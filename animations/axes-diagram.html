@@ -22,10 +22,8 @@
         --accent: #ff2a1f;
         --diag-ink: #c8c8c8;
         --diag-ink-dim: #5a5a5a;
-        --diag-grid: #2d6aea;
-        --diag-grid-faint: rgba(45, 106, 234, 0.28);
         --diag-orange: #ff8f2e;
-        --diag-face: #0c0c0e;
+        --diag-face: #0a0a0c;
         --fs: 156;
         --lh: 0.96;
         --tracking: 0;
@@ -102,6 +100,8 @@
         text-align: left;
         white-space: nowrap;
         will-change: font-variation-settings;
+        z-index: 1;
+        pointer-events: none;
       }
 
       .specimen .row {
@@ -116,84 +116,43 @@
         shape-rendering: crispEdges;
         image-rendering: pixelated;
         text-rendering: optimizeSpeed;
+        z-index: 2;
       }
 
-      .diagram .chart-face {
+      .diagram .cube-face-fill {
         fill: var(--diag-face);
-        stroke: var(--diag-ink);
-        stroke-width: 2;
+        stroke: none;
+        opacity: 0.35;
       }
 
-      .diagram .ring-conc {
+      .diagram .cube-edge {
+        fill: none;
+        stroke: var(--diag-ink);
+        stroke-width: 2;
+        stroke-linecap: square;
+        stroke-linejoin: miter;
+      }
+
+      .diagram .axis-guide {
         fill: none;
         stroke: var(--diag-ink-dim);
-        stroke-width: 1;
-        opacity: 0.65;
-        stroke-dasharray: 2 5;
-      }
-
-      .diagram .ring-conc.major {
-        stroke: var(--diag-ink);
-        opacity: 0.85;
-        stroke-dasharray: none;
-      }
-
-      .diagram .mesh-arc {
-        fill: none;
-        stroke: var(--diag-grid);
-        stroke-width: 1;
-        opacity: 0.42;
-      }
-
-      .diagram .mesh-ray {
-        fill: none;
-        stroke: var(--diag-grid-faint);
-        stroke-width: 1;
-        opacity: 0.9;
-      }
-
-      .diagram .ring-outer {
-        fill: none;
-        stroke: var(--diag-ink);
         stroke-width: 2;
-        opacity: 0.95;
+        stroke-dasharray: 4 4;
+        stroke-linecap: square;
       }
 
-      .diagram .axis {
-        fill: none;
-        stroke: var(--diag-ink-dim);
-        stroke-width: 1;
-        opacity: 0.75;
-      }
-
-      .diagram .axis.active {
-        stroke: var(--accent);
-        stroke-width: 2;
-        opacity: 1;
-      }
-
-      .diagram .tick {
-        stroke: var(--diag-ink);
-        stroke-width: 1;
-        opacity: 0.65;
-      }
-
-      .diagram .tick.major {
-        stroke-width: 2;
-        opacity: 1;
-      }
-
-      .diagram .center {
-        fill: var(--diag-orange);
-        stroke: var(--diag-ink);
-        stroke-width: 1;
-        opacity: 0.95;
+      .diagram .axis-lbl {
+        fill: var(--diag-ink);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
       }
 
       .diagram .dot {
         fill: var(--accent);
         stroke: var(--diag-ink);
-        stroke-width: 1;
+        stroke-width: 2;
       }
 
       .diagram .trail {
@@ -202,57 +161,14 @@
         stroke-width: 2;
         stroke-linecap: square;
         stroke-linejoin: miter;
-        opacity: 0.45;
-      }
-
-      .diagram .deg-lbl {
-        fill: var(--diag-ink);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 11px;
-        font-variant-numeric: tabular-nums;
-        opacity: 0.95;
-      }
-
-      .diagram .alt-lbl {
-        fill: var(--diag-ink-dim);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 10px;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .diagram .label-val {
-        fill: var(--diag-ink);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 14px;
-        letter-spacing: 0.06em;
-        opacity: 0.85;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .diagram .label-val.active {
-        fill: var(--diag-orange);
-        opacity: 1;
-      }
-
-      .diagram .label {
-        fill: var(--diag-ink-dim);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        opacity: 0.9;
-      }
-
-      .diagram .label.active {
-        fill: var(--diag-ink);
-        opacity: 1;
+        opacity: 0.4;
       }
 
       .diagram .tech-meta {
         fill: var(--diag-ink-dim);
         font-family: "Courier New", Courier, monospace;
         font-size: 10px;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
       }
 
@@ -260,19 +176,15 @@
         fill: var(--diag-orange);
         font-family: "Courier New", Courier, monospace;
         font-size: 12px;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
         font-variant-numeric: tabular-nums;
       }
 
-      .diagram .tech-readout.active {
-        fill: var(--accent);
-      }
-
       .diagram .tech-phase {
-        fill: var(--diag-grid);
+        fill: var(--diag-ink);
         font-family: "Courier New", Courier, monospace;
         font-size: 11px;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.08em;
       }
 
       .panel {
@@ -419,68 +331,38 @@
             shape-rendering="crispEdges"
             aria-hidden="true"
           >
-            <defs>
-              <clipPath id="chartClip">
-                <circle cx="512" cy="512" r="416" />
-              </clipPath>
-            </defs>
-            <circle class="chart-face" cx="512" cy="512" r="418" />
-            <g id="concentricRings"></g>
-            <g id="meshLayer" clip-path="url(#chartClip)"></g>
-            <g id="radialBlue"></g>
-            <g id="ticks"></g>
-            <circle class="ring-outer" cx="512" cy="512" r="420" />
-            <line class="axis" id="axisWdth" x1="92" y1="512" x2="932" y2="512" />
-            <line class="axis" id="axisWght" x1="512" y1="92" x2="512" y2="932" />
-            <line class="axis" id="axisSlnt" x1="215" y1="809" x2="809" y2="215" />
-            <line class="axis" id="axisCntr" x1="809" y1="809" x2="215" y2="215" />
-            <g id="degLabels"></g>
-            <g id="altLabels"></g>
-            <circle class="center" cx="512" cy="512" r="4" />
-
-            <text class="label-val" id="lblWdthMax" x="948" y="518" text-anchor="start">130</text>
-            <text class="label-val" id="lblWdthMin" x="76" y="518" text-anchor="end">65</text>
-            <text class="label-val" id="lblWghtMax" x="512" y="72" text-anchor="middle">1000</text>
-            <text class="label-val" id="lblWghtMin" x="512" y="966" text-anchor="middle">200</text>
-            <text class="label-val" id="lblSlntMax" x="820" y="202" text-anchor="start">−12°</text>
-            <text class="label-val" id="lblSlntMin" x="204" y="826" text-anchor="end">0°</text>
-            <text class="label-val" id="lblCntrMax" x="204" y="202" text-anchor="end">100</text>
-            <text class="label-val" id="lblCntrMin" x="820" y="826" text-anchor="start">0</text>
-
-            <text class="label" id="lblWdth" x="948" y="538" text-anchor="start">wdth</text>
-            <text class="label" id="lblWght" x="512" y="52" text-anchor="middle">wght</text>
-            <text class="label" id="lblSlnt" x="832" y="226" text-anchor="start">slnt</text>
-            <text class="label" id="lblCntr" x="192" y="226" text-anchor="end">cntr</text>
-
+            <rect x="0" y="0" width="1024" height="1024" fill="none" />
+            <g id="cubeFill"></g>
+            <g id="cubeEdges"></g>
+            <g id="axisGuides"></g>
             <g id="techHud">
-              <text class="tech-meta" x="56" y="40" text-anchor="start">
-                IK-PLUS · COORD · STEREOGRAPHIC PROJ.
+              <text class="tech-meta" x="56" y="36" text-anchor="start">
+                ABCIkarusPlusVariable · 3×3×3 design cube
               </text>
-              <text class="tech-meta" x="56" y="54" text-anchor="start">
-                AXES: wght, wdth, slnt, CNTR — fvar instance L1
+              <text class="tech-meta" x="56" y="50" text-anchor="start">
+                width × contrast × weight (+ slnt orbit)
               </text>
-              <text class="tech-readout" id="hudWght" x="56" y="888" text-anchor="start">
+              <text class="tech-readout" id="hudWght" x="56" y="872" text-anchor="start">
                 WGHT=400
               </text>
-              <text class="tech-readout" id="hudWdth" x="56" y="906" text-anchor="start">
-                WDTH=100.0
+              <text class="tech-readout" id="hudWdth" x="56" y="890" text-anchor="start">
+                WDTH=100
               </text>
-              <text class="tech-readout" id="hudSlnt" x="56" y="924" text-anchor="start">
-                SLNT=0.00°
-              </text>
-              <text class="tech-readout" id="hudCntr" x="56" y="942" text-anchor="start">
+              <text class="tech-readout" id="hudCntr" x="56" y="908" text-anchor="start">
                 CNTR=000
               </text>
-              <text class="tech-readout" id="hudNorm" x="56" y="962" text-anchor="start">
-                NORM 0.0000 / 1.0000 / 0.0000 / 0.0000
+              <text class="tech-readout" id="hudSlnt" x="56" y="926" text-anchor="start">
+                SLNT=0
               </text>
-              <text class="tech-phase" id="hudPhase" x="960" y="962" text-anchor="end">
-                PH: IDLE
+              <text class="tech-readout" id="hudNorm" x="56" y="946" text-anchor="start">
+                NORM 0 / 0 / 0 / 0
+              </text>
+              <text class="tech-phase" id="hudPhase" x="968" y="958" text-anchor="end">
+                u=0.00
               </text>
             </g>
-
             <path class="trail" id="trail" d="" />
-            <rect class="dot" id="dot" x="506" y="506" width="12" height="12" />
+            <rect class="dot" id="dot" x="500" y="500" width="14" height="14" />
           </svg>
         </div>
       </div>
@@ -489,7 +371,7 @@
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom the artboard</p>
+      <p class="hint">shift + scroll to zoom · cube = wdth / CNTR / wght</p>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -504,7 +386,7 @@
           <span class="val" id="fgVal">#f5d100</span>
         </div>
         <div class="row-ctl">
-          <label for="ac">diagram</label>
+          <label for="ac">accent</label>
           <input id="ac" type="color" value="#ff2a1f" />
           <span class="val" id="acVal">#ff2a1f</span>
         </div>
@@ -603,29 +485,9 @@
       <div class="group">
         <p class="group-title">motion</p>
         <div class="row-ctl">
-          <label for="t1">weight</label>
-          <input id="t1" type="range" min="0.5" max="6" step="0.1" value="2.0" />
-          <span class="val" id="t1Val">2.0s</span>
-        </div>
-        <div class="row-ctl">
-          <label for="t2">width</label>
-          <input id="t2" type="range" min="0.5" max="6" step="0.1" value="2.0" />
-          <span class="val" id="t2Val">2.0s</span>
-        </div>
-        <div class="row-ctl">
-          <label for="t3">slant</label>
-          <input id="t3" type="range" min="0.5" max="6" step="0.1" value="1.6" />
-          <span class="val" id="t3Val">1.6s</span>
-        </div>
-        <div class="row-ctl">
-          <label for="t4">contrast</label>
-          <input id="t4" type="range" min="0.5" max="6" step="0.1" value="2.4" />
-          <span class="val" id="t4Val">2.4s</span>
-        </div>
-        <div class="row-ctl">
-          <label for="ph">hold</label>
-          <input id="ph" type="range" min="0" max="2" step="0.05" value="0.2" />
-          <span class="val" id="phVal">0.20s</span>
+          <label for="cy">cycle</label>
+          <input id="cy" type="range" min="8" max="120" step="1" value="32" />
+          <span class="val" id="cyVal">32s</span>
         </div>
         <div class="row-ctl">
           <label for="trail">trail</label>
@@ -646,7 +508,7 @@
           <span>width</span><span id="rWdth">100</span>
           <span>slant</span><span id="rSlnt">0</span>
           <span>contrast</span><span id="rCntr">0</span>
-          <span>phase</span><span id="rPhase">idle</span>
+          <span>phase</span><span id="rPhase">orbit</span>
         </div>
       </div>
 
@@ -658,20 +520,10 @@
     <script>
       (function () {
         var root = document.documentElement;
-        var stage = document.getElementById("stage");
         var specimen = document.getElementById("specimen");
         var diagram = document.getElementById("diagram");
         var dot = document.getElementById("dot");
         var trail = document.getElementById("trail");
-
-        var axisWght = document.getElementById("axisWght");
-        var axisWdth = document.getElementById("axisWdth");
-        var axisSlnt = document.getElementById("axisSlnt");
-        var axisCntr = document.getElementById("axisCntr");
-        var lblWght = document.getElementById("lblWght");
-        var lblWdth = document.getElementById("lblWdth");
-        var lblSlnt = document.getElementById("lblSlnt");
-        var lblCntr = document.getElementById("lblCntr");
 
         var rWght = document.getElementById("rWght");
         var rWdth = document.getElementById("rWdth");
@@ -686,7 +538,7 @@
         var hudNorm = document.getElementById("hudNorm");
         var hudPhase = document.getElementById("hudPhase");
 
-        var LS_KEY = "axes-diagram:settings:v3";
+        var LS_KEY = "axes-diagram:settings:v5";
 
         var DEFAULTS = {
           zm: 1,
@@ -707,11 +559,7 @@
           sMax: 0,
           cMin: 0,
           cMax: 100,
-          t1: 2.0,
-          t2: 2.0,
-          t3: 1.6,
-          t4: 2.4,
-          ph: 0.2,
+          cy: 32,
           trail: true,
           dg: true,
         };
@@ -738,11 +586,7 @@
           sMax: document.getElementById("sMax"),
           cMin: document.getElementById("cMin"),
           cMax: document.getElementById("cMax"),
-          t1: document.getElementById("t1"),
-          t2: document.getElementById("t2"),
-          t3: document.getElementById("t3"),
-          t4: document.getElementById("t4"),
-          ph: document.getElementById("ph"),
+          cy: document.getElementById("cy"),
           trail: document.getElementById("trail"),
           dg: document.getElementById("dg"),
         };
@@ -765,11 +609,7 @@
           sMax: document.getElementById("sMaxVal"),
           cMin: document.getElementById("cMinVal"),
           cMax: document.getElementById("cMaxVal"),
-          t1: document.getElementById("t1Val"),
-          t2: document.getElementById("t2Val"),
-          t3: document.getElementById("t3Val"),
-          t4: document.getElementById("t4Val"),
-          ph: document.getElementById("phVal"),
+          cy: document.getElementById("cyVal"),
           trail: document.getElementById("trailVal"),
           dg: document.getElementById("dgVal"),
         };
@@ -791,14 +631,7 @@
           )
             return Math.round(Number(v)) + "";
           if (key === "sMin" || key === "sMax") return Number(v).toFixed(2);
-          if (
-            key === "t1" ||
-            key === "t2" ||
-            key === "t3" ||
-            key === "t4" ||
-            key === "ph"
-          )
-            return Number(v).toFixed(2) + "s";
+          if (key === "cy") return Math.round(Number(v)) + "s";
           if (BOOL_KEYS[key]) return v ? "on" : "off";
           return String(v);
         }
@@ -814,30 +647,6 @@
             diagram.style.display = v ? "" : "none";
           } else if (key === "trail") {
             if (!v && trail) trail.setAttribute("d", "");
-          } else if (key === "wMax") {
-            var n1 = document.getElementById("lblWghtMax");
-            if (n1) n1.textContent = String(Math.round(Number(v)));
-          } else if (key === "wMin") {
-            var n2 = document.getElementById("lblWghtMin");
-            if (n2) n2.textContent = String(Math.round(Number(v)));
-          } else if (key === "dMax") {
-            var n3 = document.getElementById("lblWdthMax");
-            if (n3) n3.textContent = String(Math.round(Number(v)));
-          } else if (key === "dMin") {
-            var n4 = document.getElementById("lblWdthMin");
-            if (n4) n4.textContent = String(Math.round(Number(v)));
-          } else if (key === "sMin") {
-            var n5 = document.getElementById("lblSlntMax");
-            if (n5) n5.textContent = Number(v).toFixed(0) + "°";
-          } else if (key === "sMax") {
-            var n6 = document.getElementById("lblSlntMin");
-            if (n6) n6.textContent = Number(v).toFixed(0) + "°";
-          } else if (key === "cMax") {
-            var n7 = document.getElementById("lblCntrMax");
-            if (n7) n7.textContent = String(Math.round(Number(v)));
-          } else if (key === "cMin") {
-            var n8 = document.getElementById("lblCntrMin");
-            if (n8) n8.textContent = String(Math.round(Number(v)));
           }
         }
 
@@ -881,6 +690,7 @@
             } catch (e) {}
           }
           Object.keys(els).forEach(function (k) {
+            if (data[k] === undefined) data[k] = DEFAULTS[k];
             setValue(k, data[k], false);
           });
         }
@@ -930,179 +740,163 @@
           return a + (b - a) * t;
         }
 
-        function easeInOut(t) {
-          return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        /** Smooth step for seamless loops (C1 at 0 and 1). */
+        function smoothWindow(t) {
+          var x = t - Math.floor(t);
+          return x * x * (3 - 2 * x);
         }
 
-        var CX = 512;
-        var CY = 512;
-        var R = 420;
-        // 4-axis compass at 45° intervals
-        var SLNT_ANGLE = Math.PI / 4; // 45° (NE)
-        var SLNT_DX = R * Math.cos(SLNT_ANGLE);
-        var SLNT_DY = -R * Math.sin(SLNT_ANGLE);
-        var CNTR_ANGLE = (3 * Math.PI) / 4; // 135° (NW)
-        var CNTR_DX = R * Math.cos(CNTR_ANGLE);
-        var CNTR_DY = -R * Math.sin(CNTR_ANGLE);
+        function snapPx(v) {
+          return Math.round(v * 2) / 2;
+        }
 
-        var lblWdthMax = document.getElementById("lblWdthMax");
-        var lblWghtMax = document.getElementById("lblWghtMax");
-        var lblSlntMax = document.getElementById("lblSlntMax");
-        var lblCntrMax = document.getElementById("lblCntrMax");
+        var CX = 640;
+        var CY = 470;
+        var SCALE = 118;
+        var K = 0.8660254037844386;
 
-        (function buildChartGraphics() {
-          function polar(cx, cy, rr, deg) {
-            var rad = (deg * Math.PI) / 180;
-            return [cx + rr * Math.cos(rad), cy - rr * Math.sin(rad)];
+        /**
+         * Unit cube: x = width (0…1), y = contrast (0 bottom heavy … 1 top),
+         * z = weight (0 front … 1 back in iso space).
+         */
+        function proj(nx, ny, nz) {
+          var x = (nx - 0.5) * 2 * SCALE;
+          var y = (ny - 0.5) * 2 * SCALE;
+          var z = (nz - 0.5) * 2 * SCALE;
+          var sx = (x - z) * K;
+          var sy = -y * 1.08 - (x + z) * 0.5;
+          return [snapPx(CX + sx), snapPx(CY + sy)];
+        }
+
+        function segmentKey(a, b) {
+          return a < b ? a + "|" + b : b + "|" + a;
+        }
+
+        (function buildCube() {
+          var pts = {};
+          var ai;
+          var bi;
+          var ci;
+          for (ai = 0; ai < 3; ai++) {
+            for (bi = 0; bi < 3; bi++) {
+              for (ci = 0; ci < 3; ci++) {
+                var k = ai + "/" + bi + "/" + ci;
+                var P = proj(ai / 2, bi / 2, ci / 2);
+                pts[k] = { x: P[0], y: P[1] };
+              }
+            }
           }
 
-          function arcPath(cx, cy, rr, deg1, deg2) {
-            var p1 = polar(cx, cy, rr, deg1);
-            var p2 = polar(cx, cy, rr, deg2);
-            var large = Math.abs(deg2 - deg1) > 180 ? 1 : 0;
-            return (
-              "M" +
-              p1[0].toFixed(1) +
-              "," +
-              p1[1].toFixed(1) +
-              " A" +
-              rr +
-              "," +
-              rr +
-              " 0 " +
-              large +
-              " 0 " +
-              p2[0].toFixed(1) +
-              "," +
-              p2[1].toFixed(1)
-            );
-          }
-
-          var concGroup = document.getElementById("concentricRings");
-          var ringHtml = [];
-          for (var rRing = 56; rRing <= 392; rRing += 28) {
-            var ringCls = rRing % 84 === 0 ? "ring-conc major" : "ring-conc";
-            ringHtml.push(
-              '<circle class="' + ringCls + '" cx="512" cy="512" r="' + rRing + '" />'
-            );
-          }
-          concGroup.innerHTML = ringHtml.join("");
-
-          var meshGroup = document.getElementById("meshLayer");
-          var meshParts = [];
-          var i;
-          var j;
-          for (i = 0; i < 14; i++) {
-            var ra = 148 + i * 19;
-            meshParts.push(
-              '<path class="mesh-arc" d="' + arcPath(512, 624, ra, 208, 332) + '" />'
-            );
-          }
-          for (j = 0; j < 12; j++) {
-            var cxj = 232 + j * 52;
-            var rj = 172 + (j % 5) * 11;
-            meshParts.push(
-              '<path class="mesh-arc" d="' + arcPath(cxj, 556, rj, 224, 316) + '" />'
-            );
-          }
-          meshGroup.innerHTML = meshParts.join("");
-
-          var rayGroup = document.getElementById("radialBlue");
-          var rayParts = [];
-          for (var dRay = 0; dRay < 360; dRay += 30) {
-            var rRad = (dRay * Math.PI) / 180;
-            var xe = CX + 392 * Math.cos(rRad);
-            var ye = CY - 392 * Math.sin(rRad);
-            rayParts.push(
-              '<line class="mesh-ray" x1="' +
-                (2 * CX - xe).toFixed(1) +
+          var seen = {};
+          var edgeParts = [];
+            function addEdge(k0, k1) {
+            var sk = segmentKey(k0, k1);
+            if (seen[sk]) return;
+            seen[sk] = true;
+            var a = pts[k0];
+            var b = pts[k1];
+            edgeParts.push(
+              '<line class="cube-edge" x1="' +
+                a.x +
                 '" y1="' +
-                (2 * CY - ye).toFixed(1) +
+                a.y +
                 '" x2="' +
-                xe.toFixed(1) +
+                b.x +
                 '" y2="' +
-                ye.toFixed(1) +
+                b.y +
                 '" />'
             );
           }
-          rayGroup.innerHTML = rayParts.join("");
 
-          var ticksGroup = document.getElementById("ticks");
-          var minorLen = 10;
-          var majorLen = 22;
-          var majorAt = {
-            0: 1, 45: 1, 90: 1, 135: 1, 180: 1, 225: 1, 270: 1, 315: 1,
-          };
-          var tickParts = [];
-          for (var deg = 0; deg < 360; deg += 15) {
-            var rad = (deg * Math.PI) / 180;
-            var cosA = Math.cos(rad);
-            var sinA = Math.sin(rad);
-            var isMajor = !!majorAt[deg];
-            var len = isMajor ? majorLen : minorLen;
-            var x1t = CX + (R - len) * cosA;
-            var y1t = CY - (R - len) * sinA;
-            var x2t = CX + R * cosA;
-            var y2t = CY - R * sinA;
-            tickParts.push(
-              '<line class="tick' +
-                (isMajor ? " major" : "") +
-                '" x1="' +
-                x1t.toFixed(2) +
-                '" y1="' +
-                y1t.toFixed(2) +
-                '" x2="' +
-                x2t.toFixed(2) +
-                '" y2="' +
-                y2t.toFixed(2) +
-                '" />'
-            );
+          for (ai = 0; ai < 3; ai++) {
+            for (bi = 0; bi < 3; bi++) {
+              for (ci = 0; ci < 3; ci++) {
+                var k = ai + "/" + bi + "/" + ci;
+                if (ai < 2) addEdge(k, ai + 1 + "/" + bi + "/" + ci);
+                if (bi < 2) addEdge(k, ai + "/" + (bi + 1) + "/" + ci);
+                if (ci < 2) addEdge(k, ai + "/" + bi + "/" + (ci + 1));
+              }
+            }
           }
-          ticksGroup.innerHTML = tickParts.join("");
 
-          var degGroup = document.getElementById("degLabels");
-          var Rlbl = 444;
-          var degParts = [];
-          for (var di = 0; di < 24; di++) {
-            var stepDeg = di * 15;
-            var az = (90 - stepDeg + 360) % 360;
-            var radL = (stepDeg * Math.PI) / 180;
-            var lx = CX + Rlbl * Math.cos(radL);
-            var ly = CY - Rlbl * Math.sin(radL);
-            degParts.push(
-              '<text class="deg-lbl" x="' +
-                lx.toFixed(1) +
-                '" y="' +
-                ly.toFixed(1) +
-                '" text-anchor="middle" dominant-baseline="middle">' +
-                az +
-                "\u00b0</text>"
-            );
-          }
-          degGroup.innerHTML = degParts.join("");
+          document.getElementById("cubeEdges").innerHTML = edgeParts.join("");
 
-          var altGroup = document.getElementById("altLabels");
-          var altBands = [
-            { r: 364, label: "16\u00b0" },
-            { r: 308, label: "28\u00b0" },
-            { r: 252, label: "40\u00b0" },
-            { r: 196, label: "52\u00b0" },
-            { r: 140, label: "64\u00b0" },
-            { r: 84, label: "76\u00b0" },
-          ];
-          var altParts = [];
-          for (var ai = 0; ai < altBands.length; ai++) {
-            var ab = altBands[ai];
-            var yy = CY - ab.r;
-            altParts.push(
-              '<text class="alt-lbl" x="526" y="' +
-                yy.toFixed(1) +
-                '" text-anchor="start" dominant-baseline="middle">' +
-                ab.label +
-                "</text>"
-            );
-          }
-          altGroup.innerHTML = altParts.join("");
+          var f0 = proj(0, 0, 0);
+          var f1 = proj(1, 0, 0);
+          var f2 = proj(1, 0, 1);
+          var f3 = proj(0, 0, 1);
+          var faceD =
+            "M" +
+            f0[0] +
+            "," +
+            f0[1] +
+            "L" +
+            f1[0] +
+            "," +
+            f1[1] +
+            "L" +
+            f2[0] +
+            "," +
+            f2[1] +
+            "L" +
+            f3[0] +
+            "," +
+            f3[1] +
+            "Z";
+          document.getElementById("cubeFill").innerHTML =
+            '<path class="cube-face-fill" d="' + faceD + '" />';
+
+          var mx = (f0[0] + f1[0] + f2[0] + f3[0]) / 4;
+          var my = (f0[1] + f1[1] + f2[1] + f3[1]) / 4;
+          var wEnd = proj(1.35, 0, 0);
+          var cEnd = proj(0.5, 1.32, 0.5);
+          var gEnd = proj(0.5, 0.5, 1.38);
+
+          var guides =
+            '<line class="axis-guide" x1="' +
+            mx +
+            '" y1="' +
+            my +
+            '" x2="' +
+            wEnd[0] +
+            '" y2="' +
+            wEnd[1] +
+            '" />' +
+            '<line class="axis-guide" x1="' +
+            mx +
+            '" y1="' +
+            my +
+            '" x2="' +
+            cEnd[0] +
+            '" y2="' +
+            cEnd[1] +
+            '" />' +
+            '<line class="axis-guide" x1="' +
+            mx +
+            '" y1="' +
+            my +
+            '" x2="' +
+            gEnd[0] +
+            '" y2="' +
+            gEnd[1] +
+            '" />' +
+            '<text class="axis-lbl" x="' +
+            (wEnd[0] + 8) +
+            '" y="' +
+            (wEnd[1] + 4) +
+            '">width</text>' +
+            '<text class="axis-lbl" x="' +
+            (cEnd[0] + 6) +
+            '" y="' +
+            (cEnd[1] - 8) +
+            '">contrast</text>' +
+            '<text class="axis-lbl" x="' +
+            (gEnd[0] + 6) +
+            '" y="' +
+            (gEnd[1] + 14) +
+            '">weight</text>';
+
+          document.getElementById("axisGuides").innerHTML = guides;
         })();
 
         var startMs = performance.now();
@@ -1110,38 +904,10 @@
         var lastWdth = -1;
         var lastSlnt = NaN;
         var lastCntr = -1;
-        var lastActive = "";
 
-        function setActive(name) {
-          if (name === lastActive) return;
-          lastActive = name;
-          axisWght.classList.toggle("active", name === "wght");
-          axisWdth.classList.toggle("active", name === "wdth");
-          axisSlnt.classList.toggle("active", name === "slnt");
-          axisCntr.classList.toggle("active", name === "cntr");
-          lblWght.classList.toggle("active", name === "wght");
-          lblWdth.classList.toggle("active", name === "wdth");
-          lblSlnt.classList.toggle("active", name === "slnt");
-          lblCntr.classList.toggle("active", name === "cntr");
-          lblWghtMax.classList.toggle("active", name === "wght");
-          lblWdthMax.classList.toggle("active", name === "wdth");
-          lblSlntMax.classList.toggle("active", name === "slnt");
-          lblCntrMax.classList.toggle("active", name === "cntr");
-          if (hudWght) hudWght.classList.toggle("active", name === "wght");
-          if (hudWdth) hudWdth.classList.toggle("active", name === "wdth");
-          if (hudSlnt) hudSlnt.classList.toggle("active", name === "slnt");
-          if (hudCntr) hudCntr.classList.toggle("active", name === "cntr");
-        }
-
-        // travel(t) returns the 0→1→0 trip used to ride an axis center→end→center
-        function travel(t) {
-          return Math.sin(easeInOut(t) * Math.PI);
-        }
-
-        // Trail buffer: stores recent dot positions for the path "comet" effect.
-        var TRAIL_LEN = 180;
+        var TRAIL_LEN = 200;
         var trailBuf = new Array(TRAIL_LEN);
-        for (var i = 0; i < TRAIL_LEN; i++) trailBuf[i] = null;
+        for (var ti = 0; ti < TRAIL_LEN; ti++) trailBuf[ti] = null;
         var trailHead = 0;
 
         function pushTrail(x, y) {
@@ -1156,18 +922,14 @@
             var idx = (trailHead + k) % TRAIL_LEN;
             var pt = trailBuf[idx];
             if (!pt) continue;
-            d += (first ? "M" : "L") + pt[0].toFixed(1) + " " + pt[1].toFixed(1) + " ";
+            d += (first ? "M" : "L") + pt[0] + " " + pt[1] + " ";
             first = false;
           }
           trail.setAttribute("d", d);
         }
 
         function frame(now) {
-          var T1 = parseFloat(els.t1.value);
-          var T2 = parseFloat(els.t2.value);
-          var T3 = parseFloat(els.t3.value);
-          var T4 = parseFloat(els.t4.value);
-          var PH = parseFloat(els.ph.value);
+          var cycle = Math.max(8, parseFloat(els.cy.value));
           var wMin = parseFloat(els.wMin.value);
           var wMax = parseFloat(els.wMax.value);
           var dMin = parseFloat(els.dMin.value);
@@ -1177,79 +939,64 @@
           var cMin = parseFloat(els.cMin.value);
           var cMax = parseFloat(els.cMax.value);
 
-          var TOTAL = PH + T1 + PH + T2 + PH + T3 + PH + T4;
-          var t = ((now - startMs) / 1000) % TOTAL;
-
-          var ox = 0,
-            oy = 0;
-          var phaseLabel = "idle";
-          var active = "";
-          var wght = wMin;
-          var wdth = dMin;
-          var slnt = sMax;
-          var cntr = cMin;
-          var trip = 0;
-          var p;
-
-          var s0 = PH;
-          var s1 = s0 + T1;
-          var s2 = s1 + PH;
-          var s3 = s2 + T2;
-          var s4 = s3 + PH;
-          var s5 = s4 + T3;
-          var s6 = s5 + PH;
-          var s7 = s6 + T4;
-
-          if (t < s0) {
-            phaseLabel = "hold";
-          } else if (t < s1) {
-            p = (t - s0) / T1;
-            trip = travel(p);
-            oy = -R * trip;
-            wght = lerp(wMin, wMax, trip);
-            phaseLabel = "weight";
-            active = "wght";
-          } else if (t < s2) {
-            phaseLabel = "hold";
-          } else if (t < s3) {
-            p = (t - s2) / T2;
-            trip = travel(p);
-            ox = R * trip;
-            wdth = lerp(dMin, dMax, trip);
-            phaseLabel = "width";
-            active = "wdth";
-          } else if (t < s4) {
-            phaseLabel = "hold";
-          } else if (t < s5) {
-            p = (t - s4) / T3;
-            trip = travel(p);
-            ox = SLNT_DX * trip;
-            oy = SLNT_DY * trip;
-            slnt = lerp(sMax, sMin, trip);
-            phaseLabel = "slant";
-            active = "slnt";
-          } else if (t < s6) {
-            phaseLabel = "hold";
-          } else {
-            p = (t - s6) / T4;
-            trip = travel(p);
-            ox = CNTR_DX * trip;
-            oy = CNTR_DY * trip;
-            cntr = lerp(cMin, cMax, trip);
-            phaseLabel = "contrast";
-            active = "cntr";
+          if (wMin > wMax) {
+            var tw = wMin;
+            wMin = wMax;
+            wMax = tw;
+          }
+          if (dMin > dMax) {
+            var td = dMin;
+            dMin = dMax;
+            dMax = td;
+          }
+          if (sMin > sMax) {
+            var ts = sMin;
+            sMin = sMax;
+            sMax = ts;
+          }
+          if (cMin > cMax) {
+            var tc = cMin;
+            cMin = cMax;
+            cMax = tc;
           }
 
-          var px = CX + ox;
-          var py = CY + oy;
-          var dotSz = 12;
-          dot.setAttribute("x", (px - dotSz / 2).toFixed(2));
-          dot.setAttribute("y", (py - dotSz / 2).toFixed(2));
+          var u = (now - startMs) / (cycle * 1000);
+          var s = smoothWindow(u);
 
-          setActive(active);
+          var twave = 2 * Math.PI * s;
+          var nw =
+            0.5 +
+            0.48 *
+              Math.sin(twave + 0.7);
+          var nz =
+            0.5 +
+            0.48 *
+              Math.sin(twave * 1.127 + 2.1);
+          var ny =
+            0.5 +
+            0.48 *
+              Math.sin(twave * 0.853 + 4.2);
+          var nSl =
+            0.5 +
+            0.5 * Math.sin(twave * 0.937 + 1.55);
 
-          var trailOn = !!els.trail.checked;
-          if (trailOn) {
+          var wght = lerp(wMin, wMax, nz);
+          var wdth = lerp(dMin, dMax, nw);
+          var cntr = lerp(cMin, cMax, ny);
+          var slnt = lerp(sMin, sMax, nSl);
+
+          var nxVis = (wdth - dMin) / (dMax - dMin || 1);
+          var nyVis = (cntr - cMin) / (cMax - cMin || 1);
+          var nzVis = (wght - wMin) / (wMax - wMin || 1);
+
+          var P = proj(nxVis, nyVis, nzVis);
+          var px = P[0];
+          var py = P[1];
+          var dotSz = 14;
+          dot.setAttribute("x", Math.round(px - dotSz / 2));
+          dot.setAttribute("y", Math.round(py - dotSz / 2));
+
+          if (els.trail.checked) {
             pushTrail(px, py);
             renderTrail();
           }
@@ -1258,8 +1005,8 @@
           var lhMaxV = parseFloat(els.lhMax.value);
           var trMinV = parseFloat(els.trMin.value);
           var trMaxV = parseFloat(els.trMax.value);
-          var lhCur = lerp(lhMinV, lhMaxV, trip);
-          var trCur = lerp(trMinV, trMaxV, trip);
+          var lhCur = lerp(lhMinV, lhMaxV, s);
+          var trCur = lerp(trMinV, trMaxV, s);
           root.style.setProperty("--lh", lhCur.toFixed(3));
           root.style.setProperty("--tracking", trCur.toFixed(4));
 
@@ -1293,35 +1040,24 @@
           rWdth.textContent = String(wdthR);
           rSlnt.textContent = slntR.toFixed(2);
           rCntr.textContent = String(cntrR);
-          rPhase.textContent = phaseLabel;
+          rPhase.textContent = "orbit";
 
           if (hudWght) hudWght.textContent = "WGHT=" + wghtR;
-          if (hudWdth) hudWdth.textContent = "WDTH=" + wdthR.toFixed(1);
-          if (hudSlnt) hudSlnt.textContent = "SLNT=" + slntR.toFixed(2) + "\u00b0";
+          if (hudWdth) hudWdth.textContent = "WDTH=" + wdthR;
           if (hudCntr) hudCntr.textContent = "CNTR=" + ("00" + cntrR).slice(-3);
-          var denW = wMax - wMin || 1;
-          var denD = dMax - dMin || 1;
-          var denS = sMax - sMin || 1;
-          var denC = cMax - cMin || 1;
+          if (hudSlnt) hudSlnt.textContent = "SLNT=" + slntR.toFixed(2);
           if (hudNorm) {
             hudNorm.textContent =
               "NORM " +
-              ((wghtR - wMin) / denW).toFixed(4) +
-              " / " +
-              ((wdthR - dMin) / denD).toFixed(4) +
-              " / " +
-              ((slntR - sMin) / denS).toFixed(4) +
-              " / " +
-              ((cntrR - cMin) / denC).toFixed(4);
+              nxVis.toFixed(3) +
+              " · " +
+              nyVis.toFixed(3) +
+              " · " +
+              nzVis.toFixed(3) +
+              " · " +
+              ((slntR - sMin) / (sMax - sMin || 1)).toFixed(3);
           }
-          if (hudPhase) {
-            hudPhase.textContent =
-              "PH: " +
-              (phaseLabel === "hold" ? "HOLD" : phaseLabel.toUpperCase()) +
-              " · t=" +
-              t.toFixed(2) +
-              "s";
-          }
+          if (hudPhase) hudPhase.textContent = "u=" + (u % 1).toFixed(2);
 
           requestAnimationFrame(frame);
         }
