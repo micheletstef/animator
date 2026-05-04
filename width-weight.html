@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>width × weight diagram</title>
+    <style>
+      @font-face {
+        font-family: "IkarusWidthVariable";
+        src: url("fonts/ABCIkarusWidthVariable.ttf")
+          format("truetype-variations");
+        font-weight: 200 1000;
+        font-stretch: 65% 130%;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: dark;
+        --bg: #000000;
+        --fg: #f5d100;
+        --accent: #ff2a1f;
+        --fs: 156;
+        --lh: 0.96;
+        --tracking: 0;
+        --pad: 36;
+        --zoom: 1;
+        --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #e9e9e9;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        align-items: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        display: flex;
+        align-items: safe center;
+        justify-content: safe center;
+        height: 100%;
+        min-width: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+      }
+
+      .stage-outer {
+        width: calc(var(--base) * var(--zoom));
+        height: calc(var(--base) * var(--zoom));
+        position: relative;
+        flex: 0 0 auto;
+      }
+
+      .stage {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--base);
+        height: var(--base);
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        font-family: "IkarusWidthVariable", system-ui, sans-serif;
+        transform: scale(var(--zoom));
+        transform-origin: top left;
+      }
+
+      .specimen {
+        position: absolute;
+        inset: calc(var(--pad) * 1px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
+        font-size: calc(var(--fs) * 1px);
+        font-variation-settings: "wght" 400, "wdth" 100;
+        text-align: center;
+        white-space: nowrap;
+        will-change: font-variation-settings;
+      }
+
+      .specimen .row {
+        display: block;
+      }
+
+      .diagram {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: visible;
+      }
+
+      .diagram .ring,
+      .diagram .axis {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .diagram .dot {
+        fill: var(--accent);
+        stroke: none;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row-ctl {
+        display: grid;
+        grid-template-columns: 64px 1fr 60px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row-ctl label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row-ctl input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row-ctl input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row-ctl input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row-ctl input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row-ctl .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .row-ctl input[type="checkbox"] {
+        justify-self: start;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+
+      .readout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 12px;
+        font-size: 11px;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .readout span:nth-child(odd) {
+        color: #6a6a6a;
+        text-transform: lowercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="width × weight diagram">
+          <div class="specimen" id="specimen">
+            <span class="row">ABCDEFGHIJK</span>
+            <span class="row">LMNOPQRTU</span>
+            <span class="row">VWXYZabcd</span>
+            <span class="row">efghijklnopq</span>
+            <span class="row">stuvwxyz&amp;!?</span>
+            <span class="row">1234567890</span>
+          </div>
+          <svg
+            class="diagram"
+            id="diagram"
+            viewBox="0 0 1024 1024"
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden="true"
+          >
+            <circle class="ring" id="ring" cx="512" cy="512" r="500" />
+            <line class="axis" id="axis" x1="12" y1="512" x2="1012" y2="512" />
+            <circle class="dot" id="dot" cx="12" cy="512" r="14" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="zm" value="1" />
+
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">shift + scroll to zoom the artboard</p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row-ctl">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#000000" />
+          <span class="val" id="bgVal">#000000</span>
+        </div>
+        <div class="row-ctl">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#f5d100" />
+          <span class="val" id="fgVal">#f5d100</span>
+        </div>
+        <div class="row-ctl">
+          <label for="ac">diagram</label>
+          <input id="ac" type="color" value="#ff2a1f" />
+          <span class="val" id="acVal">#ff2a1f</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row-ctl">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="60" max="260" step="1" value="156" />
+          <span class="val" id="fsVal">156px</span>
+        </div>
+        <div class="row-ctl">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.96" />
+          <span class="val" id="lhVal">0.96</span>
+        </div>
+        <div class="row-ctl">
+          <label for="tr">kern</label>
+          <input id="tr" type="range" min="-0.1" max="0.1" step="0.001" value="0" />
+          <span class="val" id="trVal">0</span>
+        </div>
+        <div class="row-ctl">
+          <label for="pd">margin</label>
+          <input id="pd" type="range" min="0" max="120" step="1" value="36" />
+          <span class="val" id="pdVal">36px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">axes range</p>
+        <div class="row-ctl">
+          <label for="wMin">w-min</label>
+          <input id="wMin" type="range" min="100" max="1000" step="1" value="200" />
+          <span class="val" id="wMinVal">200</span>
+        </div>
+        <div class="row-ctl">
+          <label for="wMax">w-max</label>
+          <input id="wMax" type="range" min="100" max="1000" step="1" value="1000" />
+          <span class="val" id="wMaxVal">1000</span>
+        </div>
+        <div class="row-ctl">
+          <label for="dMin">d-min</label>
+          <input id="dMin" type="range" min="65" max="130" step="1" value="65" />
+          <span class="val" id="dMinVal">65</span>
+        </div>
+        <div class="row-ctl">
+          <label for="dMax">d-default</label>
+          <input id="dMax" type="range" min="65" max="130" step="1" value="100" />
+          <span class="val" id="dMaxVal">100</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion</p>
+        <div class="row-ctl">
+          <label for="t1">phase 1</label>
+          <input id="t1" type="range" min="0.5" max="6" step="0.1" value="2.4" />
+          <span class="val" id="t1Val">2.4s</span>
+        </div>
+        <div class="row-ctl">
+          <label for="t2">phase 2</label>
+          <input id="t2" type="range" min="1" max="10" step="0.1" value="4.2" />
+          <span class="val" id="t2Val">4.2s</span>
+        </div>
+        <div class="row-ctl">
+          <label for="ph">hold</label>
+          <input id="ph" type="range" min="0" max="2" step="0.05" value="0.5" />
+          <span class="val" id="phVal">0.5s</span>
+        </div>
+        <div class="row-ctl">
+          <label for="dg">diagram</label>
+          <input id="dg" type="checkbox" checked />
+          <span class="val" id="dgVal">on</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">live</p>
+        <div class="readout" id="readout">
+          <span>weight</span><span id="rWght">200</span>
+          <span>width</span><span id="rWdth">100</span>
+          <span>phase</span><span id="rPhase">idle</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+      </div>
+    </aside>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var stage = document.getElementById("stage");
+        var specimen = document.getElementById("specimen");
+        var diagram = document.getElementById("diagram");
+        var ring = document.getElementById("ring");
+        var axis = document.getElementById("axis");
+        var dot = document.getElementById("dot");
+
+        var rWght = document.getElementById("rWght");
+        var rWdth = document.getElementById("rWdth");
+        var rPhase = document.getElementById("rPhase");
+
+        var LS_KEY = "axes-diagram:settings:v1";
+
+        var DEFAULTS = {
+          zm: 1,
+          bg: "#000000",
+          fg: "#f5d100",
+          ac: "#ff2a1f",
+          fs: 156,
+          lh: 0.96,
+          tr: 0,
+          pd: 36,
+          wMin: 200,
+          wMax: 1000,
+          dMin: 65,
+          dMax: 100,
+          t1: 2.4,
+          t2: 4.2,
+          ph: 0.5,
+          dg: true,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1, ac: 1 };
+        var BOOL_KEYS = { dg: 1 };
+
+        var els = {
+          zm: document.getElementById("zm"),
+          bg: document.getElementById("bg"),
+          fg: document.getElementById("fg"),
+          ac: document.getElementById("ac"),
+          fs: document.getElementById("fs"),
+          lh: document.getElementById("lh"),
+          tr: document.getElementById("tr"),
+          pd: document.getElementById("pd"),
+          wMin: document.getElementById("wMin"),
+          wMax: document.getElementById("wMax"),
+          dMin: document.getElementById("dMin"),
+          dMax: document.getElementById("dMax"),
+          t1: document.getElementById("t1"),
+          t2: document.getElementById("t2"),
+          ph: document.getElementById("ph"),
+          dg: document.getElementById("dg"),
+        };
+
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          ac: document.getElementById("acVal"),
+          fs: document.getElementById("fsVal"),
+          lh: document.getElementById("lhVal"),
+          tr: document.getElementById("trVal"),
+          pd: document.getElementById("pdVal"),
+          wMin: document.getElementById("wMinVal"),
+          wMax: document.getElementById("wMaxVal"),
+          dMin: document.getElementById("dMinVal"),
+          dMax: document.getElementById("dMaxVal"),
+          t1: document.getElementById("t1Val"),
+          t2: document.getElementById("t2Val"),
+          ph: document.getElementById("phVal"),
+          dg: document.getElementById("dgVal"),
+        };
+
+        function fmt(key, v) {
+          if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (key === "zm") return Math.round(Number(v) * 100) + "%";
+          if (key === "fs" || key === "pd") return Math.round(Number(v)) + "px";
+          if (key === "lh") return Number(v).toFixed(2);
+          if (key === "tr") return Math.round(Number(v) * 1000) + "";
+          if (key === "wMin" || key === "wMax" || key === "dMin" || key === "dMax")
+            return Math.round(Number(v)) + "";
+          if (key === "t1" || key === "t2" || key === "ph")
+            return Number(v).toFixed(2) + "s";
+          if (BOOL_KEYS[key]) return v ? "on" : "off";
+          return String(v);
+        }
+
+        function applyVar(key, v) {
+          if (key === "zm") root.style.setProperty("--zoom", v);
+          else if (key === "bg") root.style.setProperty("--bg", v);
+          else if (key === "fg") root.style.setProperty("--fg", v);
+          else if (key === "ac") root.style.setProperty("--accent", v);
+          else if (key === "fs") root.style.setProperty("--fs", v);
+          else if (key === "lh") root.style.setProperty("--lh", v);
+          else if (key === "tr") root.style.setProperty("--tracking", v);
+          else if (key === "pd") root.style.setProperty("--pad", v);
+          else if (key === "dg") {
+            diagram.style.display = v ? "" : "none";
+          }
+        }
+
+        function setValue(key, v, persist) {
+          if (BOOL_KEYS[key]) {
+            els[key].checked = !!v;
+          } else {
+            els[key].value = v;
+          }
+          if (vals[key]) {
+            vals[key].textContent = fmt(key, v);
+          }
+          applyVar(key, v);
+          if (persist !== false) save();
+        }
+
+        function save() {
+          var out = {};
+          Object.keys(els).forEach(function (k) {
+            if (BOOL_KEYS[k]) out[k] = !!els[k].checked;
+            else if (COLOR_KEYS[k]) out[k] = els[k].value;
+            else out[k] = parseFloat(els[k].value);
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(out));
+          } catch (e) {}
+        }
+
+        function load() {
+          var raw;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {
+            raw = null;
+          }
+          var data = DEFAULTS;
+          if (raw) {
+            try {
+              var parsed = JSON.parse(raw);
+              data = Object.assign({}, DEFAULTS, parsed);
+            } catch (e) {}
+          }
+          Object.keys(els).forEach(function (k) {
+            setValue(k, data[k], false);
+          });
+        }
+
+        Object.keys(els).forEach(function (k) {
+          if (k === "zm") return;
+          var ev = BOOL_KEYS[k] ? "change" : "input";
+          els[k].addEventListener(ev, function () {
+            var v;
+            if (BOOL_KEYS[k]) v = els[k].checked;
+            else if (COLOR_KEYS[k]) v = els[k].value;
+            else v = parseFloat(els[k].value);
+            setValue(k, v);
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", function () {
+          Object.keys(DEFAULTS).forEach(function (k) {
+            setValue(k, DEFAULTS[k]);
+          });
+        });
+
+        var stageWrap = document.getElementById("stageWrap");
+        stageWrap.addEventListener(
+          "wheel",
+          function (e) {
+            if (!e.shiftKey) return;
+            e.preventDefault();
+            var current = parseFloat(els.zm.value) || 1;
+            var factor = Math.exp(-e.deltaY * 0.0015);
+            var next = Math.max(0.1, Math.min(4, current * factor));
+            if (next === current) return;
+            var rect = stageWrap.getBoundingClientRect();
+            var contentX = e.clientX - rect.left + stageWrap.scrollLeft;
+            var contentY = e.clientY - rect.top + stageWrap.scrollTop;
+            var ratio = next / current;
+            setValue("zm", next);
+            stageWrap.scrollLeft = contentX * ratio - (e.clientX - rect.left);
+            stageWrap.scrollTop = contentY * ratio - (e.clientY - rect.top);
+          },
+          { passive: false }
+        );
+
+        load();
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function easeInOut(t) {
+          return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        }
+
+        var CX = 512;
+        var CY = 512;
+        var R = 500;
+
+        var startMs = performance.now();
+        var lastWght = -1;
+        var lastWdth = -1;
+
+        function frame(now) {
+          var T1 = parseFloat(els.t1.value);
+          var T2 = parseFloat(els.t2.value);
+          var PH = parseFloat(els.ph.value);
+          var wMin = parseFloat(els.wMin.value);
+          var wMax = parseFloat(els.wMax.value);
+          var dDef = parseFloat(els.dMax.value);
+          var dMin = parseFloat(els.dMin.value);
+
+          var TOTAL = PH + T1 + PH + T2;
+          var t = ((now - startMs) / 1000) % TOTAL;
+
+          var x, y, p, pe, theta;
+          var phaseLabel = "idle";
+          var wght, wdth;
+
+          if (t < PH) {
+            x = -1;
+            y = 0;
+            wght = wMin;
+            wdth = dDef;
+            phaseLabel = "hold·left";
+          } else if (t < PH + T1) {
+            p = (t - PH) / T1;
+            pe = easeInOut(p);
+            x = -1 + 2 * pe;
+            y = 0;
+            wght = lerp(wMin, wMax, pe);
+            wdth = dDef;
+            phaseLabel = "weight";
+          } else if (t < PH + T1 + PH) {
+            x = 1;
+            y = 0;
+            wght = wMax;
+            wdth = dDef;
+            phaseLabel = "hold·right";
+          } else {
+            p = (t - PH - T1 - PH) / T2;
+            pe = easeInOut(p);
+            theta = pe * Math.PI;
+            x = Math.cos(theta);
+            y = -Math.sin(theta);
+            wght = lerp(wMax, wMin, pe);
+            wdth = lerp(dDef, dMin, Math.sin(theta));
+            phaseLabel = "width";
+          }
+
+          var px = CX + x * R;
+          var py = CY + y * R;
+          dot.setAttribute("cx", px.toFixed(2));
+          dot.setAttribute("cy", py.toFixed(2));
+
+          var wghtR = Math.round(wght);
+          var wdthR = Math.round(wdth);
+
+          if (wghtR !== lastWght || wdthR !== lastWdth) {
+            specimen.style.fontVariationSettings =
+              '"wght" ' + wghtR + ', "wdth" ' + wdthR;
+            lastWght = wghtR;
+            lastWdth = wdthR;
+          }
+
+          rWght.textContent = String(wghtR);
+          rWdth.textContent = String(wdthR);
+          rPhase.textContent = phaseLabel;
+
+          requestAnimationFrame(frame);
+        }
+
+        function start() {
+          startMs = performance.now();
+          requestAnimationFrame(frame);
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(function () {
+            requestAnimationFrame(start);
+          });
+        } else {
+          requestAnimationFrame(start);
+        }
+      })();
+    </script>
+  </body>
+</html>

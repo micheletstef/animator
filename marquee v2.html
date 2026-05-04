@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>names marquee</title>
+    <title>names marquee v2</title>
     <style>
       @font-face {
         font-family: "IkarusCondensedVariable";
@@ -380,6 +380,8 @@
             var tt = Math.pow(t, gamma);
             var w = Math.round(wTop + (wBot - wTop) * tt);
             el.style.fontVariationSettings = '"wght" ' + w;
+            // top 100% -> bottom 20%, follows the same curve as weight
+            el.style.opacity = 1 + (0.2 - 1) * tt;
           }
         }
 

@@ -139,15 +139,6 @@
         background: #111;
       }
 
-      .empty {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        color: #6a6a6a;
-        text-transform: lowercase;
-        letter-spacing: 0.06em;
-      }
     </style>
   </head>
   <body>
@@ -165,7 +156,6 @@
     </aside>
 
     <main class="viewer" id="viewer">
-      <div class="empty" id="empty" hidden>select an animation</div>
       <iframe
         id="frame"
         title="Animation"
@@ -193,7 +183,6 @@
 
         var navList = document.getElementById("navList");
         var frame = document.getElementById("frame");
-        var empty = document.getElementById("empty");
 
         function render(activeId) {
           navList.innerHTML = "";
@@ -228,14 +217,10 @@
           var anim = findById(id);
           if (!anim) {
             frame.src = "about:blank";
-            frame.hidden = true;
-            empty.hidden = false;
             render(null);
             document.title = "animator";
             return;
           }
-          empty.hidden = true;
-          frame.hidden = false;
           if (frame.getAttribute("data-current") !== anim.url) {
             frame.src = anim.url;
             frame.setAttribute("data-current", anim.url);
