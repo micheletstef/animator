@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SPF 100+ → 8</title>
+    <style>
+      @font-face {
+        font-family: "IkarusVariable";
+        src: url("fonts/ABCIkarusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --bg: #ffffff;
+        --fg: #000000;
+        --pad: 6.2vmin;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        font-family: "IkarusVariable", system-ui, sans-serif;
+      }
+
+      .stage {
+        --w: min(96vmin, 96vw, 96vh);
+        width: var(--w);
+        aspect-ratio: 1 / 1;
+        background: var(--bg);
+        color: var(--fg);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      }
+
+      .lockup {
+        position: absolute;
+        top: var(--pad);
+        left: var(--pad);
+        right: var(--pad);
+        line-height: 0.86;
+        letter-spacing: -0.035em;
+        font-feature-settings: "ss01";
+        font-variation-settings: "wght" 1000;
+      }
+
+      .line {
+        display: block;
+        font-size: clamp(40px, 38vmin, 600px);
+        font-variation-settings: inherit;
+        white-space: nowrap;
+      }
+
+      .num {
+        display: block;
+        font-size: clamp(40px, 38vmin, 600px);
+        font-variation-settings: inherit;
+        white-space: nowrap;
+      }
+
+      .num .plus {
+        display: inline-block;
+        transform-origin: left center;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+      }
+
+      .num.no-plus .plus {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage" aria-label="SPF animation">
+      <div class="lockup" id="lockup">
+        <span class="line">SPF</span>
+        <span class="num" id="num"><span class="digits" id="digits">100</span><span class="plus" id="plus">+</span></span>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var lockup = document.getElementById("lockup");
+        var num = document.getElementById("num");
+        var digits = document.getElementById("digits");
+
+        var START = 100;
+        var END = 8;
+        var W_MAX = 1000;
+        var W_MIN = 200;
+
+        var COUNT_MS = 3800;
+        var HOLD_START_MS = 600;
+        var HOLD_END_MS = 900;
+        var TOTAL_MS = HOLD_START_MS + COUNT_MS + HOLD_END_MS;
+
+        function easeInOutCubic(t) {
+          return t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function frame(now, t0) {
+          var elapsed = (now - t0) % TOTAL_MS;
+          var p;
+
+          if (elapsed < HOLD_START_MS) {
+            p = 0;
+          } else if (elapsed < HOLD_START_MS + COUNT_MS) {
+            p = (elapsed - HOLD_START_MS) / COUNT_MS;
+          } else {
+            p = 1;
+          }
+
+          var eased = easeInOutCubic(p);
+          var value = Math.round(START - (START - END) * eased);
+          var weight = Math.round(W_MAX - (W_MAX - W_MIN) * eased);
+
+          if (digits.textContent !== String(value)) {
+            digits.textContent = String(value);
+          }
+
+          if (p > 0.001) {
+            num.classList.add("no-plus");
+          } else {
+            num.classList.remove("no-plus");
+          }
+
+          lockup.style.fontVariationSettings = '"wght" ' + weight;
+
+          requestAnimationFrame(function (n) {
+            frame(n, t0);
+          });
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start);
+        } else {
+          start();
+        }
+
+        function start() {
+          requestAnimationFrame(function (n) {
+            frame(n, n);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
