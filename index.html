@@ -433,6 +433,50 @@
         min-width: 28px;
         text-align: right;
       }
+
+      .typography-subhead {
+        margin: 10px 0 4px 2px;
+        font-size: 10px;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #888;
+      }
+
+      .typography-subhead[hidden] {
+        display: none !important;
+      }
+
+      .typography-num {
+        width: 100%;
+        max-width: 112px;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 11px;
+        padding: 4px 6px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        background: #fff;
+        color: #1f1f1f;
+      }
+
+      .typography-inline {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 14px;
+      }
+
+      .typography-check {
+        font-size: 11px;
+        text-transform: lowercase;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .typography-check input {
+        margin: 0;
+      }
     </style>
   </head>
   <body>
@@ -467,6 +511,114 @@
             <span class="settings-label">font</span>
             <select id="activeTextFontSelect" class="typography-select" aria-label="Font for selected text"></select>
           </div>
+          <p class="typography-subhead">character</p>
+          <div class="settings-row">
+            <span class="settings-label">size</span>
+            <input
+              type="number"
+              class="typography-num"
+              id="textFontSize"
+              min="4"
+              max="1200"
+              value="32"
+              step="1"
+              aria-label="Font size in pixels"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">leading</span>
+            <input
+              type="number"
+              class="typography-num"
+              id="textLineHeight"
+              min="0.4"
+              max="5"
+              value="1.25"
+              step="0.05"
+              aria-label="Line height"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">tracking</span>
+            <input
+              type="number"
+              class="typography-num"
+              id="textTracking"
+              min="-80"
+              max="200"
+              value="0"
+              step="0.5"
+              aria-label="Letter spacing in pixels"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">word</span>
+            <input
+              type="number"
+              class="typography-num"
+              id="textWordSpace"
+              min="-40"
+              max="120"
+              value="0"
+              step="0.5"
+              aria-label="Word spacing in pixels"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">h scale</span>
+            <input
+              type="number"
+              class="typography-num"
+              id="textHorizScale"
+              min="10"
+              max="300"
+              value="100"
+              step="1"
+              aria-label="Horizontal scale percent"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">baseline</span>
+            <input
+              type="number"
+              class="typography-num"
+              id="textBaselineShift"
+              min="-240"
+              max="240"
+              value="0"
+              step="1"
+              aria-label="Baseline shift in pixels"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">align</span>
+            <select id="textAlign" class="typography-select" aria-label="Paragraph alignment">
+              <option value="left">left</option>
+              <option value="center">center</option>
+              <option value="right">right</option>
+              <option value="justify">justify</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">case</span>
+            <select id="textCase" class="typography-select" aria-label="Capitalization">
+              <option value="normal">normal</option>
+              <option value="uppercase">all caps</option>
+              <option value="small-caps">small caps</option>
+              <option value="all-small-caps">all small caps</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">decor</span>
+            <div class="typography-inline">
+              <label class="typography-check"
+                ><input type="checkbox" id="textDecUnderline" /> underline</label
+              >
+              <label class="typography-check"
+                ><input type="checkbox" id="textDecStrike" /> strike</label
+              >
+            </div>
+          </div>
           <div class="settings-row">
             <span class="settings-label">color</span>
             <input
@@ -476,6 +628,7 @@
               aria-label="Text color for selected text"
             />
           </div>
+          <p class="typography-subhead" id="vfAxesTitle" hidden>axes</p>
           <div id="vfAxisHost" class="vf-axis-host" hidden></div>
         </div>
         <div class="settings-row">
@@ -559,6 +712,17 @@
         var activeTextFontSelect = document.getElementById("activeTextFontSelect");
         var activeTextColor = document.getElementById("activeTextColor");
         var vfAxisHost = document.getElementById("vfAxisHost");
+        var vfAxesTitle = document.getElementById("vfAxesTitle");
+        var textFontSize = document.getElementById("textFontSize");
+        var textLineHeight = document.getElementById("textLineHeight");
+        var textTracking = document.getElementById("textTracking");
+        var textWordSpace = document.getElementById("textWordSpace");
+        var textHorizScale = document.getElementById("textHorizScale");
+        var textBaselineShift = document.getElementById("textBaselineShift");
+        var textAlign = document.getElementById("textAlign");
+        var textCase = document.getElementById("textCase");
+        var textDecUnderline = document.getElementById("textDecUnderline");
+        var textDecStrike = document.getElementById("textDecStrike");
 
         var outputViewport = document.getElementById("outputViewport");
         var outputScaleOuter = document.getElementById("outputScaleOuter");
@@ -631,13 +795,14 @@
           typographyBlock.hidden = true;
           vfAxisHost.hidden = true;
           vfAxisHost.innerHTML = "";
+          if (vfAxesTitle) vfAxesTitle.hidden = true;
         }
 
         function readVfMap(inner) {
           var raw = (inner.style && inner.style.fontVariationSettings) || "";
           var map = {};
           if (!raw) return map;
-          var re = /'([a-z]{4})'\s+([-.\d]+)/gi;
+          var re = /'([a-zA-Z]{4})'\s+([-.\d]+)/gi;
           var m;
           while ((m = re.exec(raw))) {
             map[m[1].toLowerCase()] = parseFloat(m[2]);
@@ -648,7 +813,7 @@
         function writeVfToInner(inner, map) {
           var parts = [];
           Object.keys(map).forEach(function (tag) {
-            parts.push("'" + tag + "' " + map[tag]);
+            parts.push("'" + String(tag).toLowerCase() + "' " + map[tag]);
           });
           inner.style.fontVariationSettings = parts.length ? parts.join(", ") : "";
         }
@@ -666,9 +831,10 @@
               var existing = readVfMap(inner);
               var map = {};
               f.axes.forEach(function (a) {
-                var v = existing[a.tag];
+                var tag = String(a.tag).toLowerCase();
+                var v = existing[tag];
                 if (v === undefined || isNaN(v)) v = a.default;
-                map[a.tag] = v;
+                map[tag] = v;
               });
               writeVfToInner(inner, map);
             } else {
@@ -691,43 +857,52 @@
           vfAxisHost.innerHTML = "";
           if (!activeTextInner) {
             vfAxisHost.hidden = true;
+            if (vfAxesTitle) vfAxesTitle.hidden = true;
             return;
           }
           var id = activeTextInner.dataset.fontId;
           var f = id ? fontRegistry[id] : null;
           if (!f || !f.variable || !f.axes || !f.axes.length) {
             vfAxisHost.hidden = true;
+            if (vfAxesTitle) vfAxesTitle.hidden = true;
             return;
           }
           vfAxisHost.hidden = false;
+          if (vfAxesTitle) vfAxesTitle.hidden = false;
           var vfMap = readVfMap(activeTextInner);
           f.axes.forEach(function (axis) {
+            var tag = String(axis.tag).toLowerCase();
             var row = document.createElement("div");
             row.className = "vf-axis-row";
             var lab = document.createElement("label");
-            lab.setAttribute("for", "vf-" + axis.tag);
-            lab.textContent = axis.name || axis.tag;
+            lab.setAttribute("for", "vf-" + tag);
+            lab.textContent = axis.name || tag;
             var wrap = document.createElement("div");
             wrap.style.display = "flex";
             wrap.style.alignItems = "center";
             wrap.style.gap = "8px";
             var rng = document.createElement("input");
             rng.type = "range";
-            rng.id = "vf-" + axis.tag;
+            rng.id = "vf-" + tag;
             rng.min = String(axis.min);
             rng.max = String(axis.max);
-            rng.step = axis.step != null ? String(axis.step) : "1";
-            var cur = vfMap[axis.tag];
+            rng.step =
+              axis.step != null
+                ? String(axis.step)
+                : (axis.max - axis.min) / 200 < 0.05
+                  ? "0.01"
+                  : "1";
+            var cur = vfMap[tag];
             if (cur === undefined || isNaN(cur)) cur = axis.default;
             rng.value = String(cur);
             var val = document.createElement("span");
             val.className = "vf-axis-val";
-            val.textContent = String(Math.round(parseFloat(rng.value) * 10) / 10);
+            val.textContent = String(Math.round(parseFloat(rng.value) * 100) / 100);
             rng.addEventListener("input", function () {
               var v = parseFloat(rng.value);
-              val.textContent = String(Math.round(v * 10) / 10);
+              val.textContent = String(Math.round(v * 100) / 100);
               var m = readVfMap(activeTextInner);
-              m[axis.tag] = v;
+              m[tag] = v;
               writeVfToInner(activeTextInner, m);
               syncMirrorSoon(24);
             });
@@ -759,6 +934,143 @@
           activeTextColor.value = computedColorToHex(activeTextInner);
         }
 
+        function parseCssPx(val, fallback) {
+          if (val == null || val === "" || val === "normal") return fallback;
+          var m = String(val).match(/^(-?[\d.]+)px$/i);
+          return m ? parseFloat(m[1]) : fallback;
+        }
+
+        function applyDefaultTextMetrics(el) {
+          el.style.fontSize = "32px";
+          el.style.lineHeight = "1.25";
+          el.style.letterSpacing = "0px";
+          el.style.wordSpacing = "0px";
+          el.style.textAlign = "left";
+          el.style.textTransform = "none";
+          el.style.fontVariantCaps = "normal";
+          el.style.textDecorationLine = "none";
+          el.style.transformOrigin = "0 50%";
+          el.style.transform = "";
+          el.dataset.horizScale = "100";
+          el.dataset.baselineShift = "0";
+        }
+
+        function applyTextTransformFromCase() {
+          if (!activeTextInner) return;
+          var el = activeTextInner;
+          var v = textCase.value;
+          el.style.textTransform = "none";
+          el.style.fontVariantCaps = "normal";
+          if (v === "uppercase") el.style.textTransform = "uppercase";
+          else if (v === "small-caps") el.style.fontVariantCaps = "small-caps";
+          else if (v === "all-small-caps") el.style.fontVariantCaps = "all-small-caps";
+        }
+
+        function applyMetricsFromPanelToActive() {
+          if (!activeTextInner) return;
+          var el = activeTextInner;
+          el.style.fontSize = textFontSize.value + "px";
+          el.style.lineHeight = String(textLineHeight.value);
+          el.style.letterSpacing = textTracking.value + "px";
+          el.style.wordSpacing = textWordSpace.value + "px";
+          el.style.textAlign = textAlign.value;
+          applyTextTransformFromCase();
+          var decs = [];
+          if (textDecUnderline.checked) decs.push("underline");
+          if (textDecStrike.checked) decs.push("line-through");
+          el.style.textDecorationLine = decs.length ? decs.join(" ") : "none";
+          el.dataset.horizScale = String(textHorizScale.value);
+          el.dataset.baselineShift = String(textBaselineShift.value);
+          el.style.transformOrigin = "0 50%";
+          var scale = (parseFloat(textHorizScale.value) || 100) / 100;
+          var shift = parseFloat(textBaselineShift.value) || 0;
+          var tf = [];
+          if (shift) tf.push("translateY(" + -shift + "px)");
+          if (Math.abs(scale - 1) > 0.001) tf.push("scaleX(" + scale + ")");
+          el.style.transform = tf.length ? tf.join(" ") : "";
+          syncMirrorSoon(20);
+        }
+
+        function syncTextMetricsFromInner() {
+          if (!activeTextInner) return;
+          var el = activeTextInner;
+          var cs = getComputedStyle(el);
+          var fs = parseCssPx(el.style.fontSize, null);
+          if (fs == null) fs = parseCssPx(cs.fontSize, 32);
+          textFontSize.value = String(Math.round(fs));
+
+          var lhInline = el.style.lineHeight;
+          if (lhInline && lhInline !== "normal") {
+            if (lhInline.indexOf("px") >= 0) {
+              var lhPx = parseCssPx(lhInline, NaN);
+              var basePx = parseCssPx(cs.fontSize, fs);
+              textLineHeight.value = String(
+                Math.round((lhPx / basePx) * 100) / 100
+              );
+            } else {
+              textLineHeight.value = String(parseFloat(lhInline) || 1.25);
+            }
+          } else {
+            var lhC = cs.lineHeight;
+            var baseFs = parseCssPx(cs.fontSize, fs);
+            if (String(lhC).indexOf("px") >= 0) {
+              textLineHeight.value = String(
+                Math.round((parseCssPx(lhC, baseFs * 1.25) / baseFs) * 100) / 100
+              );
+            } else {
+              textLineHeight.value = String(parseFloat(lhC) || 1.25);
+            }
+          }
+
+          textTracking.value = String(
+            parseCssPx(el.style.letterSpacing, parseCssPx(cs.letterSpacing, 0))
+          );
+          textWordSpace.value = String(
+            parseCssPx(el.style.wordSpacing, parseCssPx(cs.wordSpacing, 0))
+          );
+          textHorizScale.value = String(parseFloat(el.dataset.horizScale) || 100);
+          textBaselineShift.value = String(parseFloat(el.dataset.baselineShift) || 0);
+          var ta = (el.style.textAlign || cs.textAlign || "left").toLowerCase();
+          if (ta === "start") ta = "left";
+          if (ta === "end") ta = "right";
+          if (["left", "center", "right", "justify"].indexOf(ta) < 0) ta = "left";
+          textAlign.value = ta;
+          var fvc = (el.style.fontVariantCaps || cs.fontVariantCaps || "normal")
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+          var tt = (el.style.textTransform || cs.textTransform || "none").toLowerCase();
+          if (fvc === "all-small-caps") textCase.value = "all-small-caps";
+          else if (fvc === "small-caps") textCase.value = "small-caps";
+          else if (tt === "uppercase") textCase.value = "uppercase";
+          else textCase.value = "normal";
+
+          var td = el.style.textDecorationLine || cs.textDecorationLine || "none";
+          textDecUnderline.checked = td.indexOf("underline") >= 0;
+          textDecStrike.checked = td.indexOf("line-through") >= 0;
+        }
+
+        function bindTypographyMetrics() {
+          [
+            textFontSize,
+            textLineHeight,
+            textTracking,
+            textWordSpace,
+            textHorizScale,
+            textBaselineShift,
+          ].forEach(function (n) {
+            if (!n) return;
+            n.addEventListener("input", applyMetricsFromPanelToActive);
+            n.addEventListener("change", applyMetricsFromPanelToActive);
+          });
+          if (textAlign) textAlign.addEventListener("change", applyMetricsFromPanelToActive);
+          if (textCase) textCase.addEventListener("change", applyMetricsFromPanelToActive);
+          if (textDecUnderline)
+            textDecUnderline.addEventListener("change", applyMetricsFromPanelToActive);
+          if (textDecStrike)
+            textDecStrike.addEventListener("change", applyMetricsFromPanelToActive);
+        }
+        bindTypographyMetrics();
+
         function setActiveTextInner(inner) {
           if (!inner || !scene.contains(inner)) return;
           activeTextInner = inner;
@@ -772,6 +1084,7 @@
           }
           syncSelectFromInner();
           syncTextColorFromInner();
+          syncTextMetricsFromInner();
           renderVfPanel();
         }
 
@@ -1035,6 +1348,7 @@
           inner.contentEditable = "true";
           inner.setAttribute("spellcheck", "true");
           inner.textContent = "text";
+          applyDefaultTextMetrics(inner);
           inner.style.color = activeTextColor ? activeTextColor.value : "#1f1f1f";
           inner.addEventListener("input", function () {
             syncMirrorSoon(48);

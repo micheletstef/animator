@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generate fonts/fonts.json from font files in fonts/. Run from repo root."""
+"""Generate fonts/fonts.json from font files in fonts/. Run from repo root.
+
+With fonttools (use: .venv-fonts/bin/python scripts/build-fonts-manifest.py):
+variable fonts include full fvar axes. Otherwise falls back to heuristics.
+"""
 from __future__ import annotations
 
 import json
@@ -9,6 +13,23 @@ import unicodedata
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "fonts")
 OUT = os.path.join(ROOT, "fonts.json")
+
+TAG_LABELS = {
+    "wght": "Weight",
+    "wdth": "Width",
+    "slnt": "Slant",
+    "ital": "Italic",
+    "opsz": "Optical size",
+    "grad": "Grade",
+    "xhgt": "x-height",
+    "XOPQ": "x opaque",
+    "YOPQ": "y opaque",
+    "XTRA": "x transparent",
+    "YTUC": "y transparent UC",
+    "YTAS": "y transparent asc",
+    "YTDE": "y transparent desc",
+    "YTLC": "y transparent lc",
+}
 
 
 def classify(name: str) -> str:
@@ -45,7 +66,64 @@ def is_variable(filename: str) -> bool:
     return filename.lower().endswith(".ttf") and "variable" in filename.lower()
 
 
-def variable_axes(filename: str) -> list[dict]:
+def axis_step_hint(tag: str, lo: float, hi: float) -> float | None:
+    span = hi - lo
+    if tag in ("ital",) or span <= 2.5:
+        return 1.0
+    if tag == "slnt":
+        return 0.25
+    if span <= 40:
+        return 0.5
+    if span <= 200:
+        return 1.0
+    return None
+
+
+def read_fvar_axes(fullpath: str) -> list[dict] | None:
+    try:
+        from fontTools.ttLib import TTFont
+    except ImportError:
+        return None
+    font = None
+    try:
+        font = TTFont(fullpath, lazy=True)
+        if "fvar" not in font:
+            return None
+        name_tbl = font.get("name")
+        out: list[dict] = []
+        for ax in font["fvar"].axes:
+            tag = ax.axisTag
+            if isinstance(tag, bytes):
+                tag = tag.decode("latin-1").strip()
+            nm = None
+            if name_tbl is not None and getattr(ax, "axisNameID", None):
+                nm = name_tbl.getDebugName(ax.axisNameID)
+            if not nm:
+                nm = TAG_LABELS.get(tag, tag)
+            lo, hi, dv = float(ax.minValue), float(ax.maxValue), float(ax.defaultValue)
+            d: dict = {
+                "tag": tag,
+                "name": nm,
+                "min": lo,
+                "max": hi,
+                "default": dv,
+            }
+            st = axis_step_hint(tag, lo, hi)
+            if st is not None:
+                d["step"] = st
+            out.append(d)
+        return out or None
+    except Exception:
+        return None
+    finally:
+        if font is not None:
+            try:
+                font.close()
+            except Exception:
+                pass
+
+
+def variable_axes_fallback(filename: str) -> list[dict]:
     name = filename
     if "WidthVariable" in name:
         return [
@@ -88,14 +166,16 @@ def make_entry(filename: str) -> dict:
     path = filename
     cf = css_family(filename)
     fid = stem
+    fullpath = os.path.join(ROOT, filename)
     if is_variable(filename):
+        axes = read_fvar_axes(fullpath) or variable_axes_fallback(filename)
         return {
             "id": fid,
             "label": label,
             "path": path,
             "cssFamily": cf,
             "variable": True,
-            "axes": variable_axes(filename),
+            "axes": axes,
         }
     w, st = static_weight_style(stem)
     return {

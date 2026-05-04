@@ -1,3 +1,5 @@
 # Server-only webhook (do not commit secrets or logs).
 deploy.php
 deploy.log
+
+.venv-fonts/

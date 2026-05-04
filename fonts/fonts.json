@@ -1221,9 +1221,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1237,9 +1245,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1253,9 +1269,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1269,9 +1293,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1283,19 +1315,27 @@
           "variable": true,
           "axes": [
             {
-              "tag": "wght",
-              "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
-            },
-            {
               "tag": "wdth",
               "name": "Width",
-              "min": 50,
-              "max": 200,
-              "default": 100,
-              "step": 1
+              "min": 65.0,
+              "max": 130.0,
+              "default": 100.0,
+              "step": 1.0
+            },
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1309,9 +1349,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1325,9 +1373,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1341,9 +1397,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1357,9 +1421,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1371,19 +1443,27 @@
           "variable": true,
           "axes": [
             {
-              "tag": "wght",
-              "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
-            },
-            {
               "tag": "wdth",
               "name": "Width",
-              "min": 50,
-              "max": 200,
-              "default": 100,
-              "step": 1
+              "min": 65.0,
+              "max": 130.0,
+              "default": 100.0,
+              "step": 1.0
+            },
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1395,19 +1475,35 @@
           "variable": true,
           "axes": [
             {
-              "tag": "wght",
-              "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "tag": "CNTR",
+              "name": "Contrast",
+              "min": 0.0,
+              "max": 100.0,
+              "default": 0.0,
+              "step": 1.0
             },
             {
               "tag": "wdth",
               "name": "Width",
-              "min": 60,
-              "max": 140,
-              "default": 100,
-              "step": 1
+              "min": 65.0,
+              "max": 130.0,
+              "default": 100.0,
+              "step": 1.0
+            },
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1421,9 +1517,17 @@
             {
               "tag": "wght",
               "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         },
@@ -1435,19 +1539,27 @@
           "variable": true,
           "axes": [
             {
-              "tag": "wght",
-              "name": "Weight",
-              "min": 100,
-              "max": 900,
-              "default": 400
-            },
-            {
               "tag": "wdth",
               "name": "Width",
-              "min": 50,
-              "max": 200,
-              "default": 100,
-              "step": 1
+              "min": 65.0,
+              "max": 130.0,
+              "default": 100.0,
+              "step": 1.0
+            },
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 200.0,
+              "max": 1000.0,
+              "default": 400.0
+            },
+            {
+              "tag": "slnt",
+              "name": "Slant",
+              "min": -12.0,
+              "max": 0.0,
+              "default": 0.0,
+              "step": 0.25
             }
           ]
         }
