@@ -86,11 +86,12 @@
         inset: calc(var(--pad) * 1px);
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
+        align-items: flex-start;
         line-height: var(--lh);
         letter-spacing: calc(var(--tracking) * 1em);
         font-size: calc(var(--fs) * 1px);
-        font-variation-settings: "wght" 400, "wdth" 100;
+        font-variation-settings: "wght" 400, "wdth" 100, "slnt" 0;
         text-align: left;
         white-space: nowrap;
         will-change: font-variation-settings;
@@ -107,17 +108,40 @@
         overflow: visible;
       }
 
-      .diagram .ring,
       .diagram .axis {
         fill: none;
         stroke: var(--accent);
         stroke-width: 2;
         vector-effect: non-scaling-stroke;
+        opacity: 0.35;
+      }
+
+      .diagram .axis.active {
+        opacity: 1;
+      }
+
+      .diagram .center {
+        fill: var(--accent);
+        stroke: none;
+        opacity: 0.6;
       }
 
       .diagram .dot {
         fill: var(--accent);
         stroke: none;
+      }
+
+      .diagram .label {
+        fill: var(--accent);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 22px;
+        text-transform: lowercase;
+        letter-spacing: 0.06em;
+        opacity: 0.55;
+      }
+
+      .diagram .label.active {
+        opacity: 1;
       }
 
       .panel {
@@ -263,9 +287,14 @@
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
           >
-            <circle class="ring" id="ring" cx="512" cy="512" r="500" />
-            <line class="axis" id="axis" x1="12" y1="512" x2="1012" y2="512" />
-            <circle class="dot" id="dot" cx="12" cy="512" r="14" />
+            <line class="axis" id="axisWdth" x1="12" y1="512" x2="1012" y2="512" />
+            <line class="axis" id="axisWght" x1="512" y1="12" x2="512" y2="1012" />
+            <line class="axis" id="axisSlnt" x1="262" y1="945" x2="762" y2="79" />
+            <circle class="center" cx="512" cy="512" r="4" />
+            <text class="label" id="lblWdth" x="1012" y="500" text-anchor="end">width</text>
+            <text class="label" id="lblWght" x="524" y="28" text-anchor="start">weight</text>
+            <text class="label" id="lblSlnt" x="770" y="68" text-anchor="start">slant</text>
+            <circle class="dot" id="dot" cx="512" cy="512" r="14" />
           </svg>
         </div>
       </div>
@@ -330,40 +359,63 @@
       </div>
 
       <div class="group">
-        <p class="group-title">axes range</p>
+        <p class="group-title">weight (wght)</p>
         <div class="row-ctl">
-          <label for="wMin">w-min</label>
+          <label for="wMin">min</label>
           <input id="wMin" type="range" min="100" max="1000" step="1" value="200" />
           <span class="val" id="wMinVal">200</span>
         </div>
         <div class="row-ctl">
-          <label for="wMax">w-max</label>
+          <label for="wMax">max</label>
           <input id="wMax" type="range" min="100" max="1000" step="1" value="1000" />
           <span class="val" id="wMaxVal">1000</span>
         </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">width (wdth)</p>
         <div class="row-ctl">
-          <label for="dMin">d-min</label>
+          <label for="dMin">min</label>
           <input id="dMin" type="range" min="65" max="130" step="1" value="65" />
           <span class="val" id="dMinVal">65</span>
         </div>
         <div class="row-ctl">
-          <label for="dMax">d-default</label>
-          <input id="dMax" type="range" min="65" max="130" step="1" value="100" />
-          <span class="val" id="dMaxVal">100</span>
+          <label for="dMax">max</label>
+          <input id="dMax" type="range" min="65" max="130" step="1" value="130" />
+          <span class="val" id="dMaxVal">130</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">slant (slnt)</p>
+        <div class="row-ctl">
+          <label for="sMin">min</label>
+          <input id="sMin" type="range" min="-12" max="0" step="0.25" value="-12" />
+          <span class="val" id="sMinVal">-12</span>
+        </div>
+        <div class="row-ctl">
+          <label for="sMax">max</label>
+          <input id="sMax" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="sMaxVal">0</span>
         </div>
       </div>
 
       <div class="group">
         <p class="group-title">motion</p>
         <div class="row-ctl">
-          <label for="t1">phase 1</label>
+          <label for="t1">weight</label>
           <input id="t1" type="range" min="0.5" max="6" step="0.1" value="2.4" />
           <span class="val" id="t1Val">2.4s</span>
         </div>
         <div class="row-ctl">
-          <label for="t2">phase 2</label>
-          <input id="t2" type="range" min="1" max="10" step="0.1" value="4.2" />
-          <span class="val" id="t2Val">4.2s</span>
+          <label for="t2">width</label>
+          <input id="t2" type="range" min="0.5" max="6" step="0.1" value="2.4" />
+          <span class="val" id="t2Val">2.4s</span>
+        </div>
+        <div class="row-ctl">
+          <label for="t3">slant</label>
+          <input id="t3" type="range" min="0.5" max="6" step="0.1" value="2.0" />
+          <span class="val" id="t3Val">2.0s</span>
         </div>
         <div class="row-ctl">
           <label for="ph">hold</label>
@@ -382,6 +434,7 @@
         <div class="readout" id="readout">
           <span>weight</span><span id="rWght">200</span>
           <span>width</span><span id="rWdth">100</span>
+          <span>slant</span><span id="rSlnt">0</span>
           <span>phase</span><span id="rPhase">idle</span>
         </div>
       </div>
@@ -397,15 +450,21 @@
         var stage = document.getElementById("stage");
         var specimen = document.getElementById("specimen");
         var diagram = document.getElementById("diagram");
-        var ring = document.getElementById("ring");
-        var axis = document.getElementById("axis");
         var dot = document.getElementById("dot");
+
+        var axisWght = document.getElementById("axisWght");
+        var axisWdth = document.getElementById("axisWdth");
+        var axisSlnt = document.getElementById("axisSlnt");
+        var lblWght = document.getElementById("lblWght");
+        var lblWdth = document.getElementById("lblWdth");
+        var lblSlnt = document.getElementById("lblSlnt");
 
         var rWght = document.getElementById("rWght");
         var rWdth = document.getElementById("rWdth");
+        var rSlnt = document.getElementById("rSlnt");
         var rPhase = document.getElementById("rPhase");
 
-        var LS_KEY = "axes-diagram:settings:v1";
+        var LS_KEY = "axes-diagram:settings:v2";
 
         var DEFAULTS = {
           zm: 1,
@@ -421,9 +480,12 @@
           wMin: 200,
           wMax: 1000,
           dMin: 65,
-          dMax: 100,
+          dMax: 130,
+          sMin: -12,
+          sMax: 0,
           t1: 2.4,
-          t2: 4.2,
+          t2: 2.4,
+          t3: 2.0,
           ph: 0.5,
           dg: true,
         };
@@ -446,8 +508,11 @@
           wMax: document.getElementById("wMax"),
           dMin: document.getElementById("dMin"),
           dMax: document.getElementById("dMax"),
+          sMin: document.getElementById("sMin"),
+          sMax: document.getElementById("sMax"),
           t1: document.getElementById("t1"),
           t2: document.getElementById("t2"),
+          t3: document.getElementById("t3"),
           ph: document.getElementById("ph"),
           dg: document.getElementById("dg"),
         };
@@ -466,8 +531,11 @@
           wMax: document.getElementById("wMaxVal"),
           dMin: document.getElementById("dMinVal"),
           dMax: document.getElementById("dMaxVal"),
+          sMin: document.getElementById("sMinVal"),
+          sMax: document.getElementById("sMaxVal"),
           t1: document.getElementById("t1Val"),
           t2: document.getElementById("t2Val"),
+          t3: document.getElementById("t3Val"),
           ph: document.getElementById("phVal"),
           dg: document.getElementById("dgVal"),
         };
@@ -481,7 +549,8 @@
             return Math.round(Number(v) * 1000) + "";
           if (key === "wMin" || key === "wMax" || key === "dMin" || key === "dMax")
             return Math.round(Number(v)) + "";
-          if (key === "t1" || key === "t2" || key === "ph")
+          if (key === "sMin" || key === "sMax") return Number(v).toFixed(2);
+          if (key === "t1" || key === "t2" || key === "t3" || key === "ph")
             return Number(v).toFixed(2) + "s";
           if (BOOL_KEYS[key]) return v ? "on" : "off";
           return String(v);
@@ -595,85 +664,116 @@
         var CX = 512;
         var CY = 512;
         var R = 500;
+        var SLNT_DX = 250;
+        var SLNT_DY = -433;
 
         var startMs = performance.now();
         var lastWght = -1;
         var lastWdth = -1;
+        var lastSlnt = NaN;
+        var lastActive = "";
+
+        function setActive(name) {
+          if (name === lastActive) return;
+          lastActive = name;
+          axisWght.classList.toggle("active", name === "wght");
+          axisWdth.classList.toggle("active", name === "wdth");
+          axisSlnt.classList.toggle("active", name === "slnt");
+          lblWght.classList.toggle("active", name === "wght");
+          lblWdth.classList.toggle("active", name === "wdth");
+          lblSlnt.classList.toggle("active", name === "slnt");
+        }
+
+        // travel(t) returns the 0→1→0 trip used to ride an axis center→end→center
+        function travel(t) {
+          return Math.sin(easeInOut(t) * Math.PI);
+        }
 
         function frame(now) {
           var T1 = parseFloat(els.t1.value);
           var T2 = parseFloat(els.t2.value);
+          var T3 = parseFloat(els.t3.value);
           var PH = parseFloat(els.ph.value);
           var wMin = parseFloat(els.wMin.value);
           var wMax = parseFloat(els.wMax.value);
-          var dDef = parseFloat(els.dMax.value);
           var dMin = parseFloat(els.dMin.value);
+          var dMax = parseFloat(els.dMax.value);
+          var sMin = parseFloat(els.sMin.value);
+          var sMax = parseFloat(els.sMax.value);
 
-          var TOTAL = PH + T1 + PH + T2;
+          var TOTAL = PH + T1 + PH + T2 + PH + T3;
           var t = ((now - startMs) / 1000) % TOTAL;
 
-          var x, y, p, pe, theta;
+          var ox = 0, oy = 0;
           var phaseLabel = "idle";
-          var wght, wdth;
+          var active = "";
+          var wght = wMin;
+          var wdth = dMin;
+          var slnt = sMax;
+          var trip = 0;
+          var p;
 
           if (t < PH) {
-            x = -1;
-            y = 0;
-            wght = wMin;
-            wdth = dDef;
-            phaseLabel = "hold·left";
+            phaseLabel = "hold";
           } else if (t < PH + T1) {
             p = (t - PH) / T1;
-            pe = easeInOut(p);
-            x = -1 + 2 * pe;
-            y = 0;
-            wght = lerp(wMin, wMax, pe);
-            wdth = dDef;
+            trip = travel(p);
+            oy = -R * trip;
+            wght = lerp(wMin, wMax, trip);
             phaseLabel = "weight";
+            active = "wght";
           } else if (t < PH + T1 + PH) {
-            x = 1;
-            y = 0;
-            wght = wMax;
-            wdth = dDef;
-            phaseLabel = "hold·right";
-          } else {
+            phaseLabel = "hold";
+          } else if (t < PH + T1 + PH + T2) {
             p = (t - PH - T1 - PH) / T2;
-            pe = easeInOut(p);
-            theta = pe * Math.PI;
-            x = Math.cos(theta);
-            y = -Math.sin(theta);
-            wght = lerp(wMax, wMin, pe);
-            wdth = lerp(dDef, dMin, Math.sin(theta));
+            trip = travel(p);
+            ox = R * trip;
+            wdth = lerp(dMin, dMax, trip);
             phaseLabel = "width";
+            active = "wdth";
+          } else if (t < PH + T1 + PH + T2 + PH) {
+            phaseLabel = "hold";
+          } else {
+            p = (t - PH - T1 - PH - T2 - PH) / T3;
+            trip = travel(p);
+            ox = SLNT_DX * trip;
+            oy = SLNT_DY * trip;
+            slnt = lerp(sMax, sMin, trip);
+            phaseLabel = "slant";
+            active = "slnt";
           }
 
-          var px = CX + x * R;
-          var py = CY + y * R;
+          var px = CX + ox;
+          var py = CY + oy;
           dot.setAttribute("cx", px.toFixed(2));
           dot.setAttribute("cy", py.toFixed(2));
 
-          var posT = (x + 1) / 2;
+          setActive(active);
+
           var lhMinV = parseFloat(els.lhMin.value);
           var lhMaxV = parseFloat(els.lhMax.value);
           var trMinV = parseFloat(els.trMin.value);
           var trMaxV = parseFloat(els.trMax.value);
-          var lhCur = lerp(lhMinV, lhMaxV, posT);
-          var trCur = lerp(trMinV, trMaxV, posT);
+          var lhCur = lerp(lhMinV, lhMaxV, trip);
+          var trCur = lerp(trMinV, trMaxV, trip);
           root.style.setProperty("--lh", lhCur.toFixed(3));
           root.style.setProperty("--tracking", trCur.toFixed(4));
 
           var wghtR = Math.round(wght);
           var wdthR = Math.round(wdth);
+          var slntR = Math.round(slnt * 100) / 100;
 
-          if (wghtR !== lastWght || wdthR !== lastWdth) {
+          if (wghtR !== lastWght || wdthR !== lastWdth || slntR !== lastSlnt) {
             specimen.style.fontVariationSettings =
-              '"wght" ' + wghtR + ', "wdth" ' + wdthR;
+              '"wght" ' + wghtR + ', "wdth" ' + wdthR + ', "slnt" ' + slntR;
             lastWght = wghtR;
             lastWdth = wdthR;
+            lastSlnt = slntR;
           }
 
           rWght.textContent = String(wghtR);
           rWdth.textContent = String(wdthR);
+          rSlnt.textContent = slntR.toFixed(2);
           rPhase.textContent = phaseLabel;
 
           requestAnimationFrame(frame);

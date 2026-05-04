@@ -22,7 +22,6 @@
         --pad-r: 0;
         --pad-b: 0;
         --pad-l: 0;
-        --fs: 220;
         --lh: 0.92;
         --zoom: 1;
         --w-top: 1000;
@@ -106,9 +105,8 @@
 
       .line {
         display: block;
-        font-size: calc(var(--fs) * 1px);
+        font-size: 220px;
         white-space: nowrap;
-        letter-spacing: inherit;
         text-align: center;
         font-variation-settings: "wght" 1000;
       }
@@ -252,14 +250,23 @@
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
-          <label for="fs">size</label>
-          <input id="fs" type="range" min="40" max="800" step="1" value="220" />
-          <span class="val" id="fsVal">220px</span>
-        </div>
-        <div class="row">
           <label for="lh">leading</label>
           <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
           <span class="val" id="lhVal">0.92</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">size</p>
+        <div class="row">
+          <label for="sTop">top</label>
+          <input id="sTop" type="range" min="40" max="800" step="1" value="240" />
+          <span class="val" id="sTopVal">240px</span>
+        </div>
+        <div class="row">
+          <label for="sBot">bottom</label>
+          <input id="sBot" type="range" min="40" max="800" step="1" value="120" />
+          <span class="val" id="sBotVal">120px</span>
         </div>
       </div>
 
@@ -293,6 +300,20 @@
           <label for="gm">curve</label>
           <input id="gm" type="range" min="0.3" max="3" step="0.01" value="1" />
           <span class="val" id="gmVal">1.00</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">opacity</p>
+        <div class="row">
+          <label for="oTop">top</label>
+          <input id="oTop" type="range" min="0" max="1" step="0.01" value="1" />
+          <span class="val" id="oTopVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="oBot">bottom</label>
+          <input id="oBot" type="range" min="0" max="1" step="0.01" value="0.2" />
+          <span class="val" id="oBotVal">20%</span>
         </div>
       </div>
 
@@ -376,20 +397,37 @@
           var wBot = parseFloat(els.wBot.value);
           var kTop = parseFloat(els.kTop.value);
           var kBot = parseFloat(els.kBot.value);
+          var sTop = parseFloat(els.sTop.value);
+          var sBot = parseFloat(els.sBot.value);
+          var oTop = parseFloat(els.oTop.value);
+          var oBot = parseFloat(els.oBot.value);
           var gamma = parseFloat(els.gm.value);
 
-          for (var i = 0; i < lineEls.length; i++) {
+          // Read every line's current vertical position BEFORE writing any
+          // styles. Per-line font-size shifts the layout, so reading and
+          // writing in the same loop would make later lines see stale
+          // positions and produce the wrong `t`.
+          var n = lineEls.length;
+          var centers = new Array(n);
+          for (var i = 0; i < n; i++) {
             var el = lineEls[i];
             var yTop = el.offsetTop - offset;
-            var center = yTop + el.offsetHeight / 2;
-            var t = center / marqueeH;
+            centers[i] = yTop + el.offsetHeight / 2;
+          }
+
+          for (var j = 0; j < n; j++) {
+            var node = lineEls[j];
+            var t = centers[j] / marqueeH;
             if (t < 0) t = 0;
             else if (t > 1) t = 1;
             var tt = Math.pow(t, gamma);
             var w = Math.round(wTop + (wBot - wTop) * tt);
-            el.style.fontVariationSettings = '"wght" ' + w;
+            node.style.fontVariationSettings = '"wght" ' + w;
             var k = kTop + (kBot - kTop) * tt;
-            el.style.letterSpacing = k.toFixed(4) + "em";
+            node.style.letterSpacing = k.toFixed(4) + "em";
+            var s = sTop + (sBot - sTop) * tt;
+            node.style.fontSize = s + "px";
+            node.style.opacity = oTop + (oBot - oTop) * tt;
           }
         }
 
@@ -406,6 +444,16 @@
           track.style.transform = "translateY(" + -offset + "px)";
 
           updateWeights();
+
+          // Per-line font-size means line heights (and therefore the loop
+          // length) can drift between frames. Re-measure and rescale offset
+          // so the visible position is preserved across the change.
+          var prev = loopHeight;
+          measure();
+          if (prev > 0 && loopHeight > 0 && prev !== loopHeight) {
+            offset = (offset / prev) * loopHeight;
+          }
+
           requestAnimationFrame(frame);
         }
 
@@ -416,13 +464,16 @@
           zm: 1,
           bg: "#ffffff",
           fg: "#f5d100",
-          fs: 220,
           lh: 0.92,
+          sTop: 240,
+          sBot: 120,
           kTop: -0.02,
           kBot: 0.02,
           wTop: 1000,
           wBot: 500,
           gm: 1,
+          oTop: 1,
+          oBot: 0.2,
           sp: 80,
           pv: 0,
           ph: 0,
@@ -434,13 +485,16 @@
           zm: document.getElementById("zm"),
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
-          fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
+          sTop: document.getElementById("sTop"),
+          sBot: document.getElementById("sBot"),
           kTop: document.getElementById("kTop"),
           kBot: document.getElementById("kBot"),
           wTop: document.getElementById("wTop"),
           wBot: document.getElementById("wBot"),
           gm: document.getElementById("gm"),
+          oTop: document.getElementById("oTop"),
+          oBot: document.getElementById("oBot"),
           sp: document.getElementById("sp"),
           pv: document.getElementById("pv"),
           ph: document.getElementById("ph"),
@@ -448,13 +502,16 @@
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
+          sTop: document.getElementById("sTopVal"),
+          sBot: document.getElementById("sBotVal"),
           kTop: document.getElementById("kTopVal"),
           kBot: document.getElementById("kBotVal"),
           wTop: document.getElementById("wTopVal"),
           wBot: document.getElementById("wBotVal"),
           gm: document.getElementById("gmVal"),
+          oTop: document.getElementById("oTopVal"),
+          oBot: document.getElementById("oBotVal"),
           sp: document.getElementById("spVal"),
           pv: document.getElementById("pvVal"),
           ph: document.getElementById("phVal"),
@@ -462,8 +519,10 @@
 
         function fmt(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
-          if (key === "zm") return Math.round(Number(v) * 100) + "%";
-          if (key === "fs") return Math.round(Number(v)) + "px";
+          if (key === "zm" || key === "oTop" || key === "oBot")
+            return Math.round(Number(v) * 100) + "%";
+          if (key === "sTop" || key === "sBot")
+            return Math.round(Number(v)) + "px";
           if (key === "lh" || key === "gm") return Number(v).toFixed(2);
           if (key === "kTop" || key === "kBot")
             return Math.round(Number(v) * 1000) + "";
@@ -476,7 +535,6 @@
           if (key === "zm") root.style.setProperty("--zoom", v);
           else if (key === "bg") root.style.setProperty("--bg", v);
           else if (key === "fg") root.style.setProperty("--fg", v);
-          else if (key === "fs") root.style.setProperty("--fs", v);
           else if (key === "lh") root.style.setProperty("--lh", v);
           else if (key === "pv") {
             root.style.setProperty("--pad-t", v);
@@ -530,7 +588,7 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "fs" || k === "lh") {
+            if (k === "sTop" || k === "sBot" || k === "lh") {
               requestAnimationFrame(measure);
             }
           });
