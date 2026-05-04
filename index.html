@@ -1689,7 +1689,7 @@
           }
         }
 
-        function commitTypographyTargetFromSelection() {
+        function commitTypographyTargetFromSelection(updateOnCollapse) {
           if (!activeTextInner || !document.body.contains(activeTextInner)) {
             typographyTargetEl = null;
             return;
@@ -1703,6 +1703,7 @@
           }
           var range = sel.getRangeAt(0);
           if (range.collapsed) {
+            if (!updateOnCollapse) return;
             var run = closestTextRunAncestor(range.startContainer, activeTextInner);
             typographyTargetEl = run || activeTextInner;
             syncSidebarFromTarget();
@@ -2109,7 +2110,7 @@
           function (e) {
             if (!activeTextInner || typographyBlock.hidden) return;
             if (activeTextInner.contains(e.target)) return;
-            commitTypographyTargetFromSelection();
+            commitTypographyTargetFromSelection(false);
             requestAnimationFrame(function () {
               requestAnimationFrame(syncTypographyHighlightFromTarget);
             });
@@ -2604,7 +2605,7 @@
               var rt = e.relatedTarget;
               if (rt && inner.contains(rt)) return;
               if (activeTextInner === inner) {
-                commitTypographyTargetFromSelection();
+                commitTypographyTargetFromSelection(false);
               }
               requestAnimationFrame(function () {
                 requestAnimationFrame(syncTypographyHighlightFromTarget);
@@ -2614,12 +2615,12 @@
           );
           inner.addEventListener("mouseup", function () {
             if (activeTextInner !== inner) return;
-            commitTypographyTargetFromSelection();
+            commitTypographyTargetFromSelection(true);
           });
           inner.addEventListener("keyup", function (e) {
             if (activeTextInner !== inner) return;
             if (e.key === "Escape") return;
-            commitTypographyTargetFromSelection();
+            commitTypographyTargetFromSelection(true);
           });
           inner.addEventListener("mousedown", function (e) {
             if (e.button !== 0) return;
