@@ -6,11 +6,12 @@
     <title>axes diagram</title>
     <style>
       @font-face {
-        font-family: "IkarusWidthVariable";
-        src: url("../fonts/ABCIkarusWidthVariable.ttf")
+        font-family: "IkarusPlusVariable";
+        src: url("../fonts/ABCIkarusPlusVariable.ttf")
           format("truetype-variations");
         font-weight: 200 1000;
         font-stretch: 65% 130%;
+        font-style: oblique -12deg 0deg;
         font-display: block;
       }
 
@@ -19,6 +20,12 @@
         --bg: #000000;
         --fg: #f5d100;
         --accent: #ff2a1f;
+        --diag-ink: #c8c8c8;
+        --diag-ink-dim: #5a5a5a;
+        --diag-grid: #2d6aea;
+        --diag-grid-faint: rgba(45, 106, 234, 0.28);
+        --diag-orange: #ff8f2e;
+        --diag-face: #0c0c0e;
         --fs: 156;
         --lh: 0.96;
         --tracking: 0;
@@ -76,7 +83,7 @@
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        font-family: "IkarusWidthVariable", system-ui, sans-serif;
+        font-family: "IkarusPlusVariable", system-ui, sans-serif;
         transform: scale(var(--zoom));
         transform-origin: top left;
       }
@@ -91,7 +98,7 @@
         line-height: var(--lh);
         letter-spacing: calc(var(--tracking) * 1em);
         font-size: calc(var(--fs) * 1px);
-        font-variation-settings: "wght" 400, "wdth" 100, "slnt" 0;
+        font-variation-settings: "wght" 400, "wdth" 100, "slnt" 0, "CNTR" 0;
         text-align: left;
         white-space: nowrap;
         will-change: font-variation-settings;
@@ -106,85 +113,166 @@
         inset: 0;
         pointer-events: none;
         overflow: visible;
+        shape-rendering: crispEdges;
+        image-rendering: pixelated;
+        text-rendering: optimizeSpeed;
+      }
+
+      .diagram .chart-face {
+        fill: var(--diag-face);
+        stroke: var(--diag-ink);
+        stroke-width: 2;
+      }
+
+      .diagram .ring-conc {
+        fill: none;
+        stroke: var(--diag-ink-dim);
+        stroke-width: 1;
+        opacity: 0.65;
+        stroke-dasharray: 2 5;
+      }
+
+      .diagram .ring-conc.major {
+        stroke: var(--diag-ink);
+        opacity: 0.85;
+        stroke-dasharray: none;
+      }
+
+      .diagram .mesh-arc {
+        fill: none;
+        stroke: var(--diag-grid);
+        stroke-width: 1;
+        opacity: 0.42;
+      }
+
+      .diagram .mesh-ray {
+        fill: none;
+        stroke: var(--diag-grid-faint);
+        stroke-width: 1;
+        opacity: 0.9;
       }
 
       .diagram .ring-outer {
         fill: none;
-        stroke: var(--accent);
-        stroke-width: 1.5;
-        vector-effect: non-scaling-stroke;
-        opacity: 0.7;
-      }
-
-      .diagram .ring-inner {
-        fill: none;
-        stroke: var(--accent);
-        stroke-width: 1;
-        vector-effect: non-scaling-stroke;
-        stroke-dasharray: 3 7;
-        opacity: 0.22;
+        stroke: var(--diag-ink);
+        stroke-width: 2;
+        opacity: 0.95;
       }
 
       .diagram .axis {
         fill: none;
-        stroke: var(--accent);
+        stroke: var(--diag-ink-dim);
         stroke-width: 1;
-        vector-effect: non-scaling-stroke;
-        opacity: 0.4;
+        opacity: 0.75;
       }
 
       .diagram .axis.active {
+        stroke: var(--accent);
         stroke-width: 2;
         opacity: 1;
       }
 
       .diagram .tick {
-        stroke: var(--accent);
+        stroke: var(--diag-ink);
         stroke-width: 1;
-        vector-effect: non-scaling-stroke;
-        opacity: 0.5;
+        opacity: 0.65;
       }
 
       .diagram .tick.major {
-        stroke-width: 1.5;
-        opacity: 0.9;
+        stroke-width: 2;
+        opacity: 1;
       }
 
       .diagram .center {
-        fill: var(--accent);
-        stroke: none;
-        opacity: 0.7;
+        fill: var(--diag-orange);
+        stroke: var(--diag-ink);
+        stroke-width: 1;
+        opacity: 0.95;
       }
 
       .diagram .dot {
         fill: var(--accent);
-        stroke: none;
+        stroke: var(--diag-ink);
+        stroke-width: 1;
+      }
+
+      .diagram .trail {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2;
+        stroke-linecap: square;
+        stroke-linejoin: miter;
+        opacity: 0.45;
+      }
+
+      .diagram .deg-lbl {
+        fill: var(--diag-ink);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        opacity: 0.95;
+      }
+
+      .diagram .alt-lbl {
+        fill: var(--diag-ink-dim);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
       }
 
       .diagram .label-val {
-        fill: var(--accent);
+        fill: var(--diag-ink);
         font-family: "Courier New", Courier, monospace;
-        font-size: 16px;
-        letter-spacing: 0.04em;
-        opacity: 0.6;
+        font-size: 14px;
+        letter-spacing: 0.06em;
+        opacity: 0.85;
         font-variant-numeric: tabular-nums;
       }
 
       .diagram .label-val.active {
+        fill: var(--diag-orange);
         opacity: 1;
       }
 
       .diagram .label {
-        fill: var(--accent);
+        fill: var(--diag-ink-dim);
         font-family: "Courier New", Courier, monospace;
-        font-size: 18px;
-        text-transform: lowercase;
-        letter-spacing: 0.08em;
-        opacity: 0.5;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        opacity: 0.9;
       }
 
       .diagram .label.active {
+        fill: var(--diag-ink);
         opacity: 1;
+      }
+
+      .diagram .tech-meta {
+        fill: var(--diag-ink-dim);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .diagram .tech-readout {
+        fill: var(--diag-orange);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .diagram .tech-readout.active {
+        fill: var(--accent);
+      }
+
+      .diagram .tech-phase {
+        fill: var(--diag-grid);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
       }
 
       .panel {
@@ -328,32 +416,71 @@
             id="diagram"
             viewBox="0 0 1024 1024"
             preserveAspectRatio="xMidYMid meet"
+            shape-rendering="crispEdges"
             aria-hidden="true"
           >
-            <g>
-              <circle class="ring-inner" cx="512" cy="512" r="105" />
-              <circle class="ring-inner" cx="512" cy="512" r="210" />
-              <circle class="ring-inner" cx="512" cy="512" r="315" />
-            </g>
-            <circle class="ring-outer" cx="512" cy="512" r="420" />
+            <defs>
+              <clipPath id="chartClip">
+                <circle cx="512" cy="512" r="416" />
+              </clipPath>
+            </defs>
+            <circle class="chart-face" cx="512" cy="512" r="418" />
+            <g id="concentricRings"></g>
+            <g id="meshLayer" clip-path="url(#chartClip)"></g>
+            <g id="radialBlue"></g>
             <g id="ticks"></g>
+            <circle class="ring-outer" cx="512" cy="512" r="420" />
             <line class="axis" id="axisWdth" x1="92" y1="512" x2="932" y2="512" />
             <line class="axis" id="axisWght" x1="512" y1="92" x2="512" y2="932" />
-            <line class="axis" id="axisSlnt" x1="302" y1="876" x2="722" y2="148" />
-            <circle class="center" cx="512" cy="512" r="5" />
+            <line class="axis" id="axisSlnt" x1="215" y1="809" x2="809" y2="215" />
+            <line class="axis" id="axisCntr" x1="809" y1="809" x2="215" y2="215" />
+            <g id="degLabels"></g>
+            <g id="altLabels"></g>
+            <circle class="center" cx="512" cy="512" r="4" />
 
-            <text class="label-val" id="lblWdthMax" x="952" y="518" text-anchor="start">130</text>
-            <text class="label-val" id="lblWdthMin" x="72" y="518" text-anchor="end">65</text>
-            <text class="label-val" id="lblWghtMax" x="512" y="68" text-anchor="middle">1000</text>
-            <text class="label-val" id="lblWghtMin" x="512" y="970" text-anchor="middle">200</text>
-            <text class="label-val" id="lblSlntMax" x="734" y="135" text-anchor="start">−12°</text>
-            <text class="label-val" id="lblSlntMin" x="290" y="893" text-anchor="end">0°</text>
+            <text class="label-val" id="lblWdthMax" x="948" y="518" text-anchor="start">130</text>
+            <text class="label-val" id="lblWdthMin" x="76" y="518" text-anchor="end">65</text>
+            <text class="label-val" id="lblWghtMax" x="512" y="72" text-anchor="middle">1000</text>
+            <text class="label-val" id="lblWghtMin" x="512" y="966" text-anchor="middle">200</text>
+            <text class="label-val" id="lblSlntMax" x="820" y="202" text-anchor="start">−12°</text>
+            <text class="label-val" id="lblSlntMin" x="204" y="826" text-anchor="end">0°</text>
+            <text class="label-val" id="lblCntrMax" x="204" y="202" text-anchor="end">100</text>
+            <text class="label-val" id="lblCntrMin" x="820" y="826" text-anchor="start">0</text>
 
-            <text class="label" id="lblWdth" x="952" y="544" text-anchor="start">width</text>
-            <text class="label" id="lblWght" x="512" y="42" text-anchor="middle">weight</text>
-            <text class="label" id="lblSlnt" x="754" y="161" text-anchor="start">slant</text>
+            <text class="label" id="lblWdth" x="948" y="538" text-anchor="start">wdth</text>
+            <text class="label" id="lblWght" x="512" y="52" text-anchor="middle">wght</text>
+            <text class="label" id="lblSlnt" x="832" y="226" text-anchor="start">slnt</text>
+            <text class="label" id="lblCntr" x="192" y="226" text-anchor="end">cntr</text>
 
-            <circle class="dot" id="dot" cx="512" cy="512" r="14" />
+            <g id="techHud">
+              <text class="tech-meta" x="56" y="40" text-anchor="start">
+                IK-PLUS · COORD · STEREOGRAPHIC PROJ.
+              </text>
+              <text class="tech-meta" x="56" y="54" text-anchor="start">
+                AXES: wght, wdth, slnt, CNTR — fvar instance L1
+              </text>
+              <text class="tech-readout" id="hudWght" x="56" y="888" text-anchor="start">
+                WGHT=400
+              </text>
+              <text class="tech-readout" id="hudWdth" x="56" y="906" text-anchor="start">
+                WDTH=100.0
+              </text>
+              <text class="tech-readout" id="hudSlnt" x="56" y="924" text-anchor="start">
+                SLNT=0.00°
+              </text>
+              <text class="tech-readout" id="hudCntr" x="56" y="942" text-anchor="start">
+                CNTR=000
+              </text>
+              <text class="tech-readout" id="hudNorm" x="56" y="962" text-anchor="start">
+                NORM 0.0000 / 1.0000 / 0.0000 / 0.0000
+              </text>
+              <text class="tech-phase" id="hudPhase" x="960" y="962" text-anchor="end">
+                PH: IDLE
+              </text>
+            </g>
+
+            <path class="trail" id="trail" d="" />
+            <rect class="dot" id="dot" x="506" y="506" width="12" height="12" />
           </svg>
         </div>
       </div>
@@ -460,26 +587,50 @@
       </div>
 
       <div class="group">
+        <p class="group-title">contrast (CNTR)</p>
+        <div class="row-ctl">
+          <label for="cMin">min</label>
+          <input id="cMin" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="cMinVal">0</span>
+        </div>
+        <div class="row-ctl">
+          <label for="cMax">max</label>
+          <input id="cMax" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="cMaxVal">100</span>
+        </div>
+      </div>
+
+      <div class="group">
         <p class="group-title">motion</p>
         <div class="row-ctl">
           <label for="t1">weight</label>
-          <input id="t1" type="range" min="0.5" max="6" step="0.1" value="2.4" />
-          <span class="val" id="t1Val">2.4s</span>
+          <input id="t1" type="range" min="0.5" max="6" step="0.1" value="2.0" />
+          <span class="val" id="t1Val">2.0s</span>
         </div>
         <div class="row-ctl">
           <label for="t2">width</label>
-          <input id="t2" type="range" min="0.5" max="6" step="0.1" value="2.4" />
-          <span class="val" id="t2Val">2.4s</span>
+          <input id="t2" type="range" min="0.5" max="6" step="0.1" value="2.0" />
+          <span class="val" id="t2Val">2.0s</span>
         </div>
         <div class="row-ctl">
           <label for="t3">slant</label>
-          <input id="t3" type="range" min="0.5" max="6" step="0.1" value="2.0" />
-          <span class="val" id="t3Val">2.0s</span>
+          <input id="t3" type="range" min="0.5" max="6" step="0.1" value="1.6" />
+          <span class="val" id="t3Val">1.6s</span>
+        </div>
+        <div class="row-ctl">
+          <label for="t4">contrast</label>
+          <input id="t4" type="range" min="0.5" max="6" step="0.1" value="2.4" />
+          <span class="val" id="t4Val">2.4s</span>
         </div>
         <div class="row-ctl">
           <label for="ph">hold</label>
-          <input id="ph" type="range" min="0" max="2" step="0.05" value="0.5" />
-          <span class="val" id="phVal">0.5s</span>
+          <input id="ph" type="range" min="0" max="2" step="0.05" value="0.2" />
+          <span class="val" id="phVal">0.20s</span>
+        </div>
+        <div class="row-ctl">
+          <label for="trail">trail</label>
+          <input id="trail" type="checkbox" checked />
+          <span class="val" id="trailVal">on</span>
         </div>
         <div class="row-ctl">
           <label for="dg">diagram</label>
@@ -491,9 +642,10 @@
       <div class="group">
         <p class="group-title">live</p>
         <div class="readout" id="readout">
-          <span>weight</span><span id="rWght">200</span>
+          <span>weight</span><span id="rWght">400</span>
           <span>width</span><span id="rWdth">100</span>
           <span>slant</span><span id="rSlnt">0</span>
+          <span>contrast</span><span id="rCntr">0</span>
           <span>phase</span><span id="rPhase">idle</span>
         </div>
       </div>
@@ -510,20 +662,31 @@
         var specimen = document.getElementById("specimen");
         var diagram = document.getElementById("diagram");
         var dot = document.getElementById("dot");
+        var trail = document.getElementById("trail");
 
         var axisWght = document.getElementById("axisWght");
         var axisWdth = document.getElementById("axisWdth");
         var axisSlnt = document.getElementById("axisSlnt");
+        var axisCntr = document.getElementById("axisCntr");
         var lblWght = document.getElementById("lblWght");
         var lblWdth = document.getElementById("lblWdth");
         var lblSlnt = document.getElementById("lblSlnt");
+        var lblCntr = document.getElementById("lblCntr");
 
         var rWght = document.getElementById("rWght");
         var rWdth = document.getElementById("rWdth");
         var rSlnt = document.getElementById("rSlnt");
+        var rCntr = document.getElementById("rCntr");
         var rPhase = document.getElementById("rPhase");
 
-        var LS_KEY = "axes-diagram:settings:v2";
+        var hudWght = document.getElementById("hudWght");
+        var hudWdth = document.getElementById("hudWdth");
+        var hudSlnt = document.getElementById("hudSlnt");
+        var hudCntr = document.getElementById("hudCntr");
+        var hudNorm = document.getElementById("hudNorm");
+        var hudPhase = document.getElementById("hudPhase");
+
+        var LS_KEY = "axes-diagram:settings:v3";
 
         var DEFAULTS = {
           zm: 1,
@@ -542,15 +705,19 @@
           dMax: 130,
           sMin: -12,
           sMax: 0,
-          t1: 2.4,
-          t2: 2.4,
-          t3: 2.0,
-          ph: 0.5,
+          cMin: 0,
+          cMax: 100,
+          t1: 2.0,
+          t2: 2.0,
+          t3: 1.6,
+          t4: 2.4,
+          ph: 0.2,
+          trail: true,
           dg: true,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1, ac: 1 };
-        var BOOL_KEYS = { dg: 1 };
+        var BOOL_KEYS = { dg: 1, trail: 1 };
 
         var els = {
           zm: document.getElementById("zm"),
@@ -569,10 +736,14 @@
           dMax: document.getElementById("dMax"),
           sMin: document.getElementById("sMin"),
           sMax: document.getElementById("sMax"),
+          cMin: document.getElementById("cMin"),
+          cMax: document.getElementById("cMax"),
           t1: document.getElementById("t1"),
           t2: document.getElementById("t2"),
           t3: document.getElementById("t3"),
+          t4: document.getElementById("t4"),
           ph: document.getElementById("ph"),
+          trail: document.getElementById("trail"),
           dg: document.getElementById("dg"),
         };
 
@@ -592,10 +763,14 @@
           dMax: document.getElementById("dMaxVal"),
           sMin: document.getElementById("sMinVal"),
           sMax: document.getElementById("sMaxVal"),
+          cMin: document.getElementById("cMinVal"),
+          cMax: document.getElementById("cMaxVal"),
           t1: document.getElementById("t1Val"),
           t2: document.getElementById("t2Val"),
           t3: document.getElementById("t3Val"),
+          t4: document.getElementById("t4Val"),
           ph: document.getElementById("phVal"),
+          trail: document.getElementById("trailVal"),
           dg: document.getElementById("dgVal"),
         };
 
@@ -606,10 +781,23 @@
           if (key === "lhMin" || key === "lhMax") return Number(v).toFixed(2);
           if (key === "trMin" || key === "trMax")
             return Math.round(Number(v) * 1000) + "";
-          if (key === "wMin" || key === "wMax" || key === "dMin" || key === "dMax")
+          if (
+            key === "wMin" ||
+            key === "wMax" ||
+            key === "dMin" ||
+            key === "dMax" ||
+            key === "cMin" ||
+            key === "cMax"
+          )
             return Math.round(Number(v)) + "";
           if (key === "sMin" || key === "sMax") return Number(v).toFixed(2);
-          if (key === "t1" || key === "t2" || key === "t3" || key === "ph")
+          if (
+            key === "t1" ||
+            key === "t2" ||
+            key === "t3" ||
+            key === "t4" ||
+            key === "ph"
+          )
             return Number(v).toFixed(2) + "s";
           if (BOOL_KEYS[key]) return v ? "on" : "off";
           return String(v);
@@ -624,6 +812,8 @@
           else if (key === "pd") root.style.setProperty("--pad", v);
           else if (key === "dg") {
             diagram.style.display = v ? "" : "none";
+          } else if (key === "trail") {
+            if (!v && trail) trail.setAttribute("d", "");
           } else if (key === "wMax") {
             var n1 = document.getElementById("lblWghtMax");
             if (n1) n1.textContent = String(Math.round(Number(v)));
@@ -642,6 +832,12 @@
           } else if (key === "sMax") {
             var n6 = document.getElementById("lblSlntMin");
             if (n6) n6.textContent = Number(v).toFixed(0) + "°";
+          } else if (key === "cMax") {
+            var n7 = document.getElementById("lblCntrMax");
+            if (n7) n7.textContent = String(Math.round(Number(v)));
+          } else if (key === "cMin") {
+            var n8 = document.getElementById("lblCntrMin");
+            if (n8) n8.textContent = String(Math.round(Number(v)));
           }
         }
 
@@ -741,51 +937,179 @@
         var CX = 512;
         var CY = 512;
         var R = 420;
-        var SLNT_ANGLE = Math.PI / 3; // 60° from horizontal
+        // 4-axis compass at 45° intervals
+        var SLNT_ANGLE = Math.PI / 4; // 45° (NE)
         var SLNT_DX = R * Math.cos(SLNT_ANGLE);
         var SLNT_DY = -R * Math.sin(SLNT_ANGLE);
+        var CNTR_ANGLE = (3 * Math.PI) / 4; // 135° (NW)
+        var CNTR_DX = R * Math.cos(CNTR_ANGLE);
+        var CNTR_DY = -R * Math.sin(CNTR_ANGLE);
 
         var lblWdthMax = document.getElementById("lblWdthMax");
         var lblWghtMax = document.getElementById("lblWghtMax");
         var lblSlntMax = document.getElementById("lblSlntMax");
+        var lblCntrMax = document.getElementById("lblCntrMax");
 
-        (function buildTicks() {
+        (function buildChartGraphics() {
+          function polar(cx, cy, rr, deg) {
+            var rad = (deg * Math.PI) / 180;
+            return [cx + rr * Math.cos(rad), cy - rr * Math.sin(rad)];
+          }
+
+          function arcPath(cx, cy, rr, deg1, deg2) {
+            var p1 = polar(cx, cy, rr, deg1);
+            var p2 = polar(cx, cy, rr, deg2);
+            var large = Math.abs(deg2 - deg1) > 180 ? 1 : 0;
+            return (
+              "M" +
+              p1[0].toFixed(1) +
+              "," +
+              p1[1].toFixed(1) +
+              " A" +
+              rr +
+              "," +
+              rr +
+              " 0 " +
+              large +
+              " 0 " +
+              p2[0].toFixed(1) +
+              "," +
+              p2[1].toFixed(1)
+            );
+          }
+
+          var concGroup = document.getElementById("concentricRings");
+          var ringHtml = [];
+          for (var rRing = 56; rRing <= 392; rRing += 28) {
+            var ringCls = rRing % 84 === 0 ? "ring-conc major" : "ring-conc";
+            ringHtml.push(
+              '<circle class="' + ringCls + '" cx="512" cy="512" r="' + rRing + '" />'
+            );
+          }
+          concGroup.innerHTML = ringHtml.join("");
+
+          var meshGroup = document.getElementById("meshLayer");
+          var meshParts = [];
+          var i;
+          var j;
+          for (i = 0; i < 14; i++) {
+            var ra = 148 + i * 19;
+            meshParts.push(
+              '<path class="mesh-arc" d="' + arcPath(512, 624, ra, 208, 332) + '" />'
+            );
+          }
+          for (j = 0; j < 12; j++) {
+            var cxj = 232 + j * 52;
+            var rj = 172 + (j % 5) * 11;
+            meshParts.push(
+              '<path class="mesh-arc" d="' + arcPath(cxj, 556, rj, 224, 316) + '" />'
+            );
+          }
+          meshGroup.innerHTML = meshParts.join("");
+
+          var rayGroup = document.getElementById("radialBlue");
+          var rayParts = [];
+          for (var dRay = 0; dRay < 360; dRay += 30) {
+            var rRad = (dRay * Math.PI) / 180;
+            var xe = CX + 392 * Math.cos(rRad);
+            var ye = CY - 392 * Math.sin(rRad);
+            rayParts.push(
+              '<line class="mesh-ray" x1="' +
+                (2 * CX - xe).toFixed(1) +
+                '" y1="' +
+                (2 * CY - ye).toFixed(1) +
+                '" x2="' +
+                xe.toFixed(1) +
+                '" y2="' +
+                ye.toFixed(1) +
+                '" />'
+            );
+          }
+          rayGroup.innerHTML = rayParts.join("");
+
           var ticksGroup = document.getElementById("ticks");
-          var minorLen = 8;
-          var majorLen = 18;
-          var majorAt = { 0: 1, 60: 1, 90: 1, 180: 1, 240: 1, 270: 1 };
-          var parts = [];
+          var minorLen = 10;
+          var majorLen = 22;
+          var majorAt = {
+            0: 1, 45: 1, 90: 1, 135: 1, 180: 1, 225: 1, 270: 1, 315: 1,
+          };
+          var tickParts = [];
           for (var deg = 0; deg < 360; deg += 15) {
             var rad = (deg * Math.PI) / 180;
             var cosA = Math.cos(rad);
             var sinA = Math.sin(rad);
             var isMajor = !!majorAt[deg];
             var len = isMajor ? majorLen : minorLen;
-            var x1 = CX + (R - len) * cosA;
-            var y1 = CY - (R - len) * sinA;
-            var x2 = CX + R * cosA;
-            var y2 = CY - R * sinA;
-            parts.push(
+            var x1t = CX + (R - len) * cosA;
+            var y1t = CY - (R - len) * sinA;
+            var x2t = CX + R * cosA;
+            var y2t = CY - R * sinA;
+            tickParts.push(
               '<line class="tick' +
                 (isMajor ? " major" : "") +
                 '" x1="' +
-                x1.toFixed(2) +
+                x1t.toFixed(2) +
                 '" y1="' +
-                y1.toFixed(2) +
+                y1t.toFixed(2) +
                 '" x2="' +
-                x2.toFixed(2) +
+                x2t.toFixed(2) +
                 '" y2="' +
-                y2.toFixed(2) +
+                y2t.toFixed(2) +
                 '" />'
             );
           }
-          ticksGroup.innerHTML = parts.join("");
+          ticksGroup.innerHTML = tickParts.join("");
+
+          var degGroup = document.getElementById("degLabels");
+          var Rlbl = 444;
+          var degParts = [];
+          for (var di = 0; di < 24; di++) {
+            var stepDeg = di * 15;
+            var az = (90 - stepDeg + 360) % 360;
+            var radL = (stepDeg * Math.PI) / 180;
+            var lx = CX + Rlbl * Math.cos(radL);
+            var ly = CY - Rlbl * Math.sin(radL);
+            degParts.push(
+              '<text class="deg-lbl" x="' +
+                lx.toFixed(1) +
+                '" y="' +
+                ly.toFixed(1) +
+                '" text-anchor="middle" dominant-baseline="middle">' +
+                az +
+                "\u00b0</text>"
+            );
+          }
+          degGroup.innerHTML = degParts.join("");
+
+          var altGroup = document.getElementById("altLabels");
+          var altBands = [
+            { r: 364, label: "16\u00b0" },
+            { r: 308, label: "28\u00b0" },
+            { r: 252, label: "40\u00b0" },
+            { r: 196, label: "52\u00b0" },
+            { r: 140, label: "64\u00b0" },
+            { r: 84, label: "76\u00b0" },
+          ];
+          var altParts = [];
+          for (var ai = 0; ai < altBands.length; ai++) {
+            var ab = altBands[ai];
+            var yy = CY - ab.r;
+            altParts.push(
+              '<text class="alt-lbl" x="526" y="' +
+                yy.toFixed(1) +
+                '" text-anchor="start" dominant-baseline="middle">' +
+                ab.label +
+                "</text>"
+            );
+          }
+          altGroup.innerHTML = altParts.join("");
         })();
 
         var startMs = performance.now();
         var lastWght = -1;
         var lastWdth = -1;
         var lastSlnt = NaN;
+        var lastCntr = -1;
         var lastActive = "";
 
         function setActive(name) {
@@ -794,12 +1118,19 @@
           axisWght.classList.toggle("active", name === "wght");
           axisWdth.classList.toggle("active", name === "wdth");
           axisSlnt.classList.toggle("active", name === "slnt");
+          axisCntr.classList.toggle("active", name === "cntr");
           lblWght.classList.toggle("active", name === "wght");
           lblWdth.classList.toggle("active", name === "wdth");
           lblSlnt.classList.toggle("active", name === "slnt");
+          lblCntr.classList.toggle("active", name === "cntr");
           lblWghtMax.classList.toggle("active", name === "wght");
           lblWdthMax.classList.toggle("active", name === "wdth");
           lblSlntMax.classList.toggle("active", name === "slnt");
+          lblCntrMax.classList.toggle("active", name === "cntr");
+          if (hudWght) hudWght.classList.toggle("active", name === "wght");
+          if (hudWdth) hudWdth.classList.toggle("active", name === "wdth");
+          if (hudSlnt) hudSlnt.classList.toggle("active", name === "slnt");
+          if (hudCntr) hudCntr.classList.toggle("active", name === "cntr");
         }
 
         // travel(t) returns the 0→1→0 trip used to ride an axis center→end→center
@@ -807,10 +1138,35 @@
           return Math.sin(easeInOut(t) * Math.PI);
         }
 
+        // Trail buffer: stores recent dot positions for the path "comet" effect.
+        var TRAIL_LEN = 180;
+        var trailBuf = new Array(TRAIL_LEN);
+        for (var i = 0; i < TRAIL_LEN; i++) trailBuf[i] = null;
+        var trailHead = 0;
+
+        function pushTrail(x, y) {
+          trailBuf[trailHead] = [x, y];
+          trailHead = (trailHead + 1) % TRAIL_LEN;
+        }
+
+        function renderTrail() {
+          var d = "";
+          var first = true;
+          for (var k = 0; k < TRAIL_LEN; k++) {
+            var idx = (trailHead + k) % TRAIL_LEN;
+            var pt = trailBuf[idx];
+            if (!pt) continue;
+            d += (first ? "M" : "L") + pt[0].toFixed(1) + " " + pt[1].toFixed(1) + " ";
+            first = false;
+          }
+          trail.setAttribute("d", d);
+        }
+
         function frame(now) {
           var T1 = parseFloat(els.t1.value);
           var T2 = parseFloat(els.t2.value);
           var T3 = parseFloat(els.t3.value);
+          var T4 = parseFloat(els.t4.value);
           var PH = parseFloat(els.ph.value);
           var wMin = parseFloat(els.wMin.value);
           var wMax = parseFloat(els.wMax.value);
@@ -818,55 +1174,85 @@
           var dMax = parseFloat(els.dMax.value);
           var sMin = parseFloat(els.sMin.value);
           var sMax = parseFloat(els.sMax.value);
+          var cMin = parseFloat(els.cMin.value);
+          var cMax = parseFloat(els.cMax.value);
 
-          var TOTAL = PH + T1 + PH + T2 + PH + T3;
+          var TOTAL = PH + T1 + PH + T2 + PH + T3 + PH + T4;
           var t = ((now - startMs) / 1000) % TOTAL;
 
-          var ox = 0, oy = 0;
+          var ox = 0,
+            oy = 0;
           var phaseLabel = "idle";
           var active = "";
           var wght = wMin;
           var wdth = dMin;
           var slnt = sMax;
+          var cntr = cMin;
           var trip = 0;
           var p;
 
-          if (t < PH) {
+          var s0 = PH;
+          var s1 = s0 + T1;
+          var s2 = s1 + PH;
+          var s3 = s2 + T2;
+          var s4 = s3 + PH;
+          var s5 = s4 + T3;
+          var s6 = s5 + PH;
+          var s7 = s6 + T4;
+
+          if (t < s0) {
             phaseLabel = "hold";
-          } else if (t < PH + T1) {
-            p = (t - PH) / T1;
+          } else if (t < s1) {
+            p = (t - s0) / T1;
             trip = travel(p);
             oy = -R * trip;
             wght = lerp(wMin, wMax, trip);
             phaseLabel = "weight";
             active = "wght";
-          } else if (t < PH + T1 + PH) {
+          } else if (t < s2) {
             phaseLabel = "hold";
-          } else if (t < PH + T1 + PH + T2) {
-            p = (t - PH - T1 - PH) / T2;
+          } else if (t < s3) {
+            p = (t - s2) / T2;
             trip = travel(p);
             ox = R * trip;
             wdth = lerp(dMin, dMax, trip);
             phaseLabel = "width";
             active = "wdth";
-          } else if (t < PH + T1 + PH + T2 + PH) {
+          } else if (t < s4) {
             phaseLabel = "hold";
-          } else {
-            p = (t - PH - T1 - PH - T2 - PH) / T3;
+          } else if (t < s5) {
+            p = (t - s4) / T3;
             trip = travel(p);
             ox = SLNT_DX * trip;
             oy = SLNT_DY * trip;
             slnt = lerp(sMax, sMin, trip);
             phaseLabel = "slant";
             active = "slnt";
+          } else if (t < s6) {
+            phaseLabel = "hold";
+          } else {
+            p = (t - s6) / T4;
+            trip = travel(p);
+            ox = CNTR_DX * trip;
+            oy = CNTR_DY * trip;
+            cntr = lerp(cMin, cMax, trip);
+            phaseLabel = "contrast";
+            active = "cntr";
           }
 
           var px = CX + ox;
           var py = CY + oy;
-          dot.setAttribute("cx", px.toFixed(2));
-          dot.setAttribute("cy", py.toFixed(2));
+          var dotSz = 12;
+          dot.setAttribute("x", (px - dotSz / 2).toFixed(2));
+          dot.setAttribute("y", (py - dotSz / 2).toFixed(2));
 
           setActive(active);
+
+          var trailOn = !!els.trail.checked;
+          if (trailOn) {
+            pushTrail(px, py);
+            renderTrail();
+          }
 
           var lhMinV = parseFloat(els.lhMin.value);
           var lhMaxV = parseFloat(els.lhMax.value);
@@ -880,19 +1266,62 @@
           var wghtR = Math.round(wght);
           var wdthR = Math.round(wdth);
           var slntR = Math.round(slnt * 100) / 100;
+          var cntrR = Math.round(cntr);
 
-          if (wghtR !== lastWght || wdthR !== lastWdth || slntR !== lastSlnt) {
+          if (
+            wghtR !== lastWght ||
+            wdthR !== lastWdth ||
+            slntR !== lastSlnt ||
+            cntrR !== lastCntr
+          ) {
             specimen.style.fontVariationSettings =
-              '"wght" ' + wghtR + ', "wdth" ' + wdthR + ', "slnt" ' + slntR;
+              '"wght" ' +
+              wghtR +
+              ', "wdth" ' +
+              wdthR +
+              ', "slnt" ' +
+              slntR +
+              ', "CNTR" ' +
+              cntrR;
             lastWght = wghtR;
             lastWdth = wdthR;
             lastSlnt = slntR;
+            lastCntr = cntrR;
           }
 
           rWght.textContent = String(wghtR);
           rWdth.textContent = String(wdthR);
           rSlnt.textContent = slntR.toFixed(2);
+          rCntr.textContent = String(cntrR);
           rPhase.textContent = phaseLabel;
+
+          if (hudWght) hudWght.textContent = "WGHT=" + wghtR;
+          if (hudWdth) hudWdth.textContent = "WDTH=" + wdthR.toFixed(1);
+          if (hudSlnt) hudSlnt.textContent = "SLNT=" + slntR.toFixed(2) + "\u00b0";
+          if (hudCntr) hudCntr.textContent = "CNTR=" + ("00" + cntrR).slice(-3);
+          var denW = wMax - wMin || 1;
+          var denD = dMax - dMin || 1;
+          var denS = sMax - sMin || 1;
+          var denC = cMax - cMin || 1;
+          if (hudNorm) {
+            hudNorm.textContent =
+              "NORM " +
+              ((wghtR - wMin) / denW).toFixed(4) +
+              " / " +
+              ((wdthR - dMin) / denD).toFixed(4) +
+              " / " +
+              ((slntR - sMin) / denS).toFixed(4) +
+              " / " +
+              ((cntrR - cMin) / denC).toFixed(4);
+          }
+          if (hudPhase) {
+            hudPhase.textContent =
+              "PH: " +
+              (phaseLabel === "hold" ? "HOLD" : phaseLabel.toUpperCase()) +
+              " · t=" +
+              t.toFixed(2) +
+              "s";
+          }
 
           requestAnimationFrame(frame);
         }

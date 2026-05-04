@@ -95,6 +95,8 @@
         inset: 0;
         z-index: 1;
         pointer-events: none;
+        color: var(--fg);
+        filter: url(#ghost-outline);
       }
 
       .glyph {
@@ -103,9 +105,9 @@
       }
 
       .ghost {
-        color: transparent;
-        -webkit-text-stroke: calc(var(--stroke) * 1px) var(--fg);
-        -webkit-text-fill-color: transparent;
+        color: var(--fg);
+        -webkit-text-fill-color: currentColor;
+        -webkit-text-stroke: 0;
       }
 
       .panel {
@@ -310,6 +312,37 @@
     </style>
   </head>
   <body>
+    <svg
+      width="0"
+      height="0"
+      style="position: absolute; pointer-events: none"
+      aria-hidden="true"
+    >
+      <defs>
+        <filter
+          id="ghost-outline"
+          filterUnits="objectBoundingBox"
+          x="-5%"
+          y="-5%"
+          width="110%"
+          height="110%"
+        >
+          <feMorphology
+            id="ghost-erode"
+            operator="erode"
+            radius="1"
+            in="SourceAlpha"
+            result="eroded"
+          />
+          <feComposite
+            operator="out"
+            in="SourceGraphic"
+            in2="eroded"
+          />
+        </filter>
+      </defs>
+    </svg>
+
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="ghost animation">
@@ -541,12 +574,19 @@
           wVal.textContent = Math.round(lo) + " / " + Math.round(hi);
         }
 
+        var ghostErode = document.getElementById("ghost-erode");
+
         function applyVar(key, v) {
           if (key === "zm") root.style.setProperty("--zoom", v);
           else if (key === "bg") root.style.setProperty("--bg", v);
           else if (key === "fg") root.style.setProperty("--fg", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
-          else if (key === "sk") root.style.setProperty("--stroke", v);
+          else if (key === "sk") {
+            root.style.setProperty("--stroke", v);
+            if (ghostErode) {
+              ghostErode.setAttribute("radius", String(Math.max(0.1, Number(v))));
+            }
+          }
         }
 
         function setValue(key, v, persist) {
