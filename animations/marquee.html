@@ -24,7 +24,6 @@
         --pad-l: 0;
         --fs: 220;
         --lh: 0.92;
-        --tracking: -0.02;
         --zoom: 1;
         --w-top: 1000;
         --w-bottom: 500;
@@ -93,7 +92,6 @@
         bottom: calc(var(--pad-b) * 1px);
         left: calc(var(--pad-l) * 1px);
         line-height: var(--lh);
-        letter-spacing: calc(var(--tracking) * 1em);
         overflow: hidden;
         will-change: transform;
       }
@@ -263,10 +261,19 @@
           <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
           <span class="val" id="lhVal">0.92</span>
         </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">kerning</p>
         <div class="row">
-          <label for="tr">kern</label>
-          <input id="tr" type="range" min="-0.2" max="0.2" step="0.001" value="-0.02" />
-          <span class="val" id="trVal">-20</span>
+          <label for="kTop">top</label>
+          <input id="kTop" type="range" min="-0.5" max="0.5" step="0.001" value="-0.02" />
+          <span class="val" id="kTopVal">-20</span>
+        </div>
+        <div class="row">
+          <label for="kBot">bottom</label>
+          <input id="kBot" type="range" min="-0.5" max="0.5" step="0.001" value="0.02" />
+          <span class="val" id="kBotVal">20</span>
         </div>
       </div>
 
@@ -331,7 +338,6 @@
           "Kreta",
           "Labyrinth",
           "Samos",
-          "Ägäis",
         ];
 
         var marquee = document.getElementById("marquee");
@@ -368,6 +374,8 @@
           var marqueeH = marquee.clientHeight || 1;
           var wTop = parseFloat(els.wTop.value);
           var wBot = parseFloat(els.wBot.value);
+          var kTop = parseFloat(els.kTop.value);
+          var kBot = parseFloat(els.kBot.value);
           var gamma = parseFloat(els.gm.value);
 
           for (var i = 0; i < lineEls.length; i++) {
@@ -380,6 +388,8 @@
             var tt = Math.pow(t, gamma);
             var w = Math.round(wTop + (wBot - wTop) * tt);
             el.style.fontVariationSettings = '"wght" ' + w;
+            var k = kTop + (kBot - kTop) * tt;
+            el.style.letterSpacing = k.toFixed(4) + "em";
           }
         }
 
@@ -408,7 +418,8 @@
           fg: "#f5d100",
           fs: 220,
           lh: 0.92,
-          tr: -0.02,
+          kTop: -0.02,
+          kBot: 0.02,
           wTop: 1000,
           wBot: 500,
           gm: 1,
@@ -425,7 +436,8 @@
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
-          tr: document.getElementById("tr"),
+          kTop: document.getElementById("kTop"),
+          kBot: document.getElementById("kBot"),
           wTop: document.getElementById("wTop"),
           wBot: document.getElementById("wBot"),
           gm: document.getElementById("gm"),
@@ -438,7 +450,8 @@
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
-          tr: document.getElementById("trVal"),
+          kTop: document.getElementById("kTopVal"),
+          kBot: document.getElementById("kBotVal"),
           wTop: document.getElementById("wTopVal"),
           wBot: document.getElementById("wBotVal"),
           gm: document.getElementById("gmVal"),
@@ -452,7 +465,8 @@
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "lh" || key === "gm") return Number(v).toFixed(2);
-          if (key === "tr") return Math.round(Number(v) * 1000) + "";
+          if (key === "kTop" || key === "kBot")
+            return Math.round(Number(v) * 1000) + "";
           if (key === "wTop" || key === "wBot" || key === "sp")
             return Math.round(Number(v)) + "";
           return Math.round(Number(v)) + "px";
@@ -464,7 +478,6 @@
           else if (key === "fg") root.style.setProperty("--fg", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
           else if (key === "lh") root.style.setProperty("--lh", v);
-          else if (key === "tr") root.style.setProperty("--tracking", v);
           else if (key === "pv") {
             root.style.setProperty("--pad-t", v);
             root.style.setProperty("--pad-b", v);

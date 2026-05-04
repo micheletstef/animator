@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>width × weight diagram</title>
+    <title>axes diagram</title>
     <style>
       @font-face {
         font-family: "IkarusWidthVariable";
@@ -91,7 +91,7 @@
         letter-spacing: calc(var(--tracking) * 1em);
         font-size: calc(var(--fs) * 1px);
         font-variation-settings: "wght" 400, "wdth" 100;
-        text-align: center;
+        text-align: left;
         white-space: nowrap;
         will-change: font-variation-settings;
       }
@@ -247,7 +247,7 @@
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="width × weight diagram">
+        <div class="stage" id="stage" aria-label="axes diagram">
           <div class="specimen" id="specimen">
             <span class="row">ABCDEFGHIJK</span>
             <span class="row">LMNOPQRTU</span>
@@ -303,14 +303,24 @@
           <span class="val" id="fsVal">156px</span>
         </div>
         <div class="row-ctl">
-          <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.96" />
-          <span class="val" id="lhVal">0.96</span>
+          <label for="lhMin">lead·min</label>
+          <input id="lhMin" type="range" min="0.7" max="1.4" step="0.01" value="0.96" />
+          <span class="val" id="lhMinVal">0.96</span>
         </div>
         <div class="row-ctl">
-          <label for="tr">kern</label>
-          <input id="tr" type="range" min="-0.1" max="0.1" step="0.001" value="0" />
-          <span class="val" id="trVal">0</span>
+          <label for="lhMax">lead·max</label>
+          <input id="lhMax" type="range" min="0.7" max="1.4" step="0.01" value="0.96" />
+          <span class="val" id="lhMaxVal">0.96</span>
+        </div>
+        <div class="row-ctl">
+          <label for="trMin">kern·min</label>
+          <input id="trMin" type="range" min="-0.1" max="0.1" step="0.001" value="0" />
+          <span class="val" id="trMinVal">0</span>
+        </div>
+        <div class="row-ctl">
+          <label for="trMax">kern·max</label>
+          <input id="trMax" type="range" min="-0.1" max="0.1" step="0.001" value="0" />
+          <span class="val" id="trMaxVal">0</span>
         </div>
         <div class="row-ctl">
           <label for="pd">margin</label>
@@ -403,8 +413,10 @@
           fg: "#f5d100",
           ac: "#ff2a1f",
           fs: 156,
-          lh: 0.96,
-          tr: 0,
+          lhMin: 0.96,
+          lhMax: 0.96,
+          trMin: 0,
+          trMax: 0,
           pd: 36,
           wMin: 200,
           wMax: 1000,
@@ -425,8 +437,10 @@
           fg: document.getElementById("fg"),
           ac: document.getElementById("ac"),
           fs: document.getElementById("fs"),
-          lh: document.getElementById("lh"),
-          tr: document.getElementById("tr"),
+          lhMin: document.getElementById("lhMin"),
+          lhMax: document.getElementById("lhMax"),
+          trMin: document.getElementById("trMin"),
+          trMax: document.getElementById("trMax"),
           pd: document.getElementById("pd"),
           wMin: document.getElementById("wMin"),
           wMax: document.getElementById("wMax"),
@@ -443,8 +457,10 @@
           fg: document.getElementById("fgVal"),
           ac: document.getElementById("acVal"),
           fs: document.getElementById("fsVal"),
-          lh: document.getElementById("lhVal"),
-          tr: document.getElementById("trVal"),
+          lhMin: document.getElementById("lhMinVal"),
+          lhMax: document.getElementById("lhMaxVal"),
+          trMin: document.getElementById("trMinVal"),
+          trMax: document.getElementById("trMaxVal"),
           pd: document.getElementById("pdVal"),
           wMin: document.getElementById("wMinVal"),
           wMax: document.getElementById("wMaxVal"),
@@ -460,8 +476,9 @@
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs" || key === "pd") return Math.round(Number(v)) + "px";
-          if (key === "lh") return Number(v).toFixed(2);
-          if (key === "tr") return Math.round(Number(v) * 1000) + "";
+          if (key === "lhMin" || key === "lhMax") return Number(v).toFixed(2);
+          if (key === "trMin" || key === "trMax")
+            return Math.round(Number(v) * 1000) + "";
           if (key === "wMin" || key === "wMax" || key === "dMin" || key === "dMax")
             return Math.round(Number(v)) + "";
           if (key === "t1" || key === "t2" || key === "ph")
@@ -476,8 +493,6 @@
           else if (key === "fg") root.style.setProperty("--fg", v);
           else if (key === "ac") root.style.setProperty("--accent", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
-          else if (key === "lh") root.style.setProperty("--lh", v);
-          else if (key === "tr") root.style.setProperty("--tracking", v);
           else if (key === "pd") root.style.setProperty("--pad", v);
           else if (key === "dg") {
             diagram.style.display = v ? "" : "none";
@@ -636,6 +651,16 @@
           var py = CY + y * R;
           dot.setAttribute("cx", px.toFixed(2));
           dot.setAttribute("cy", py.toFixed(2));
+
+          var posT = (x + 1) / 2;
+          var lhMinV = parseFloat(els.lhMin.value);
+          var lhMaxV = parseFloat(els.lhMax.value);
+          var trMinV = parseFloat(els.trMin.value);
+          var trMaxV = parseFloat(els.trMax.value);
+          var lhCur = lerp(lhMinV, lhMaxV, posT);
+          var trCur = lerp(trMinV, trMaxV, posT);
+          root.style.setProperty("--lh", lhCur.toFixed(3));
+          root.style.setProperty("--tracking", trCur.toFixed(4));
 
           var wghtR = Math.round(wght);
           var wdthR = Math.round(wdth);

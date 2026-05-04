@@ -1,28 +1,28 @@
 {
   "animations": [
     {
+      "id": "axes-diagram",
+      "label": "axes diagram",
+      "url": "animations/axes-diagram.html",
+      "mtime": 1777926748
+    },
+    {
       "id": "marquee",
       "label": "names marquee",
       "url": "animations/marquee.html",
-      "mtime": 1777926242
+      "mtime": 1777926534
     },
     {
       "id": "marquee-v2",
       "label": "names marquee v2",
       "url": "animations/marquee v2.html",
-      "mtime": 1777926245
+      "mtime": 1777926549
     },
     {
       "id": "spf",
       "label": "SPF 100+ → 8",
       "url": "animations/spf.html",
       "mtime": 1777926248
-    },
-    {
-      "id": "width-weight",
-      "label": "width × weight diagram",
-      "url": "animations/width-weight.html",
-      "mtime": 1777926251
     }
   ]
 }
