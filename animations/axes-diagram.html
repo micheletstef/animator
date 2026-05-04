@@ -108,22 +108,52 @@
         overflow: visible;
       }
 
+      .diagram .ring-outer {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 1.5;
+        vector-effect: non-scaling-stroke;
+        opacity: 0.7;
+      }
+
+      .diagram .ring-inner {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 1;
+        vector-effect: non-scaling-stroke;
+        stroke-dasharray: 3 7;
+        opacity: 0.22;
+      }
+
       .diagram .axis {
         fill: none;
         stroke: var(--accent);
-        stroke-width: 2;
+        stroke-width: 1;
         vector-effect: non-scaling-stroke;
-        opacity: 0.35;
+        opacity: 0.4;
       }
 
       .diagram .axis.active {
+        stroke-width: 2;
         opacity: 1;
+      }
+
+      .diagram .tick {
+        stroke: var(--accent);
+        stroke-width: 1;
+        vector-effect: non-scaling-stroke;
+        opacity: 0.5;
+      }
+
+      .diagram .tick.major {
+        stroke-width: 1.5;
+        opacity: 0.9;
       }
 
       .diagram .center {
         fill: var(--accent);
         stroke: none;
-        opacity: 0.6;
+        opacity: 0.7;
       }
 
       .diagram .dot {
@@ -131,13 +161,26 @@
         stroke: none;
       }
 
+      .diagram .label-val {
+        fill: var(--accent);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 16px;
+        letter-spacing: 0.04em;
+        opacity: 0.6;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .diagram .label-val.active {
+        opacity: 1;
+      }
+
       .diagram .label {
         fill: var(--accent);
         font-family: "Courier New", Courier, monospace;
-        font-size: 22px;
+        font-size: 18px;
         text-transform: lowercase;
-        letter-spacing: 0.06em;
-        opacity: 0.55;
+        letter-spacing: 0.08em;
+        opacity: 0.5;
       }
 
       .diagram .label.active {
@@ -287,13 +330,29 @@
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
           >
-            <line class="axis" id="axisWdth" x1="12" y1="512" x2="1012" y2="512" />
-            <line class="axis" id="axisWght" x1="512" y1="12" x2="512" y2="1012" />
-            <line class="axis" id="axisSlnt" x1="262" y1="945" x2="762" y2="79" />
-            <circle class="center" cx="512" cy="512" r="4" />
-            <text class="label" id="lblWdth" x="1012" y="500" text-anchor="end">width</text>
-            <text class="label" id="lblWght" x="524" y="28" text-anchor="start">weight</text>
-            <text class="label" id="lblSlnt" x="770" y="68" text-anchor="start">slant</text>
+            <g>
+              <circle class="ring-inner" cx="512" cy="512" r="105" />
+              <circle class="ring-inner" cx="512" cy="512" r="210" />
+              <circle class="ring-inner" cx="512" cy="512" r="315" />
+            </g>
+            <circle class="ring-outer" cx="512" cy="512" r="420" />
+            <g id="ticks"></g>
+            <line class="axis" id="axisWdth" x1="92" y1="512" x2="932" y2="512" />
+            <line class="axis" id="axisWght" x1="512" y1="92" x2="512" y2="932" />
+            <line class="axis" id="axisSlnt" x1="302" y1="876" x2="722" y2="148" />
+            <circle class="center" cx="512" cy="512" r="5" />
+
+            <text class="label-val" id="lblWdthMax" x="952" y="518" text-anchor="start">130</text>
+            <text class="label-val" id="lblWdthMin" x="72" y="518" text-anchor="end">65</text>
+            <text class="label-val" id="lblWghtMax" x="512" y="68" text-anchor="middle">1000</text>
+            <text class="label-val" id="lblWghtMin" x="512" y="970" text-anchor="middle">200</text>
+            <text class="label-val" id="lblSlntMax" x="734" y="135" text-anchor="start">−12°</text>
+            <text class="label-val" id="lblSlntMin" x="290" y="893" text-anchor="end">0°</text>
+
+            <text class="label" id="lblWdth" x="952" y="544" text-anchor="start">width</text>
+            <text class="label" id="lblWght" x="512" y="42" text-anchor="middle">weight</text>
+            <text class="label" id="lblSlnt" x="754" y="161" text-anchor="start">slant</text>
+
             <circle class="dot" id="dot" cx="512" cy="512" r="14" />
           </svg>
         </div>
@@ -565,6 +624,24 @@
           else if (key === "pd") root.style.setProperty("--pad", v);
           else if (key === "dg") {
             diagram.style.display = v ? "" : "none";
+          } else if (key === "wMax") {
+            var n1 = document.getElementById("lblWghtMax");
+            if (n1) n1.textContent = String(Math.round(Number(v)));
+          } else if (key === "wMin") {
+            var n2 = document.getElementById("lblWghtMin");
+            if (n2) n2.textContent = String(Math.round(Number(v)));
+          } else if (key === "dMax") {
+            var n3 = document.getElementById("lblWdthMax");
+            if (n3) n3.textContent = String(Math.round(Number(v)));
+          } else if (key === "dMin") {
+            var n4 = document.getElementById("lblWdthMin");
+            if (n4) n4.textContent = String(Math.round(Number(v)));
+          } else if (key === "sMin") {
+            var n5 = document.getElementById("lblSlntMax");
+            if (n5) n5.textContent = Number(v).toFixed(0) + "°";
+          } else if (key === "sMax") {
+            var n6 = document.getElementById("lblSlntMin");
+            if (n6) n6.textContent = Number(v).toFixed(0) + "°";
           }
         }
 
@@ -663,9 +740,47 @@
 
         var CX = 512;
         var CY = 512;
-        var R = 500;
-        var SLNT_DX = 250;
-        var SLNT_DY = -433;
+        var R = 420;
+        var SLNT_ANGLE = Math.PI / 3; // 60° from horizontal
+        var SLNT_DX = R * Math.cos(SLNT_ANGLE);
+        var SLNT_DY = -R * Math.sin(SLNT_ANGLE);
+
+        var lblWdthMax = document.getElementById("lblWdthMax");
+        var lblWghtMax = document.getElementById("lblWghtMax");
+        var lblSlntMax = document.getElementById("lblSlntMax");
+
+        (function buildTicks() {
+          var ticksGroup = document.getElementById("ticks");
+          var minorLen = 8;
+          var majorLen = 18;
+          var majorAt = { 0: 1, 60: 1, 90: 1, 180: 1, 240: 1, 270: 1 };
+          var parts = [];
+          for (var deg = 0; deg < 360; deg += 15) {
+            var rad = (deg * Math.PI) / 180;
+            var cosA = Math.cos(rad);
+            var sinA = Math.sin(rad);
+            var isMajor = !!majorAt[deg];
+            var len = isMajor ? majorLen : minorLen;
+            var x1 = CX + (R - len) * cosA;
+            var y1 = CY - (R - len) * sinA;
+            var x2 = CX + R * cosA;
+            var y2 = CY - R * sinA;
+            parts.push(
+              '<line class="tick' +
+                (isMajor ? " major" : "") +
+                '" x1="' +
+                x1.toFixed(2) +
+                '" y1="' +
+                y1.toFixed(2) +
+                '" x2="' +
+                x2.toFixed(2) +
+                '" y2="' +
+                y2.toFixed(2) +
+                '" />'
+            );
+          }
+          ticksGroup.innerHTML = parts.join("");
+        })();
 
         var startMs = performance.now();
         var lastWght = -1;
@@ -682,6 +797,9 @@
           lblWght.classList.toggle("active", name === "wght");
           lblWdth.classList.toggle("active", name === "wdth");
           lblSlnt.classList.toggle("active", name === "slnt");
+          lblWghtMax.classList.toggle("active", name === "wght");
+          lblWdthMax.classList.toggle("active", name === "wdth");
+          lblSlntMax.classList.toggle("active", name === "slnt");
         }
 
         // travel(t) returns the 0→1→0 trip used to ride an axis center→end→center

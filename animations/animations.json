@@ -4,13 +4,19 @@
       "id": "axes-diagram",
       "label": "axes diagram",
       "url": "animations/axes-diagram.html",
-      "mtime": 1777926748
+      "mtime": 1777927417
+    },
+    {
+      "id": "ghost",
+      "label": "ghost",
+      "url": "animations/ghost.html",
+      "mtime": 1777928097
     },
     {
       "id": "marquee",
       "label": "names marquee",
       "url": "animations/marquee.html",
-      "mtime": 1777927246
+      "mtime": 1777927704
     },
     {
       "id": "spf",

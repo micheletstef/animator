@@ -22,7 +22,6 @@
         --pad-r: 0;
         --pad-b: 0;
         --pad-l: 0;
-        --lh: 0.92;
         --zoom: 1;
         --w-top: 1000;
         --w-bottom: 500;
@@ -90,7 +89,7 @@
         right: calc(var(--pad-r) * 1px);
         bottom: calc(var(--pad-b) * 1px);
         left: calc(var(--pad-l) * 1px);
-        line-height: var(--lh);
+        line-height: 0.92;
         overflow: hidden;
         will-change: transform;
       }
@@ -248,72 +247,69 @@
       </div>
 
       <div class="group">
-        <p class="group-title">type</p>
+        <p class="group-title">top</p>
         <div class="row">
-          <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
-          <span class="val" id="lhVal">0.92</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">size</p>
-        <div class="row">
-          <label for="sTop">top</label>
+          <label for="sTop">size</label>
           <input id="sTop" type="range" min="40" max="800" step="1" value="240" />
           <span class="val" id="sTopVal">240px</span>
         </div>
         <div class="row">
-          <label for="sBot">bottom</label>
-          <input id="sBot" type="range" min="40" max="800" step="1" value="120" />
-          <span class="val" id="sBotVal">120px</span>
+          <label for="lhTop">leading</label>
+          <input id="lhTop" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
+          <span class="val" id="lhTopVal">0.92</span>
         </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">kerning</p>
         <div class="row">
-          <label for="kTop">top</label>
+          <label for="kTop">kern</label>
           <input id="kTop" type="range" min="-0.5" max="0.5" step="0.001" value="-0.02" />
           <span class="val" id="kTopVal">-20</span>
         </div>
         <div class="row">
-          <label for="kBot">bottom</label>
-          <input id="kBot" type="range" min="-0.5" max="0.5" step="0.001" value="0.02" />
-          <span class="val" id="kBotVal">20</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">weight</p>
-        <div class="row">
-          <label for="wTop">top</label>
+          <label for="wTop">weight</label>
           <input id="wTop" type="range" min="100" max="1000" step="1" value="1000" />
           <span class="val" id="wTopVal">1000</span>
         </div>
         <div class="row">
-          <label for="wBot">bottom</label>
-          <input id="wBot" type="range" min="100" max="1000" step="1" value="500" />
-          <span class="val" id="wBotVal">500</span>
-        </div>
-        <div class="row">
-          <label for="gm">curve</label>
-          <input id="gm" type="range" min="0.3" max="3" step="0.01" value="1" />
-          <span class="val" id="gmVal">1.00</span>
+          <label for="oTop">opacity</label>
+          <input id="oTop" type="range" min="0" max="1" step="0.01" value="1" />
+          <span class="val" id="oTopVal">100%</span>
         </div>
       </div>
 
       <div class="group">
-        <p class="group-title">opacity</p>
+        <p class="group-title">bottom</p>
         <div class="row">
-          <label for="oTop">top</label>
-          <input id="oTop" type="range" min="0" max="1" step="0.01" value="1" />
-          <span class="val" id="oTopVal">100%</span>
+          <label for="sBot">size</label>
+          <input id="sBot" type="range" min="40" max="800" step="1" value="120" />
+          <span class="val" id="sBotVal">120px</span>
         </div>
         <div class="row">
-          <label for="oBot">bottom</label>
+          <label for="lhBot">leading</label>
+          <input id="lhBot" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
+          <span class="val" id="lhBotVal">0.92</span>
+        </div>
+        <div class="row">
+          <label for="kBot">kern</label>
+          <input id="kBot" type="range" min="-0.5" max="0.5" step="0.001" value="0.02" />
+          <span class="val" id="kBotVal">20</span>
+        </div>
+        <div class="row">
+          <label for="wBot">weight</label>
+          <input id="wBot" type="range" min="100" max="1000" step="1" value="500" />
+          <span class="val" id="wBotVal">500</span>
+        </div>
+        <div class="row">
+          <label for="oBot">opacity</label>
           <input id="oBot" type="range" min="0" max="1" step="0.01" value="0.2" />
           <span class="val" id="oBotVal">20%</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">curve</p>
+        <div class="row">
+          <label for="gm">curve</label>
+          <input id="gm" type="range" min="0.3" max="3" step="0.01" value="1" />
+          <span class="val" id="gmVal">1.00</span>
         </div>
       </div>
 
@@ -399,6 +395,8 @@
           var kBot = parseFloat(els.kBot.value);
           var sTop = parseFloat(els.sTop.value);
           var sBot = parseFloat(els.sBot.value);
+          var lhTop = parseFloat(els.lhTop.value);
+          var lhBot = parseFloat(els.lhBot.value);
           var oTop = parseFloat(els.oTop.value);
           var oBot = parseFloat(els.oBot.value);
           var gamma = parseFloat(els.gm.value);
@@ -427,6 +425,8 @@
             node.style.letterSpacing = k.toFixed(4) + "em";
             var s = sTop + (sBot - sTop) * tt;
             node.style.fontSize = s + "px";
+            var lh = lhTop + (lhBot - lhTop) * tt;
+            node.style.lineHeight = lh.toFixed(4);
             node.style.opacity = oTop + (oBot - oTop) * tt;
           }
         }
@@ -464,9 +464,10 @@
           zm: 1,
           bg: "#ffffff",
           fg: "#f5d100",
-          lh: 0.92,
           sTop: 240,
           sBot: 120,
+          lhTop: 0.92,
+          lhBot: 0.92,
           kTop: -0.02,
           kBot: 0.02,
           wTop: 1000,
@@ -485,9 +486,10 @@
           zm: document.getElementById("zm"),
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
-          lh: document.getElementById("lh"),
           sTop: document.getElementById("sTop"),
           sBot: document.getElementById("sBot"),
+          lhTop: document.getElementById("lhTop"),
+          lhBot: document.getElementById("lhBot"),
           kTop: document.getElementById("kTop"),
           kBot: document.getElementById("kBot"),
           wTop: document.getElementById("wTop"),
@@ -502,9 +504,10 @@
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          lh: document.getElementById("lhVal"),
           sTop: document.getElementById("sTopVal"),
           sBot: document.getElementById("sBotVal"),
+          lhTop: document.getElementById("lhTopVal"),
+          lhBot: document.getElementById("lhBotVal"),
           kTop: document.getElementById("kTopVal"),
           kBot: document.getElementById("kBotVal"),
           wTop: document.getElementById("wTopVal"),
@@ -523,7 +526,8 @@
             return Math.round(Number(v) * 100) + "%";
           if (key === "sTop" || key === "sBot")
             return Math.round(Number(v)) + "px";
-          if (key === "lh" || key === "gm") return Number(v).toFixed(2);
+          if (key === "lhTop" || key === "lhBot" || key === "gm")
+            return Number(v).toFixed(2);
           if (key === "kTop" || key === "kBot")
             return Math.round(Number(v) * 1000) + "";
           if (key === "wTop" || key === "wBot" || key === "sp")
@@ -535,7 +539,6 @@
           if (key === "zm") root.style.setProperty("--zoom", v);
           else if (key === "bg") root.style.setProperty("--bg", v);
           else if (key === "fg") root.style.setProperty("--fg", v);
-          else if (key === "lh") root.style.setProperty("--lh", v);
           else if (key === "pv") {
             root.style.setProperty("--pad-t", v);
             root.style.setProperty("--pad-b", v);
@@ -588,7 +591,12 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "sTop" || k === "sBot" || k === "lh") {
+            if (
+              k === "sTop" ||
+              k === "sBot" ||
+              k === "lhTop" ||
+              k === "lhBot"
+            ) {
               requestAnimationFrame(measure);
             }
           });
