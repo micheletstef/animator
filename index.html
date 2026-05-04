@@ -10,7 +10,6 @@
         --ar-w: 1080;
         --ar-h: 1440;
         --artboard-bg: #ffffff;
-        --editor-view-h: min(78vh, 820px);
       }
 
       * {
@@ -212,6 +211,11 @@
         padding-left: 20px;
       }
 
+      .editor-column {
+        align-self: start;
+        padding-right: 4px;
+      }
+
       .output-column {
         border-right: 1px solid rgba(31, 31, 31, 0.12);
         padding-right: 16px;
@@ -408,15 +412,8 @@
         z-index: 50;
       }
 
-      .editor-column {
-        padding-right: 4px;
-      }
-
       .editor-scroll {
-        height: var(--editor-view-h);
-        min-height: 180px;
-        max-height: min(92vh, 900px);
-        overflow: auto;
+        overflow: visible;
         padding: 10px;
         display: flex;
         flex-direction: column;
@@ -517,9 +514,7 @@
       }
 
       .artboard-text--sized .artboard-text-inner {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
+        overflow: visible;
       }
 
       .artboard-item.artboard-text.is-text-selected {
@@ -1138,12 +1133,33 @@
         var selectedTextWrap = null;
         var formatPresetMinH = 1440;
 
-        function syncOutputReadoutAndCss() {
-          root.style.setProperty("--ar-w", String(outputW));
-          root.style.setProperty("--ar-h", String(outputH));
+        function syncOutputReadoutText() {
           if (outputSizeReadout) {
             outputSizeReadout.textContent = "(" + outputW + " × " + outputH + ")";
           }
+        }
+
+        function syncArCssVars() {
+          var inMq = outputViewport && outputViewport.classList.contains("is-marquee");
+          if (inMq) {
+            root.style.setProperty("--ar-w", String(logicalW));
+            root.style.setProperty("--ar-h", String(logicalH));
+          } else {
+            root.style.setProperty("--ar-w", String(outputW));
+            root.style.setProperty("--ar-h", String(outputH));
+          }
+        }
+
+        function getOutputPreviewPixelDims() {
+          if (outputViewport && outputViewport.classList.contains("is-marquee")) {
+            return { w: logicalW, h: logicalH };
+          }
+          return { w: outputW, h: outputH };
+        }
+
+        function syncOutputReadoutAndCss() {
+          syncOutputReadoutText();
+          syncArCssVars();
         }
 
         var LS_SESSION = "animator:session:v1";
@@ -1320,10 +1336,6 @@
         }
 
         function buildSnapshotObject(itemsHtml) {
-          var evh =
-            root.style.getPropertyValue("--editor-view-h").trim() ||
-            String(getComputedStyle(root).getPropertyValue("--editor-view-h") || "").trim() ||
-            "320px";
           return {
             v: 1,
             logicalW: logicalW,
@@ -1338,7 +1350,6 @@
               direction: marqueeDirection ? marqueeDirection.value : "left"
             },
             outputZoom: outputZoomFactor,
-            editorViewH: evh,
             typography: collectTypographySnapshot(),
             itemsHtml: itemsHtml || ""
           };
@@ -1379,7 +1390,7 @@
             logicalW = outputW;
             logicalH = isFinite(snap.logicalH) ? snap.logicalH : outputH;
             if (logicalH < outputH) logicalH = outputH;
-            syncOutputReadoutAndCss();
+            syncOutputReadoutText();
             if (sceneBadge && opt) {
               sceneBadge.textContent = opt.getAttribute("data-label") || "";
             }
@@ -1415,9 +1426,6 @@
             if (outputZoomReadout) {
               outputZoomReadout.textContent =
                 Math.round(outputZoomFactor * 100) + "%";
-            }
-            if (snap.editorViewH) {
-              root.style.setProperty("--editor-view-h", snap.editorViewH);
             }
             applyTypographySnapshot(snap.typography);
             injectItemsHTML(snap.itemsHtml || "");
@@ -2101,25 +2109,28 @@
 
         function applyOutputScaleToPair(scaleInner, scaleOuter, s) {
           if (!scaleInner || !scaleOuter) return;
-          scaleInner.style.width = outputW + "px";
-          scaleInner.style.height = outputH + "px";
+          var d = getOutputPreviewPixelDims();
+          scaleInner.style.width = d.w + "px";
+          scaleInner.style.height = d.h + "px";
           scaleInner.style.transform = "scale(" + s + ")";
-          scaleOuter.style.width = outputW * s + "px";
-          scaleOuter.style.height = outputH * s + "px";
+          scaleOuter.style.width = d.w * s + "px";
+          scaleOuter.style.height = d.h * s + "px";
         }
 
         function layoutOutputScale() {
+          syncArCssVars();
           var pad = 24;
           var availW = Math.max(80, outputViewport.clientWidth - pad);
           var availH = Math.max(80, outputViewport.clientHeight - pad);
-          var sFit = Math.min(availW / outputW, availH / outputH) * 0.98;
+          var d = getOutputPreviewPixelDims();
+          var sFit = Math.min(availW / d.w, availH / d.h) * 0.98;
           if (sFit <= 0 || !isFinite(sFit)) sFit = 0.2;
           var s = sFit * outputZoomFactor;
           applyOutputScaleToPair(outputScaleInner, outputScaleOuter, s);
           if (outputMarqueeWindow && outputViewport) {
             if (outputViewport.classList.contains("is-marquee")) {
-              outputMarqueeWindow.style.width = outputW * s + "px";
-              outputMarqueeWindow.style.height = outputH * s + "px";
+              outputMarqueeWindow.style.width = d.w * s + "px";
+              outputMarqueeWindow.style.height = d.h * s + "px";
             } else {
               outputMarqueeWindow.style.width = "";
               outputMarqueeWindow.style.height = "";
@@ -2201,10 +2212,16 @@
           });
         }
         if (marqueeSpeed) {
-          marqueeSpeed.addEventListener("input", applyMarqueeState);
+          marqueeSpeed.addEventListener("input", function () {
+            applyMarqueeState();
+            layoutOutputScale();
+          });
         }
         if (marqueeDirection) {
-          marqueeDirection.addEventListener("change", applyMarqueeState);
+          marqueeDirection.addEventListener("change", function () {
+            applyMarqueeState();
+            layoutOutputScale();
+          });
         }
 
         var TEXT_DRAG_THRESHOLD = 6;
@@ -2486,7 +2503,7 @@
                 logicalH = fh0;
               }
             }
-            syncOutputReadoutAndCss();
+            syncOutputReadoutText();
             applyLogicalSize(logicalW, logicalH);
             if (sceneBadge && fo) {
               sceneBadge.textContent = fo.getAttribute("data-label") || "";
