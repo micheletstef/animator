@@ -76,13 +76,11 @@
 
       .num .plus {
         display: inline-block;
-        transform-origin: left center;
-        transition: opacity 0.18s ease, transform 0.18s ease;
+        transition: opacity 0.12s ease;
       }
 
       .num.no-plus .plus {
         opacity: 0;
-        transform: scaleX(0);
       }
     </style>
   </head>
@@ -105,10 +103,13 @@
         var W_MAX = 1000;
         var W_MIN = 200;
 
-        var COUNT_MS = 3800;
         var HOLD_START_MS = 600;
-        var HOLD_END_MS = 900;
-        var TOTAL_MS = HOLD_START_MS + COUNT_MS + HOLD_END_MS;
+        var DOWN_MS = 3200;
+        var HOLD_BOTTOM_MS = 700;
+        var UP_MS = 3200;
+        var HOLD_END_MS = 600;
+        var TOTAL_MS =
+          HOLD_START_MS + DOWN_MS + HOLD_BOTTOM_MS + UP_MS + HOLD_END_MS;
 
         function easeInOutCubic(t) {
           return t < 0.5
@@ -122,10 +123,19 @@
 
           if (elapsed < HOLD_START_MS) {
             p = 0;
-          } else if (elapsed < HOLD_START_MS + COUNT_MS) {
-            p = (elapsed - HOLD_START_MS) / COUNT_MS;
-          } else {
+          } else if (elapsed < HOLD_START_MS + DOWN_MS) {
+            p = (elapsed - HOLD_START_MS) / DOWN_MS;
+          } else if (elapsed < HOLD_START_MS + DOWN_MS + HOLD_BOTTOM_MS) {
             p = 1;
+          } else if (
+            elapsed <
+            HOLD_START_MS + DOWN_MS + HOLD_BOTTOM_MS + UP_MS
+          ) {
+            p =
+              1 -
+              (elapsed - HOLD_START_MS - DOWN_MS - HOLD_BOTTOM_MS) / UP_MS;
+          } else {
+            p = 0;
           }
 
           var eased = easeInOutCubic(p);
