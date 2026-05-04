@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>animator</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0e0e0e;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #e9e9e9;
+      }
+
+      body {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .sidebar {
+        flex: 0 0 200px;
+        height: 100%;
+        padding: 16px 14px;
+        border-right: 1px solid #1f1f1f;
+        background: #131313;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: auto;
+      }
+
+      .sidebar h1 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.06em;
+        color: #9a9a9a;
+      }
+
+      .nav-section {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .nav-title {
+        margin: 0 0 4px 2px;
+        text-transform: lowercase;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        color: #6a6a6a;
+      }
+
+      .nav-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .nav-list a {
+        display: block;
+        padding: 6px 8px;
+        border-radius: 4px;
+        color: #cfcfcf;
+        text-decoration: none;
+        text-transform: lowercase;
+        border: 1px solid transparent;
+      }
+
+      .nav-list a:hover,
+      .nav-list a:focus {
+        background: #1d1d1d;
+        color: #fff;
+        outline: none;
+      }
+
+      .nav-list a.is-active {
+        background: #fff;
+        color: #0e0e0e;
+        border-color: #fff;
+      }
+
+      .nav-list a .nav-meta {
+        display: block;
+        color: #6a6a6a;
+        font-size: 10px;
+        margin-top: 1px;
+      }
+
+      .nav-list a.is-active .nav-meta {
+        color: #555;
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        color: #5a5a5a;
+        font-size: 10px;
+        line-height: 1.5;
+      }
+
+      .sidebar-footer a {
+        color: #9a9a9a;
+        text-decoration: none;
+      }
+
+      .sidebar-footer a:hover {
+        color: #fff;
+      }
+
+      .viewer {
+        flex: 1 1 auto;
+        position: relative;
+        background: #0e0e0e;
+        overflow: hidden;
+      }
+
+      .viewer iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        background: #111;
+      }
+
+      .empty {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #6a6a6a;
+        text-transform: lowercase;
+        letter-spacing: 0.06em;
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar" aria-label="Animations">
+      <h1>animator</h1>
+
+      <div class="nav-section">
+        <p class="nav-title">animations</p>
+        <ul class="nav-list" id="navList"></ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <a href="index.html">open editor →</a>
+      </div>
+    </aside>
+
+    <main class="viewer" id="viewer">
+      <div class="empty" id="empty" hidden>select an animation</div>
+      <iframe
+        id="frame"
+        title="Animation"
+        src="about:blank"
+        allow="autoplay; clipboard-write"
+      ></iframe>
+    </main>
+
+    <script>
+      (function () {
+        var ANIMATIONS = [
+          {
+            id: "spf",
+            label: "spf 100+ → 8",
+            meta: "weight + count animation",
+            url: "spf.html",
+          },
+          {
+            id: "marquee",
+            label: "names marquee",
+            meta: "vertical scrolling weights",
+            url: "marquee.html",
+          },
+        ];
+
+        var navList = document.getElementById("navList");
+        var frame = document.getElementById("frame");
+        var empty = document.getElementById("empty");
+
+        function render(activeId) {
+          navList.innerHTML = "";
+          ANIMATIONS.forEach(function (a) {
+            var li = document.createElement("li");
+            var aEl = document.createElement("a");
+            aEl.href = "#" + a.id;
+            aEl.textContent = a.label;
+            if (a.meta) {
+              var meta = document.createElement("span");
+              meta.className = "nav-meta";
+              meta.textContent = a.meta;
+              aEl.appendChild(meta);
+            }
+            if (a.id === activeId) {
+              aEl.classList.add("is-active");
+              aEl.setAttribute("aria-current", "page");
+            }
+            li.appendChild(aEl);
+            navList.appendChild(li);
+          });
+        }
+
+        function findById(id) {
+          for (var i = 0; i < ANIMATIONS.length; i++) {
+            if (ANIMATIONS[i].id === id) return ANIMATIONS[i];
+          }
+          return null;
+        }
+
+        function load(id) {
+          var anim = findById(id);
+          if (!anim) {
+            frame.src = "about:blank";
+            frame.hidden = true;
+            empty.hidden = false;
+            render(null);
+            document.title = "animator";
+            return;
+          }
+          empty.hidden = true;
+          frame.hidden = false;
+          if (frame.getAttribute("data-current") !== anim.url) {
+            frame.src = anim.url;
+            frame.setAttribute("data-current", anim.url);
+          }
+          render(anim.id);
+          document.title = "animator — " + anim.label;
+          try {
+            localStorage.setItem("animator:overview:last", anim.id);
+          } catch (e) {}
+        }
+
+        function readHash() {
+          var h = (window.location.hash || "").replace(/^#/, "").trim();
+          return h || null;
+        }
+
+        function initial() {
+          var fromHash = readHash();
+          if (fromHash && findById(fromHash)) return fromHash;
+          var saved = null;
+          try {
+            saved = localStorage.getItem("animator:overview:last");
+          } catch (e) {}
+          if (saved && findById(saved)) return saved;
+          return ANIMATIONS.length ? ANIMATIONS[0].id : null;
+        }
+
+        window.addEventListener("hashchange", function () {
+          var id = readHash();
+          if (id && findById(id)) {
+            load(id);
+          }
+        });
+
+        var startId = initial();
+        if (startId && !readHash()) {
+          history.replaceState(null, "", "#" + startId);
+        }
+        load(startId);
+      })();
+    </script>
+  </body>
+</html>
