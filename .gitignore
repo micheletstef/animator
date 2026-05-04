@@ -1,0 +1,3 @@
+# Server-only webhook (secrets); keep deploy.example.php in Git instead.
+deploy.php
+deploy.log
