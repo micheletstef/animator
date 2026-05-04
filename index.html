@@ -486,7 +486,7 @@
         letter-spacing: 0px;
         word-spacing: 0px;
         word-break: break-word;
-        cursor: grab;
+        cursor: text;
       }
 
       .artboard-text-inner:focus {
@@ -835,8 +835,11 @@
             <h2 class="settings-title">text</h2>
           </div>
           <p class="typography-selection-hint">
-            Select a range to set character and axis styles on that range only; otherwise the
-            whole frame updates.
+            Click in the frame, drag to select characters (like InDesign), then adjust font,
+            size, color, tracking, or variable axes — only the selection changes. With no
+            selection, settings apply to the whole frame. Move the frame with the top
+            <strong>move</strong> strip or hold <strong>⌥ option</strong> (Alt) and drag the
+            text area.
           </p>
           <div class="settings-row">
             <span class="settings-label">font</span>
@@ -2496,8 +2499,6 @@
           });
         }
 
-        var TEXT_DRAG_THRESHOLD = 6;
-
         function attachFrameResize(wrap, inner, btn, corner) {
           btn.addEventListener("mousedown", function (e) {
             if (e.button !== 0) return;
@@ -2627,40 +2628,12 @@
           if (handle) attachDragFixed(handle, wrap, parent);
           inner.addEventListener("mousedown", function (e) {
             if (e.button !== 0) return;
-            if (e.altKey) {
-              e.preventDefault();
-              if (document.activeElement === inner) inner.blur();
-              selectTextWrap(wrap);
-              setActiveTextInner(inner);
-              beginDragItem(wrap, parent, e.clientX, e.clientY);
-              return;
-            }
-            var sx = e.clientX;
-            var sy = e.clientY;
-            var sl = wrap.offsetLeft;
-            var st = wrap.offsetTop;
-            var moved = false;
-            function onMove(ev) {
-              if (moved) return;
-              if (
-                Math.abs(ev.clientX - sx) < TEXT_DRAG_THRESHOLD &&
-                Math.abs(ev.clientY - sy) < TEXT_DRAG_THRESHOLD
-              ) {
-                return;
-              }
-              moved = true;
-              ev.preventDefault();
-              if (document.activeElement === inner) inner.blur();
-              window.removeEventListener("mousemove", onMove);
-              window.removeEventListener("mouseup", onUp);
-              beginDragItem(wrap, parent, sx, sy, sl, st);
-            }
-            function onUp() {
-              window.removeEventListener("mousemove", onMove);
-              window.removeEventListener("mouseup", onUp);
-            }
-            window.addEventListener("mousemove", onMove);
-            window.addEventListener("mouseup", onUp);
+            if (!e.altKey) return;
+            e.preventDefault();
+            if (document.activeElement === inner) inner.blur();
+            selectTextWrap(wrap);
+            setActiveTextInner(inner);
+            beginDragItem(wrap, parent, e.clientX, e.clientY);
           });
         }
 
