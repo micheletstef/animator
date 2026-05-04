@@ -85,14 +85,7 @@
         font-size: 12px;
       }
 
-      .marquee-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
-      }
-
-      .marquee-choice {
+      .zoom-fit-btn {
         border: 0;
         background: transparent;
         color: #1f1f1f;
@@ -101,17 +94,18 @@
         font-family: "Courier New", Courier, monospace;
         font-size: 12px;
         line-height: 1.25;
+        text-transform: lowercase;
       }
 
-      .marquee-choice.inactive {
-        color: #5d5d5d;
-        text-decoration: line-through;
-      }
-
-      .marquee-choice:hover,
-      .marquee-choice:focus {
+      .zoom-fit-btn:hover,
+      .zoom-fit-btn:focus {
         text-decoration: underline;
         outline: none;
+      }
+
+      .column-title .output-size-readout {
+        color: #6a6a6a;
+        font-weight: 400;
       }
 
       .settings-actions {
@@ -154,11 +148,59 @@
       }
 
       .column-title {
-        margin: 0 0 8px 0;
+        margin: 0;
         font-size: 12px;
         font-weight: 400;
         text-transform: lowercase;
         color: #6a6a6a;
+      }
+
+      .output-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+
+      .output-zoom-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .output-zoom-controls button {
+        border: 0;
+        background: transparent;
+        color: #1f1f1f;
+        padding: 0 4px;
+        cursor: pointer;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 14px;
+        line-height: 1;
+        min-width: 22px;
+      }
+
+      .output-zoom-controls button:hover,
+      .output-zoom-controls button:focus {
+        text-decoration: underline;
+        outline: none;
+      }
+
+      .output-zoom-readout {
+        font-size: 11px;
+        color: #6a6a6a;
+        min-width: 36px;
+        text-align: center;
+      }
+
+      .output-zoom-hint {
+        font-size: 10px;
+        color: #9a9a9a;
+        margin: 0 0 6px 0;
+        text-transform: lowercase;
       }
 
       .output-column,
@@ -178,17 +220,16 @@
       .output-viewport {
         flex: 1;
         min-height: min(70vh, 560px);
+        min-width: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 12px;
-        background: rgba(0, 0, 0, 0.03);
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        overflow: auto;
       }
 
       .output-scale-outer {
         flex-shrink: 0;
-        overflow: hidden;
       }
 
       .output-scale-inner {
@@ -198,7 +239,6 @@
       .scene {
         position: relative;
         background: var(--artboard-bg);
-        border: 1px solid rgba(0, 0, 0, 0.22);
         overflow: hidden;
       }
 
@@ -240,8 +280,6 @@
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        background: rgba(0, 0, 0, 0.02);
-        border: 1px solid rgba(0, 0, 0, 0.1);
       }
 
       .editor-scale-outer {
@@ -332,6 +370,67 @@
         flex: 1;
         min-height: 0;
       }
+
+      .typography-block {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(31, 31, 31, 0.12);
+      }
+
+      .typography-block[hidden] {
+        display: none !important;
+      }
+
+      .typography-block .settings-title {
+        color: #6a6a6a;
+      }
+
+      .typography-select {
+        width: 100%;
+        max-width: 100%;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 11px;
+        line-height: 1.2;
+        padding: 4px 6px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        background: #fff;
+        color: #1f1f1f;
+      }
+
+      .vf-axis-host {
+        margin-top: 8px;
+        padding-left: 2px;
+      }
+
+      .vf-axis-host[hidden] {
+        display: none !important;
+      }
+
+      .vf-axis-row {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      .vf-axis-row label {
+        text-transform: lowercase;
+        font-size: 11px;
+        color: #444;
+      }
+
+      .vf-axis-row input[type="range"] {
+        width: 100%;
+        max-width: 160px;
+      }
+
+      .vf-axis-val {
+        font-size: 10px;
+        color: #6a6a6a;
+        min-width: 28px;
+        text-align: right;
+      }
     </style>
   </head>
   <body>
@@ -342,56 +441,40 @@
         </div>
         <div class="settings-row">
           <span class="settings-label">format</span>
-          <div
-            class="marquee-toggle"
-            id="ratioGroup"
-            role="radiogroup"
-            aria-label="Frame format"
-          >
-            <button
-              type="button"
-              class="marquee-choice"
-              data-w="1080"
-              data-h="1440"
-              data-label="3:4"
-              role="radio"
-              aria-checked="true"
-            >
-              1080 × 1440
-            </button>
-            <span>/</span>
-            <button
-              type="button"
-              class="marquee-choice inactive"
-              data-w="1080"
-              data-h="1080"
-              data-label="1:1"
-              role="radio"
-              aria-checked="false"
-            >
-              1080 × 1080
-            </button>
-            <span>/</span>
-            <button
-              type="button"
-              class="marquee-choice inactive"
-              data-w="1080"
-              data-h="1920"
-              data-label="reels"
-              role="radio"
-              aria-checked="false"
-            >
-              1080 × 1920
-            </button>
-          </div>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">size</span>
-          <span class="settings-muted" id="metaReadout">1080 × 1440 (3:4)</span>
+          <select id="formatSelect" class="typography-select" aria-label="Frame format">
+            <option value="1080-1440" data-w="1080" data-h="1440" data-label="3:4" selected>
+              1080 × 1440 (3:4)
+            </option>
+            <option value="1080-1080" data-w="1080" data-h="1080" data-label="1:1">
+              1080 × 1080 (1:1)
+            </option>
+            <option value="1080-1920" data-w="1080" data-h="1920" data-label="reels">
+              1080 × 1920 (reels)
+            </option>
+          </select>
         </div>
         <div class="settings-row">
           <span class="settings-label">background</span>
           <input type="color" id="bgColor" value="#ffffff" aria-label="Artboard background" />
+        </div>
+        <div id="typographyBlock" class="typography-block" hidden>
+          <div class="settings-title-row">
+            <h2 class="settings-title">text</h2>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">font</span>
+            <select id="activeTextFontSelect" class="typography-select" aria-label="Font for selected text"></select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">color</span>
+            <input
+              type="color"
+              id="activeTextColor"
+              value="#1f1f1f"
+              aria-label="Text color for selected text"
+            />
+          </div>
+          <div id="vfAxisHost" class="vf-axis-host" hidden></div>
         </div>
         <div class="settings-row">
           <span class="settings-label">add</span>
@@ -404,7 +487,21 @@
       </aside>
 
       <section class="output-column" aria-label="Output preview">
-        <p class="column-title">output</p>
+        <div class="output-header">
+          <p class="column-title">
+            output
+            <span class="output-size-readout" id="outputSizeReadout">(1080 × 1440)</span>
+          </p>
+          <div class="output-zoom-controls" role="group" aria-label="Output zoom">
+            <button type="button" id="outputZoomOut" aria-label="Zoom out">−</button>
+            <span class="output-zoom-readout" id="outputZoomReadout">100%</span>
+            <button type="button" id="outputZoomIn" aria-label="Zoom in">+</button>
+            <button type="button" class="zoom-fit-btn" id="outputZoomFit" aria-label="Fit to view">
+              fit
+            </button>
+          </div>
+        </div>
+        <p class="output-zoom-hint">ctrl / ⌘ + scroll to zoom</p>
         <div class="output-viewport" id="outputViewport">
           <div class="output-scale-outer" id="outputScaleOuter">
             <div class="output-scale-inner" id="outputScaleInner">
@@ -449,13 +546,17 @@
         var root = document.documentElement;
         var scene = document.getElementById("scene");
         var sceneMirror = document.getElementById("sceneMirror");
-        var metaReadout = document.getElementById("metaReadout");
         var sceneBadge = document.getElementById("sceneBadge");
-        var buttons = document.querySelectorAll("#ratioGroup .marquee-choice");
+        var formatSelect = document.getElementById("formatSelect");
+        var outputSizeReadout = document.getElementById("outputSizeReadout");
         var bgColor = document.getElementById("bgColor");
         var addText = document.getElementById("addText");
         var addImage = document.getElementById("addImage");
         var imageFile = document.getElementById("imageFile");
+        var typographyBlock = document.getElementById("typographyBlock");
+        var activeTextFontSelect = document.getElementById("activeTextFontSelect");
+        var activeTextColor = document.getElementById("activeTextColor");
+        var vfAxisHost = document.getElementById("vfAxisHost");
 
         var outputViewport = document.getElementById("outputViewport");
         var outputScaleOuter = document.getElementById("outputScaleOuter");
@@ -464,20 +565,21 @@
         var editorScaleOuter = document.getElementById("editorScaleOuter");
         var editorScaleInner = document.getElementById("editorScaleInner");
         var editorResizeHandle = document.getElementById("editorResizeHandle");
+        var outputZoomInBtn = document.getElementById("outputZoomIn");
+        var outputZoomOutBtn = document.getElementById("outputZoomOut");
+        var outputZoomFitBtn = document.getElementById("outputZoomFit");
+        var outputZoomReadout = document.getElementById("outputZoomReadout");
 
         var logicalW = 1080;
         var logicalH = 1440;
         var mirrorTimer = null;
         var editorScaleStored = 0.25;
-
-        function gcd(a, b) {
-          return b ? gcd(b, a % b) : a;
-        }
-
-        function ratioLabel(w, h) {
-          var g = gcd(w, h);
-          return w / g + ":" + h / g;
-        }
+        var outputZoomFactor = 1;
+        var OUTPUT_ZOOM_MIN = 0.25;
+        var OUTPUT_ZOOM_MAX = 4;
+        var fontManifest = null;
+        var fontRegistry = {};
+        var activeTextInner = null;
 
         function applyLogicalSize(w, h) {
           logicalW = w;
@@ -491,8 +593,9 @@
         function setRatio(w, h, shortLabel) {
           root.style.setProperty("--ar-w", String(w));
           root.style.setProperty("--ar-h", String(h));
-          metaReadout.textContent =
-            w + " × " + h + " (" + ratioLabel(w, h) + ")";
+          if (outputSizeReadout) {
+            outputSizeReadout.textContent = "(" + w + " × " + h + ")";
+          }
           sceneBadge.textContent = shortLabel;
           scene.setAttribute(
             "aria-label",
@@ -503,23 +606,16 @@
           syncMirrorSoon(0);
         }
 
-        function activate(btn) {
-          buttons.forEach(function (b) {
-            var on = b === btn;
-            b.classList.toggle("inactive", !on);
-            b.setAttribute("aria-checked", on ? "true" : "false");
-          });
-          var w = parseInt(btn.getAttribute("data-w"), 10);
-          var h = parseInt(btn.getAttribute("data-h"), 10);
-          var label = btn.getAttribute("data-label") || "";
+        function applyFormatFromSelect() {
+          var opt = formatSelect.selectedOptions[0];
+          if (!opt) return;
+          var w = parseInt(opt.getAttribute("data-w"), 10);
+          var h = parseInt(opt.getAttribute("data-h"), 10);
+          var label = opt.getAttribute("data-label") || "";
           setRatio(w, h, label);
         }
 
-        buttons.forEach(function (btn) {
-          btn.addEventListener("click", function () {
-            activate(btn);
-          });
-        });
+        formatSelect.addEventListener("change", applyFormatFromSelect);
 
         function syncBgFromPicker() {
           root.style.setProperty("--artboard-bg", bgColor.value);
@@ -527,6 +623,246 @@
 
         bgColor.addEventListener("input", syncBgFromPicker);
         syncBgFromPicker();
+
+        function hideTypography() {
+          activeTextInner = null;
+          typographyBlock.hidden = true;
+          vfAxisHost.hidden = true;
+          vfAxisHost.innerHTML = "";
+        }
+
+        function readVfMap(inner) {
+          var raw = (inner.style && inner.style.fontVariationSettings) || "";
+          var map = {};
+          if (!raw) return map;
+          var re = /'([a-z]{4})'\s+([-.\d]+)/gi;
+          var m;
+          while ((m = re.exec(raw))) {
+            map[m[1].toLowerCase()] = parseFloat(m[2]);
+          }
+          return map;
+        }
+
+        function writeVfToInner(inner, map) {
+          var parts = [];
+          Object.keys(map).forEach(function (tag) {
+            parts.push("'" + tag + "' " + map[tag]);
+          });
+          inner.style.fontVariationSettings = parts.length ? parts.join(", ") : "";
+        }
+
+        function applyFontIdToInner(inner, fontId) {
+          var f = fontRegistry[fontId];
+          if (!inner || !f) return;
+          inner.dataset.fontId = fontId;
+          if (f.stack) {
+            inner.style.fontFamily = f.stack;
+            inner.style.fontVariationSettings = "";
+          } else if (f.cssFamily) {
+            inner.style.fontFamily = "'" + f.cssFamily + "', sans-serif";
+            if (f.variable && f.axes) {
+              var existing = readVfMap(inner);
+              var map = {};
+              f.axes.forEach(function (a) {
+                var v = existing[a.tag];
+                if (v === undefined || isNaN(v)) v = a.default;
+                map[a.tag] = v;
+              });
+              writeVfToInner(inner, map);
+            } else {
+              inner.style.fontVariationSettings = "";
+            }
+          }
+        }
+
+        function syncSelectFromInner() {
+          if (!activeTextInner) return;
+          var id = activeTextInner.dataset.fontId;
+          if (id && fontRegistry[id]) {
+            activeTextFontSelect.value = id;
+          } else if (fontManifest && fontManifest.defaultFontId) {
+            activeTextFontSelect.value = fontManifest.defaultFontId;
+          }
+        }
+
+        function renderVfPanel() {
+          vfAxisHost.innerHTML = "";
+          if (!activeTextInner) {
+            vfAxisHost.hidden = true;
+            return;
+          }
+          var id = activeTextInner.dataset.fontId;
+          var f = id ? fontRegistry[id] : null;
+          if (!f || !f.variable || !f.axes || !f.axes.length) {
+            vfAxisHost.hidden = true;
+            return;
+          }
+          vfAxisHost.hidden = false;
+          var vfMap = readVfMap(activeTextInner);
+          f.axes.forEach(function (axis) {
+            var row = document.createElement("div");
+            row.className = "vf-axis-row";
+            var lab = document.createElement("label");
+            lab.setAttribute("for", "vf-" + axis.tag);
+            lab.textContent = axis.name || axis.tag;
+            var wrap = document.createElement("div");
+            wrap.style.display = "flex";
+            wrap.style.alignItems = "center";
+            wrap.style.gap = "8px";
+            var rng = document.createElement("input");
+            rng.type = "range";
+            rng.id = "vf-" + axis.tag;
+            rng.min = String(axis.min);
+            rng.max = String(axis.max);
+            rng.step = axis.step != null ? String(axis.step) : "1";
+            var cur = vfMap[axis.tag];
+            if (cur === undefined || isNaN(cur)) cur = axis.default;
+            rng.value = String(cur);
+            var val = document.createElement("span");
+            val.className = "vf-axis-val";
+            val.textContent = String(Math.round(parseFloat(rng.value) * 10) / 10);
+            rng.addEventListener("input", function () {
+              var v = parseFloat(rng.value);
+              val.textContent = String(Math.round(v * 10) / 10);
+              var m = readVfMap(activeTextInner);
+              m[axis.tag] = v;
+              writeVfToInner(activeTextInner, m);
+              syncMirrorSoon(24);
+            });
+            wrap.appendChild(rng);
+            wrap.appendChild(val);
+            row.appendChild(lab);
+            row.appendChild(wrap);
+            vfAxisHost.appendChild(row);
+          });
+        }
+
+        function computedColorToHex(el) {
+          var rgb = getComputedStyle(el).color;
+          var m = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+          if (!m) return "#1f1f1f";
+          return (
+            "#" +
+            [m[1], m[2], m[3]]
+              .map(function (x) {
+                var h = parseInt(x, 10).toString(16);
+                return h.length === 1 ? "0" + h : h;
+              })
+              .join("")
+          );
+        }
+
+        function syncTextColorFromInner() {
+          if (!activeTextInner || !activeTextColor) return;
+          activeTextColor.value = computedColorToHex(activeTextInner);
+        }
+
+        function setActiveTextInner(inner) {
+          if (!inner || !scene.contains(inner)) return;
+          activeTextInner = inner;
+          typographyBlock.hidden = false;
+          if (
+            (!inner.dataset.fontId || !fontRegistry[inner.dataset.fontId]) &&
+            fontManifest &&
+            fontManifest.defaultFontId
+          ) {
+            applyFontIdToInner(inner, fontManifest.defaultFontId);
+          }
+          syncSelectFromInner();
+          syncTextColorFromInner();
+          renderVfPanel();
+        }
+
+        document.addEventListener("mousedown", function (e) {
+          var t = e.target;
+          if (typographyBlock.contains(t)) return;
+          if (t.closest && t.closest(".artboard-text")) return;
+          hideTypography();
+        });
+
+        scene.addEventListener(
+          "mousedown",
+          function (e) {
+            var inner = e.target.closest && e.target.closest(".artboard-text-inner");
+            if (inner && scene.contains(inner)) setActiveTextInner(inner);
+          },
+          true
+        );
+
+        scene.addEventListener("focusin", function (e) {
+          var inner = e.target.closest && e.target.closest(".artboard-text-inner");
+          if (inner && scene.contains(inner)) setActiveTextInner(inner);
+        });
+
+        activeTextFontSelect.addEventListener("change", function () {
+          if (!activeTextInner) return;
+          applyFontIdToInner(activeTextInner, activeTextFontSelect.value);
+          renderVfPanel();
+          syncMirrorSoon(0);
+        });
+
+        activeTextColor.addEventListener("input", function () {
+          if (!activeTextInner) return;
+          activeTextInner.style.color = activeTextColor.value;
+          syncMirrorSoon(32);
+        });
+
+        function injectFontFaces(manifest) {
+          var css = "";
+          manifest.groups.forEach(function (g) {
+            g.fonts.forEach(function (f) {
+              if (!f.path || !f.cssFamily) return;
+              var u = "fonts/" + f.path.replace(/^\//, "");
+              if (f.variable) {
+                css +=
+                  "@font-face{font-family:'" +
+                  f.cssFamily +
+                  "';src:url('" +
+                  u +
+                  "') format('woff2-variations');font-weight:100 900;font-style:oblique 0deg 10deg;font-display:swap;}";
+              } else {
+                css +=
+                  "@font-face{font-family:'" +
+                  f.cssFamily +
+                  "';src:url('" +
+                  u +
+                  "') format('woff2');font-weight:" +
+                  (f.weight != null ? f.weight : 400) +
+                  ";font-style:" +
+                  (f.style || "normal") +
+                  ";font-display:swap;}";
+              }
+            });
+          });
+          if (!css) return;
+          var st = document.createElement("style");
+          st.id = "dynamic-font-faces";
+          st.textContent = css;
+          document.head.appendChild(st);
+        }
+
+        function buildFontSelect(manifest) {
+          activeTextFontSelect.innerHTML = "";
+          fontRegistry = {};
+          manifest.groups.forEach(function (g) {
+            var og = document.createElement("optgroup");
+            og.label = g.label;
+            g.fonts.forEach(function (f) {
+              fontRegistry[f.id] = f;
+              var opt = document.createElement("option");
+              opt.value = f.id;
+              opt.textContent = f.label;
+              og.appendChild(opt);
+            });
+            activeTextFontSelect.appendChild(og);
+          });
+        }
+
+        function initFontsFromManifest(manifest) {
+          fontManifest = manifest;
+          injectFontFaces(manifest);
+          buildFontSelect(manifest);
+        }
 
         function syncMirror() {
           sceneMirror.innerHTML = scene.innerHTML;
@@ -547,12 +883,27 @@
           }, d);
         }
 
+        function clampOutputZoom(z) {
+          if (!isFinite(z)) return 1;
+          return Math.max(OUTPUT_ZOOM_MIN, Math.min(OUTPUT_ZOOM_MAX, z));
+        }
+
+        function setOutputZoom(next) {
+          outputZoomFactor = clampOutputZoom(next);
+          if (outputZoomReadout) {
+            outputZoomReadout.textContent =
+              Math.round(outputZoomFactor * 100) + "%";
+          }
+          layoutOutputScale();
+        }
+
         function layoutOutputScale() {
           var pad = 24;
           var availW = Math.max(80, outputViewport.clientWidth - pad);
           var availH = Math.max(80, outputViewport.clientHeight - pad);
-          var s = Math.min(availW / logicalW, availH / logicalH) * 0.98;
-          if (s <= 0 || !isFinite(s)) s = 0.2;
+          var sFit = Math.min(availW / logicalW, availH / logicalH) * 0.98;
+          if (sFit <= 0 || !isFinite(sFit)) sFit = 0.2;
+          var s = sFit * outputZoomFactor;
           outputScaleInner.style.width = logicalW + "px";
           outputScaleInner.style.height = logicalH + "px";
           outputScaleInner.style.transform = "scale(" + s + ")";
@@ -581,6 +932,28 @@
         var roOut = new ResizeObserver(layoutScales);
         roOut.observe(outputViewport);
         roOut.observe(editorScroll);
+
+        outputZoomInBtn.addEventListener("click", function () {
+          setOutputZoom(outputZoomFactor * 1.15);
+        });
+        outputZoomOutBtn.addEventListener("click", function () {
+          setOutputZoom(outputZoomFactor / 1.15);
+        });
+        outputZoomFitBtn.addEventListener("click", function () {
+          setOutputZoom(1);
+        });
+
+        outputViewport.addEventListener(
+          "wheel",
+          function (e) {
+            if (!e.ctrlKey && !e.metaKey) return;
+            e.preventDefault();
+            var delta = e.deltaY;
+            var factor = delta > 0 ? 1 / 1.08 : 1.08;
+            setOutputZoom(outputZoomFactor * factor);
+          },
+          { passive: false }
+        );
 
         function attachDragFixed(handle, item, parent) {
           handle.addEventListener("mousedown", function (e) {
@@ -627,6 +1000,7 @@
           inner.contentEditable = "true";
           inner.setAttribute("spellcheck", "true");
           inner.textContent = "text";
+          inner.style.color = activeTextColor ? activeTextColor.value : "#1f1f1f";
           inner.addEventListener("input", function () {
             syncMirrorSoon(48);
           });
@@ -634,6 +1008,10 @@
           wrap.appendChild(inner);
           scene.appendChild(wrap);
           attachDragFixed(handle, wrap, scene);
+          if (fontManifest && fontManifest.defaultFontId) {
+            applyFontIdToInner(inner, fontManifest.defaultFontId);
+          }
+          setActiveTextInner(inner);
           syncMirrorSoon(0);
         });
 
@@ -685,9 +1063,37 @@
           window.addEventListener("mouseup", onUp);
         });
 
-        applyLogicalSize(1080, 1440);
-        layoutScales();
-        syncMirror();
+        function boot() {
+          applyLogicalSize(1080, 1440);
+          layoutScales();
+          syncMirror();
+        }
+
+        fetch("fonts/fonts.json")
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (manifest) {
+            initFontsFromManifest(manifest);
+            boot();
+          })
+          .catch(function () {
+            activeTextFontSelect.innerHTML = "";
+            var og = document.createElement("optgroup");
+            og.label = "system";
+            var opt = document.createElement("option");
+            opt.value = "system-ui";
+            opt.textContent = "system ui";
+            og.appendChild(opt);
+            activeTextFontSelect.appendChild(og);
+            fontRegistry["system-ui"] = {
+              id: "system-ui",
+              label: "system ui",
+              stack: "system-ui, sans-serif",
+            };
+            fontManifest = { defaultFontId: "system-ui", groups: [] };
+            boot();
+          });
       })();
     </script>
   </body>
