@@ -337,11 +337,6 @@
         height: 100%;
       }
 
-      .output-viewport.is-marquee .marquee-art-cell {
-        width: calc(var(--ar-w) * 1px);
-        height: calc(var(--ar-h) * 1px);
-      }
-
       .output-viewport:not(.is-marquee) .marquee-art-cell--dup {
         display: none !important;
       }
@@ -506,6 +501,17 @@
         font-family: inherit;
         color: inherit;
         cursor: inherit;
+      }
+
+      .artboard-text-run {
+        display: inline;
+      }
+
+      .typography-selection-hint {
+        font-size: 11px;
+        color: #8a8a8a;
+        margin: -2px 0 10px 0;
+        line-height: 1.35;
       }
 
       .artboard-item.artboard-text {
@@ -828,6 +834,10 @@
           <div class="settings-title-row">
             <h2 class="settings-title">text</h2>
           </div>
+          <p class="typography-selection-hint">
+            Select a range to set character and axis styles on that range only; otherwise the
+            whole frame updates.
+          </p>
           <div class="settings-row">
             <span class="settings-label">font</span>
             <select id="activeTextFontSelect" class="typography-select" aria-label="Font for selected text"></select>
@@ -1091,6 +1101,8 @@
         var textCase = document.getElementById("textCase");
         var textDecUnderline = document.getElementById("textDecUnderline");
         var textDecStrike = document.getElementById("textDecStrike");
+        var TEXT_RUN_CLASS = "artboard-text-run";
+        var typographySelectionSyncTimer = null;
 
         var outputViewport = document.getElementById("outputViewport");
         var outputMarqueeTrack = document.getElementById("outputMarqueeTrack");
@@ -1140,21 +1152,24 @@
         }
 
         function syncArCssVars() {
-          var inMq = outputViewport && outputViewport.classList.contains("is-marquee");
-          if (inMq) {
-            root.style.setProperty("--ar-w", String(logicalW));
-            root.style.setProperty("--ar-h", String(logicalH));
-          } else {
-            root.style.setProperty("--ar-w", String(outputW));
-            root.style.setProperty("--ar-h", String(outputH));
-          }
+          root.style.setProperty("--ar-w", String(outputW));
+          root.style.setProperty("--ar-h", String(outputH));
         }
 
-        function getOutputPreviewPixelDims() {
-          if (outputViewport && outputViewport.classList.contains("is-marquee")) {
-            return { w: logicalW, h: logicalH };
+        function applyMarqueeArtCellCanvasSize() {
+          if (!marqueeArtCellA || !marqueeArtCellB) return;
+          var inMq = outputViewport && outputViewport.classList.contains("is-marquee");
+          if (inMq) {
+            marqueeArtCellA.style.width = logicalW + "px";
+            marqueeArtCellA.style.height = logicalH + "px";
+            marqueeArtCellB.style.width = logicalW + "px";
+            marqueeArtCellB.style.height = logicalH + "px";
+          } else {
+            marqueeArtCellA.style.width = "";
+            marqueeArtCellA.style.height = "";
+            marqueeArtCellB.style.width = "";
+            marqueeArtCellB.style.height = "";
           }
-          return { w: outputW, h: outputH };
         }
 
         function syncOutputReadoutAndCss() {
@@ -1592,6 +1607,10 @@
         syncBgFromPicker();
 
         function hideTypography() {
+          if (typographySelectionSyncTimer) {
+            clearTimeout(typographySelectionSyncTimer);
+            typographySelectionSyncTimer = null;
+          }
           clearTextFrameSelection();
           activeTextInner = null;
           typographyBlock.hidden = true;
@@ -1600,10 +1619,116 @@
           if (vfAxesTitle) vfAxesTitle.hidden = true;
         }
 
-        function readVfMap(inner) {
-          var raw = (inner.style && inner.style.fontVariationSettings) || "";
+        function rangeCoversNodeContents(node, range) {
+          var r = document.createRange();
+          r.selectNodeContents(node);
+          return (
+            range.compareBoundaryPoints(Range.START_TO_START, r) === 0 &&
+            range.compareBoundaryPoints(Range.END_TO_END, r) === 0
+          );
+        }
+
+        function getCollapsedStyleTarget(inner) {
+          var sel = window.getSelection();
+          if (!sel.rangeCount || !inner.contains(sel.anchorNode)) return inner;
+          var r = sel.getRangeAt(0);
+          if (!r.collapsed) return inner;
+          var n = r.startContainer;
+          if (n.nodeType === Node.TEXT_NODE) {
+            var p = n.parentElement;
+            while (p && p !== inner) {
+              if (p.classList && p.classList.contains(TEXT_RUN_CLASS)) return p;
+              p = p.parentElement;
+            }
+            return inner;
+          }
+          if (n !== inner && n.nodeType === Node.ELEMENT_NODE) {
+            var q = n;
+            while (q && q !== inner) {
+              if (q.classList && q.classList.contains(TEXT_RUN_CLASS)) return q;
+              q = q.parentElement;
+            }
+          }
+          return inner;
+        }
+
+        function getTypographySyncElement(inner) {
+          if (!inner) return null;
+          var sel = window.getSelection();
+          if (!sel.rangeCount || !inner.contains(sel.commonAncestorContainer)) {
+            return inner;
+          }
+          var range = sel.getRangeAt(0);
+          if (!range.collapsed) {
+            var n = range.startContainer;
+            var el = n.nodeType === Node.TEXT_NODE ? n.parentElement : n;
+            while (el && el !== inner) {
+              if (el.classList && el.classList.contains(TEXT_RUN_CLASS)) return el;
+              el = el.parentElement;
+            }
+            return inner;
+          }
+          return getCollapsedStyleTarget(inner);
+        }
+
+        function resolveTypographyApplyTarget(inner) {
+          var sel = window.getSelection();
+          if (!sel.rangeCount || !inner.contains(sel.commonAncestorContainer)) {
+            return { target: inner, wrapped: false };
+          }
+          var range = sel.getRangeAt(0);
+          if (range.collapsed) {
+            return { target: getCollapsedStyleTarget(inner), wrapped: false };
+          }
+          if (rangeCoversNodeContents(inner, range)) {
+            return { target: inner, wrapped: false };
+          }
+          var ca = range.commonAncestorContainer;
+          if (
+            ca.nodeType === Node.ELEMENT_NODE &&
+            ca.classList.contains(TEXT_RUN_CLASS) &&
+            rangeCoversNodeContents(ca, range)
+          ) {
+            return { target: ca, wrapped: false };
+          }
+          try {
+            var frag = range.extractContents();
+            var span = document.createElement("span");
+            span.className = TEXT_RUN_CLASS;
+            span.appendChild(frag);
+            range.insertNode(span);
+            inner.normalize();
+            sel.removeAllRanges();
+            var nr = document.createRange();
+            nr.selectNodeContents(span);
+            sel.addRange(nr);
+            return { target: span, wrapped: true };
+          } catch (err) {
+            return { target: inner, wrapped: false };
+          }
+        }
+
+        function readDatasetAlongChain(key, fromEl, rootInner) {
+          var x = fromEl;
+          while (x) {
+            if (x.dataset && x.dataset[key] != null && x.dataset[key] !== "") {
+              var v = parseFloat(x.dataset[key]);
+              if (isFinite(v)) return v;
+            }
+            if (x === rootInner) break;
+            x = x.parentElement;
+          }
+          return key === "horizScale" ? 100 : 0;
+        }
+
+        function readVfMap(el) {
+          var raw = (el.style && el.style.fontVariationSettings) || "";
+          if (!raw || raw === "normal") {
+            var cs = getComputedStyle(el).fontVariationSettings;
+            if (cs && cs !== "normal") raw = cs;
+          }
           var map = {};
-          if (!raw) return map;
+          if (!raw || raw === "normal") return map;
           var re = /'([a-zA-Z]{4})'\s+([-.\d]+)/gi;
           var m;
           while ((m = re.exec(raw))) {
@@ -1612,25 +1737,25 @@
           return map;
         }
 
-        function writeVfToInner(inner, map) {
+        function writeVfToElement(el, map) {
           var parts = [];
           Object.keys(map).forEach(function (tag) {
             parts.push("'" + String(tag).toLowerCase() + "' " + map[tag]);
           });
-          inner.style.fontVariationSettings = parts.length ? parts.join(", ") : "";
+          el.style.fontVariationSettings = parts.length ? parts.join(", ") : "";
         }
 
-        function applyFontIdToInner(inner, fontId) {
+        function applyFontIdToElement(el, fontId) {
           var f = fontRegistry[fontId];
-          if (!inner || !f) return;
-          inner.dataset.fontId = fontId;
+          if (!el || !f) return;
+          el.dataset.fontId = fontId;
           if (f.stack) {
-            inner.style.fontFamily = f.stack;
-            inner.style.fontVariationSettings = "";
+            el.style.fontFamily = f.stack;
+            el.style.fontVariationSettings = "";
           } else if (f.cssFamily) {
-            inner.style.fontFamily = "'" + f.cssFamily + "', sans-serif";
+            el.style.fontFamily = "'" + f.cssFamily + "', sans-serif";
             if (f.variable && f.axes) {
-              var existing = readVfMap(inner);
+              var existing = readVfMap(el);
               var map = {};
               f.axes.forEach(function (a) {
                 var tag = String(a.tag).toLowerCase();
@@ -1638,16 +1763,23 @@
                 if (v === undefined || isNaN(v)) v = a.default;
                 map[tag] = v;
               });
-              writeVfToInner(inner, map);
+              writeVfToElement(el, map);
             } else {
-              inner.style.fontVariationSettings = "";
+              el.style.fontVariationSettings = "";
             }
           }
         }
 
+        function applyFontIdToInner(inner, fontId) {
+          applyFontIdToElement(inner, fontId);
+        }
+
         function syncSelectFromInner() {
           if (!activeTextInner) return;
-          var id = activeTextInner.dataset.fontId;
+          var syncEl = getTypographySyncElement(activeTextInner);
+          var id =
+            (syncEl && syncEl.dataset && syncEl.dataset.fontId) ||
+            activeTextInner.dataset.fontId;
           if (id && fontRegistry[id]) {
             activeTextFontSelect.value = id;
           } else if (fontManifest && fontManifest.defaultFontId) {
@@ -1662,7 +1794,10 @@
             if (vfAxesTitle) vfAxesTitle.hidden = true;
             return;
           }
-          var id = activeTextInner.dataset.fontId;
+          var syncEl = getTypographySyncElement(activeTextInner);
+          var id =
+            (syncEl && syncEl.dataset && syncEl.dataset.fontId) ||
+            activeTextInner.dataset.fontId;
           var f = id ? fontRegistry[id] : null;
           if (!f || !f.variable || !f.axes || !f.axes.length) {
             vfAxisHost.hidden = true;
@@ -1671,7 +1806,7 @@
           }
           vfAxisHost.hidden = false;
           if (vfAxesTitle) vfAxesTitle.hidden = false;
-          var vfMap = readVfMap(activeTextInner);
+          var vfMap = readVfMap(syncEl);
           f.axes.forEach(function (axis) {
             var tag = String(axis.tag).toLowerCase();
             var row = document.createElement("div");
@@ -1703,9 +1838,11 @@
             rng.addEventListener("input", function () {
               var v = parseFloat(rng.value);
               val.textContent = String(Math.round(v * 100) / 100);
-              var m = readVfMap(activeTextInner);
+              var res = resolveTypographyApplyTarget(activeTextInner);
+              var node = res.target;
+              var m = readVfMap(node);
               m[tag] = v;
-              writeVfToInner(activeTextInner, m);
+              writeVfToElement(node, m);
               syncMirrorSoon(24);
             });
             wrap.appendChild(rng);
@@ -1733,7 +1870,8 @@
 
         function syncTextColorFromInner() {
           if (!activeTextInner || !activeTextColor) return;
-          activeTextColor.value = computedColorToHex(activeTextInner);
+          var syncEl = getTypographySyncElement(activeTextInner);
+          activeTextColor.value = computedColorToHex(syncEl);
         }
 
         function parseCssPx(val, fallback) {
@@ -1765,20 +1903,22 @@
           el.dataset.baselineShift = "0";
         }
 
-        function applyTextTransformFromCase() {
-          if (!activeTextInner) return;
-          var el = activeTextInner;
+        function applyTextTransformFromCase(target) {
+          if (!target) return;
           var v = textCase.value;
-          el.style.textTransform = "none";
-          el.style.fontVariantCaps = "normal";
-          if (v === "uppercase") el.style.textTransform = "uppercase";
-          else if (v === "small-caps") el.style.fontVariantCaps = "small-caps";
-          else if (v === "all-small-caps") el.style.fontVariantCaps = "all-small-caps";
+          target.style.textTransform = "none";
+          target.style.fontVariantCaps = "normal";
+          if (v === "uppercase") target.style.textTransform = "uppercase";
+          else if (v === "small-caps") target.style.fontVariantCaps = "small-caps";
+          else if (v === "all-small-caps") {
+            target.style.fontVariantCaps = "all-small-caps";
+          }
         }
 
         function applyMetricsFromPanelToActive() {
           if (!activeTextInner) return;
-          var el = activeTextInner;
+          var res = resolveTypographyApplyTarget(activeTextInner);
+          var el = res.target;
           var fsNum = parseFloat(textFontSize.value);
           if (!isFinite(fsNum) || fsNum <= 0) fsNum = 32;
           var lhMult = parseFloat(textLineHeight.value);
@@ -1791,8 +1931,8 @@
           var ws = parseFloat(textWordSpace.value);
           if (!isFinite(ws)) ws = 0;
           el.style.wordSpacing = ws + "px";
-          el.style.textAlign = textAlign.value;
-          applyTextTransformFromCase();
+          activeTextInner.style.textAlign = textAlign.value;
+          applyTextTransformFromCase(el);
           var decs = [];
           if (textDecUnderline.checked) decs.push("underline");
           if (textDecStrike.checked) decs.push("line-through");
@@ -1811,7 +1951,8 @@
 
         function syncTextMetricsFromInner() {
           if (!activeTextInner) return;
-          var el = activeTextInner;
+          var syncEl = getTypographySyncElement(activeTextInner);
+          var el = syncEl;
           var cs = getComputedStyle(el);
           var fs = parseCssPx(el.style.fontSize, null);
           if (fs == null) fs = parseCssPx(cs.fontSize, 32);
@@ -1837,9 +1978,18 @@
           textWordSpace.value = String(
             parseCssPx(el.style.wordSpacing, parseCssPx(cs.wordSpacing, 0))
           );
-          textHorizScale.value = String(parseFloat(el.dataset.horizScale) || 100);
-          textBaselineShift.value = String(parseFloat(el.dataset.baselineShift) || 0);
-          var ta = (el.style.textAlign || cs.textAlign || "left").toLowerCase();
+          textHorizScale.value = String(
+            readDatasetAlongChain("horizScale", el, activeTextInner)
+          );
+          textBaselineShift.value = String(
+            readDatasetAlongChain("baselineShift", el, activeTextInner)
+          );
+          var innerCs = getComputedStyle(activeTextInner);
+          var ta = (
+            activeTextInner.style.textAlign ||
+            innerCs.textAlign ||
+            "left"
+          ).toLowerCase();
           if (ta === "start") ta = "left";
           if (ta === "end") ta = "right";
           if (["left", "center", "right", "justify"].indexOf(ta) < 0) ta = "left";
@@ -1879,6 +2029,26 @@
             textDecStrike.addEventListener("change", applyMetricsFromPanelToActive);
         }
         bindTypographyMetrics();
+
+        document.addEventListener("selectionchange", function () {
+          if (!activeTextInner || typographyBlock.hidden) return;
+          var ae = document.activeElement;
+          if (
+            ae !== activeTextInner &&
+            !(ae && activeTextInner.contains(ae))
+          ) {
+            return;
+          }
+          clearTimeout(typographySelectionSyncTimer);
+          typographySelectionSyncTimer = setTimeout(function () {
+            typographySelectionSyncTimer = null;
+            if (!activeTextInner) return;
+            syncSelectFromInner();
+            syncTextColorFromInner();
+            syncTextMetricsFromInner();
+            renderVfPanel();
+          }, 48);
+        });
 
         function setActiveTextInner(inner) {
           if (!inner || !scene.contains(inner)) return;
@@ -1945,14 +2115,16 @@
 
         activeTextFontSelect.addEventListener("change", function () {
           if (!activeTextInner) return;
-          applyFontIdToInner(activeTextInner, activeTextFontSelect.value);
+          var res = resolveTypographyApplyTarget(activeTextInner);
+          applyFontIdToElement(res.target, activeTextFontSelect.value);
           renderVfPanel();
           syncMirrorSoon(0);
         });
 
         activeTextColor.addEventListener("input", function () {
           if (!activeTextInner) return;
-          activeTextInner.style.color = activeTextColor.value;
+          var res = resolveTypographyApplyTarget(activeTextInner);
+          res.target.style.color = activeTextColor.value;
           syncMirrorSoon(32);
         });
 
@@ -2081,6 +2253,7 @@
           } else if (marqueeArtCellB) {
             marqueeArtCellB.innerHTML = "";
           }
+          applyMarqueeArtCellCanvasSize();
         }
 
         function syncMirrorSoon(ms) {
@@ -2109,12 +2282,11 @@
 
         function applyOutputScaleToPair(scaleInner, scaleOuter, s) {
           if (!scaleInner || !scaleOuter) return;
-          var d = getOutputPreviewPixelDims();
-          scaleInner.style.width = d.w + "px";
-          scaleInner.style.height = d.h + "px";
+          scaleInner.style.width = outputW + "px";
+          scaleInner.style.height = outputH + "px";
           scaleInner.style.transform = "scale(" + s + ")";
-          scaleOuter.style.width = d.w * s + "px";
-          scaleOuter.style.height = d.h * s + "px";
+          scaleOuter.style.width = outputW * s + "px";
+          scaleOuter.style.height = outputH * s + "px";
         }
 
         function layoutOutputScale() {
@@ -2122,20 +2294,20 @@
           var pad = 24;
           var availW = Math.max(80, outputViewport.clientWidth - pad);
           var availH = Math.max(80, outputViewport.clientHeight - pad);
-          var d = getOutputPreviewPixelDims();
-          var sFit = Math.min(availW / d.w, availH / d.h) * 0.98;
+          var sFit = Math.min(availW / outputW, availH / outputH) * 0.98;
           if (sFit <= 0 || !isFinite(sFit)) sFit = 0.2;
           var s = sFit * outputZoomFactor;
           applyOutputScaleToPair(outputScaleInner, outputScaleOuter, s);
           if (outputMarqueeWindow && outputViewport) {
             if (outputViewport.classList.contains("is-marquee")) {
-              outputMarqueeWindow.style.width = d.w * s + "px";
-              outputMarqueeWindow.style.height = d.h * s + "px";
+              outputMarqueeWindow.style.width = outputW * s + "px";
+              outputMarqueeWindow.style.height = outputH * s + "px";
             } else {
               outputMarqueeWindow.style.width = "";
               outputMarqueeWindow.style.height = "";
             }
           }
+          applyMarqueeArtCellCanvasSize();
         }
 
         function applyMarqueeState() {
