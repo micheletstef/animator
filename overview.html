@@ -259,7 +259,7 @@
         }
 
         function loadFromManifest() {
-          return fetch(MANIFEST_URL)
+          return fetch(MANIFEST_URL, { cache: "no-store" })
             .then(function (r) {
               if (!r.ok) throw new Error("manifest " + r.status);
               return r.json();
@@ -271,6 +271,7 @@
                   id: a.id || slugify(a.url || a.label || ""),
                   label: a.label || humanise(a.id || ""),
                   url: a.url,
+                  mtime: a.mtime != null ? a.mtime : null,
                   meta: a.meta || null,
                 };
               });
@@ -325,6 +326,12 @@
           return null;
         }
 
+        function iframeSrc(anim) {
+          var u = anim.url;
+          if (anim.mtime == null) return u;
+          return u + (u.indexOf("?") >= 0 ? "&" : "?") + "v=" + anim.mtime;
+        }
+
         function load(id) {
           var anim = findById(id);
           if (!anim) {
@@ -333,9 +340,10 @@
             document.title = "animator";
             return;
           }
-          if (frame.getAttribute("data-current") !== anim.url) {
-            frame.src = anim.url;
-            frame.setAttribute("data-current", anim.url);
+          var src = iframeSrc(anim);
+          if (frame.getAttribute("data-current") !== src) {
+            frame.src = src;
+            frame.setAttribute("data-current", src);
           }
           render(anim.id);
           document.title = "animator — " + anim.label;
