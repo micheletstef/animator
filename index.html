@@ -226,6 +226,75 @@
         justify-content: center;
         padding: 12px;
         overflow: auto;
+        --marquee-duration: 32s;
+      }
+
+      .output-viewport.is-marquee {
+        overflow: hidden;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      .output-marquee-track {
+        display: flex;
+        flex-direction: row;
+        flex-shrink: 0;
+        width: max-content;
+        height: max-content;
+        align-items: center;
+        will-change: transform;
+      }
+
+      .output-viewport.is-marquee .output-marquee-track {
+        animation: outMarqueeX var(--marquee-duration) linear infinite;
+      }
+
+      .output-viewport.is-marquee.marquee-axis-y .output-marquee-track {
+        flex-direction: column;
+        animation-name: outMarqueeY;
+      }
+
+      .output-viewport.is-marquee.marquee-rev .output-marquee-track {
+        animation-direction: reverse;
+      }
+
+      @keyframes outMarqueeX {
+        from {
+          transform: translate3d(0, 0, 0);
+        }
+        to {
+          transform: translate3d(-50%, 0, 0);
+        }
+      }
+
+      @keyframes outMarqueeY {
+        from {
+          transform: translate3d(0, 0, 0);
+        }
+        to {
+          transform: translate3d(0, -50%, 0);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .output-viewport.is-marquee .output-marquee-track {
+          animation: none;
+        }
+      }
+
+      .output-marquee-panel {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .output-marquee-panel.is-marquee-clone {
+        display: none;
+      }
+
+      .output-viewport.is-marquee .output-marquee-panel.is-marquee-clone {
+        display: flex;
       }
 
       .output-scale-outer {
@@ -341,8 +410,25 @@
         outline: none;
         min-height: 1.2em;
         font-size: 32px;
-        line-height: 1.25;
+        line-height: 40px;
+        letter-spacing: 0px;
+        word-spacing: 0px;
         word-break: break-word;
+        cursor: grab;
+      }
+
+      .artboard-text-inner:focus {
+        cursor: text;
+      }
+
+      .scene .artboard-text-inner * {
+        line-height: inherit;
+        letter-spacing: inherit;
+        word-spacing: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        color: inherit;
+        cursor: inherit;
       }
 
       .artboard-item.artboard-text {
@@ -503,6 +589,41 @@
           <span class="settings-label">background</span>
           <input type="color" id="bgColor" value="#ffffff" aria-label="Artboard background" />
         </div>
+        <div class="settings-title-row" style="margin-top: 10px">
+          <h2 class="settings-title">output loop</h2>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">marquee</span>
+          <label class="typography-check"
+            ><input type="checkbox" id="marqueeEnabled" aria-label="Infinite marquee on output" />
+            on</label
+          >
+        </div>
+        <div class="settings-row marquee-extra" id="marqueeSpeedRow" hidden>
+          <span class="settings-label">speed</span>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+            <input
+              type="range"
+              id="marqueeSpeed"
+              min="6"
+              max="90"
+              value="32"
+              step="1"
+              aria-label="Seconds per loop"
+              style="width: min(140px, 100%)"
+            />
+            <span class="settings-muted" id="marqueeSpeedLabel">32s loop</span>
+          </div>
+        </div>
+        <div class="settings-row marquee-extra" id="marqueeDirRow" hidden>
+          <span class="settings-label">direction</span>
+          <select id="marqueeDirection" class="typography-select" aria-label="Marquee direction">
+            <option value="left">left</option>
+            <option value="right">right</option>
+            <option value="up">up</option>
+            <option value="down">down</option>
+          </select>
+        </div>
         <div id="typographyBlock" class="typography-block" hidden>
           <div class="settings-title-row">
             <h2 class="settings-title">text</h2>
@@ -658,14 +779,30 @@
         </div>
         <p class="output-zoom-hint">ctrl / ⌘ + scroll to zoom</p>
         <div class="output-viewport" id="outputViewport">
-          <div class="output-scale-outer" id="outputScaleOuter">
-            <div class="output-scale-inner" id="outputScaleInner">
-              <div
-                class="scene scene-mirror"
-                id="sceneMirror"
-                role="presentation"
-                aria-hidden="true"
-              ></div>
+          <div class="output-marquee-track" id="outputMarqueeTrack">
+            <div class="output-marquee-panel">
+              <div class="output-scale-outer" id="outputScaleOuter">
+                <div class="output-scale-inner" id="outputScaleInner">
+                  <div
+                    class="scene scene-mirror"
+                    id="sceneMirror"
+                    role="presentation"
+                    aria-hidden="true"
+                  ></div>
+                </div>
+              </div>
+            </div>
+            <div class="output-marquee-panel is-marquee-clone" id="outputMarqueePanelB">
+              <div class="output-scale-outer" id="outputScaleOuterB">
+                <div class="output-scale-inner" id="outputScaleInnerB">
+                  <div
+                    class="scene scene-mirror"
+                    id="sceneMirrorB"
+                    role="presentation"
+                    aria-hidden="true"
+                  ></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -725,8 +862,18 @@
         var textDecStrike = document.getElementById("textDecStrike");
 
         var outputViewport = document.getElementById("outputViewport");
+        var outputMarqueeTrack = document.getElementById("outputMarqueeTrack");
         var outputScaleOuter = document.getElementById("outputScaleOuter");
         var outputScaleInner = document.getElementById("outputScaleInner");
+        var outputScaleOuterB = document.getElementById("outputScaleOuterB");
+        var outputScaleInnerB = document.getElementById("outputScaleInnerB");
+        var sceneMirrorB = document.getElementById("sceneMirrorB");
+        var marqueeEnabled = document.getElementById("marqueeEnabled");
+        var marqueeSpeed = document.getElementById("marqueeSpeed");
+        var marqueeSpeedLabel = document.getElementById("marqueeSpeedLabel");
+        var marqueeDirection = document.getElementById("marqueeDirection");
+        var marqueeSpeedRow = document.getElementById("marqueeSpeedRow");
+        var marqueeDirRow = document.getElementById("marqueeDirRow");
         var editorScroll = document.getElementById("editorScroll");
         var editorScaleOuter = document.getElementById("editorScaleOuter");
         var editorScaleInner = document.getElementById("editorScaleInner");
@@ -754,6 +901,10 @@
           scene.style.height = h + "px";
           sceneMirror.style.width = w + "px";
           sceneMirror.style.height = h + "px";
+          if (sceneMirrorB) {
+            sceneMirrorB.style.width = w + "px";
+            sceneMirrorB.style.height = h + "px";
+          }
         }
 
         function setRatio(w, h, shortLabel) {
@@ -940,9 +1091,17 @@
           return m ? parseFloat(m[1]) : fallback;
         }
 
+        function applyLeadingAsPx(el, fsPx, mult) {
+          var fs = fsPx != null ? fsPx : parseFloat(el.style.fontSize) || 32;
+          var m = mult != null ? mult : 1.25;
+          if (!isFinite(fs) || fs <= 0) fs = 32;
+          if (!isFinite(m) || m <= 0) m = 1.25;
+          el.style.lineHeight = Math.round(fs * m * 100) / 100 + "px";
+        }
+
         function applyDefaultTextMetrics(el) {
           el.style.fontSize = "32px";
-          el.style.lineHeight = "1.25";
+          applyLeadingAsPx(el, 32, 1.25);
           el.style.letterSpacing = "0px";
           el.style.wordSpacing = "0px";
           el.style.textAlign = "left";
@@ -969,10 +1128,18 @@
         function applyMetricsFromPanelToActive() {
           if (!activeTextInner) return;
           var el = activeTextInner;
-          el.style.fontSize = textFontSize.value + "px";
-          el.style.lineHeight = String(textLineHeight.value);
-          el.style.letterSpacing = textTracking.value + "px";
-          el.style.wordSpacing = textWordSpace.value + "px";
+          var fsNum = parseFloat(textFontSize.value);
+          if (!isFinite(fsNum) || fsNum <= 0) fsNum = 32;
+          var lhMult = parseFloat(textLineHeight.value);
+          if (!isFinite(lhMult) || lhMult <= 0) lhMult = 1.25;
+          el.style.fontSize = fsNum + "px";
+          applyLeadingAsPx(el, fsNum, lhMult);
+          var trk = parseFloat(textTracking.value);
+          if (!isFinite(trk)) trk = 0;
+          el.style.letterSpacing = trk + "px";
+          var ws = parseFloat(textWordSpace.value);
+          if (!isFinite(ws)) ws = 0;
+          el.style.wordSpacing = ws + "px";
           el.style.textAlign = textAlign.value;
           applyTextTransformFromCase();
           var decs = [];
@@ -999,27 +1166,18 @@
           if (fs == null) fs = parseCssPx(cs.fontSize, 32);
           textFontSize.value = String(Math.round(fs));
 
-          var lhInline = el.style.lineHeight;
-          if (lhInline && lhInline !== "normal") {
-            if (lhInline.indexOf("px") >= 0) {
-              var lhPx = parseCssPx(lhInline, NaN);
-              var basePx = parseCssPx(cs.fontSize, fs);
-              textLineHeight.value = String(
-                Math.round((lhPx / basePx) * 100) / 100
-              );
-            } else {
-              textLineHeight.value = String(parseFloat(lhInline) || 1.25);
-            }
+          var baseFs = parseCssPx(cs.fontSize, fs);
+          var lhC = cs.lineHeight;
+          var lhPx = parseCssPx(lhC, null);
+          if (lhPx != null && baseFs > 0) {
+            textLineHeight.value = String(
+              Math.round((lhPx / baseFs) * 100) / 100
+            );
           } else {
-            var lhC = cs.lineHeight;
-            var baseFs = parseCssPx(cs.fontSize, fs);
-            if (String(lhC).indexOf("px") >= 0) {
-              textLineHeight.value = String(
-                Math.round((parseCssPx(lhC, baseFs * 1.25) / baseFs) * 100) / 100
-              );
-            } else {
-              textLineHeight.value = String(parseFloat(lhC) || 1.25);
-            }
+            var lhNum = parseFloat(lhC);
+            textLineHeight.value = String(
+              isFinite(lhNum) && lhNum > 0 && lhNum < 10 ? lhNum : 1.25
+            );
           }
 
           textTracking.value = String(
@@ -1212,14 +1370,20 @@
           buildFontSelect(manifest);
         }
 
-        function syncMirror() {
-          sceneMirror.innerHTML = scene.innerHTML;
-          sceneMirror.querySelectorAll(".artboard-drag-handle").forEach(function (n) {
+        function syncMirrorToElement(mirrorEl) {
+          if (!mirrorEl) return;
+          mirrorEl.innerHTML = scene.innerHTML;
+          mirrorEl.querySelectorAll(".artboard-drag-handle").forEach(function (n) {
             n.remove();
           });
-          sceneMirror.querySelectorAll(".artboard-text-inner").forEach(function (el) {
+          mirrorEl.querySelectorAll(".artboard-text-inner").forEach(function (el) {
             el.removeAttribute("contenteditable");
           });
+        }
+
+        function syncMirror() {
+          syncMirrorToElement(sceneMirror);
+          syncMirrorToElement(sceneMirrorB);
         }
 
         function syncMirrorSoon(ms) {
@@ -1245,6 +1409,15 @@
           layoutOutputScale();
         }
 
+        function applyOutputScaleToPair(scaleInner, scaleOuter, s) {
+          if (!scaleInner || !scaleOuter) return;
+          scaleInner.style.width = logicalW + "px";
+          scaleInner.style.height = logicalH + "px";
+          scaleInner.style.transform = "scale(" + s + ")";
+          scaleOuter.style.width = logicalW * s + "px";
+          scaleOuter.style.height = logicalH * s + "px";
+        }
+
         function layoutOutputScale() {
           var pad = 24;
           var availW = Math.max(80, outputViewport.clientWidth - pad);
@@ -1252,11 +1425,30 @@
           var sFit = Math.min(availW / logicalW, availH / logicalH) * 0.98;
           if (sFit <= 0 || !isFinite(sFit)) sFit = 0.2;
           var s = sFit * outputZoomFactor;
-          outputScaleInner.style.width = logicalW + "px";
-          outputScaleInner.style.height = logicalH + "px";
-          outputScaleInner.style.transform = "scale(" + s + ")";
-          outputScaleOuter.style.width = logicalW * s + "px";
-          outputScaleOuter.style.height = logicalH * s + "px";
+          applyOutputScaleToPair(outputScaleInner, outputScaleOuter, s);
+          applyOutputScaleToPair(outputScaleInnerB, outputScaleOuterB, s);
+        }
+
+        function applyMarqueeState() {
+          var on = marqueeEnabled && marqueeEnabled.checked;
+          if (marqueeSpeedRow) marqueeSpeedRow.hidden = !on;
+          if (marqueeDirRow) marqueeDirRow.hidden = !on;
+          if (!outputViewport) return;
+          outputViewport.classList.toggle("is-marquee", on);
+          outputViewport.classList.remove("marquee-axis-y", "marquee-rev");
+          var dir = marqueeDirection ? marqueeDirection.value : "left";
+          if (dir === "up" || dir === "down") {
+            outputViewport.classList.add("marquee-axis-y");
+          }
+          if (dir === "right" || dir === "down") {
+            outputViewport.classList.add("marquee-rev");
+          }
+          var sec = marqueeSpeed ? parseInt(marqueeSpeed.value, 10) : 32;
+          if (!isFinite(sec) || sec < 3) sec = 32;
+          outputViewport.style.setProperty("--marquee-duration", sec + "s");
+          if (marqueeSpeedLabel) {
+            marqueeSpeedLabel.textContent = sec + "s loop";
+          }
         }
 
         function layoutEditorScale() {
@@ -1303,31 +1495,90 @@
           { passive: false }
         );
 
+        if (marqueeEnabled) {
+          marqueeEnabled.addEventListener("change", function () {
+            applyMarqueeState();
+            layoutOutputScale();
+          });
+        }
+        if (marqueeSpeed) {
+          marqueeSpeed.addEventListener("input", applyMarqueeState);
+        }
+        if (marqueeDirection) {
+          marqueeDirection.addEventListener("change", applyMarqueeState);
+        }
+
+        var TEXT_DRAG_THRESHOLD = 6;
+
+        function beginDragItem(item, parent, startClientX, startClientY, startLeft, startTop) {
+          var scale = editorScaleStored || 0.2;
+          var sx = startClientX;
+          var sy = startClientY;
+          var sl = startLeft != null ? startLeft : item.offsetLeft;
+          var st = startTop != null ? startTop : item.offsetTop;
+          function onMove(ev) {
+            var dx = (ev.clientX - sx) / scale;
+            var dy = (ev.clientY - sy) / scale;
+            var nl = sl + dx;
+            var nt = st + dy;
+            var maxL = parent.clientWidth - item.offsetWidth;
+            var maxT = parent.clientHeight - item.offsetHeight;
+            item.style.left = Math.max(0, Math.min(maxL, nl)) + "px";
+            item.style.top = Math.max(0, Math.min(maxT, nt)) + "px";
+            syncMirrorSoon(16);
+          }
+          function onUp() {
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            syncMirrorSoon(0);
+          }
+          window.addEventListener("mousemove", onMove);
+          window.addEventListener("mouseup", onUp);
+        }
+
         function attachDragFixed(handle, item, parent) {
           handle.addEventListener("mousedown", function (e) {
             if (e.button !== 0) return;
             e.preventDefault();
             e.stopPropagation();
-            var scale = editorScaleStored || 0.2;
-            var startX = e.clientX;
-            var startY = e.clientY;
-            var startLeft = item.offsetLeft;
-            var startTop = item.offsetTop;
+            beginDragItem(item, parent, e.clientX, e.clientY);
+          });
+        }
+
+        function attachTextBoxDrag(wrap, inner, parent) {
+          var handle = wrap.querySelector(".artboard-drag-handle");
+          if (handle) attachDragFixed(handle, wrap, parent);
+          inner.addEventListener("mousedown", function (e) {
+            if (e.button !== 0) return;
+            if (e.altKey) {
+              e.preventDefault();
+              if (document.activeElement === inner) inner.blur();
+              beginDragItem(wrap, parent, e.clientX, e.clientY);
+              return;
+            }
+            var sx = e.clientX;
+            var sy = e.clientY;
+            var sl = wrap.offsetLeft;
+            var st = wrap.offsetTop;
+            var moved = false;
             function onMove(ev) {
-              var dx = (ev.clientX - startX) / scale;
-              var dy = (ev.clientY - startY) / scale;
-              var nl = startLeft + dx;
-              var nt = startTop + dy;
-              var maxL = parent.clientWidth - item.offsetWidth;
-              var maxT = parent.clientHeight - item.offsetHeight;
-              item.style.left = Math.max(0, Math.min(maxL, nl)) + "px";
-              item.style.top = Math.max(0, Math.min(maxT, nt)) + "px";
-              syncMirrorSoon(16);
+              if (moved) return;
+              if (
+                Math.abs(ev.clientX - sx) < TEXT_DRAG_THRESHOLD &&
+                Math.abs(ev.clientY - sy) < TEXT_DRAG_THRESHOLD
+              ) {
+                return;
+              }
+              moved = true;
+              ev.preventDefault();
+              if (document.activeElement === inner) inner.blur();
+              window.removeEventListener("mousemove", onMove);
+              window.removeEventListener("mouseup", onUp);
+              beginDragItem(wrap, parent, sx, sy, sl, st);
             }
             function onUp() {
               window.removeEventListener("mousemove", onMove);
               window.removeEventListener("mouseup", onUp);
-              syncMirrorSoon(0);
             }
             window.addEventListener("mousemove", onMove);
             window.addEventListener("mouseup", onUp);
@@ -1342,7 +1593,7 @@
           wrap.style.width = "84%";
           var handle = document.createElement("div");
           handle.className = "artboard-drag-handle";
-          handle.textContent = "move";
+          handle.textContent = "move · alt-drag";
           var inner = document.createElement("div");
           inner.className = "artboard-text-inner";
           inner.contentEditable = "true";
@@ -1356,7 +1607,7 @@
           wrap.appendChild(handle);
           wrap.appendChild(inner);
           scene.appendChild(wrap);
-          attachDragFixed(handle, wrap, scene);
+          attachTextBoxDrag(wrap, inner, scene);
           if (fontManifest && fontManifest.defaultFontId) {
             applyFontIdToInner(inner, fontManifest.defaultFontId);
           }
@@ -1416,6 +1667,7 @@
           applyLogicalSize(1080, 1440);
           layoutScales();
           syncMirror();
+          applyMarqueeState();
         }
 
         fetch("fonts/fonts.json")
