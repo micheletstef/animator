@@ -3,28 +3,232 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hello world, again</title>
+    <title>animator</title>
     <style>
+      :root {
+        --bg: #0c0e12;
+        --fg: #c8cdd5;
+        --muted: #6b7280;
+        --line: #242830;
+        --accent: #e6edf3;
+        --board: #12151c;
+        --board-line: #2a303c;
+        --ar-w: 1080;
+        --ar-h: 1440;
+      }
+
       * {
         box-sizing: border-box;
       }
+
       body {
         margin: 0;
-        min-height: 100vh;
+        min-height: 100dvh;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 13px;
+        line-height: 1.45;
+        background: var(--bg);
+        color: var(--fg);
+      }
+
+      .app {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        color: var(--accent);
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .settings {
+        padding: 14px 18px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      h2::before {
+        content: "## ";
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      .ratio-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 4px;
+        color: var(--muted);
+      }
+
+      .ratio-row button {
+        appearance: none;
+        border: none;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        padding: 4px 6px;
+        margin: 0;
+        cursor: pointer;
+        border-radius: 2px;
+      }
+
+      .ratio-row button:hover {
+        color: var(--fg);
+      }
+
+      .ratio-row button[aria-pressed="true"] {
+        color: var(--accent);
+      }
+
+      .ratio-row .sep {
+        user-select: none;
+        color: var(--line);
+        padding: 0 2px;
+      }
+
+      .meta {
+        margin-top: 10px;
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .meta strong {
+        color: var(--fg);
+        font-weight: 500;
+      }
+
+      .stage {
+        flex: 1;
         display: grid;
         place-items: center;
-        font-family: system-ui, sans-serif;
-        background: #0f1419;
-        color: #e6edf3;
+        padding: 20px;
+        min-height: 0;
       }
-      h1 {
-        font-weight: 600;
-        font-size: clamp(1.75rem, 5vw, 2.5rem);
-        letter-spacing: -0.02em;
+
+      .artboard {
+        position: relative;
+        aspect-ratio: var(--ar-w) / var(--ar-h);
+        height: min(92dvh, calc(92vw * var(--ar-h) / var(--ar-w)));
+        width: auto;
+        max-width: 92vw;
+        background: var(--board);
+        box-shadow: inset 0 0 0 1px var(--board-line);
+      }
+
+      .artboard::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      }
+
+      .artboard-label {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        font-size: 10px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+        pointer-events: none;
       }
     </style>
   </head>
   <body>
-    <h1>Hello world, again</h1>
+    <div class="app">
+      <header>animator</header>
+      <main>
+        <section class="settings" aria-label="Format">
+          <h2>format</h2>
+          <div class="ratio-row" role="group" aria-label="Instagram ratio">
+            <button type="button" data-w="1080" data-h="1440" data-label="3:4" aria-pressed="true">
+              1080 × 1440
+            </button>
+            <span class="sep">/</span>
+            <button type="button" data-w="1080" data-h="1080" data-label="1:1" aria-pressed="false">
+              1080 × 1080
+            </button>
+            <span class="sep">/</span>
+            <button type="button" data-w="1080" data-h="1920" data-label="reels" aria-pressed="false">
+              1080 × 1920
+            </button>
+          </div>
+          <p class="meta" id="meta">
+            <strong id="metaDims">1080 × 1440</strong>
+            <span id="metaRatio"> (3:4)</span>
+          </p>
+        </section>
+        <section class="stage" aria-label="Artboard">
+          <div class="artboard" id="artboard" role="img" aria-label="Frame">
+            <span class="artboard-label" id="artboardBadge">3:4</span>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var artboard = document.getElementById("artboard");
+        var metaDims = document.getElementById("metaDims");
+        var metaRatio = document.getElementById("metaRatio");
+        var artboardBadge = document.getElementById("artboardBadge");
+        var buttons = document.querySelectorAll(".ratio-row button");
+
+        function gcd(a, b) {
+          return b ? gcd(b, a % b) : a;
+        }
+
+        function ratioLabel(w, h) {
+          var g = gcd(w, h);
+          return w / g + ":" + h / g;
+        }
+
+        function setRatio(w, h, shortLabel) {
+          root.style.setProperty("--ar-w", String(w));
+          root.style.setProperty("--ar-h", String(h));
+          metaDims.textContent = w + " × " + h;
+          metaRatio.textContent = " (" + ratioLabel(w, h) + ")";
+          artboardBadge.textContent = shortLabel;
+          artboard.setAttribute(
+            "aria-label",
+            "Frame " + w + " by " + h + " pixels"
+          );
+        }
+
+        buttons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var w = parseInt(btn.getAttribute("data-w"), 10);
+            var h = parseInt(btn.getAttribute("data-h"), 10);
+            var label = btn.getAttribute("data-label") || "";
+            buttons.forEach(function (b) {
+              b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+            });
+            setRatio(w, h, label);
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
