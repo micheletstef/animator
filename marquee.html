@@ -29,6 +29,7 @@
         --w-top: 1000;
         --w-bottom: 500;
         --gamma: 1;
+        --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
       }
 
       * {
@@ -55,23 +56,34 @@
 
       .stage-wrap {
         display: flex;
+        align-items: safe center;
+        justify-content: safe center;
         height: 100%;
         min-width: 0;
         overflow: auto;
+        overscroll-behavior: contain;
+      }
+
+      .stage-outer {
+        width: calc(var(--base) * var(--zoom));
+        height: calc(var(--base) * var(--zoom));
+        position: relative;
+        flex: 0 0 auto;
       }
 
       .stage {
-        --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
-        width: calc(var(--base) * var(--zoom));
-        aspect-ratio: 1 / 1;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--base);
+        height: var(--base);
         background: var(--bg);
         color: var(--fg);
-        position: relative;
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
         font-family: "IkarusCondensedVariable", system-ui, sans-serif;
-        margin: auto;
-        flex: 0 0 auto;
+        transform: scale(var(--zoom));
+        transform-origin: top left;
       }
 
       .marquee {
@@ -116,12 +128,18 @@
       }
 
       .panel h2 {
-        margin: 0 0 12px 0;
+        margin: 0 0 4px 0;
         font-size: 12px;
         font-weight: 400;
         text-transform: lowercase;
         letter-spacing: 0.04em;
         color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
       }
 
       .panel .group {
@@ -204,25 +222,20 @@
     </style>
   </head>
   <body>
-    <div class="stage-wrap">
-      <div class="stage" id="stage" aria-label="names marquee">
-        <div class="marquee" id="marquee">
-          <div class="track" id="track"></div>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="names marquee">
+          <div class="marquee" id="marquee">
+            <div class="track" id="track"></div>
+          </div>
         </div>
       </div>
     </div>
+    <input type="hidden" id="zm" value="1" />
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-
-      <div class="group">
-        <p class="group-title">view</p>
-        <div class="row">
-          <label for="zm">zoom</label>
-          <input id="zm" type="range" min="0.1" max="2" step="0.01" value="1" />
-          <span class="val" id="zmVal">100%</span>
-        </div>
-      </div>
+      <p class="hint">shift + scroll to zoom the artboard</p>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -288,24 +301,14 @@
       <div class="group">
         <p class="group-title">margins</p>
         <div class="row">
-          <label for="pt">top</label>
-          <input id="pt" type="range" min="0" max="600" step="1" value="0" />
-          <span class="val" id="ptVal">0px</span>
+          <label for="pv">vertical</label>
+          <input id="pv" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="pvVal">0px</span>
         </div>
         <div class="row">
-          <label for="pr">right</label>
-          <input id="pr" type="range" min="0" max="600" step="1" value="0" />
-          <span class="val" id="prVal">0px</span>
-        </div>
-        <div class="row">
-          <label for="pb">bottom</label>
-          <input id="pb" type="range" min="0" max="600" step="1" value="0" />
-          <span class="val" id="pbVal">0px</span>
-        </div>
-        <div class="row">
-          <label for="pl">left</label>
-          <input id="pl" type="range" min="0" max="600" step="1" value="0" />
-          <span class="val" id="plVal">0px</span>
+          <label for="ph">horizontal</label>
+          <input id="ph" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="phVal">0px</span>
         </div>
       </div>
 
@@ -410,10 +413,8 @@
           wBot: 500,
           gm: 1,
           sp: 80,
-          pt: 0,
-          pr: 0,
-          pb: 0,
-          pl: 0,
+          pv: 0,
+          ph: 0,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
@@ -429,13 +430,10 @@
           wBot: document.getElementById("wBot"),
           gm: document.getElementById("gm"),
           sp: document.getElementById("sp"),
-          pt: document.getElementById("pt"),
-          pr: document.getElementById("pr"),
-          pb: document.getElementById("pb"),
-          pl: document.getElementById("pl"),
+          pv: document.getElementById("pv"),
+          ph: document.getElementById("ph"),
         };
         var vals = {
-          zm: document.getElementById("zmVal"),
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
@@ -445,10 +443,8 @@
           wBot: document.getElementById("wBotVal"),
           gm: document.getElementById("gmVal"),
           sp: document.getElementById("spVal"),
-          pt: document.getElementById("ptVal"),
-          pr: document.getElementById("prVal"),
-          pb: document.getElementById("pbVal"),
-          pl: document.getElementById("plVal"),
+          pv: document.getElementById("pvVal"),
+          ph: document.getElementById("phVal"),
         };
 
         function fmt(key, v) {
@@ -469,15 +465,20 @@
           else if (key === "fs") root.style.setProperty("--fs", v);
           else if (key === "lh") root.style.setProperty("--lh", v);
           else if (key === "tr") root.style.setProperty("--tracking", v);
-          else if (key === "pt") root.style.setProperty("--pad-t", v);
-          else if (key === "pr") root.style.setProperty("--pad-r", v);
-          else if (key === "pb") root.style.setProperty("--pad-b", v);
-          else if (key === "pl") root.style.setProperty("--pad-l", v);
+          else if (key === "pv") {
+            root.style.setProperty("--pad-t", v);
+            root.style.setProperty("--pad-b", v);
+          } else if (key === "ph") {
+            root.style.setProperty("--pad-l", v);
+            root.style.setProperty("--pad-r", v);
+          }
         }
 
         function setValue(key, v, persist) {
           els[key].value = v;
-          vals[key].textContent = fmt(key, v);
+          if (vals[key]) {
+            vals[key].textContent = fmt(key, v);
+          }
           applyVar(key, v);
           if (persist !== false) save();
         }
@@ -512,6 +513,7 @@
         }
 
         Object.keys(els).forEach(function (k) {
+          if (k === "zm") return;
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
@@ -527,6 +529,27 @@
           });
           requestAnimationFrame(measure);
         });
+
+        var stageWrap = document.getElementById("stageWrap");
+        stageWrap.addEventListener(
+          "wheel",
+          function (e) {
+            if (!e.shiftKey) return;
+            e.preventDefault();
+            var current = parseFloat(els.zm.value) || 1;
+            var factor = Math.exp(-e.deltaY * 0.0015);
+            var next = Math.max(0.1, Math.min(4, current * factor));
+            if (next === current) return;
+            var rect = stageWrap.getBoundingClientRect();
+            var contentX = e.clientX - rect.left + stageWrap.scrollLeft;
+            var contentY = e.clientY - rect.top + stageWrap.scrollTop;
+            var ratio = next / current;
+            setValue("zm", next);
+            stageWrap.scrollLeft = contentX * ratio - (e.clientX - rect.left);
+            stageWrap.scrollTop = contentY * ratio - (e.clientY - rect.top);
+          },
+          { passive: false }
+        );
 
         window.addEventListener("resize", function () {
           requestAnimationFrame(measure);
