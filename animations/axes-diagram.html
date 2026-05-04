@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>axes diagram</title>
+    <title>axes · variable states</title>
     <style>
       @font-face {
         font-family: "IkarusPlusVariable";
@@ -15,21 +15,34 @@
         font-display: block;
       }
 
+      @font-face {
+        font-family: "IkarusFlairVariable";
+        src: url("../fonts/ABCIkarusFlairVariable.ttf")
+          format("truetype-variations");
+        font-weight: 200 1000;
+        font-style: oblique -12deg 0deg;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusContrastVariable";
+        src: url("../fonts/ABCIkarusContrastVariable.ttf")
+          format("truetype-variations");
+        font-weight: 200 1000;
+        font-style: oblique -12deg 0deg;
+        font-display: block;
+      }
+
       :root {
         color-scheme: dark;
         --bg: #000000;
         --fg: #f5d100;
-        --accent: #ff2a1f;
-        --diag-ink: #c8c8c8;
-        --diag-ink-dim: #5a5a5a;
-        --diag-orange: #ff8f2e;
-        --diag-face: #0a0a0c;
         --fs: 156;
         --lh: 0.96;
         --tracking: 0;
         --pad: 36;
         --zoom: 1;
-        --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
+        --base: min(calc(100vh - 48px), calc(100vw - 300px - 72px));
       }
 
       * {
@@ -48,7 +61,7 @@
 
       body {
         display: grid;
-        grid-template-columns: 1fr 280px;
+        grid-template-columns: 1fr 300px;
         align-items: center;
         gap: 24px;
         padding: 24px;
@@ -81,7 +94,6 @@
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        font-family: "IkarusPlusVariable", system-ui, sans-serif;
         transform: scale(var(--zoom));
         transform-origin: top left;
       }
@@ -100,91 +112,25 @@
         text-align: left;
         white-space: nowrap;
         will-change: font-variation-settings;
-        z-index: 1;
         pointer-events: none;
+      }
+
+      .specimen.plus {
+        font-family: "IkarusPlusVariable", system-ui, sans-serif;
+      }
+
+      .specimen.flair {
+        font-family: "IkarusFlairVariable", system-ui, sans-serif;
+        font-variation-settings: "wght" 400, "slnt" 0;
+      }
+
+      .specimen.contrast {
+        font-family: "IkarusContrastVariable", system-ui, sans-serif;
+        font-variation-settings: "wght" 400, "slnt" 0;
       }
 
       .specimen .row {
         display: block;
-      }
-
-      .diagram {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        overflow: visible;
-        shape-rendering: crispEdges;
-        image-rendering: pixelated;
-        text-rendering: optimizeSpeed;
-        z-index: 2;
-      }
-
-      .diagram .cube-face-fill {
-        fill: var(--diag-face);
-        stroke: none;
-        opacity: 0.35;
-      }
-
-      .diagram .cube-edge {
-        fill: none;
-        stroke: var(--diag-ink);
-        stroke-width: 2;
-        stroke-linecap: square;
-        stroke-linejoin: miter;
-      }
-
-      .diagram .axis-guide {
-        fill: none;
-        stroke: var(--diag-ink-dim);
-        stroke-width: 2;
-        stroke-dasharray: 4 4;
-        stroke-linecap: square;
-      }
-
-      .diagram .axis-lbl {
-        fill: var(--diag-ink);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 13px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-
-      .diagram .dot {
-        fill: var(--accent);
-        stroke: var(--diag-ink);
-        stroke-width: 2;
-      }
-
-      .diagram .trail {
-        fill: none;
-        stroke: var(--accent);
-        stroke-width: 2;
-        stroke-linecap: square;
-        stroke-linejoin: miter;
-        opacity: 0.4;
-      }
-
-      .diagram .tech-meta {
-        fill: var(--diag-ink-dim);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 10px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-
-      .diagram .tech-readout {
-        fill: var(--diag-orange);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 12px;
-        letter-spacing: 0.06em;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .diagram .tech-phase {
-        fill: var(--diag-ink);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 11px;
-        letter-spacing: 0.08em;
       }
 
       .panel {
@@ -218,6 +164,14 @@
         margin-bottom: 18px;
       }
 
+      .panel .group.plus-only {
+        display: none;
+      }
+
+      body.mode-plus .panel .group.plus-only {
+        display: block;
+      }
+
       .panel .group-title {
         text-transform: lowercase;
         color: #6a6a6a;
@@ -228,7 +182,7 @@
 
       .row-ctl {
         display: grid;
-        grid-template-columns: 64px 1fr 60px;
+        grid-template-columns: 72px 1fr 56px;
         align-items: center;
         gap: 8px;
         margin-bottom: 6px;
@@ -269,8 +223,15 @@
         font-variant-numeric: tabular-nums;
       }
 
-      .row-ctl input[type="checkbox"] {
-        justify-self: start;
+      .row-ctl select {
+        grid-column: 2 / -1;
+        width: 100%;
+        background: #111;
+        color: #e9e9e9;
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font: inherit;
       }
 
       .panel .actions {
@@ -309,13 +270,21 @@
         color: #6a6a6a;
         text-transform: lowercase;
       }
+
+      .readout .hide-plus {
+        display: none;
+      }
+
+      body.mode-plus .readout .hide-plus {
+        display: block;
+      }
     </style>
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="axes diagram">
-          <div class="specimen" id="specimen">
+        <div class="stage" id="stage" aria-label="variable specimen">
+          <div class="specimen plus" id="specimen">
             <span class="row">ABCDEFGHIJK</span>
             <span class="row">LMNOPQRTU</span>
             <span class="row">VWXYZabcd</span>
@@ -323,47 +292,6 @@
             <span class="row">stuvwxyz&amp;!?</span>
             <span class="row">1234567890</span>
           </div>
-          <svg
-            class="diagram"
-            id="diagram"
-            viewBox="0 0 1024 1024"
-            preserveAspectRatio="xMidYMid meet"
-            shape-rendering="crispEdges"
-            aria-hidden="true"
-          >
-            <rect x="0" y="0" width="1024" height="1024" fill="none" />
-            <g id="cubeFill"></g>
-            <g id="cubeEdges"></g>
-            <g id="axisGuides"></g>
-            <g id="techHud">
-              <text class="tech-meta" x="56" y="36" text-anchor="start">
-                ABCIkarusPlusVariable · 3×3×3 design cube
-              </text>
-              <text class="tech-meta" x="56" y="50" text-anchor="start">
-                width × contrast × weight (+ slnt orbit)
-              </text>
-              <text class="tech-readout" id="hudWght" x="56" y="872" text-anchor="start">
-                WGHT=400
-              </text>
-              <text class="tech-readout" id="hudWdth" x="56" y="890" text-anchor="start">
-                WDTH=100
-              </text>
-              <text class="tech-readout" id="hudCntr" x="56" y="908" text-anchor="start">
-                CNTR=000
-              </text>
-              <text class="tech-readout" id="hudSlnt" x="56" y="926" text-anchor="start">
-                SLNT=0
-              </text>
-              <text class="tech-readout" id="hudNorm" x="56" y="946" text-anchor="start">
-                NORM 0 / 0 / 0 / 0
-              </text>
-              <text class="tech-phase" id="hudPhase" x="968" y="958" text-anchor="end">
-                u=0.00
-              </text>
-            </g>
-            <path class="trail" id="trail" d="" />
-            <rect class="dot" id="dot" x="500" y="500" width="14" height="14" />
-          </svg>
         </div>
       </div>
     </div>
@@ -371,7 +299,20 @@
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom · cube = wdth / CNTR / wght</p>
+      <p class="hint">shift + scroll to zoom · min/max drive the loop</p>
+
+      <div class="group">
+        <p class="group-title">font</p>
+        <div class="row-ctl">
+          <label for="family">face</label>
+          <select id="family" aria-label="Variable font family">
+            <option value="plus">ABCIkarusPlusVariable</option>
+            <option value="flair">ABCIkarusFlairVariable</option>
+            <option value="contrast">ABCIkarusContrastVariable</option>
+          </select>
+          <span class="val" id="familyVal"></span>
+        </div>
+      </div>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -384,11 +325,6 @@
           <label for="fg">text</label>
           <input id="fg" type="color" value="#f5d100" />
           <span class="val" id="fgVal">#f5d100</span>
-        </div>
-        <div class="row-ctl">
-          <label for="ac">accent</label>
-          <input id="ac" type="color" value="#ff2a1f" />
-          <span class="val" id="acVal">#ff2a1f</span>
         </div>
       </div>
 
@@ -427,7 +363,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">weight (wght)</p>
+        <p class="group-title">weight · wght</p>
         <div class="row-ctl">
           <label for="wMin">min</label>
           <input id="wMin" type="range" min="100" max="1000" step="1" value="200" />
@@ -440,8 +376,8 @@
         </div>
       </div>
 
-      <div class="group">
-        <p class="group-title">width (wdth)</p>
+      <div class="group plus-only">
+        <p class="group-title">width · wdth</p>
         <div class="row-ctl">
           <label for="dMin">min</label>
           <input id="dMin" type="range" min="65" max="130" step="1" value="65" />
@@ -455,7 +391,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">slant (slnt)</p>
+        <p class="group-title">slant · slnt</p>
         <div class="row-ctl">
           <label for="sMin">min</label>
           <input id="sMin" type="range" min="-12" max="0" step="0.25" value="-12" />
@@ -468,8 +404,8 @@
         </div>
       </div>
 
-      <div class="group">
-        <p class="group-title">contrast (CNTR)</p>
+      <div class="group plus-only">
+        <p class="group-title">contrast · CNTR</p>
         <div class="row-ctl">
           <label for="cMin">min</label>
           <input id="cMin" type="range" min="0" max="100" step="1" value="0" />
@@ -489,26 +425,16 @@
           <input id="cy" type="range" min="8" max="120" step="1" value="32" />
           <span class="val" id="cyVal">32s</span>
         </div>
-        <div class="row-ctl">
-          <label for="trail">trail</label>
-          <input id="trail" type="checkbox" checked />
-          <span class="val" id="trailVal">on</span>
-        </div>
-        <div class="row-ctl">
-          <label for="dg">diagram</label>
-          <input id="dg" type="checkbox" checked />
-          <span class="val" id="dgVal">on</span>
-        </div>
       </div>
 
       <div class="group">
         <p class="group-title">live</p>
         <div class="readout" id="readout">
-          <span>weight</span><span id="rWght">400</span>
-          <span>width</span><span id="rWdth">100</span>
-          <span>slant</span><span id="rSlnt">0</span>
-          <span>contrast</span><span id="rCntr">0</span>
-          <span>phase</span><span id="rPhase">orbit</span>
+          <span>wght</span><span id="rWght">400</span>
+          <span class="hide-plus">wdth</span><span class="hide-plus" id="rWdth">100</span>
+          <span>slnt</span><span id="rSlnt">0</span>
+          <span class="hide-plus">CNTR</span><span class="hide-plus" id="rCntr">0</span>
+          <span>phase</span><span id="rPhase">—</span>
         </div>
       </div>
 
@@ -520,10 +446,8 @@
     <script>
       (function () {
         var root = document.documentElement;
+        var body = document.body;
         var specimen = document.getElementById("specimen");
-        var diagram = document.getElementById("diagram");
-        var dot = document.getElementById("dot");
-        var trail = document.getElementById("trail");
 
         var rWght = document.getElementById("rWght");
         var rWdth = document.getElementById("rWdth");
@@ -531,20 +455,13 @@
         var rCntr = document.getElementById("rCntr");
         var rPhase = document.getElementById("rPhase");
 
-        var hudWght = document.getElementById("hudWght");
-        var hudWdth = document.getElementById("hudWdth");
-        var hudSlnt = document.getElementById("hudSlnt");
-        var hudCntr = document.getElementById("hudCntr");
-        var hudNorm = document.getElementById("hudNorm");
-        var hudPhase = document.getElementById("hudPhase");
-
-        var LS_KEY = "axes-diagram:settings:v5";
+        var LS_KEY = "axes-diagram:settings:v6";
 
         var DEFAULTS = {
           zm: 1,
+          family: "plus",
           bg: "#000000",
           fg: "#f5d100",
-          ac: "#ff2a1f",
           fs: 156,
           lhMin: 0.96,
           lhMax: 0.96,
@@ -560,18 +477,20 @@
           cMin: 0,
           cMax: 100,
           cy: 32,
-          trail: true,
-          dg: true,
         };
 
-        var COLOR_KEYS = { bg: 1, fg: 1, ac: 1 };
-        var BOOL_KEYS = { dg: 1, trail: 1 };
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var FAMILY_LABEL = {
+          plus: "plus",
+          flair: "flair",
+          contrast: "contrast",
+        };
 
         var els = {
           zm: document.getElementById("zm"),
+          family: document.getElementById("family"),
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
-          ac: document.getElementById("ac"),
           fs: document.getElementById("fs"),
           lhMin: document.getElementById("lhMin"),
           lhMax: document.getElementById("lhMax"),
@@ -587,14 +506,12 @@
           cMin: document.getElementById("cMin"),
           cMax: document.getElementById("cMax"),
           cy: document.getElementById("cy"),
-          trail: document.getElementById("trail"),
-          dg: document.getElementById("dg"),
         };
 
         var vals = {
+          family: document.getElementById("familyVal"),
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          ac: document.getElementById("acVal"),
           fs: document.getElementById("fsVal"),
           lhMin: document.getElementById("lhMinVal"),
           lhMax: document.getElementById("lhMaxVal"),
@@ -610,13 +527,23 @@
           cMin: document.getElementById("cMinVal"),
           cMax: document.getElementById("cMaxVal"),
           cy: document.getElementById("cyVal"),
-          trail: document.getElementById("trailVal"),
-          dg: document.getElementById("dgVal"),
         };
+
+        function getFamily() {
+          return els.family.value || "plus";
+        }
+
+        function applyFamilyClass(fam) {
+          specimen.classList.remove("plus", "flair", "contrast");
+          specimen.classList.add(fam);
+          body.classList.remove("mode-plus");
+          if (fam === "plus") body.classList.add("mode-plus");
+        }
 
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
+          if (key === "family") return FAMILY_LABEL[v] || v;
           if (key === "fs" || key === "pd") return Math.round(Number(v)) + "px";
           if (key === "lhMin" || key === "lhMax") return Number(v).toFixed(2);
           if (key === "trMin" || key === "trMax")
@@ -632,7 +559,6 @@
             return Math.round(Number(v)) + "";
           if (key === "sMin" || key === "sMax") return Number(v).toFixed(2);
           if (key === "cy") return Math.round(Number(v)) + "s";
-          if (BOOL_KEYS[key]) return v ? "on" : "off";
           return String(v);
         }
 
@@ -640,19 +566,14 @@
           if (key === "zm") root.style.setProperty("--zoom", v);
           else if (key === "bg") root.style.setProperty("--bg", v);
           else if (key === "fg") root.style.setProperty("--fg", v);
-          else if (key === "ac") root.style.setProperty("--accent", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
           else if (key === "pd") root.style.setProperty("--pad", v);
-          else if (key === "dg") {
-            diagram.style.display = v ? "" : "none";
-          } else if (key === "trail") {
-            if (!v && trail) trail.setAttribute("d", "");
-          }
+          else if (key === "family") applyFamilyClass(v);
         }
 
         function setValue(key, v, persist) {
-          if (BOOL_KEYS[key]) {
-            els[key].checked = !!v;
+          if (key === "family") {
+            els.family.value = v;
           } else {
             els[key].value = v;
           }
@@ -666,9 +587,13 @@
         function save() {
           var out = {};
           Object.keys(els).forEach(function (k) {
-            if (BOOL_KEYS[k]) out[k] = !!els[k].checked;
-            else if (COLOR_KEYS[k]) out[k] = els[k].value;
-            else out[k] = parseFloat(els[k].value);
+            if (k === "family") {
+              out[k] = els.family.value;
+            } else if (COLOR_KEYS[k]) {
+              out[k] = els[k].value;
+            } else {
+              out[k] = parseFloat(els[k].value);
+            }
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(out));
@@ -697,10 +622,10 @@
 
         Object.keys(els).forEach(function (k) {
           if (k === "zm") return;
-          var ev = BOOL_KEYS[k] ? "change" : "input";
-          els[k].addEventListener(ev, function () {
+          var target = k === "family" ? els.family : els[k];
+          target.addEventListener(k === "family" ? "change" : "input", function () {
             var v;
-            if (BOOL_KEYS[k]) v = els[k].checked;
+            if (k === "family") v = els.family.value;
             else if (COLOR_KEYS[k]) v = els[k].value;
             else v = parseFloat(els[k].value);
             setValue(k, v);
@@ -740,193 +665,13 @@
           return a + (b - a) * t;
         }
 
-        /** Smooth step for seamless loops (C1 at 0 and 1). */
         function smoothWindow(t) {
           var x = t - Math.floor(t);
           return x * x * (3 - 2 * x);
         }
 
-        function snapPx(v) {
-          return Math.round(v * 2) / 2;
-        }
-
-        var CX = 640;
-        var CY = 470;
-        var SCALE = 118;
-        var K = 0.8660254037844386;
-
-        /**
-         * Unit cube: x = width (0…1), y = contrast (0 bottom heavy … 1 top),
-         * z = weight (0 front … 1 back in iso space).
-         */
-        function proj(nx, ny, nz) {
-          var x = (nx - 0.5) * 2 * SCALE;
-          var y = (ny - 0.5) * 2 * SCALE;
-          var z = (nz - 0.5) * 2 * SCALE;
-          var sx = (x - z) * K;
-          var sy = -y * 1.08 - (x + z) * 0.5;
-          return [snapPx(CX + sx), snapPx(CY + sy)];
-        }
-
-        function segmentKey(a, b) {
-          return a < b ? a + "|" + b : b + "|" + a;
-        }
-
-        (function buildCube() {
-          var pts = {};
-          var ai;
-          var bi;
-          var ci;
-          for (ai = 0; ai < 3; ai++) {
-            for (bi = 0; bi < 3; bi++) {
-              for (ci = 0; ci < 3; ci++) {
-                var k = ai + "/" + bi + "/" + ci;
-                var P = proj(ai / 2, bi / 2, ci / 2);
-                pts[k] = { x: P[0], y: P[1] };
-              }
-            }
-          }
-
-          var seen = {};
-          var edgeParts = [];
-            function addEdge(k0, k1) {
-            var sk = segmentKey(k0, k1);
-            if (seen[sk]) return;
-            seen[sk] = true;
-            var a = pts[k0];
-            var b = pts[k1];
-            edgeParts.push(
-              '<line class="cube-edge" x1="' +
-                a.x +
-                '" y1="' +
-                a.y +
-                '" x2="' +
-                b.x +
-                '" y2="' +
-                b.y +
-                '" />'
-            );
-          }
-
-          for (ai = 0; ai < 3; ai++) {
-            for (bi = 0; bi < 3; bi++) {
-              for (ci = 0; ci < 3; ci++) {
-                var k = ai + "/" + bi + "/" + ci;
-                if (ai < 2) addEdge(k, ai + 1 + "/" + bi + "/" + ci);
-                if (bi < 2) addEdge(k, ai + "/" + (bi + 1) + "/" + ci);
-                if (ci < 2) addEdge(k, ai + "/" + bi + "/" + (ci + 1));
-              }
-            }
-          }
-
-          document.getElementById("cubeEdges").innerHTML = edgeParts.join("");
-
-          var f0 = proj(0, 0, 0);
-          var f1 = proj(1, 0, 0);
-          var f2 = proj(1, 0, 1);
-          var f3 = proj(0, 0, 1);
-          var faceD =
-            "M" +
-            f0[0] +
-            "," +
-            f0[1] +
-            "L" +
-            f1[0] +
-            "," +
-            f1[1] +
-            "L" +
-            f2[0] +
-            "," +
-            f2[1] +
-            "L" +
-            f3[0] +
-            "," +
-            f3[1] +
-            "Z";
-          document.getElementById("cubeFill").innerHTML =
-            '<path class="cube-face-fill" d="' + faceD + '" />';
-
-          var mx = (f0[0] + f1[0] + f2[0] + f3[0]) / 4;
-          var my = (f0[1] + f1[1] + f2[1] + f3[1]) / 4;
-          var wEnd = proj(1.35, 0, 0);
-          var cEnd = proj(0.5, 1.32, 0.5);
-          var gEnd = proj(0.5, 0.5, 1.38);
-
-          var guides =
-            '<line class="axis-guide" x1="' +
-            mx +
-            '" y1="' +
-            my +
-            '" x2="' +
-            wEnd[0] +
-            '" y2="' +
-            wEnd[1] +
-            '" />' +
-            '<line class="axis-guide" x1="' +
-            mx +
-            '" y1="' +
-            my +
-            '" x2="' +
-            cEnd[0] +
-            '" y2="' +
-            cEnd[1] +
-            '" />' +
-            '<line class="axis-guide" x1="' +
-            mx +
-            '" y1="' +
-            my +
-            '" x2="' +
-            gEnd[0] +
-            '" y2="' +
-            gEnd[1] +
-            '" />' +
-            '<text class="axis-lbl" x="' +
-            (wEnd[0] + 8) +
-            '" y="' +
-            (wEnd[1] + 4) +
-            '">width</text>' +
-            '<text class="axis-lbl" x="' +
-            (cEnd[0] + 6) +
-            '" y="' +
-            (cEnd[1] - 8) +
-            '">contrast</text>' +
-            '<text class="axis-lbl" x="' +
-            (gEnd[0] + 6) +
-            '" y="' +
-            (gEnd[1] + 14) +
-            '">weight</text>';
-
-          document.getElementById("axisGuides").innerHTML = guides;
-        })();
-
         var startMs = performance.now();
-        var lastWght = -1;
-        var lastWdth = -1;
-        var lastSlnt = NaN;
-        var lastCntr = -1;
-
-        var TRAIL_LEN = 200;
-        var trailBuf = new Array(TRAIL_LEN);
-        for (var ti = 0; ti < TRAIL_LEN; ti++) trailBuf[ti] = null;
-        var trailHead = 0;
-
-        function pushTrail(x, y) {
-          trailBuf[trailHead] = [x, y];
-          trailHead = (trailHead + 1) % TRAIL_LEN;
-        }
-
-        function renderTrail() {
-          var d = "";
-          var first = true;
-          for (var k = 0; k < TRAIL_LEN; k++) {
-            var idx = (trailHead + k) % TRAIL_LEN;
-            var pt = trailBuf[idx];
-            if (!pt) continue;
-            d += (first ? "M" : "L") + pt[0] + " " + pt[1] + " ";
-            first = false;
-          }
-          trail.setAttribute("d", d);
-        }
+        var lastFvs = "";
 
         function frame(now) {
           var cycle = Math.max(8, parseFloat(els.cy.value));
@@ -981,24 +726,35 @@
             0.5 * Math.sin(twave * 0.937 + 1.55);
 
           var wght = lerp(wMin, wMax, nz);
-          var wdth = lerp(dMin, dMax, nw);
-          var cntr = lerp(cMin, cMax, ny);
           var slnt = lerp(sMin, sMax, nSl);
+          var fam = getFamily();
 
-          var nxVis = (wdth - dMin) / (dMax - dMin || 1);
-          var nyVis = (cntr - cMin) / (cMax - cMin || 1);
-          var nzVis = (wght - wMin) / (wMax - wMin || 1);
+          var wghtR = Math.round(wght);
+          var slntR = Math.round(slnt * 100) / 100;
+          var fvs;
+          if (fam === "plus") {
+            var wdth = lerp(dMin, dMax, nw);
+            var cntr = lerp(cMin, cMax, ny);
+            var wdthR = Math.round(wdth);
+            var cntrR = Math.round(cntr);
+            fvs =
+              '"wght" ' +
+              wghtR +
+              ', "wdth" ' +
+              wdthR +
+              ', "slnt" ' +
+              slntR +
+              ', "CNTR" ' +
+              cntrR;
+            rWdth.textContent = String(wdthR);
+            rCntr.textContent = String(cntrR);
+          } else {
+            fvs = '"wght" ' + wghtR + ', "slnt" ' + slntR;
+          }
 
-          var P = proj(nxVis, nyVis, nzVis);
-          var px = P[0];
-          var py = P[1];
-          var dotSz = 14;
-          dot.setAttribute("x", Math.round(px - dotSz / 2));
-          dot.setAttribute("y", Math.round(py - dotSz / 2));
-
-          if (els.trail.checked) {
-            pushTrail(px, py);
-            renderTrail();
+          if (fvs !== lastFvs) {
+            specimen.style.fontVariationSettings = fvs;
+            lastFvs = fvs;
           }
 
           var lhMinV = parseFloat(els.lhMin.value);
@@ -1010,54 +766,9 @@
           root.style.setProperty("--lh", lhCur.toFixed(3));
           root.style.setProperty("--tracking", trCur.toFixed(4));
 
-          var wghtR = Math.round(wght);
-          var wdthR = Math.round(wdth);
-          var slntR = Math.round(slnt * 100) / 100;
-          var cntrR = Math.round(cntr);
-
-          if (
-            wghtR !== lastWght ||
-            wdthR !== lastWdth ||
-            slntR !== lastSlnt ||
-            cntrR !== lastCntr
-          ) {
-            specimen.style.fontVariationSettings =
-              '"wght" ' +
-              wghtR +
-              ', "wdth" ' +
-              wdthR +
-              ', "slnt" ' +
-              slntR +
-              ', "CNTR" ' +
-              cntrR;
-            lastWght = wghtR;
-            lastWdth = wdthR;
-            lastSlnt = slntR;
-            lastCntr = cntrR;
-          }
-
           rWght.textContent = String(wghtR);
-          rWdth.textContent = String(wdthR);
           rSlnt.textContent = slntR.toFixed(2);
-          rCntr.textContent = String(cntrR);
-          rPhase.textContent = "orbit";
-
-          if (hudWght) hudWght.textContent = "WGHT=" + wghtR;
-          if (hudWdth) hudWdth.textContent = "WDTH=" + wdthR;
-          if (hudCntr) hudCntr.textContent = "CNTR=" + ("00" + cntrR).slice(-3);
-          if (hudSlnt) hudSlnt.textContent = "SLNT=" + slntR.toFixed(2);
-          if (hudNorm) {
-            hudNorm.textContent =
-              "NORM " +
-              nxVis.toFixed(3) +
-              " · " +
-              nyVis.toFixed(3) +
-              " · " +
-              nzVis.toFixed(3) +
-              " · " +
-              ((slntR - sMin) / (sMax - sMin || 1)).toFixed(3);
-          }
-          if (hudPhase) hudPhase.textContent = "u=" + (u % 1).toFixed(2);
+          rPhase.textContent = (u % 1).toFixed(2);
 
           requestAnimationFrame(frame);
         }

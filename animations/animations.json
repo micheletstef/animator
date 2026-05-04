@@ -2,9 +2,9 @@
   "animations": [
     {
       "id": "axes-diagram",
-      "label": "axes diagram",
+      "label": "axes · variable states",
       "url": "animations/axes-diagram.html",
-      "mtime": 1777930589
+      "mtime": 1777930968
     },
     {
       "id": "ghost",
