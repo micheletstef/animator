@@ -252,23 +252,52 @@
         width: max-content;
         height: max-content;
         align-items: center;
+        justify-content: center;
+      }
+
+      .output-scene-frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--artboard-bg);
+        outline: 1px solid rgba(31, 31, 31, 0.32);
+        outline-offset: -1px;
+      }
+
+      .output-artwork-marquee-track {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        width: max-content;
+        height: 100%;
+        align-items: stretch;
         will-change: transform;
       }
 
-      .output-viewport.is-marquee .output-marquee-track {
-        animation: outMarqueeX var(--marquee-duration) linear infinite;
+      .output-viewport:not(.is-marquee) .output-artwork-marquee-track {
+        width: 100%;
+        height: 100%;
+        transform: none !important;
+        animation: none !important;
       }
 
-      .output-viewport.is-marquee.marquee-axis-y .output-marquee-track {
+      .output-viewport.is-marquee .output-artwork-marquee-track {
+        animation: outMarqueeArtX var(--marquee-duration) linear infinite;
+      }
+
+      .output-viewport.is-marquee.marquee-axis-y .output-artwork-marquee-track {
         flex-direction: column;
-        animation-name: outMarqueeY;
+        width: 100%;
+        height: max-content;
+        animation-name: outMarqueeArtY;
       }
 
-      .output-viewport.is-marquee.marquee-rev .output-marquee-track {
+      .output-viewport.is-marquee.marquee-rev .output-artwork-marquee-track {
         animation-direction: reverse;
       }
 
-      @keyframes outMarqueeX {
+      @keyframes outMarqueeArtX {
         from {
           transform: translate3d(0, 0, 0);
         }
@@ -277,7 +306,7 @@
         }
       }
 
-      @keyframes outMarqueeY {
+      @keyframes outMarqueeArtY {
         from {
           transform: translate3d(0, 0, 0);
         }
@@ -287,9 +316,30 @@
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .output-viewport.is-marquee .output-marquee-track {
+        .output-viewport.is-marquee .output-artwork-marquee-track {
           animation: none;
         }
+      }
+
+      .marquee-art-cell {
+        flex-shrink: 0;
+        position: relative;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+
+      .output-viewport:not(.is-marquee) .marquee-art-cell {
+        width: 100%;
+        height: 100%;
+      }
+
+      .output-viewport.is-marquee .marquee-art-cell {
+        width: calc(var(--ar-w) * 1px);
+        height: calc(var(--ar-h) * 1px);
+      }
+
+      .output-viewport:not(.is-marquee) .marquee-art-cell--dup {
+        display: none !important;
       }
 
       .output-marquee-panel {
@@ -297,14 +347,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-      }
-
-      .output-marquee-panel.is-marquee-clone {
-        display: none;
-      }
-
-      .output-viewport.is-marquee .output-marquee-panel.is-marquee-clone {
-        display: flex;
       }
 
       .output-scale-outer {
@@ -317,10 +359,12 @@
 
       .scene {
         position: relative;
-        background: var(--artboard-bg);
-        overflow: visible;
+        background-color: var(--artboard-bg);
+        background-image: none;
+        overflow: hidden;
         outline: 1px solid rgba(31, 31, 31, 0.32);
         outline-offset: -1px;
+        flex-shrink: 0;
       }
 
       .scene-mirror {
@@ -482,14 +526,16 @@
       }
 
       .artboard-item.artboard-text.is-text-selected {
-        border-color: rgba(31, 31, 31, 0.55);
+        border: 2px solid #1f1f1f;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.95),
+          0 2px 12px rgba(0, 0, 0, 0.18);
         z-index: 12;
       }
 
       .frame-handles {
         position: absolute;
         left: 0;
-        top: 36px;
+        top: 0;
         right: 0;
         bottom: 0;
         pointer-events: none;
@@ -504,42 +550,46 @@
 
       .frame-handle {
         position: absolute;
-        width: 11px;
-        height: 11px;
+        width: 14px;
+        height: 14px;
         margin: 0;
         padding: 0;
-        border: 1px solid rgba(31, 31, 31, 0.45);
+        border: 2px solid #1f1f1f;
         background: #fff;
-        border-radius: 1px;
+        border-radius: 2px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9),
+          0 1px 4px rgba(0, 0, 0, 0.35);
         pointer-events: auto;
         box-sizing: border-box;
       }
 
       .frame-handle:focus {
         outline: none;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.55),
+          0 1px 4px rgba(0, 0, 0, 0.35);
       }
 
       .frame-handle--nw {
-        left: -6px;
-        top: -6px;
+        left: 2px;
+        top: 2px;
         cursor: nwse-resize;
       }
 
       .frame-handle--ne {
-        right: -6px;
-        top: -6px;
+        right: 2px;
+        top: 2px;
         cursor: nesw-resize;
       }
 
       .frame-handle--sw {
-        left: -6px;
-        bottom: -6px;
+        left: 2px;
+        bottom: 2px;
         cursor: nesw-resize;
       }
 
       .frame-handle--se {
-        right: -6px;
-        bottom: -6px;
+        right: 2px;
+        bottom: 2px;
         cursor: nwse-resize;
       }
 
@@ -666,6 +716,60 @@
 
       .typography-check input {
         margin: 0;
+      }
+
+      .saved-artboards-list {
+        list-style: none;
+        margin: 8px 0 0;
+        padding: 0;
+        max-height: 200px;
+        overflow: auto;
+      }
+
+      .saved-artboards-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 5px 2px;
+        border-bottom: 1px solid rgba(31, 31, 31, 0.1);
+      }
+
+      .saved-artboards-list .saved-load-btn {
+        flex: 1;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 11px;
+        line-height: 1.25;
+        color: #1f1f1f;
+        text-decoration: underline;
+        padding: 0;
+        min-width: 0;
+      }
+
+      .saved-artboards-list .saved-load-btn:hover,
+      .saved-artboards-list .saved-load-btn:focus {
+        outline: none;
+      }
+
+      .saved-artboards-list .saved-del-btn {
+        border: 0;
+        background: transparent;
+        color: #888;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0 4px;
+        flex-shrink: 0;
+      }
+
+      .saved-artboards-list .saved-del-btn:hover,
+      .saved-artboards-list .saved-del-btn:focus {
+        color: #1f1f1f;
+        outline: none;
       }
     </style>
   </head>
@@ -856,8 +960,33 @@
           <p class="typography-subhead" id="vfAxesTitle" hidden>axes</p>
           <div id="vfAxisHost" class="vf-axis-host" hidden></div>
         </div>
+        <div class="settings-title-row" style="margin-top: 14px">
+          <h2 class="settings-title">saved artboards</h2>
+        </div>
         <div class="settings-row">
-          <span class="settings-label">add</span>
+          <span class="settings-label">name</span>
+          <input
+            type="text"
+            class="typography-num"
+            id="saveArtboardName"
+            maxlength="80"
+            placeholder="label"
+            aria-label="Name for saved artboard"
+            style="max-width: 100%"
+          />
+        </div>
+        <div class="settings-row">
+          <span class="settings-label"></span>
+          <div class="settings-actions">
+            <button type="button" id="saveArtboardBtn">save to list</button>
+          </div>
+        </div>
+        <ul class="saved-artboards-list" id="savedArtboardsList" aria-label="Saved artboards"></ul>
+        <div class="settings-title-row" style="margin-top: 14px">
+          <h2 class="settings-title">add</h2>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label"></span>
           <div class="settings-actions">
             <button type="button" id="addText">text box</button>
             <button type="button" id="addImage">image</button>
@@ -888,24 +1017,26 @@
               <div class="output-marquee-panel">
                 <div class="output-scale-outer" id="outputScaleOuter">
                   <div class="output-scale-inner" id="outputScaleInner">
-                    <div
-                      class="scene scene-mirror"
-                      id="sceneMirror"
-                      role="presentation"
-                      aria-hidden="true"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              <div class="output-marquee-panel is-marquee-clone" id="outputMarqueePanelB">
-                <div class="output-scale-outer" id="outputScaleOuterB">
-                  <div class="output-scale-inner" id="outputScaleInnerB">
-                    <div
-                      class="scene scene-mirror"
-                      id="sceneMirrorB"
-                      role="presentation"
-                      aria-hidden="true"
-                    ></div>
+                    <div class="output-scene-frame" id="outputSceneFrame">
+                      <div
+                        class="output-artwork-marquee-track"
+                        id="outputArtworkMarqueeTrack"
+                        aria-hidden="true"
+                      >
+                        <div
+                          class="marquee-art-cell scene-mirror"
+                          id="marqueeArtCellA"
+                          role="presentation"
+                          aria-hidden="true"
+                        ></div>
+                        <div
+                          class="marquee-art-cell marquee-art-cell--dup scene-mirror"
+                          id="marqueeArtCellB"
+                          role="presentation"
+                          aria-hidden="true"
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -949,7 +1080,6 @@
       (function () {
         var root = document.documentElement;
         var scene = document.getElementById("scene");
-        var sceneMirror = document.getElementById("sceneMirror");
         var sceneBadge = document.getElementById("sceneBadge");
         var formatSelect = document.getElementById("formatSelect");
         var outputSizeReadout = document.getElementById("outputSizeReadout");
@@ -978,9 +1108,8 @@
         var outputMarqueeWindow = document.getElementById("outputMarqueeWindow");
         var outputScaleOuter = document.getElementById("outputScaleOuter");
         var outputScaleInner = document.getElementById("outputScaleInner");
-        var outputScaleOuterB = document.getElementById("outputScaleOuterB");
-        var outputScaleInnerB = document.getElementById("outputScaleInnerB");
-        var sceneMirrorB = document.getElementById("sceneMirrorB");
+        var marqueeArtCellA = document.getElementById("marqueeArtCellA");
+        var marqueeArtCellB = document.getElementById("marqueeArtCellB");
         var marqueeEnabled = document.getElementById("marqueeEnabled");
         var marqueeSpeed = document.getElementById("marqueeSpeed");
         var marqueeSpeedLabel = document.getElementById("marqueeSpeedLabel");
@@ -996,6 +1125,10 @@
         var outputZoomOutBtn = document.getElementById("outputZoomOut");
         var outputZoomFitBtn = document.getElementById("outputZoomFit");
         var outputZoomReadout = document.getElementById("outputZoomReadout");
+        var saveArtboardName = document.getElementById("saveArtboardName");
+        var saveArtboardBtn = document.getElementById("saveArtboardBtn");
+        var savedArtboardsList = document.getElementById("savedArtboardsList");
+        var settingsPanelEl = document.querySelector(".settings-panel");
 
         var logicalW = 1080;
         var logicalH = 1440;
@@ -1009,6 +1142,374 @@
         var activeTextInner = null;
         var selectedTextWrap = null;
         var formatPresetMinH = 1440;
+
+        var LS_SESSION = "animator:session:v1";
+        var LS_LIBRARY = "animator:library:v1";
+        var restoringSnapshot = false;
+        var sessionPersistTimer = null;
+        var persistenceWired = false;
+
+        function readJSON(key) {
+          try {
+            var raw = localStorage.getItem(key);
+            if (!raw) return null;
+            return JSON.parse(raw);
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function writeJSON(key, val) {
+          try {
+            localStorage.setItem(key, JSON.stringify(val));
+          } catch (e) {
+            console.warn("localStorage write failed", key, e);
+          }
+        }
+
+        function collectTypographySnapshot() {
+          return {
+            textFontSize: textFontSize ? textFontSize.value : "",
+            textLineHeight: textLineHeight ? textLineHeight.value : "",
+            textTracking: textTracking ? textTracking.value : "",
+            textWordSpace: textWordSpace ? textWordSpace.value : "",
+            textHorizScale: textHorizScale ? textHorizScale.value : "",
+            textBaselineShift: textBaselineShift ? textBaselineShift.value : "",
+            textAlign: textAlign ? textAlign.value : "",
+            textCase: textCase ? textCase.value : "",
+            textDecUnderline: !!(textDecUnderline && textDecUnderline.checked),
+            textDecStrike: !!(textDecStrike && textDecStrike.checked),
+            activeTextColor: activeTextColor ? activeTextColor.value : "",
+            activeTextFontSelect: activeTextFontSelect ? activeTextFontSelect.value : ""
+          };
+        }
+
+        function applyTypographySnapshot(tp) {
+          if (!tp || typeof tp !== "object") return;
+          if (tp.textFontSize != null && textFontSize) textFontSize.value = tp.textFontSize;
+          if (tp.textLineHeight != null && textLineHeight) textLineHeight.value = tp.textLineHeight;
+          if (tp.textTracking != null && textTracking) textTracking.value = tp.textTracking;
+          if (tp.textWordSpace != null && textWordSpace) textWordSpace.value = tp.textWordSpace;
+          if (tp.textHorizScale != null && textHorizScale) textHorizScale.value = tp.textHorizScale;
+          if (tp.textBaselineShift != null && textBaselineShift) {
+            textBaselineShift.value = tp.textBaselineShift;
+          }
+          if (tp.textAlign != null && textAlign) textAlign.value = tp.textAlign;
+          if (tp.textCase != null && textCase) textCase.value = tp.textCase;
+          if (textDecUnderline) textDecUnderline.checked = !!tp.textDecUnderline;
+          if (textDecStrike) textDecStrike.checked = !!tp.textDecStrike;
+          if (tp.activeTextColor != null && activeTextColor) {
+            activeTextColor.value = tp.activeTextColor;
+          }
+          if (tp.activeTextFontSelect != null && activeTextFontSelect) {
+            if ([].some.call(activeTextFontSelect.options, function (o) {
+              return o.value === tp.activeTextFontSelect;
+            })) {
+              activeTextFontSelect.value = tp.activeTextFontSelect;
+            }
+          }
+        }
+
+        function clearArtboardItems() {
+          scene.querySelectorAll(".artboard-item").forEach(function (n) {
+            n.remove();
+          });
+        }
+
+        function rehydrateAllArtboardItems() {
+          scene.querySelectorAll(".artboard-item").forEach(function (wrap) {
+            if (wrap.classList.contains("artboard-text")) {
+              wrap.querySelectorAll(".artboard-drag-handle").forEach(function (n) {
+                n.remove();
+              });
+              var inner = wrap.querySelector(".artboard-text-inner");
+              if (!inner) return;
+              wrap.querySelectorAll(".frame-handles").forEach(function (n) {
+                n.remove();
+              });
+              attachTextFrameChrome(wrap, inner);
+              inner.setAttribute("contenteditable", "true");
+              inner.setAttribute("spellcheck", "true");
+              inner.addEventListener("input", function () {
+                syncMirrorSoon(48);
+                scheduleSessionPersist();
+              });
+              attachTextBoxDrag(wrap, inner, scene);
+            } else if (wrap.classList.contains("artboard-image")) {
+              var handle = wrap.querySelector(".artboard-drag-handle");
+              if (handle) attachDragFixed(handle, wrap, scene);
+            }
+          });
+        }
+
+        function injectItemsHTML(html) {
+          clearArtboardItems();
+          var holder = document.createElement("div");
+          holder.innerHTML = html || "";
+          var before = sceneHeightGrip || null;
+          [].slice.call(holder.children).forEach(function (el) {
+            if (before) scene.insertBefore(el, before);
+            else scene.appendChild(el);
+          });
+          rehydrateAllArtboardItems();
+        }
+
+        function cloneItemForSave(node) {
+          var c = node.cloneNode(true);
+          c.querySelectorAll(".frame-handles").forEach(function (n) {
+            n.remove();
+          });
+          return c;
+        }
+
+        function prepareItemsHtmlForSave(done) {
+          var items = [].slice.call(scene.querySelectorAll(".artboard-item"));
+          if (!items.length) {
+            done("");
+            return;
+          }
+          var clones = items.map(function (it) {
+            return cloneItemForSave(it);
+          });
+          var imgs = [];
+          clones.forEach(function (cl) {
+            cl.querySelectorAll("img").forEach(function (img) {
+              imgs.push(img);
+            });
+          });
+          var i = 0;
+          function nextImg() {
+            if (i >= imgs.length) {
+              done(
+                clones
+                  .map(function (c) {
+                    return c.outerHTML;
+                  })
+                  .join("")
+              );
+              return;
+            }
+            var img = imgs[i++];
+            var src = img.getAttribute("src") || "";
+            if (src.indexOf("data:") === 0) {
+              nextImg();
+              return;
+            }
+            if (src.indexOf("blob:") !== 0) {
+              nextImg();
+              return;
+            }
+            var im = new Image();
+            im.onload = function () {
+              try {
+                var cnv = document.createElement("canvas");
+                cnv.width = im.naturalWidth || 1;
+                cnv.height = im.naturalHeight || 1;
+                cnv.getContext("2d").drawImage(im, 0, 0);
+                img.setAttribute("src", cnv.toDataURL("image/png"));
+              } catch (err) {}
+              nextImg();
+            };
+            im.onerror = function () {
+              nextImg();
+            };
+            im.src = src;
+          }
+          nextImg();
+        }
+
+        function buildSnapshotObject(itemsHtml) {
+          var evh =
+            root.style.getPropertyValue("--editor-view-h").trim() ||
+            String(getComputedStyle(root).getPropertyValue("--editor-view-h") || "").trim() ||
+            "320px";
+          return {
+            v: 1,
+            logicalW: logicalW,
+            logicalH: logicalH,
+            format: formatSelect ? formatSelect.value : "1080-1440",
+            bg: bgColor ? bgColor.value : "#ffffff",
+            marquee: {
+              on: !!(marqueeEnabled && marqueeEnabled.checked),
+              speed: marqueeSpeed ? String(marqueeSpeed.value) : "32",
+              direction: marqueeDirection ? marqueeDirection.value : "left"
+            },
+            outputZoom: outputZoomFactor,
+            editorViewH: evh,
+            typography: collectTypographySnapshot(),
+            itemsHtml: itemsHtml || ""
+          };
+        }
+
+        function flushSessionToStorage() {
+          if (restoringSnapshot) return;
+          prepareItemsHtmlForSave(function (html) {
+            writeJSON(LS_SESSION, buildSnapshotObject(html));
+          });
+        }
+
+        function scheduleSessionPersist() {
+          if (restoringSnapshot) return;
+          if (sessionPersistTimer) clearTimeout(sessionPersistTimer);
+          sessionPersistTimer = setTimeout(function () {
+            sessionPersistTimer = null;
+            flushSessionToStorage();
+          }, 550);
+        }
+
+        function applySnapshot(snap) {
+          if (!snap || snap.v !== 1) return;
+          restoringSnapshot = true;
+          try {
+            hideTypography();
+            if (snap.format && formatSelect) {
+              formatSelect.value = snap.format;
+            }
+            var opt = formatSelect && formatSelect.selectedOptions[0];
+            var fw = opt ? parseInt(opt.getAttribute("data-w"), 10) : snap.logicalW;
+            var fh = opt ? parseInt(opt.getAttribute("data-h"), 10) : snap.logicalH;
+            if (isFinite(fh) && fh > 0) formatPresetMinH = fh;
+            logicalW = isFinite(snap.logicalW) ? snap.logicalW : fw || 1080;
+            logicalH = isFinite(snap.logicalH) ? snap.logicalH : fh || 1440;
+            root.style.setProperty("--ar-w", String(logicalW));
+            root.style.setProperty("--ar-h", String(logicalH));
+            if (outputSizeReadout) {
+              outputSizeReadout.textContent = "(" + logicalW + " × " + logicalH + ")";
+            }
+            if (sceneBadge && opt) {
+              sceneBadge.textContent = opt.getAttribute("data-label") || "";
+            }
+            scene.setAttribute(
+              "aria-label",
+              "Frame " + logicalW + " by " + logicalH + " pixels"
+            );
+            applyLogicalSize(logicalW, logicalH);
+            if (snap.bg != null && bgColor) {
+              bgColor.value = snap.bg;
+              syncBgFromPicker();
+            }
+            if (snap.marquee) {
+              if (marqueeEnabled) marqueeEnabled.checked = !!snap.marquee.on;
+              if (marqueeSpeed && snap.marquee.speed != null) {
+                marqueeSpeed.value = String(snap.marquee.speed);
+              }
+              if (marqueeDirection && snap.marquee.direction) {
+                marqueeDirection.value = snap.marquee.direction;
+              }
+            }
+            applyMarqueeState();
+            outputZoomFactor = clampOutputZoom(
+              snap.outputZoom != null ? snap.outputZoom : 1
+            );
+            if (outputZoomReadout) {
+              outputZoomReadout.textContent =
+                Math.round(outputZoomFactor * 100) + "%";
+            }
+            if (snap.editorViewH) {
+              root.style.setProperty("--editor-view-h", snap.editorViewH);
+            }
+            applyTypographySnapshot(snap.typography);
+            injectItemsHTML(snap.itemsHtml || "");
+            layoutScales();
+            syncMirrorSoon(0);
+            syncMirror();
+          } finally {
+            restoringSnapshot = false;
+          }
+        }
+
+        function readLibrary() {
+          var raw = readJSON(LS_LIBRARY);
+          return Array.isArray(raw) ? raw : [];
+        }
+
+        function writeLibrary(arr) {
+          writeJSON(LS_LIBRARY, arr);
+        }
+
+        function renderSavedArtboardsList() {
+          if (!savedArtboardsList) return;
+          var arr = readLibrary().slice().sort(function (a, b) {
+            return (b.t || 0) - (a.t || 0);
+          });
+          savedArtboardsList.innerHTML = "";
+          arr.forEach(function (entry) {
+            var li = document.createElement("li");
+            var loadBtn = document.createElement("button");
+            loadBtn.type = "button";
+            loadBtn.className = "saved-load-btn";
+            loadBtn.textContent = entry.name || "untitled";
+            loadBtn.addEventListener("click", function () {
+              if (entry.snap) {
+                applySnapshot(entry.snap);
+                scheduleSessionPersist();
+              }
+            });
+            var delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "saved-del-btn";
+            delBtn.setAttribute("aria-label", "Delete saved artboard");
+            delBtn.textContent = "×";
+            delBtn.addEventListener("click", function (e) {
+              e.stopPropagation();
+              var next = readLibrary().filter(function (x) {
+                return x.id !== entry.id;
+              });
+              writeLibrary(next);
+              renderSavedArtboardsList();
+            });
+            li.appendChild(loadBtn);
+            li.appendChild(delBtn);
+            savedArtboardsList.appendChild(li);
+          });
+        }
+
+        function wirePersistence() {
+          if (persistenceWired) return;
+          persistenceWired = true;
+          if (settingsPanelEl) {
+            settingsPanelEl.addEventListener("input", scheduleSessionPersist);
+            settingsPanelEl.addEventListener("change", scheduleSessionPersist);
+          }
+          var mo = new MutationObserver(function () {
+            scheduleSessionPersist();
+          });
+          mo.observe(scene, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            characterData: true
+          });
+          editorResizeHandle.addEventListener("mouseup", scheduleSessionPersist);
+          if (sceneHeightGrip) {
+            sceneHeightGrip.addEventListener("mouseup", scheduleSessionPersist);
+          }
+          if (saveArtboardBtn) {
+            saveArtboardBtn.addEventListener("click", function () {
+              var label = (saveArtboardName && saveArtboardName.value.trim()) || "";
+              if (!label) {
+                label = "untitled " + new Date().toLocaleString();
+              }
+              prepareItemsHtmlForSave(function (html) {
+                var snap = buildSnapshotObject(html);
+                var list = readLibrary();
+                list.push({
+                  id:
+                    "b_" +
+                    Date.now().toString(36) +
+                    "_" +
+                    Math.random().toString(36).slice(2, 8),
+                  name: label,
+                  t: Date.now(),
+                  snap: snap
+                });
+                writeLibrary(list);
+                renderSavedArtboardsList();
+                if (saveArtboardName) saveArtboardName.value = "";
+              });
+            });
+          }
+        }
 
         function clearTextFrameSelection() {
           if (selectedTextWrap) {
@@ -1030,12 +1531,6 @@
           logicalH = h;
           scene.style.width = w + "px";
           scene.style.height = h + "px";
-          sceneMirror.style.width = w + "px";
-          sceneMirror.style.height = h + "px";
-          if (sceneMirrorB) {
-            sceneMirrorB.style.width = w + "px";
-            sceneMirrorB.style.height = h + "px";
-          }
         }
 
         function setRatio(w, h, shortLabel) {
@@ -1388,6 +1883,29 @@
           hideTypography();
         });
 
+        document.addEventListener(
+          "keydown",
+          function (e) {
+            if (e.key !== "Backspace" && e.key !== "Delete") return;
+            var wrap = selectedTextWrap;
+            if (!wrap || !wrap.classList.contains("artboard-text")) return;
+            var inner = wrap.querySelector(".artboard-text-inner");
+            var ae = document.activeElement;
+            if (inner && (ae === inner || (inner.contains && inner.contains(ae)))) {
+              return;
+            }
+            if (typographyBlock && typographyBlock.contains(ae)) return;
+            if (settingsPanelEl && settingsPanelEl.contains(ae)) return;
+            e.preventDefault();
+            wrap.remove();
+            clearTextFrameSelection();
+            hideTypography();
+            syncMirrorSoon(0);
+            scheduleSessionPersist();
+          },
+          true
+        );
+
         scene.addEventListener(
           "mousedown",
           function (e) {
@@ -1505,26 +2023,41 @@
           buildFontSelect(manifest);
         }
 
-        function syncMirrorToElement(mirrorEl) {
-          if (!mirrorEl) return;
-          mirrorEl.innerHTML = scene.innerHTML;
-          mirrorEl.querySelectorAll(".scene-height-grip").forEach(function (n) {
+        function stripMirrorUiFromRoot(mirrorRoot) {
+          if (!mirrorRoot) return;
+          mirrorRoot.querySelectorAll(".scene-height-grip").forEach(function (n) {
             n.remove();
           });
-          mirrorEl.querySelectorAll(".frame-handles").forEach(function (n) {
+          mirrorRoot.querySelectorAll(".frame-handles").forEach(function (n) {
             n.remove();
           });
-          mirrorEl.querySelectorAll(".artboard-drag-handle").forEach(function (n) {
+          mirrorRoot.querySelectorAll(".artboard-drag-handle").forEach(function (n) {
             n.remove();
           });
-          mirrorEl.querySelectorAll(".artboard-text-inner").forEach(function (el) {
+          mirrorRoot.querySelectorAll(".artboard-text-inner").forEach(function (el) {
             el.removeAttribute("contenteditable");
           });
         }
 
+        function mirrorArtboardItemsIntoCell(cell) {
+          if (!cell) return;
+          cell.innerHTML = "";
+          scene.querySelectorAll(".artboard-item").forEach(function (node) {
+            cell.appendChild(node.cloneNode(true));
+          });
+          stripMirrorUiFromRoot(cell);
+        }
+
         function syncMirror() {
-          syncMirrorToElement(sceneMirror);
-          syncMirrorToElement(sceneMirrorB);
+          if (!marqueeArtCellA) return;
+          var inMarquee =
+            outputViewport && outputViewport.classList.contains("is-marquee");
+          mirrorArtboardItemsIntoCell(marqueeArtCellA);
+          if (inMarquee && marqueeArtCellB) {
+            marqueeArtCellB.innerHTML = marqueeArtCellA.innerHTML;
+          } else if (marqueeArtCellB) {
+            marqueeArtCellB.innerHTML = "";
+          }
         }
 
         function syncMirrorSoon(ms) {
@@ -1548,6 +2081,7 @@
               Math.round(outputZoomFactor * 100) + "%";
           }
           layoutOutputScale();
+          scheduleSessionPersist();
         }
 
         function applyOutputScaleToPair(scaleInner, scaleOuter, s) {
@@ -1567,7 +2101,6 @@
           if (sFit <= 0 || !isFinite(sFit)) sFit = 0.2;
           var s = sFit * outputZoomFactor;
           applyOutputScaleToPair(outputScaleInner, outputScaleOuter, s);
-          applyOutputScaleToPair(outputScaleInnerB, outputScaleOuterB, s);
           if (outputMarqueeWindow && outputViewport) {
             if (outputViewport.classList.contains("is-marquee")) {
               outputMarqueeWindow.style.width = logicalW * s + "px";
@@ -1649,6 +2182,7 @@
           marqueeEnabled.addEventListener("change", function () {
             applyMarqueeState();
             layoutOutputScale();
+            syncMirrorSoon(0);
           });
         }
         if (marqueeSpeed) {
@@ -1675,7 +2209,7 @@
             var w0 = wrap.offsetWidth;
             var h0 = wrap.offsetHeight;
             var MIN_W = 48;
-            var MIN_H = 44;
+            var MIN_H = 32;
             function onMove(ev) {
               var dx = (ev.clientX - sx) / scale;
               var dy = (ev.clientY - sy) / scale;
@@ -1723,6 +2257,7 @@
               window.removeEventListener("mousemove", onMove);
               window.removeEventListener("mouseup", onUp);
               syncMirrorSoon(0);
+              scheduleSessionPersist();
             }
             window.addEventListener("mousemove", onMove);
             window.addEventListener("mouseup", onUp);
@@ -1764,6 +2299,7 @@
             window.removeEventListener("mousemove", onMove);
             window.removeEventListener("mouseup", onUp);
             syncMirrorSoon(0);
+            scheduleSessionPersist();
           }
           window.addEventListener("mousemove", onMove);
           window.addEventListener("mouseup", onUp);
@@ -1830,9 +2366,6 @@
           wrap.style.left = "72px";
           wrap.style.top = "120px";
           wrap.style.width = "560px";
-          var handle = document.createElement("div");
-          handle.className = "artboard-drag-handle";
-          handle.textContent = "move · alt-drag";
           var inner = document.createElement("div");
           inner.className = "artboard-text-inner";
           inner.contentEditable = "true";
@@ -1842,8 +2375,8 @@
           inner.style.color = activeTextColor ? activeTextColor.value : "#1f1f1f";
           inner.addEventListener("input", function () {
             syncMirrorSoon(48);
+            scheduleSessionPersist();
           });
-          wrap.appendChild(handle);
           wrap.appendChild(inner);
           attachTextFrameChrome(wrap, inner);
           if (sceneHeightGrip) {
@@ -1857,6 +2390,7 @@
           }
           setActiveTextInner(inner);
           syncMirrorSoon(0);
+          scheduleSessionPersist();
         });
 
         addImage.addEventListener("click", function () {
@@ -1888,6 +2422,7 @@
           }
           attachDragFixed(handle, wrap, scene);
           syncMirrorSoon(0);
+          scheduleSessionPersist();
         });
 
         editorResizeHandle.addEventListener("mousedown", function (e) {
@@ -1906,6 +2441,7 @@
           function onUp() {
             window.removeEventListener("mousemove", onMove);
             window.removeEventListener("mouseup", onUp);
+            scheduleSessionPersist();
           }
           window.addEventListener("mousemove", onMove);
           window.addEventListener("mouseup", onUp);
@@ -1941,6 +2477,7 @@
               window.removeEventListener("mousemove", onMove);
               window.removeEventListener("mouseup", onUp);
               syncMirrorSoon(0);
+              scheduleSessionPersist();
             }
             window.addEventListener("mousemove", onMove);
             window.addEventListener("mouseup", onUp);
@@ -1948,15 +2485,28 @@
         }
 
         function boot() {
-          var fo = formatSelect && formatSelect.selectedOptions[0];
-          if (fo) {
-            var ph = parseInt(fo.getAttribute("data-h"), 10);
-            if (isFinite(ph) && ph > 0) formatPresetMinH = ph;
+          var session = readJSON(LS_SESSION);
+          if (session && session.v === 1) {
+            applySnapshot(session);
+          } else {
+            var fo = formatSelect && formatSelect.selectedOptions[0];
+            if (fo) {
+              var ph = parseInt(fo.getAttribute("data-h"), 10);
+              if (isFinite(ph) && ph > 0) formatPresetMinH = ph;
+            }
+            applyLogicalSize(1080, 1440);
+            root.style.setProperty("--ar-w", String(logicalW));
+            root.style.setProperty("--ar-h", String(logicalH));
+            if (outputSizeReadout) {
+              outputSizeReadout.textContent = "(" + logicalW + " × " + logicalH + ")";
+            }
+            applyMarqueeState();
+            syncBgFromPicker();
+            layoutScales();
+            syncMirror();
           }
-          applyLogicalSize(1080, 1440);
-          applyMarqueeState();
-          layoutScales();
-          syncMirror();
+          wirePersistence();
+          renderSavedArtboardsList();
         }
 
         fetch("fonts/fonts.json")
