@@ -419,13 +419,21 @@
         overflow: auto;
         padding: 10px;
         display: flex;
-        justify-content: center;
-        align-items: flex-start;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+      }
+
+      .editor-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: max-content;
+        flex-shrink: 0;
       }
 
       .editor-scale-outer {
         flex-shrink: 0;
-        margin-bottom: 48px;
       }
 
       .editor-scale-inner {
@@ -433,13 +441,15 @@
       }
 
       .editor-resize-handle {
-        margin-top: 6px;
+        width: 100%;
+        margin-top: 4px;
         height: 14px;
         border-radius: 2px;
         background: rgba(0, 0, 0, 0.12);
         cursor: ns-resize;
         flex-shrink: 0;
         touch-action: none;
+        box-sizing: border-box;
       }
 
       .editor-resize-handle:hover {
@@ -1035,27 +1045,29 @@
       <section class="editor-column" aria-label="Editor artboard">
         <p class="column-title">artboard</p>
         <div class="editor-scroll" id="editorScroll">
-          <div class="editor-scale-outer" id="editorScaleOuter">
-            <div class="editor-scale-inner" id="editorScaleInner">
-              <div
-                class="scene"
-                id="scene"
-                role="region"
-                aria-label="Frame 1080 by 1440 pixels"
-              >
-                <span class="scene-badge" id="sceneBadge">3:4</span>
+          <div class="editor-stack">
+            <div class="editor-scale-outer" id="editorScaleOuter">
+              <div class="editor-scale-inner" id="editorScaleInner">
+                <div
+                  class="scene"
+                  id="scene"
+                  role="region"
+                  aria-label="Frame 1080 by 1440 pixels"
+                >
+                  <span class="scene-badge" id="sceneBadge">3:4</span>
+                </div>
               </div>
             </div>
+            <div
+              class="editor-resize-handle"
+              id="editorResizeHandle"
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Drag down to extend artboard height from format size"
+              title="Drag down to extend artboard canvas (starts at format height)"
+            ></div>
           </div>
         </div>
-        <div
-          class="editor-resize-handle"
-          id="editorResizeHandle"
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="Drag down to extend artboard height from format size"
-          title="Drag down to extend artboard canvas (starts at format height)"
-        ></div>
       </section>
     </div>
     <script>
@@ -1113,6 +1125,8 @@
 
         var logicalW = 1080;
         var logicalH = 1440;
+        var outputW = 1080;
+        var outputH = 1440;
         var mirrorTimer = null;
         var editorScaleStored = 0.25;
         var outputZoomFactor = 1;
@@ -1123,6 +1137,14 @@
         var activeTextInner = null;
         var selectedTextWrap = null;
         var formatPresetMinH = 1440;
+
+        function syncOutputReadoutAndCss() {
+          root.style.setProperty("--ar-w", String(outputW));
+          root.style.setProperty("--ar-h", String(outputH));
+          if (outputSizeReadout) {
+            outputSizeReadout.textContent = "(" + outputW + " × " + outputH + ")";
+          }
+        }
 
         var LS_SESSION = "animator:session:v1";
         var LS_LIBRARY = "animator:library:v1";
@@ -1306,6 +1328,8 @@
             v: 1,
             logicalW: logicalW,
             logicalH: logicalH,
+            outputW: outputW,
+            outputH: outputH,
             format: formatSelect ? formatSelect.value : "1080-1440",
             bg: bgColor ? bgColor.value : "#ffffff",
             marquee: {
@@ -1345,22 +1369,30 @@
               formatSelect.value = snap.format;
             }
             var opt = formatSelect && formatSelect.selectedOptions[0];
-            var fw = opt ? parseInt(opt.getAttribute("data-w"), 10) : snap.logicalW;
-            var fh = opt ? parseInt(opt.getAttribute("data-h"), 10) : snap.logicalH;
-            if (isFinite(fh) && fh > 0) formatPresetMinH = fh;
-            logicalW = isFinite(snap.logicalW) ? snap.logicalW : fw || 1080;
-            logicalH = isFinite(snap.logicalH) ? snap.logicalH : fh || 1440;
-            root.style.setProperty("--ar-w", String(logicalW));
-            root.style.setProperty("--ar-h", String(logicalH));
-            if (outputSizeReadout) {
-              outputSizeReadout.textContent = "(" + logicalW + " × " + logicalH + ")";
-            }
+            var fw = opt ? parseInt(opt.getAttribute("data-w"), 10) : 1080;
+            var fh = opt ? parseInt(opt.getAttribute("data-h"), 10) : 1440;
+            outputW = isFinite(snap.outputW) ? snap.outputW : fw;
+            outputH = isFinite(snap.outputH) ? snap.outputH : fh;
+            if (!isFinite(outputW) || outputW <= 0) outputW = fw;
+            if (!isFinite(outputH) || outputH <= 0) outputH = fh;
+            formatPresetMinH = outputH;
+            logicalW = outputW;
+            logicalH = isFinite(snap.logicalH) ? snap.logicalH : outputH;
+            if (logicalH < outputH) logicalH = outputH;
+            syncOutputReadoutAndCss();
             if (sceneBadge && opt) {
               sceneBadge.textContent = opt.getAttribute("data-label") || "";
             }
             scene.setAttribute(
               "aria-label",
-              "Frame " + logicalW + " by " + logicalH + " pixels"
+              "Artboard canvas " +
+                logicalW +
+                " by " +
+                logicalH +
+                " pixels, output " +
+                outputW +
+                " by " +
+                outputH
             );
             applyLogicalSize(logicalW, logicalH);
             if (snap.bg != null && bgColor) {
@@ -1511,17 +1543,24 @@
 
         function setRatio(w, h, shortLabel) {
           formatPresetMinH = h;
-          root.style.setProperty("--ar-w", String(w));
-          root.style.setProperty("--ar-h", String(h));
-          if (outputSizeReadout) {
-            outputSizeReadout.textContent = "(" + w + " × " + h + ")";
-          }
+          outputW = w;
+          outputH = h;
+          logicalW = w;
+          logicalH = h;
+          syncOutputReadoutAndCss();
           sceneBadge.textContent = shortLabel;
           scene.setAttribute(
             "aria-label",
-            "Frame " + w + " by " + h + " pixels"
+            "Artboard canvas " +
+              logicalW +
+              " by " +
+              logicalH +
+              " pixels, output " +
+              outputW +
+              " by " +
+              outputH
           );
-          applyLogicalSize(w, h);
+          applyLogicalSize(logicalW, logicalH);
           layoutScales();
           syncMirrorSoon(0);
         }
@@ -2062,25 +2101,25 @@
 
         function applyOutputScaleToPair(scaleInner, scaleOuter, s) {
           if (!scaleInner || !scaleOuter) return;
-          scaleInner.style.width = logicalW + "px";
-          scaleInner.style.height = logicalH + "px";
+          scaleInner.style.width = outputW + "px";
+          scaleInner.style.height = outputH + "px";
           scaleInner.style.transform = "scale(" + s + ")";
-          scaleOuter.style.width = logicalW * s + "px";
-          scaleOuter.style.height = logicalH * s + "px";
+          scaleOuter.style.width = outputW * s + "px";
+          scaleOuter.style.height = outputH * s + "px";
         }
 
         function layoutOutputScale() {
           var pad = 24;
           var availW = Math.max(80, outputViewport.clientWidth - pad);
           var availH = Math.max(80, outputViewport.clientHeight - pad);
-          var sFit = Math.min(availW / logicalW, availH / logicalH) * 0.98;
+          var sFit = Math.min(availW / outputW, availH / outputH) * 0.98;
           if (sFit <= 0 || !isFinite(sFit)) sFit = 0.2;
           var s = sFit * outputZoomFactor;
           applyOutputScaleToPair(outputScaleInner, outputScaleOuter, s);
           if (outputMarqueeWindow && outputViewport) {
             if (outputViewport.classList.contains("is-marquee")) {
-              outputMarqueeWindow.style.width = logicalW * s + "px";
-              outputMarqueeWindow.style.height = logicalH * s + "px";
+              outputMarqueeWindow.style.width = outputW * s + "px";
+              outputMarqueeWindow.style.height = outputH * s + "px";
             } else {
               outputMarqueeWindow.style.width = "";
               outputMarqueeWindow.style.height = "";
@@ -2405,14 +2444,16 @@
             var dy = (ev.clientY - startY) / scale;
             var minH = formatPresetMinH > 0 ? formatPresetMinH : 200;
             logicalH = Math.round(Math.max(minH, startH + dy));
-            root.style.setProperty("--ar-h", String(logicalH));
-            if (outputSizeReadout) {
-              outputSizeReadout.textContent =
-                "(" + logicalW + " × " + logicalH + ")";
-            }
             scene.setAttribute(
               "aria-label",
-              "Frame " + logicalW + " by " + logicalH + " pixels"
+              "Artboard canvas " +
+                logicalW +
+                " by " +
+                logicalH +
+                " pixels, output " +
+                outputW +
+                " by " +
+                outputH
             );
             applyLogicalSize(logicalW, logicalH);
             layoutScales();
@@ -2435,15 +2476,32 @@
           } else {
             var fo = formatSelect && formatSelect.selectedOptions[0];
             if (fo) {
-              var ph = parseInt(fo.getAttribute("data-h"), 10);
-              if (isFinite(ph) && ph > 0) formatPresetMinH = ph;
+              var fw0 = parseInt(fo.getAttribute("data-w"), 10);
+              var fh0 = parseInt(fo.getAttribute("data-h"), 10);
+              if (isFinite(fw0) && isFinite(fh0) && fw0 > 0 && fh0 > 0) {
+                outputW = fw0;
+                outputH = fh0;
+                formatPresetMinH = fh0;
+                logicalW = fw0;
+                logicalH = fh0;
+              }
             }
-            applyLogicalSize(1080, 1440);
-            root.style.setProperty("--ar-w", String(logicalW));
-            root.style.setProperty("--ar-h", String(logicalH));
-            if (outputSizeReadout) {
-              outputSizeReadout.textContent = "(" + logicalW + " × " + logicalH + ")";
+            syncOutputReadoutAndCss();
+            applyLogicalSize(logicalW, logicalH);
+            if (sceneBadge && fo) {
+              sceneBadge.textContent = fo.getAttribute("data-label") || "";
             }
+            scene.setAttribute(
+              "aria-label",
+              "Artboard canvas " +
+                logicalW +
+                " by " +
+                logicalH +
+                " pixels, output " +
+                outputW +
+                " by " +
+                outputH
+            );
             applyMarqueeState();
             syncBgFromPicker();
             layoutScales();
