@@ -97,7 +97,6 @@
         transform: scale(var(--zoom));
         transform-origin: top left;
       }
-
       .specimen {
         position: absolute;
         inset: calc(var(--pad) * 1px);
@@ -111,7 +110,7 @@
         font-variation-settings: "wght" 400, "wdth" 100, "slnt" 0, "CNTR" 0;
         text-align: left;
         white-space: nowrap;
-        will-change: font-variation-settings;
+        will-change: font-variation-settings, line-height, letter-spacing;
         pointer-events: none;
       }
 
@@ -665,13 +664,12 @@
           return a + (b - a) * t;
         }
 
-        function smoothWindow(t) {
-          var x = t - Math.floor(t);
-          return x * x * (3 - 2 * x);
+        /** 0…1 envelope from sin, C∞ loop (no eased “stalls” per cycle). */
+        function normSin(theta, phase) {
+          return 0.5 + 0.5 * Math.sin(theta + phase);
         }
 
         var startMs = performance.now();
-        var lastFvs = "";
 
         function frame(now) {
           var cycle = Math.max(8, parseFloat(els.cy.value));
@@ -705,70 +703,62 @@
             cMax = tc;
           }
 
-          var u = (now - startMs) / (cycle * 1000);
-          var s = smoothWindow(u);
+          var elapsed = (now - startMs) / 1000;
+          var theta = (2 * Math.PI * elapsed) / cycle;
 
-          var twave = 2 * Math.PI * s;
-          var nw =
-            0.5 +
-            0.48 *
-              Math.sin(twave + 0.7);
-          var nz =
-            0.5 +
-            0.48 *
-              Math.sin(twave * 1.127 + 2.1);
-          var ny =
-            0.5 +
-            0.48 *
-              Math.sin(twave * 0.853 + 4.2);
-          var nSl =
-            0.5 +
-            0.5 * Math.sin(twave * 0.937 + 1.55);
+          var nw = 0.5 + 0.48 * Math.sin(theta + 0.7);
+          var nz = 0.5 + 0.48 * Math.sin(theta * 1.127 + 2.1);
+          var ny = 0.5 + 0.48 * Math.sin(theta * 0.853 + 4.2);
+          var nSl = 0.5 + 0.5 * Math.sin(theta * 0.937 + 1.55);
 
           var wght = lerp(wMin, wMax, nz);
           var slnt = lerp(sMin, sMax, nSl);
           var fam = getFamily();
 
-          var wghtR = Math.round(wght);
-          var slntR = Math.round(slnt * 100) / 100;
+          function fmtW(x) {
+            return (Math.round(x * 10) / 10).toFixed(1);
+          }
+          function fmtD(x) {
+            return (Math.round(x * 100) / 100).toFixed(2);
+          }
+
+          var wghtS = fmtW(wght);
+          var slntS = fmtD(slnt);
           var fvs;
           if (fam === "plus") {
             var wdth = lerp(dMin, dMax, nw);
             var cntr = lerp(cMin, cMax, ny);
-            var wdthR = Math.round(wdth);
-            var cntrR = Math.round(cntr);
+            var wdthS = fmtD(wdth);
+            var cntrS = (Math.round(cntr * 10) / 10).toFixed(1);
             fvs =
               '"wght" ' +
-              wghtR +
+              wghtS +
               ', "wdth" ' +
-              wdthR +
+              wdthS +
               ', "slnt" ' +
-              slntR +
+              slntS +
               ', "CNTR" ' +
-              cntrR;
-            rWdth.textContent = String(wdthR);
-            rCntr.textContent = String(cntrR);
+              cntrS;
+            rWdth.textContent = wdthS;
+            rCntr.textContent = cntrS;
           } else {
-            fvs = '"wght" ' + wghtR + ', "slnt" ' + slntR;
+            fvs = '"wght" ' + wghtS + ', "slnt" ' + slntS;
           }
 
-          if (fvs !== lastFvs) {
-            specimen.style.fontVariationSettings = fvs;
-            lastFvs = fvs;
-          }
+          specimen.style.fontVariationSettings = fvs;
 
           var lhMinV = parseFloat(els.lhMin.value);
           var lhMaxV = parseFloat(els.lhMax.value);
           var trMinV = parseFloat(els.trMin.value);
           var trMaxV = parseFloat(els.trMax.value);
-          var lhCur = lerp(lhMinV, lhMaxV, s);
-          var trCur = lerp(trMinV, trMaxV, s);
+          var lhCur = lerp(lhMinV, lhMaxV, normSin(theta * 0.5, 0));
+          var trCur = lerp(trMinV, trMaxV, normSin(theta * 0.5, 1.7));
           root.style.setProperty("--lh", lhCur.toFixed(3));
           root.style.setProperty("--tracking", trCur.toFixed(4));
 
-          rWght.textContent = String(wghtR);
-          rSlnt.textContent = slntR.toFixed(2);
-          rPhase.textContent = (u % 1).toFixed(2);
+          rWght.textContent = wghtS;
+          rSlnt.textContent = slntS;
+          rPhase.textContent = ((theta / (2 * Math.PI)) % 1).toFixed(2);
 
           requestAnimationFrame(frame);
         }
