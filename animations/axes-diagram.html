@@ -390,16 +390,11 @@
       </div>
 
       <div class="group">
-        <p class="group-title">slant · slnt</p>
+        <p class="group-title">slant · slnt (fixed)</p>
         <div class="row-ctl">
-          <label for="sMin">min</label>
-          <input id="sMin" type="range" min="-12" max="0" step="0.25" value="-12" />
-          <span class="val" id="sMinVal">-12</span>
-        </div>
-        <div class="row-ctl">
-          <label for="sMax">max</label>
-          <input id="sMax" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="sMaxVal">0</span>
+          <label for="slnt">slant</label>
+          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slntVal">0</span>
         </div>
       </div>
 
@@ -454,7 +449,7 @@
         var rCntr = document.getElementById("rCntr");
         var rPhase = document.getElementById("rPhase");
 
-        var LS_KEY = "axes-diagram:settings:v6";
+        var LS_KEY = "axes-diagram:settings:v7";
 
         var DEFAULTS = {
           zm: 1,
@@ -471,8 +466,7 @@
           wMax: 1000,
           dMin: 65,
           dMax: 130,
-          sMin: -12,
-          sMax: 0,
+          slnt: 0,
           cMin: 0,
           cMax: 100,
           cy: 32,
@@ -500,8 +494,7 @@
           wMax: document.getElementById("wMax"),
           dMin: document.getElementById("dMin"),
           dMax: document.getElementById("dMax"),
-          sMin: document.getElementById("sMin"),
-          sMax: document.getElementById("sMax"),
+          slnt: document.getElementById("slnt"),
           cMin: document.getElementById("cMin"),
           cMax: document.getElementById("cMax"),
           cy: document.getElementById("cy"),
@@ -521,8 +514,7 @@
           wMax: document.getElementById("wMaxVal"),
           dMin: document.getElementById("dMinVal"),
           dMax: document.getElementById("dMaxVal"),
-          sMin: document.getElementById("sMinVal"),
-          sMax: document.getElementById("sMaxVal"),
+          slnt: document.getElementById("slntVal"),
           cMin: document.getElementById("cMinVal"),
           cMax: document.getElementById("cMaxVal"),
           cy: document.getElementById("cyVal"),
@@ -556,7 +548,7 @@
             key === "cMax"
           )
             return Math.round(Number(v)) + "";
-          if (key === "sMin" || key === "sMax") return Number(v).toFixed(2);
+          if (key === "slnt") return Number(v).toFixed(2);
           if (key === "cy") return Math.round(Number(v)) + "s";
           return String(v);
         }
@@ -603,6 +595,7 @@
           var raw;
           try {
             raw = localStorage.getItem(LS_KEY);
+            if (!raw) raw = localStorage.getItem("axes-diagram:settings:v6");
           } catch (e) {
             raw = null;
           }
@@ -611,6 +604,13 @@
             try {
               var parsed = JSON.parse(raw);
               data = Object.assign({}, DEFAULTS, parsed);
+              if (data.slnt == null && (parsed.sMin != null || parsed.sMax != null)) {
+                var sm = parseFloat(parsed.sMin);
+                var sx = parseFloat(parsed.sMax);
+                if (!isNaN(sm) && !isNaN(sx)) data.slnt = (sm + sx) / 2;
+                else if (!isNaN(sx)) data.slnt = sx;
+                else if (!isNaN(sm)) data.slnt = sm;
+              }
             } catch (e) {}
           }
           Object.keys(els).forEach(function (k) {
@@ -677,8 +677,8 @@
           var wMax = parseFloat(els.wMax.value);
           var dMin = parseFloat(els.dMin.value);
           var dMax = parseFloat(els.dMax.value);
-          var sMin = parseFloat(els.sMin.value);
-          var sMax = parseFloat(els.sMax.value);
+          var slnt = parseFloat(els.slnt.value);
+          if (isNaN(slnt)) slnt = 0;
           var cMin = parseFloat(els.cMin.value);
           var cMax = parseFloat(els.cMax.value);
 
@@ -692,11 +692,6 @@
             dMin = dMax;
             dMax = td;
           }
-          if (sMin > sMax) {
-            var ts = sMin;
-            sMin = sMax;
-            sMax = ts;
-          }
           if (cMin > cMax) {
             var tc = cMin;
             cMin = cMax;
@@ -709,10 +704,8 @@
           var nw = 0.5 + 0.48 * Math.sin(theta + 0.7);
           var nz = 0.5 + 0.48 * Math.sin(theta * 1.127 + 2.1);
           var ny = 0.5 + 0.48 * Math.sin(theta * 0.853 + 4.2);
-          var nSl = 0.5 + 0.5 * Math.sin(theta * 0.937 + 1.55);
 
           var wght = lerp(wMin, wMax, nz);
-          var slnt = lerp(sMin, sMax, nSl);
           var fam = getFamily();
 
           function fmtW(x) {
