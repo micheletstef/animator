@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>names marquee</title>
+    <style>
+      @font-face {
+        font-family: "IkarusCondensedVariable";
+        src: url("fonts/ABCIkarusCondensedVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: dark;
+        --bg: #ffffff;
+        --fg: #f5d100;
+        --pad-t: 0;
+        --pad-r: 0;
+        --pad-b: 0;
+        --pad-l: 0;
+        --fs: 220;
+        --lh: 0.92;
+        --tracking: -0.02;
+        --zoom: 1;
+        --w-top: 1000;
+        --w-bottom: 500;
+        --gamma: 1;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #e9e9e9;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        align-items: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        display: flex;
+        height: 100%;
+        min-width: 0;
+        overflow: auto;
+      }
+
+      .stage {
+        --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
+        width: calc(var(--base) * var(--zoom));
+        aspect-ratio: 1 / 1;
+        background: var(--bg);
+        color: var(--fg);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        font-family: "IkarusCondensedVariable", system-ui, sans-serif;
+        margin: auto;
+        flex: 0 0 auto;
+      }
+
+      .marquee {
+        position: absolute;
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
+        overflow: hidden;
+        will-change: transform;
+      }
+
+      .track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        will-change: transform;
+      }
+
+      .line {
+        display: block;
+        font-size: calc(var(--fs) * 1px);
+        white-space: nowrap;
+        letter-spacing: inherit;
+        font-variation-settings: "wght" 1000;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 12px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-wrap">
+      <div class="stage" id="stage" aria-label="names marquee">
+        <div class="marquee" id="marquee">
+          <div class="track" id="track"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+
+      <div class="group">
+        <p class="group-title">view</p>
+        <div class="row">
+          <label for="zm">zoom</label>
+          <input id="zm" type="range" min="0.1" max="2" step="0.01" value="1" />
+          <span class="val" id="zmVal">100%</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#f5d100" />
+          <span class="val" id="fgVal">#f5d100</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="40" max="800" step="1" value="220" />
+          <span class="val" id="fsVal">220px</span>
+        </div>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
+          <span class="val" id="lhVal">0.92</span>
+        </div>
+        <div class="row">
+          <label for="tr">kern</label>
+          <input id="tr" type="range" min="-0.2" max="0.2" step="0.001" value="-0.02" />
+          <span class="val" id="trVal">-20</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">weight</p>
+        <div class="row">
+          <label for="wTop">top</label>
+          <input id="wTop" type="range" min="100" max="1000" step="1" value="1000" />
+          <span class="val" id="wTopVal">1000</span>
+        </div>
+        <div class="row">
+          <label for="wBot">bottom</label>
+          <input id="wBot" type="range" min="100" max="1000" step="1" value="500" />
+          <span class="val" id="wBotVal">500</span>
+        </div>
+        <div class="row">
+          <label for="gm">curve</label>
+          <input id="gm" type="range" min="0.3" max="3" step="0.01" value="1" />
+          <span class="val" id="gmVal">1.00</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion</p>
+        <div class="row">
+          <label for="sp">speed</label>
+          <input id="sp" type="range" min="5" max="400" step="1" value="80" />
+          <span class="val" id="spVal">80</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">margins</p>
+        <div class="row">
+          <label for="pt">top</label>
+          <input id="pt" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="ptVal">0px</span>
+        </div>
+        <div class="row">
+          <label for="pr">right</label>
+          <input id="pr" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="prVal">0px</span>
+        </div>
+        <div class="row">
+          <label for="pb">bottom</label>
+          <input id="pb" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="pbVal">0px</span>
+        </div>
+        <div class="row">
+          <label for="pl">left</label>
+          <input id="pl" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="plVal">0px</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+      </div>
+    </aside>
+
+    <script>
+      (function () {
+        var NAMES = [
+          "Ikarus",
+          "Dädalus",
+          "Minos",
+          "Pasiphaë",
+          "Ariadne",
+          "Theseus",
+          "Poseidon",
+          "Helios",
+          "Kreta",
+          "Labyrinth",
+          "Ägäis",
+          "Samos",
+        ];
+
+        var marquee = document.getElementById("marquee");
+        var track = document.getElementById("track");
+
+        var lineEls = [];
+        function buildLines() {
+          track.innerHTML = "";
+          lineEls = [];
+          for (var copy = 0; copy < 2; copy++) {
+            for (var i = 0; i < NAMES.length; i++) {
+              var el = document.createElement("span");
+              el.className = "line";
+              el.textContent = NAMES[i];
+              track.appendChild(el);
+              lineEls.push(el);
+            }
+          }
+        }
+        buildLines();
+
+        var loopHeight = 0;
+        function measure() {
+          var first = lineEls[0];
+          var firstSecond = lineEls[NAMES.length];
+          if (!first || !firstSecond) return;
+          loopHeight = firstSecond.offsetTop - first.offsetTop;
+        }
+
+        var offset = 0;
+        var lastNow = 0;
+
+        function updateWeights() {
+          var marqueeH = marquee.clientHeight || 1;
+          var wTop = parseFloat(els.wTop.value);
+          var wBot = parseFloat(els.wBot.value);
+          var gamma = parseFloat(els.gm.value);
+
+          for (var i = 0; i < lineEls.length; i++) {
+            var el = lineEls[i];
+            var yTop = el.offsetTop - offset;
+            var center = yTop + el.offsetHeight / 2;
+            var t = center / marqueeH;
+            if (t < 0) t = 0;
+            else if (t > 1) t = 1;
+            var tt = Math.pow(t, gamma);
+            var w = Math.round(wTop + (wBot - wTop) * tt);
+            el.style.fontVariationSettings = '"wght" ' + w;
+          }
+        }
+
+        function frame(now) {
+          if (!lastNow) lastNow = now;
+          var dt = (now - lastNow) / 1000;
+          lastNow = now;
+
+          var speed = parseFloat(els.sp.value);
+          offset += speed * dt;
+          if (loopHeight > 0) {
+            offset = ((offset % loopHeight) + loopHeight) % loopHeight;
+          }
+          track.style.transform = "translateY(" + -offset + "px)";
+
+          updateWeights();
+          requestAnimationFrame(frame);
+        }
+
+        var LS_KEY = "names-marquee:settings:v1";
+        var root = document.documentElement;
+
+        var DEFAULTS = {
+          zm: 1,
+          bg: "#ffffff",
+          fg: "#f5d100",
+          fs: 220,
+          lh: 0.92,
+          tr: -0.02,
+          wTop: 1000,
+          wBot: 500,
+          gm: 1,
+          sp: 80,
+          pt: 0,
+          pr: 0,
+          pb: 0,
+          pl: 0,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+
+        var els = {
+          zm: document.getElementById("zm"),
+          bg: document.getElementById("bg"),
+          fg: document.getElementById("fg"),
+          fs: document.getElementById("fs"),
+          lh: document.getElementById("lh"),
+          tr: document.getElementById("tr"),
+          wTop: document.getElementById("wTop"),
+          wBot: document.getElementById("wBot"),
+          gm: document.getElementById("gm"),
+          sp: document.getElementById("sp"),
+          pt: document.getElementById("pt"),
+          pr: document.getElementById("pr"),
+          pb: document.getElementById("pb"),
+          pl: document.getElementById("pl"),
+        };
+        var vals = {
+          zm: document.getElementById("zmVal"),
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          fs: document.getElementById("fsVal"),
+          lh: document.getElementById("lhVal"),
+          tr: document.getElementById("trVal"),
+          wTop: document.getElementById("wTopVal"),
+          wBot: document.getElementById("wBotVal"),
+          gm: document.getElementById("gmVal"),
+          sp: document.getElementById("spVal"),
+          pt: document.getElementById("ptVal"),
+          pr: document.getElementById("prVal"),
+          pb: document.getElementById("pbVal"),
+          pl: document.getElementById("plVal"),
+        };
+
+        function fmt(key, v) {
+          if (key === "bg" || key === "fg") return String(v).toLowerCase();
+          if (key === "zm") return Math.round(Number(v) * 100) + "%";
+          if (key === "fs") return Math.round(Number(v)) + "px";
+          if (key === "lh" || key === "gm") return Number(v).toFixed(2);
+          if (key === "tr") return Math.round(Number(v) * 1000) + "";
+          if (key === "wTop" || key === "wBot" || key === "sp")
+            return Math.round(Number(v)) + "";
+          return Math.round(Number(v)) + "px";
+        }
+
+        function applyVar(key, v) {
+          if (key === "zm") root.style.setProperty("--zoom", v);
+          else if (key === "bg") root.style.setProperty("--bg", v);
+          else if (key === "fg") root.style.setProperty("--fg", v);
+          else if (key === "fs") root.style.setProperty("--fs", v);
+          else if (key === "lh") root.style.setProperty("--lh", v);
+          else if (key === "tr") root.style.setProperty("--tracking", v);
+          else if (key === "pt") root.style.setProperty("--pad-t", v);
+          else if (key === "pr") root.style.setProperty("--pad-r", v);
+          else if (key === "pb") root.style.setProperty("--pad-b", v);
+          else if (key === "pl") root.style.setProperty("--pad-l", v);
+        }
+
+        function setValue(key, v, persist) {
+          els[key].value = v;
+          vals[key].textContent = fmt(key, v);
+          applyVar(key, v);
+          if (persist !== false) save();
+        }
+
+        function save() {
+          var out = {};
+          Object.keys(els).forEach(function (k) {
+            out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(out));
+          } catch (e) {}
+        }
+
+        function load() {
+          var raw;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {
+            raw = null;
+          }
+          var data = DEFAULTS;
+          if (raw) {
+            try {
+              var parsed = JSON.parse(raw);
+              data = Object.assign({}, DEFAULTS, parsed);
+            } catch (e) {}
+          }
+          Object.keys(els).forEach(function (k) {
+            setValue(k, data[k], false);
+          });
+        }
+
+        Object.keys(els).forEach(function (k) {
+          els[k].addEventListener("input", function () {
+            var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+            setValue(k, v);
+            if (k === "fs" || k === "lh") {
+              requestAnimationFrame(measure);
+            }
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", function () {
+          Object.keys(DEFAULTS).forEach(function (k) {
+            setValue(k, DEFAULTS[k]);
+          });
+          requestAnimationFrame(measure);
+        });
+
+        window.addEventListener("resize", function () {
+          requestAnimationFrame(measure);
+        });
+
+        load();
+
+        function start() {
+          measure();
+          requestAnimationFrame(frame);
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(function () {
+            requestAnimationFrame(start);
+          });
+        } else {
+          requestAnimationFrame(start);
+        }
+      })();
+    </script>
+  </body>
+</html>
