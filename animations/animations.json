@@ -1,0 +1,28 @@
+{
+  "animations": [
+    {
+      "id": "marquee",
+      "label": "names marquee",
+      "url": "animations/marquee.html",
+      "mtime": 1777926242
+    },
+    {
+      "id": "marquee-v2",
+      "label": "names marquee v2",
+      "url": "animations/marquee v2.html",
+      "mtime": 1777926245
+    },
+    {
+      "id": "spf",
+      "label": "SPF 100+ → 8",
+      "url": "animations/spf.html",
+      "mtime": 1777926248
+    },
+    {
+      "id": "width-weight",
+      "label": "width × weight diagram",
+      "url": "animations/width-weight.html",
+      "mtime": 1777926251
+    }
+  ]
+}

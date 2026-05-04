@@ -166,26 +166,135 @@
 
     <script>
       (function () {
-        var ANIMATIONS = [
-          {
-            id: "spf",
-            label: "spf 100+ → 8",
-            meta: "weight + count animation",
-            url: "spf.html",
-          },
-          {
-            id: "marquee",
-            label: "names marquee",
-            meta: "vertical scrolling weights",
-            url: "marquee.html",
-          },
-        ];
+        var ANIMATIONS_DIR = "animations/";
+        var MANIFEST_URL = ANIMATIONS_DIR + "animations.json";
 
+        var ANIMATIONS = [];
         var navList = document.getElementById("navList");
         var frame = document.getElementById("frame");
 
+        function slugify(stem) {
+          return (
+            String(stem)
+              .replace(/[^a-zA-Z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "")
+              .toLowerCase() || "animation"
+          );
+        }
+
+        function humanise(stem) {
+          return String(stem).replace(/[-_]+/g, " ").trim();
+        }
+
+        function entryFromFilename(filename) {
+          var stem = filename.replace(/\.html?$/i, "");
+          return {
+            id: slugify(stem),
+            label: humanise(stem),
+            url: ANIMATIONS_DIR + filename,
+          };
+        }
+
+        // Try parsing a server-generated directory listing (Apache, Nginx,
+        // Python http.server, Caddy all return HTML with <a href="..."> links).
+        function fetchDirectoryListing() {
+          return fetch(ANIMATIONS_DIR, {
+            headers: { Accept: "text/html" },
+          })
+            .then(function (r) {
+              if (!r.ok) throw new Error("listing " + r.status);
+              var ct = r.headers.get("content-type") || "";
+              if (!/text\/html/i.test(ct)) throw new Error("not html");
+              return r.text();
+            })
+            .then(function (html) {
+              var doc = new DOMParser().parseFromString(html, "text/html");
+              var anchors = Array.prototype.slice.call(
+                doc.querySelectorAll("a[href]")
+              );
+              var seen = {};
+              var files = [];
+              anchors.forEach(function (a) {
+                var href = a.getAttribute("href") || "";
+                if (!/\.html?$/i.test(href)) return;
+                if (/^[a-z]+:|^\/\//i.test(href)) return; // absolute / protocol
+                if (href.indexOf("?") === 0 || href.indexOf("#") === 0) return;
+                if (href.indexOf("/") !== -1) return; // skip nested paths
+                var name;
+                try {
+                  name = decodeURIComponent(href);
+                } catch (e) {
+                  name = href;
+                }
+                if (seen[name]) return;
+                seen[name] = true;
+                files.push(name);
+              });
+              if (!files.length) throw new Error("no html in listing");
+              return files;
+            });
+        }
+
+        // Best-effort: read the <title> tag from each file so labels look nice.
+        function enrichWithTitle(entry) {
+          return fetch(entry.url)
+            .then(function (r) {
+              if (!r.ok) return entry;
+              return r.text().then(function (text) {
+                var m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
+                if (m && m[1].trim()) entry.label = m[1].trim();
+                return entry;
+              });
+            })
+            .catch(function () {
+              return entry;
+            });
+        }
+
+        function loadFromDirectory() {
+          return fetchDirectoryListing().then(function (filenames) {
+            var entries = filenames.map(entryFromFilename);
+            return Promise.all(entries.map(enrichWithTitle));
+          });
+        }
+
+        function loadFromManifest() {
+          return fetch(MANIFEST_URL)
+            .then(function (r) {
+              if (!r.ok) throw new Error("manifest " + r.status);
+              return r.json();
+            })
+            .then(function (data) {
+              var list = (data && data.animations) || [];
+              return list.map(function (a) {
+                return {
+                  id: a.id || slugify(a.url || a.label || ""),
+                  label: a.label || humanise(a.id || ""),
+                  url: a.url,
+                  meta: a.meta || null,
+                };
+              });
+            });
+        }
+
+        function discover() {
+          return loadFromDirectory().catch(function () {
+            return loadFromManifest();
+          });
+        }
+
         function render(activeId) {
           navList.innerHTML = "";
+          if (!ANIMATIONS.length) {
+            var li = document.createElement("li");
+            var note = document.createElement("span");
+            note.className = "nav-meta";
+            note.style.padding = "6px 8px";
+            note.textContent = "no animations found";
+            li.appendChild(note);
+            navList.appendChild(li);
+            return;
+          }
           ANIMATIONS.forEach(function (a) {
             var li = document.createElement("li");
             var aEl = document.createElement("a");
@@ -250,16 +359,25 @@
 
         window.addEventListener("hashchange", function () {
           var id = readHash();
-          if (id && findById(id)) {
-            load(id);
-          }
+          if (id && findById(id)) load(id);
         });
 
-        var startId = initial();
-        if (startId && !readHash()) {
-          history.replaceState(null, "", "#" + startId);
-        }
-        load(startId);
+        discover()
+          .then(function (list) {
+            ANIMATIONS = (list || []).slice().sort(function (a, b) {
+              return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
+            });
+            var startId = initial();
+            if (startId && !readHash()) {
+              history.replaceState(null, "", "#" + startId);
+            }
+            load(startId);
+          })
+          .catch(function (err) {
+            console.error("could not load animations", err);
+            ANIMATIONS = [];
+            render(null);
+          });
       })();
     </script>
   </body>

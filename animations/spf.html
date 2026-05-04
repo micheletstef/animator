@@ -3,12 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>names marquee v2</title>
+    <title>SPF 100+ → 8</title>
     <style>
       @font-face {
-        font-family: "IkarusCondensedVariable";
-        src: url("fonts/ABCIkarusCondensedVariable.ttf")
-          format("truetype-variations");
+        font-family: "IkarusVariable";
+        src: url("../fonts/ABCIkarusVariable.ttf") format("truetype-variations");
         font-weight: 100 1000;
         font-style: normal;
         font-display: block;
@@ -17,18 +16,15 @@
       :root {
         color-scheme: dark;
         --bg: #ffffff;
-        --fg: #f5d100;
-        --pad-t: 0;
-        --pad-r: 0;
-        --pad-b: 0;
-        --pad-l: 0;
-        --fs: 220;
-        --lh: 0.92;
-        --tracking: -0.02;
+        --fg: #000000;
+        --pad-t: 40;
+        --pad-r: 40;
+        --pad-b: 40;
+        --pad-l: 40;
+        --fs: 520;
+        --lh: 0.86;
+        --tracking: -0.035;
         --zoom: 1;
-        --w-top: 1000;
-        --w-bottom: 500;
-        --gamma: 1;
         --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
       }
 
@@ -81,12 +77,12 @@
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        font-family: "IkarusCondensedVariable", system-ui, sans-serif;
+        font-family: "IkarusVariable", system-ui, sans-serif;
         transform: scale(var(--zoom));
         transform-origin: top left;
       }
 
-      .marquee {
+      .lockup {
         position: absolute;
         top: calc(var(--pad-t) * 1px);
         right: calc(var(--pad-r) * 1px);
@@ -94,25 +90,25 @@
         left: calc(var(--pad-l) * 1px);
         line-height: var(--lh);
         letter-spacing: calc(var(--tracking) * 1em);
-        overflow: hidden;
-        will-change: transform;
+        font-variation-settings: "wght" 1000;
       }
 
-      .track {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        will-change: transform;
-      }
-
-      .line {
+      .line,
+      .num {
         display: block;
         font-size: calc(var(--fs) * 1px);
+        font-variation-settings: inherit;
         white-space: nowrap;
         letter-spacing: inherit;
-        text-align: center;
-        font-variation-settings: "wght" 1000;
+      }
+
+      .stage .num .plus {
+        display: inline-block;
+        transition: opacity 0.12s ease;
+      }
+
+      .stage .num.no-plus .plus {
+        opacity: 0;
       }
 
       .panel {
@@ -197,6 +193,101 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .row.row-wide-val {
+        grid-template-columns: 64px 1fr 100px;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 22px;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 50%;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
       .panel .actions {
         display: flex;
         gap: 8px;
@@ -224,9 +315,10 @@
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="names marquee">
-          <div class="marquee" id="marquee">
-            <div class="track" id="track"></div>
+        <div class="stage" id="stage" aria-label="SPF animation">
+          <div class="lockup" id="lockup">
+            <span class="line">SPF</span>
+            <span class="num" id="num"><span class="digits" id="digits">100</span><span class="plus" id="plus">+</span></span>
           </div>
         </div>
       </div>
@@ -246,8 +338,8 @@
         </div>
         <div class="row">
           <label for="fg">text</label>
-          <input id="fg" type="color" value="#f5d100" />
-          <span class="val" id="fgVal">#f5d100</span>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
         </div>
       </div>
 
@@ -255,46 +347,40 @@
         <p class="group-title">type</p>
         <div class="row">
           <label for="fs">size</label>
-          <input id="fs" type="range" min="40" max="800" step="1" value="220" />
-          <span class="val" id="fsVal">220px</span>
+          <input id="fs" type="range" min="40" max="2000" step="1" value="520" />
+          <span class="val" id="fsVal">520px</span>
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
-          <span class="val" id="lhVal">0.92</span>
+          <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.86" />
+          <span class="val" id="lhVal">0.86</span>
         </div>
-        <div class="row">
-          <label for="tr">kern</label>
-          <input id="tr" type="range" min="-0.2" max="0.2" step="0.001" value="-0.02" />
-          <span class="val" id="trVal">-20</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">weight</p>
-        <div class="row">
-          <label for="wTop">top</label>
-          <input id="wTop" type="range" min="100" max="1000" step="1" value="1000" />
-          <span class="val" id="wTopVal">1000</span>
-        </div>
-        <div class="row">
-          <label for="wBot">bottom</label>
-          <input id="wBot" type="range" min="100" max="1000" step="1" value="500" />
-          <span class="val" id="wBotVal">500</span>
-        </div>
-        <div class="row">
-          <label for="gm">curve</label>
-          <input id="gm" type="range" min="0.3" max="3" step="0.01" value="1" />
-          <span class="val" id="gmVal">1.00</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">motion</p>
-        <div class="row">
-          <label for="sp">speed</label>
-          <input id="sp" type="range" min="5" max="400" step="1" value="80" />
-          <span class="val" id="spVal">80</span>
+        <div class="row row-wide-val">
+          <label for="trMax">kerning</label>
+          <div class="dual-range" id="kernDual">
+            <div class="dual-track"><div class="dual-fill" id="kernFill"></div></div>
+            <input
+              id="trMax"
+              class="is-start"
+              type="range"
+              min="-5"
+              max="8"
+              step="0.001"
+              value="-0.035"
+              aria-label="Kerning start"
+            />
+            <input
+              id="trMin"
+              class="is-end"
+              type="range"
+              min="-5"
+              max="8"
+              step="0.001"
+              value="-0.12"
+              aria-label="Kerning end"
+            />
+          </div>
+          <span class="val" id="kernVal">-35 / -120</span>
         </div>
       </div>
 
@@ -302,121 +388,106 @@
         <p class="group-title">margins</p>
         <div class="row">
           <label for="pv">vertical</label>
-          <input id="pv" type="range" min="0" max="600" step="1" value="0" />
-          <span class="val" id="pvVal">0px</span>
+          <input id="pv" type="range" min="0" max="600" step="1" value="40" />
+          <span class="val" id="pvVal">40px</span>
         </div>
         <div class="row">
           <label for="ph">horizontal</label>
-          <input id="ph" type="range" min="0" max="600" step="1" value="0" />
-          <span class="val" id="phVal">0px</span>
+          <input id="ph" type="range" min="0" max="600" step="1" value="40" />
+          <span class="val" id="phVal">40px</span>
         </div>
       </div>
 
       <div class="actions">
         <button type="button" id="resetBtn">reset</button>
+        <button type="button" id="copyBtn">copy css</button>
       </div>
     </aside>
 
     <script>
       (function () {
-        var NAMES = [
-          "Ikarus",
-          "Dädalus",
-          "Minos",
-          "Pasiphaë",
-          "Ariadne",
-          "Theseus",
-          "Poseidon",
-          "Helios",
-          "Kreta",
-          "Labyrinth",
-          "Samos",
-          "Ägäis",
-        ];
+        var lockup = document.getElementById("lockup");
+        var num = document.getElementById("num");
+        var digits = document.getElementById("digits");
 
-        var marquee = document.getElementById("marquee");
-        var track = document.getElementById("track");
+        var START = 100;
+        var END = 8;
+        var W_MAX = 1000;
+        var W_MIN = 200;
 
-        var lineEls = [];
-        function buildLines() {
-          track.innerHTML = "";
-          lineEls = [];
-          for (var copy = 0; copy < 2; copy++) {
-            for (var i = 0; i < NAMES.length; i++) {
-              var el = document.createElement("span");
-              el.className = "line";
-              el.textContent = NAMES[i];
-              track.appendChild(el);
-              lineEls.push(el);
-            }
+        var HOLD_START_MS = 600;
+        var DOWN_MS = 3200;
+        var HOLD_BOTTOM_MS = 700;
+        var UP_MS = 3200;
+        var HOLD_END_MS = 600;
+        var TOTAL_MS =
+          HOLD_START_MS + DOWN_MS + HOLD_BOTTOM_MS + UP_MS + HOLD_END_MS;
+
+        function easeInOutCubic(t) {
+          return t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function frame(now, t0) {
+          var elapsed = (now - t0) % TOTAL_MS;
+          var p;
+
+          if (elapsed < HOLD_START_MS) {
+            p = 0;
+          } else if (elapsed < HOLD_START_MS + DOWN_MS) {
+            p = (elapsed - HOLD_START_MS) / DOWN_MS;
+          } else if (elapsed < HOLD_START_MS + DOWN_MS + HOLD_BOTTOM_MS) {
+            p = 1;
+          } else if (
+            elapsed <
+            HOLD_START_MS + DOWN_MS + HOLD_BOTTOM_MS + UP_MS
+          ) {
+            p =
+              1 -
+              (elapsed - HOLD_START_MS - DOWN_MS - HOLD_BOTTOM_MS) / UP_MS;
+          } else {
+            p = 0;
           }
-        }
-        buildLines();
 
-        var loopHeight = 0;
-        function measure() {
-          var first = lineEls[0];
-          var firstSecond = lineEls[NAMES.length];
-          if (!first || !firstSecond) return;
-          loopHeight = firstSecond.offsetTop - first.offsetTop;
-        }
+          var eased = easeInOutCubic(p);
+          var value = Math.round(START - (START - END) * eased);
+          var weight = Math.round(W_MAX - (W_MAX - W_MIN) * eased);
+          var trMaxV = parseFloat(els.trMax.value);
+          var trMinV = parseFloat(els.trMin.value);
+          var tracking = trMaxV + (trMinV - trMaxV) * eased;
 
-        var offset = 0;
-        var lastNow = 0;
-
-        function updateWeights() {
-          var marqueeH = marquee.clientHeight || 1;
-          var wTop = parseFloat(els.wTop.value);
-          var wBot = parseFloat(els.wBot.value);
-          var gamma = parseFloat(els.gm.value);
-
-          for (var i = 0; i < lineEls.length; i++) {
-            var el = lineEls[i];
-            var yTop = el.offsetTop - offset;
-            var center = yTop + el.offsetHeight / 2;
-            var t = center / marqueeH;
-            if (t < 0) t = 0;
-            else if (t > 1) t = 1;
-            var tt = Math.pow(t, gamma);
-            var w = Math.round(wTop + (wBot - wTop) * tt);
-            el.style.fontVariationSettings = '"wght" ' + w;
-            // top 100% -> bottom 20%, follows the same curve as weight
-            el.style.opacity = 1 + (0.2 - 1) * tt;
+          if (digits.textContent !== String(value)) {
+            digits.textContent = String(value);
           }
-        }
 
-        function frame(now) {
-          if (!lastNow) lastNow = now;
-          var dt = (now - lastNow) / 1000;
-          lastNow = now;
-
-          var speed = parseFloat(els.sp.value);
-          offset += speed * dt;
-          if (loopHeight > 0) {
-            offset = ((offset % loopHeight) + loopHeight) % loopHeight;
+          if (p > 0.001) {
+            num.classList.add("no-plus");
+          } else {
+            num.classList.remove("no-plus");
           }
-          track.style.transform = "translateY(" + -offset + "px)";
 
-          updateWeights();
-          requestAnimationFrame(frame);
+          lockup.style.fontVariationSettings = '"wght" ' + weight;
+          root.style.setProperty("--tracking", tracking);
+
+          requestAnimationFrame(function (n) {
+            frame(n, t0);
+          });
         }
 
-        var LS_KEY = "names-marquee:settings:v1";
+        var LS_KEY = "spf-anim:settings:v1";
         var root = document.documentElement;
 
         var DEFAULTS = {
           zm: 1,
           bg: "#ffffff",
-          fg: "#f5d100",
-          fs: 220,
-          lh: 0.92,
-          tr: -0.02,
-          wTop: 1000,
-          wBot: 500,
-          gm: 1,
-          sp: 80,
-          pv: 0,
-          ph: 0,
+          fg: "#000000",
+          fs: 520,
+          lh: 0.86,
+          trMax: -0.035,
+          trMin: -0.12,
+          pv: 40,
+          ph: 40,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
@@ -427,11 +498,8 @@
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
-          tr: document.getElementById("tr"),
-          wTop: document.getElementById("wTop"),
-          wBot: document.getElementById("wBot"),
-          gm: document.getElementById("gm"),
-          sp: document.getElementById("sp"),
+          trMax: document.getElementById("trMax"),
+          trMin: document.getElementById("trMin"),
           pv: document.getElementById("pv"),
           ph: document.getElementById("ph"),
         };
@@ -440,24 +508,34 @@
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
-          tr: document.getElementById("trVal"),
-          wTop: document.getElementById("wTopVal"),
-          wBot: document.getElementById("wBotVal"),
-          gm: document.getElementById("gmVal"),
-          sp: document.getElementById("spVal"),
           pv: document.getElementById("pvVal"),
           ph: document.getElementById("phVal"),
         };
+
+        var kernVal = document.getElementById("kernVal");
+        var kernFill = document.getElementById("kernFill");
 
         function fmt(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs") return Math.round(Number(v)) + "px";
-          if (key === "lh" || key === "gm") return Number(v).toFixed(2);
-          if (key === "tr") return Math.round(Number(v) * 1000) + "";
-          if (key === "wTop" || key === "wBot" || key === "sp")
-            return Math.round(Number(v)) + "";
+          if (key === "lh") return Number(v).toFixed(2);
           return Math.round(Number(v)) + "px";
+        }
+
+        function updateKernUI() {
+          var a = parseFloat(els.trMax.value);
+          var b = parseFloat(els.trMin.value);
+          var min = parseFloat(els.trMax.min);
+          var max = parseFloat(els.trMax.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          kernFill.style.left = loPct + "%";
+          kernFill.style.width = Math.max(0, hiPct - loPct) + "%";
+          kernVal.textContent =
+            Math.round(a * 1000) + " / " + Math.round(b * 1000);
         }
 
         function applyVar(key, v) {
@@ -466,8 +544,9 @@
           else if (key === "fg") root.style.setProperty("--fg", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
           else if (key === "lh") root.style.setProperty("--lh", v);
-          else if (key === "tr") root.style.setProperty("--tracking", v);
-          else if (key === "pv") {
+          else if (key === "trMax" || key === "trMin") {
+            // tracking is animated in frame(); endpoints have no direct CSS var
+          } else if (key === "pv") {
             root.style.setProperty("--pad-t", v);
             root.style.setProperty("--pad-b", v);
           } else if (key === "ph") {
@@ -478,7 +557,9 @@
 
         function setValue(key, v, persist) {
           els[key].value = v;
-          if (vals[key]) {
+          if (key === "trMax" || key === "trMin") {
+            updateKernUI();
+          } else if (vals[key]) {
             vals[key].textContent = fmt(key, v);
           }
           applyVar(key, v);
@@ -519,9 +600,6 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "fs" || k === "lh") {
-              requestAnimationFrame(measure);
-            }
           });
         });
 
@@ -529,7 +607,6 @@
           Object.keys(DEFAULTS).forEach(function (k) {
             setValue(k, DEFAULTS[k]);
           });
-          requestAnimationFrame(measure);
         });
 
         var stageWrap = document.getElementById("stageWrap");
@@ -555,23 +632,48 @@
           { passive: false }
         );
 
-        window.addEventListener("resize", function () {
-          requestAnimationFrame(measure);
+        document.getElementById("copyBtn").addEventListener("click", function (e) {
+          var btn = e.currentTarget;
+          var css =
+            ":root{\n" +
+            "  --bg: " + els.bg.value + ";\n" +
+            "  --fg: " + els.fg.value + ";\n" +
+            "  --zoom: " + els.zm.value + ";\n" +
+            "  --fs: " + els.fs.value + ";\n" +
+            "  --lh: " + els.lh.value + ";\n" +
+            "  --tracking-start: " + els.trMax.value + ";\n" +
+            "  --tracking-end: " + els.trMin.value + ";\n" +
+            "  --pad-t: " + els.pv.value + ";\n" +
+            "  --pad-r: " + els.ph.value + ";\n" +
+            "  --pad-b: " + els.pv.value + ";\n" +
+            "  --pad-l: " + els.ph.value + ";\n" +
+            "}";
+          var done = function () {
+            var prev = btn.textContent;
+            btn.textContent = "copied";
+            setTimeout(function () {
+              btn.textContent = prev;
+            }, 900);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(css).then(done, done);
+          } else {
+            done();
+          }
         });
 
         load();
 
-        function start() {
-          measure();
-          requestAnimationFrame(frame);
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start);
+        } else {
+          start();
         }
 
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(function () {
-            requestAnimationFrame(start);
+        function start() {
+          requestAnimationFrame(function (n) {
+            frame(n, n);
           });
-        } else {
-          requestAnimationFrame(start);
         }
       })();
     </script>
