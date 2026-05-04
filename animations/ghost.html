@@ -96,7 +96,6 @@
         z-index: 1;
         pointer-events: none;
         color: var(--fg);
-        filter: url(#ghost-outline);
       }
 
       .glyph {
@@ -104,10 +103,13 @@
         z-index: 2;
       }
 
+      /* Filter per ghost so each weight renders its own outline; a parent-level
+         filter would merge all glyphs into one combined mask (single ring). */
       .ghost {
         color: var(--fg);
         -webkit-text-fill-color: currentColor;
         -webkit-text-stroke: 0;
+        filter: url(#ghost-outline);
       }
 
       .panel {
@@ -416,7 +418,7 @@
         </div>
         <div class="row">
           <label for="gh">ghosts</label>
-          <input id="gh" type="range" min="2" max="40" step="1" value="14" />
+          <input id="gh" type="range" min="1" max="40" step="1" value="14" />
           <span class="val" id="ghVal">14</span>
         </div>
       </div>
@@ -451,7 +453,7 @@
 
         function buildGhosts() {
           ghostLayer.innerHTML = "";
-          var n = Math.max(2, Math.round(parseFloat(els.gh.value)));
+          var n = Math.max(1, Math.round(parseFloat(els.gh.value)));
           var wMin = parseFloat(els.wMin.value);
           var wMax = parseFloat(els.wMax.value);
           if (wMin > wMax) {
@@ -459,8 +461,9 @@
             wMin = wMax;
             wMax = t;
           }
+          var denom = n <= 1 ? 1 : n - 1;
           for (var i = 0; i < n; i++) {
-            var w = wMin + ((wMax - wMin) * i) / (n - 1);
+            var w = wMin + ((wMax - wMin) * i) / denom;
             var el = document.createElement("span");
             el.className = "ghost";
             el.textContent = "A";
