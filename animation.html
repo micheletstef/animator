@@ -147,6 +147,25 @@
         accent-color: #fff;
       }
 
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
       .row .val {
         text-align: right;
         color: #9a9a9a;
@@ -189,6 +208,20 @@
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
 
       <div class="group">
         <p class="group-title">type</p>
@@ -310,6 +343,8 @@
         var root = document.documentElement;
 
         var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
           fs: 520,
           lh: 0.86,
           tr: -0.035,
@@ -319,7 +354,11 @@
           pl: 6.2,
         };
 
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+
         var els = {
+          bg: document.getElementById("bg"),
+          fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
           tr: document.getElementById("tr"),
@@ -329,6 +368,8 @@
           pl: document.getElementById("pl"),
         };
         var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
@@ -339,6 +380,7 @@
         };
 
         function fmt(key, v) {
+          if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "lh") return Number(v).toFixed(2);
           if (key === "tr") return Math.round(Number(v) * 1000) + "";
@@ -346,7 +388,9 @@
         }
 
         function applyVar(key, v) {
-          if (key === "fs") root.style.setProperty("--fs", v);
+          if (key === "bg") root.style.setProperty("--bg", v);
+          else if (key === "fg") root.style.setProperty("--fg", v);
+          else if (key === "fs") root.style.setProperty("--fs", v);
           else if (key === "lh") root.style.setProperty("--lh", v);
           else if (key === "tr") root.style.setProperty("--tracking", v);
           else if (key === "pt") root.style.setProperty("--pad-t", v);
@@ -365,7 +409,7 @@
         function save() {
           var out = {};
           Object.keys(els).forEach(function (k) {
-            out[k] = parseFloat(els[k].value);
+            out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(out));
@@ -393,7 +437,8 @@
 
         Object.keys(els).forEach(function (k) {
           els[k].addEventListener("input", function () {
-            setValue(k, parseFloat(els[k].value));
+            var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+            setValue(k, v);
           });
         });
 
@@ -407,6 +452,8 @@
           var btn = e.currentTarget;
           var css =
             ":root{\n" +
+            "  --bg: " + els.bg.value + ";\n" +
+            "  --fg: " + els.fg.value + ";\n" +
             "  --fs: " + els.fs.value + ";\n" +
             "  --lh: " + els.lh.value + ";\n" +
             "  --tracking: " + els.tr.value + ";\n" +
