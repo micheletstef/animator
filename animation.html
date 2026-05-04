@@ -175,6 +175,101 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .row.row-wide-val {
+        grid-template-columns: 64px 1fr 100px;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 22px;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 50%;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
       .panel .actions {
         display: flex;
         gap: 8px;
@@ -247,15 +342,32 @@
           <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.86" />
           <span class="val" id="lhVal">0.86</span>
         </div>
-        <div class="row">
-          <label for="trMax">kern start</label>
-          <input id="trMax" type="range" min="-1" max="2" step="0.001" value="-0.035" />
-          <span class="val" id="trMaxVal">-35</span>
-        </div>
-        <div class="row">
-          <label for="trMin">kern end</label>
-          <input id="trMin" type="range" min="-1" max="2" step="0.001" value="-0.12" />
-          <span class="val" id="trMinVal">-120</span>
+        <div class="row row-wide-val">
+          <label for="trMax">kerning</label>
+          <div class="dual-range" id="kernDual">
+            <div class="dual-track"><div class="dual-fill" id="kernFill"></div></div>
+            <input
+              id="trMax"
+              class="is-start"
+              type="range"
+              min="-5"
+              max="8"
+              step="0.001"
+              value="-0.035"
+              aria-label="Kerning start"
+            />
+            <input
+              id="trMin"
+              class="is-end"
+              type="range"
+              min="-5"
+              max="8"
+              step="0.001"
+              value="-0.12"
+              aria-label="Kerning end"
+            />
+          </div>
+          <span class="val" id="kernVal">-35 / -120</span>
         </div>
       </div>
 
@@ -398,22 +510,36 @@
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
-          trMax: document.getElementById("trMaxVal"),
-          trMin: document.getElementById("trMinVal"),
           pt: document.getElementById("ptVal"),
           pr: document.getElementById("prVal"),
           pb: document.getElementById("pbVal"),
           pl: document.getElementById("plVal"),
         };
 
+        var kernVal = document.getElementById("kernVal");
+        var kernFill = document.getElementById("kernFill");
+
         function fmt(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "lh") return Number(v).toFixed(2);
-          if (key === "trMax" || key === "trMin")
-            return Math.round(Number(v) * 1000) + "";
           return Math.round(Number(v)) + "px";
+        }
+
+        function updateKernUI() {
+          var a = parseFloat(els.trMax.value);
+          var b = parseFloat(els.trMin.value);
+          var min = parseFloat(els.trMax.min);
+          var max = parseFloat(els.trMax.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          kernFill.style.left = loPct + "%";
+          kernFill.style.width = Math.max(0, hiPct - loPct) + "%";
+          kernVal.textContent =
+            Math.round(a * 1000) + " / " + Math.round(b * 1000);
         }
 
         function applyVar(key, v) {
@@ -432,7 +558,11 @@
 
         function setValue(key, v, persist) {
           els[key].value = v;
-          vals[key].textContent = fmt(key, v);
+          if (key === "trMax" || key === "trMin") {
+            updateKernUI();
+          } else if (vals[key]) {
+            vals[key].textContent = fmt(key, v);
+          }
           applyVar(key, v);
           if (persist !== false) save();
         }
