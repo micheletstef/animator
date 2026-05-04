@@ -4,13 +4,25 @@
       "id": "axes-diagram",
       "label": "axes diagram",
       "url": "animations/axes-diagram.html",
-      "mtime": 1777927417
+      "mtime": 1777929292
     },
     {
       "id": "ghost",
       "label": "ghost",
       "url": "animations/ghost.html",
-      "mtime": 1777928097
+      "mtime": 1777929519
+    },
+    {
+      "id": "ghost-contrast-variable",
+      "label": "ghost · contrast variable",
+      "url": "animations/ghost-contrast-variable.html",
+      "mtime": 1777930002
+    },
+    {
+      "id": "ghost-flair-variable",
+      "label": "ghost · flair variable",
+      "url": "animations/ghost-flair-variable.html",
+      "mtime": 1777929972
     },
     {
       "id": "marquee",
