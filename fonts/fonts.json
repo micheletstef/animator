@@ -1,24 +1,271 @@
 {
-  "defaultFontId": "inter-vf",
+  "defaultFontId": "ABCIkarus-Regular",
   "groups": [
+    {
+      "id": "ikarus",
+      "label": "Ikarus",
+      "fonts": [
+        {
+          "id": "ABCIkarus-Black",
+          "label": "ABCIkarus Black",
+          "path": "ABCIkarus-Black.otf",
+          "cssFamily": "anim-abcikarus-black",
+          "weight": 900,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-BlackItalic",
+          "label": "ABCIkarus BlackItalic",
+          "path": "ABCIkarus-BlackItalic.otf",
+          "cssFamily": "anim-abcikarus-blackitalic",
+          "weight": 900,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarus-Bold",
+          "label": "ABCIkarus Bold",
+          "path": "ABCIkarus-Bold.otf",
+          "cssFamily": "anim-abcikarus-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-BoldItalic",
+          "label": "ABCIkarus BoldItalic",
+          "path": "ABCIkarus-BoldItalic.otf",
+          "cssFamily": "anim-abcikarus-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarus-Heavy",
+          "label": "ABCIkarus Heavy",
+          "path": "ABCIkarus-Heavy.otf",
+          "cssFamily": "anim-abcikarus-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-HeavyItalic",
+          "label": "ABCIkarus HeavyItalic",
+          "path": "ABCIkarus-HeavyItalic.otf",
+          "cssFamily": "anim-abcikarus-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarus-Light",
+          "label": "ABCIkarus Light",
+          "path": "ABCIkarus-Light.otf",
+          "cssFamily": "anim-abcikarus-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-LightItalic",
+          "label": "ABCIkarus LightItalic",
+          "path": "ABCIkarus-LightItalic.otf",
+          "cssFamily": "anim-abcikarus-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarus-Medium",
+          "label": "ABCIkarus Medium",
+          "path": "ABCIkarus-Medium.otf",
+          "cssFamily": "anim-abcikarus-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-MediumItalic",
+          "label": "ABCIkarus MediumItalic",
+          "path": "ABCIkarus-MediumItalic.otf",
+          "cssFamily": "anim-abcikarus-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarus-Regular",
+          "label": "ABCIkarus Regular",
+          "path": "ABCIkarus-Regular.otf",
+          "cssFamily": "anim-abcikarus-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-RegularItalic",
+          "label": "ABCIkarus RegularItalic",
+          "path": "ABCIkarus-RegularItalic.otf",
+          "cssFamily": "anim-abcikarus-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarus-Thin",
+          "label": "ABCIkarus Thin",
+          "path": "ABCIkarus-Thin.otf",
+          "cssFamily": "anim-abcikarus-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-ThinItalic",
+          "label": "ABCIkarus ThinItalic",
+          "path": "ABCIkarus-ThinItalic.otf",
+          "cssFamily": "anim-abcikarus-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarus-Ultra",
+          "label": "ABCIkarus Ultra",
+          "path": "ABCIkarus-Ultra.otf",
+          "cssFamily": "anim-abcikarus-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarus-UltraItalic",
+          "label": "ABCIkarus UltraItalic",
+          "path": "ABCIkarus-UltraItalic.otf",
+          "cssFamily": "anim-abcikarus-ultraitalic",
+          "weight": 950,
+          "style": "italic"
+        }
+      ]
+    },
     {
       "id": "condensed",
       "label": "Condensed",
       "fonts": [
         {
-          "id": "arial-narrow",
-          "label": "Arial Narrow",
-          "stack": "Arial Narrow, 'Helvetica Neue', Helvetica, sans-serif"
+          "id": "ABCIkarusCondensed-Black",
+          "label": "ABCIkarusCondensed Black",
+          "path": "ABCIkarusCondensed-Black.otf",
+          "cssFamily": "anim-abcikaruscondensed-black",
+          "weight": 900,
+          "style": "normal"
         },
         {
-          "id": "franklin-cond",
-          "label": "Franklin Gothic Demi Cond",
-          "stack": "'Franklin Gothic Demi Cond', 'Arial Narrow', Impact, sans-serif"
+          "id": "ABCIkarusCondensed-BlackItalic",
+          "label": "ABCIkarusCondensed BlackItalic",
+          "path": "ABCIkarusCondensed-BlackItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-blackitalic",
+          "weight": 900,
+          "style": "italic"
         },
         {
-          "id": "bahnschrift-cond",
-          "label": "Bahnschrift Condensed",
-          "stack": "'Bahnschrift Condensed', 'Bahnschrift', 'Segoe UI', sans-serif"
+          "id": "ABCIkarusCondensed-Bold",
+          "label": "ABCIkarusCondensed Bold",
+          "path": "ABCIkarusCondensed-Bold.otf",
+          "cssFamily": "anim-abcikaruscondensed-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusCondensed-BoldItalic",
+          "label": "ABCIkarusCondensed BoldItalic",
+          "path": "ABCIkarusCondensed-BoldItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusCondensed-Heavy",
+          "label": "ABCIkarusCondensed Heavy",
+          "path": "ABCIkarusCondensed-Heavy.otf",
+          "cssFamily": "anim-abcikaruscondensed-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusCondensed-HeavyItalic",
+          "label": "ABCIkarusCondensed HeavyItalic",
+          "path": "ABCIkarusCondensed-HeavyItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusCondensed-Light",
+          "label": "ABCIkarusCondensed Light",
+          "path": "ABCIkarusCondensed-Light.otf",
+          "cssFamily": "anim-abcikaruscondensed-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusCondensed-LightItalic",
+          "label": "ABCIkarusCondensed LightItalic",
+          "path": "ABCIkarusCondensed-LightItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusCondensed-Medium",
+          "label": "ABCIkarusCondensed Medium",
+          "path": "ABCIkarusCondensed-Medium.otf",
+          "cssFamily": "anim-abcikaruscondensed-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusCondensed-MediumItalic",
+          "label": "ABCIkarusCondensed MediumItalic",
+          "path": "ABCIkarusCondensed-MediumItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusCondensed-Regular",
+          "label": "ABCIkarusCondensed Regular",
+          "path": "ABCIkarusCondensed-Regular.otf",
+          "cssFamily": "anim-abcikaruscondensed-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusCondensed-RegularItalic",
+          "label": "ABCIkarusCondensed RegularItalic",
+          "path": "ABCIkarusCondensed-RegularItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusCondensed-Thin",
+          "label": "ABCIkarusCondensed Thin",
+          "path": "ABCIkarusCondensed-Thin.otf",
+          "cssFamily": "anim-abcikaruscondensed-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusCondensed-ThinItalic",
+          "label": "ABCIkarusCondensed ThinItalic",
+          "path": "ABCIkarusCondensed-ThinItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusCondensed-Ultra",
+          "label": "ABCIkarusCondensed Ultra",
+          "path": "ABCIkarusCondensed-Ultra.otf",
+          "cssFamily": "anim-abcikaruscondensed-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusCondensed-UltraItalic",
+          "label": "ABCIkarusCondensed UltraItalic",
+          "path": "ABCIkarusCondensed-UltraItalic.otf",
+          "cssFamily": "anim-abcikaruscondensed-ultraitalic",
+          "weight": 950,
+          "style": "italic"
         }
       ]
     },
@@ -27,19 +274,936 @@
       "label": "Extended",
       "fonts": [
         {
-          "id": "arial-black",
-          "label": "Arial Black",
-          "stack": "'Arial Black', 'Arial Bold', Gadget, sans-serif"
+          "id": "ABCIkarusExtended-Black",
+          "label": "ABCIkarusExtended Black",
+          "path": "ABCIkarusExtended-Black.otf",
+          "cssFamily": "anim-abcikarusextended-black",
+          "weight": 900,
+          "style": "normal"
         },
         {
-          "id": "franklin-ext",
-          "label": "Franklin Gothic Medium",
-          "stack": "'Franklin Gothic Medium', 'Franklin Gothic', Arial, sans-serif"
+          "id": "ABCIkarusExtended-BlackItalic",
+          "label": "ABCIkarusExtended BlackItalic",
+          "path": "ABCIkarusExtended-BlackItalic.otf",
+          "cssFamily": "anim-abcikarusextended-blackitalic",
+          "weight": 900,
+          "style": "italic"
         },
         {
-          "id": "system-wide",
-          "label": "System UI",
-          "stack": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+          "id": "ABCIkarusExtended-Bold",
+          "label": "ABCIkarusExtended Bold",
+          "path": "ABCIkarusExtended-Bold.otf",
+          "cssFamily": "anim-abcikarusextended-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusExtended-BoldItalic",
+          "label": "ABCIkarusExtended BoldItalic",
+          "path": "ABCIkarusExtended-BoldItalic.otf",
+          "cssFamily": "anim-abcikarusextended-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusExtended-Heavy",
+          "label": "ABCIkarusExtended Heavy",
+          "path": "ABCIkarusExtended-Heavy.otf",
+          "cssFamily": "anim-abcikarusextended-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusExtended-HeavyItalic",
+          "label": "ABCIkarusExtended HeavyItalic",
+          "path": "ABCIkarusExtended-HeavyItalic.otf",
+          "cssFamily": "anim-abcikarusextended-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusExtended-Light",
+          "label": "ABCIkarusExtended Light",
+          "path": "ABCIkarusExtended-Light.otf",
+          "cssFamily": "anim-abcikarusextended-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusExtended-LightItalic",
+          "label": "ABCIkarusExtended LightItalic",
+          "path": "ABCIkarusExtended-LightItalic.otf",
+          "cssFamily": "anim-abcikarusextended-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusExtended-Medium",
+          "label": "ABCIkarusExtended Medium",
+          "path": "ABCIkarusExtended-Medium.otf",
+          "cssFamily": "anim-abcikarusextended-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusExtended-MediumItalic",
+          "label": "ABCIkarusExtended MediumItalic",
+          "path": "ABCIkarusExtended-MediumItalic.otf",
+          "cssFamily": "anim-abcikarusextended-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusExtended-Regular",
+          "label": "ABCIkarusExtended Regular",
+          "path": "ABCIkarusExtended-Regular.otf",
+          "cssFamily": "anim-abcikarusextended-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusExtended-RegularItalic",
+          "label": "ABCIkarusExtended RegularItalic",
+          "path": "ABCIkarusExtended-RegularItalic.otf",
+          "cssFamily": "anim-abcikarusextended-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusExtended-Thin",
+          "label": "ABCIkarusExtended Thin",
+          "path": "ABCIkarusExtended-Thin.otf",
+          "cssFamily": "anim-abcikarusextended-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusExtended-ThinItalic",
+          "label": "ABCIkarusExtended ThinItalic",
+          "path": "ABCIkarusExtended-ThinItalic.otf",
+          "cssFamily": "anim-abcikarusextended-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusExtended-Ultra",
+          "label": "ABCIkarusExtended Ultra",
+          "path": "ABCIkarusExtended-Ultra.otf",
+          "cssFamily": "anim-abcikarusextended-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusExtended-UltraItalic",
+          "label": "ABCIkarusExtended UltraItalic",
+          "path": "ABCIkarusExtended-UltraItalic.otf",
+          "cssFamily": "anim-abcikarusextended-ultraitalic",
+          "weight": 950,
+          "style": "italic"
+        }
+      ]
+    },
+    {
+      "id": "contrast",
+      "label": "Contrast",
+      "fonts": [
+        {
+          "id": "ABCIkarusContrast-Black",
+          "label": "ABCIkarusContrast Black",
+          "path": "ABCIkarusContrast-Black.otf",
+          "cssFamily": "anim-abcikaruscontrast-black",
+          "weight": 900,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-BlackItalic",
+          "label": "ABCIkarusContrast BlackItalic",
+          "path": "ABCIkarusContrast-BlackItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-blackitalic",
+          "weight": 900,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrast-Bold",
+          "label": "ABCIkarusContrast Bold",
+          "path": "ABCIkarusContrast-Bold.otf",
+          "cssFamily": "anim-abcikaruscontrast-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-BoldItalic",
+          "label": "ABCIkarusContrast BoldItalic",
+          "path": "ABCIkarusContrast-BoldItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrast-Heavy",
+          "label": "ABCIkarusContrast Heavy",
+          "path": "ABCIkarusContrast-Heavy.otf",
+          "cssFamily": "anim-abcikaruscontrast-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-HeavyItalic",
+          "label": "ABCIkarusContrast HeavyItalic",
+          "path": "ABCIkarusContrast-HeavyItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrast-Light",
+          "label": "ABCIkarusContrast Light",
+          "path": "ABCIkarusContrast-Light.otf",
+          "cssFamily": "anim-abcikaruscontrast-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-LightItalic",
+          "label": "ABCIkarusContrast LightItalic",
+          "path": "ABCIkarusContrast-LightItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrast-Medium",
+          "label": "ABCIkarusContrast Medium",
+          "path": "ABCIkarusContrast-Medium.otf",
+          "cssFamily": "anim-abcikaruscontrast-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-MediumItalic",
+          "label": "ABCIkarusContrast MediumItalic",
+          "path": "ABCIkarusContrast-MediumItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrast-Regular",
+          "label": "ABCIkarusContrast Regular",
+          "path": "ABCIkarusContrast-Regular.otf",
+          "cssFamily": "anim-abcikaruscontrast-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-RegularItalic",
+          "label": "ABCIkarusContrast RegularItalic",
+          "path": "ABCIkarusContrast-RegularItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrast-Thin",
+          "label": "ABCIkarusContrast Thin",
+          "path": "ABCIkarusContrast-Thin.otf",
+          "cssFamily": "anim-abcikaruscontrast-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-ThinItalic",
+          "label": "ABCIkarusContrast ThinItalic",
+          "path": "ABCIkarusContrast-ThinItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrast-Ultra",
+          "label": "ABCIkarusContrast Ultra",
+          "path": "ABCIkarusContrast-Ultra.otf",
+          "cssFamily": "anim-abcikaruscontrast-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrast-UltraItalic",
+          "label": "ABCIkarusContrast UltraItalic",
+          "path": "ABCIkarusContrast-UltraItalic.otf",
+          "cssFamily": "anim-abcikaruscontrast-ultraitalic",
+          "weight": 950,
+          "style": "italic"
+        }
+      ]
+    },
+    {
+      "id": "contrast-condensed",
+      "label": "Contrast condensed",
+      "fonts": [
+        {
+          "id": "ABCIkarusContrastCondensed-Black",
+          "label": "ABCIkarusContrastCondensed Black",
+          "path": "ABCIkarusContrastCondensed-Black.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-black",
+          "weight": 900,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-BlackItalic",
+          "label": "ABCIkarusContrastCondensed BlackItalic",
+          "path": "ABCIkarusContrastCondensed-BlackItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-blackitalic",
+          "weight": 900,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-Bold",
+          "label": "ABCIkarusContrastCondensed Bold",
+          "path": "ABCIkarusContrastCondensed-Bold.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-BoldItalic",
+          "label": "ABCIkarusContrastCondensed BoldItalic",
+          "path": "ABCIkarusContrastCondensed-BoldItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-Heavy",
+          "label": "ABCIkarusContrastCondensed Heavy",
+          "path": "ABCIkarusContrastCondensed-Heavy.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-HeavyItalic",
+          "label": "ABCIkarusContrastCondensed HeavyItalic",
+          "path": "ABCIkarusContrastCondensed-HeavyItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-Light",
+          "label": "ABCIkarusContrastCondensed Light",
+          "path": "ABCIkarusContrastCondensed-Light.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-LightItalic",
+          "label": "ABCIkarusContrastCondensed LightItalic",
+          "path": "ABCIkarusContrastCondensed-LightItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-Medium",
+          "label": "ABCIkarusContrastCondensed Medium",
+          "path": "ABCIkarusContrastCondensed-Medium.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-MediumItalic",
+          "label": "ABCIkarusContrastCondensed MediumItalic",
+          "path": "ABCIkarusContrastCondensed-MediumItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-Regular",
+          "label": "ABCIkarusContrastCondensed Regular",
+          "path": "ABCIkarusContrastCondensed-Regular.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-RegularItalic",
+          "label": "ABCIkarusContrastCondensed RegularItalic",
+          "path": "ABCIkarusContrastCondensed-RegularItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-Thin",
+          "label": "ABCIkarusContrastCondensed Thin",
+          "path": "ABCIkarusContrastCondensed-Thin.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-ThinItalic",
+          "label": "ABCIkarusContrastCondensed ThinItalic",
+          "path": "ABCIkarusContrastCondensed-ThinItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-Ultra",
+          "label": "ABCIkarusContrastCondensed Ultra",
+          "path": "ABCIkarusContrastCondensed-Ultra.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastCondensed-UltraItalic",
+          "label": "ABCIkarusContrastCondensed UltraItalic",
+          "path": "ABCIkarusContrastCondensed-UltraItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastcondensed-ultraitalic",
+          "weight": 950,
+          "style": "italic"
+        }
+      ]
+    },
+    {
+      "id": "contrast-extended",
+      "label": "Contrast extended",
+      "fonts": [
+        {
+          "id": "ABCIkarusContrastExtended-Black",
+          "label": "ABCIkarusContrastExtended Black",
+          "path": "ABCIkarusContrastExtended-Black.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-black",
+          "weight": 900,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-BlackItalic",
+          "label": "ABCIkarusContrastExtended BlackItalic",
+          "path": "ABCIkarusContrastExtended-BlackItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-blackitalic",
+          "weight": 900,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-Bold",
+          "label": "ABCIkarusContrastExtended Bold",
+          "path": "ABCIkarusContrastExtended-Bold.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-BoldItalic",
+          "label": "ABCIkarusContrastExtended BoldItalic",
+          "path": "ABCIkarusContrastExtended-BoldItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-Heavy",
+          "label": "ABCIkarusContrastExtended Heavy",
+          "path": "ABCIkarusContrastExtended-Heavy.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-HeavyItalic",
+          "label": "ABCIkarusContrastExtended HeavyItalic",
+          "path": "ABCIkarusContrastExtended-HeavyItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-Light",
+          "label": "ABCIkarusContrastExtended Light",
+          "path": "ABCIkarusContrastExtended-Light.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-LightItalic",
+          "label": "ABCIkarusContrastExtended LightItalic",
+          "path": "ABCIkarusContrastExtended-LightItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-Medium",
+          "label": "ABCIkarusContrastExtended Medium",
+          "path": "ABCIkarusContrastExtended-Medium.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-MediumItalic",
+          "label": "ABCIkarusContrastExtended MediumItalic",
+          "path": "ABCIkarusContrastExtended-MediumItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-Regular",
+          "label": "ABCIkarusContrastExtended Regular",
+          "path": "ABCIkarusContrastExtended-Regular.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-RegularItalic",
+          "label": "ABCIkarusContrastExtended RegularItalic",
+          "path": "ABCIkarusContrastExtended-RegularItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-Thin",
+          "label": "ABCIkarusContrastExtended Thin",
+          "path": "ABCIkarusContrastExtended-Thin.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-ThinItalic",
+          "label": "ABCIkarusContrastExtended ThinItalic",
+          "path": "ABCIkarusContrastExtended-ThinItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-Ultra",
+          "label": "ABCIkarusContrastExtended Ultra",
+          "path": "ABCIkarusContrastExtended-Ultra.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusContrastExtended-UltraItalic",
+          "label": "ABCIkarusContrastExtended UltraItalic",
+          "path": "ABCIkarusContrastExtended-UltraItalic.otf",
+          "cssFamily": "anim-abcikaruscontrastextended-ultraitalic",
+          "weight": 950,
+          "style": "italic"
+        }
+      ]
+    },
+    {
+      "id": "flair",
+      "label": "Flair",
+      "fonts": [
+        {
+          "id": "ABCIkarusFlair-Black",
+          "label": "ABCIkarusFlair Black",
+          "path": "ABCIkarusFlair-Black.otf",
+          "cssFamily": "anim-abcikarusflair-black",
+          "weight": 900,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-BlackItalic",
+          "label": "ABCIkarusFlair BlackItalic",
+          "path": "ABCIkarusFlair-BlackItalic.otf",
+          "cssFamily": "anim-abcikarusflair-blackitalic",
+          "weight": 900,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlair-Bold",
+          "label": "ABCIkarusFlair Bold",
+          "path": "ABCIkarusFlair-Bold.otf",
+          "cssFamily": "anim-abcikarusflair-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-BoldItalic",
+          "label": "ABCIkarusFlair BoldItalic",
+          "path": "ABCIkarusFlair-BoldItalic.otf",
+          "cssFamily": "anim-abcikarusflair-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlair-Heavy",
+          "label": "ABCIkarusFlair Heavy",
+          "path": "ABCIkarusFlair-Heavy.otf",
+          "cssFamily": "anim-abcikarusflair-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-HeavyItalic",
+          "label": "ABCIkarusFlair HeavyItalic",
+          "path": "ABCIkarusFlair-HeavyItalic.otf",
+          "cssFamily": "anim-abcikarusflair-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlair-Light",
+          "label": "ABCIkarusFlair Light",
+          "path": "ABCIkarusFlair-Light.otf",
+          "cssFamily": "anim-abcikarusflair-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-LightItalic",
+          "label": "ABCIkarusFlair LightItalic",
+          "path": "ABCIkarusFlair-LightItalic.otf",
+          "cssFamily": "anim-abcikarusflair-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlair-Medium",
+          "label": "ABCIkarusFlair Medium",
+          "path": "ABCIkarusFlair-Medium.otf",
+          "cssFamily": "anim-abcikarusflair-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-MediumItalic",
+          "label": "ABCIkarusFlair MediumItalic",
+          "path": "ABCIkarusFlair-MediumItalic.otf",
+          "cssFamily": "anim-abcikarusflair-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlair-Regular",
+          "label": "ABCIkarusFlair Regular",
+          "path": "ABCIkarusFlair-Regular.otf",
+          "cssFamily": "anim-abcikarusflair-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-RegularItalic",
+          "label": "ABCIkarusFlair RegularItalic",
+          "path": "ABCIkarusFlair-RegularItalic.otf",
+          "cssFamily": "anim-abcikarusflair-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlair-Thin",
+          "label": "ABCIkarusFlair Thin",
+          "path": "ABCIkarusFlair-Thin.otf",
+          "cssFamily": "anim-abcikarusflair-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-ThinItalic",
+          "label": "ABCIkarusFlair ThinItalic",
+          "path": "ABCIkarusFlair-ThinItalic.otf",
+          "cssFamily": "anim-abcikarusflair-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlair-Ultra",
+          "label": "ABCIkarusFlair Ultra",
+          "path": "ABCIkarusFlair-Ultra.otf",
+          "cssFamily": "anim-abcikarusflair-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlair-UltraItalic",
+          "label": "ABCIkarusFlair UltraItalic",
+          "path": "ABCIkarusFlair-UltraItalic.otf",
+          "cssFamily": "anim-abcikarusflair-ultraitalic",
+          "weight": 950,
+          "style": "italic"
+        }
+      ]
+    },
+    {
+      "id": "flair-condensed",
+      "label": "Flair condensed",
+      "fonts": [
+        {
+          "id": "ABCIkarusFlairCondensed-Black",
+          "label": "ABCIkarusFlairCondensed Black",
+          "path": "ABCIkarusFlairCondensed-Black.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-black",
+          "weight": 900,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-BlackItalic",
+          "label": "ABCIkarusFlairCondensed BlackItalic",
+          "path": "ABCIkarusFlairCondensed-BlackItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-blackitalic",
+          "weight": 900,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-Bold",
+          "label": "ABCIkarusFlairCondensed Bold",
+          "path": "ABCIkarusFlairCondensed-Bold.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-BoldItalic",
+          "label": "ABCIkarusFlairCondensed BoldItalic",
+          "path": "ABCIkarusFlairCondensed-BoldItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-Heavy",
+          "label": "ABCIkarusFlairCondensed Heavy",
+          "path": "ABCIkarusFlairCondensed-Heavy.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-HeavyItalic",
+          "label": "ABCIkarusFlairCondensed HeavyItalic",
+          "path": "ABCIkarusFlairCondensed-HeavyItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-Light",
+          "label": "ABCIkarusFlairCondensed Light",
+          "path": "ABCIkarusFlairCondensed-Light.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-LightItalic",
+          "label": "ABCIkarusFlairCondensed LightItalic",
+          "path": "ABCIkarusFlairCondensed-LightItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-Medium",
+          "label": "ABCIkarusFlairCondensed Medium",
+          "path": "ABCIkarusFlairCondensed-Medium.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-MediumItalic",
+          "label": "ABCIkarusFlairCondensed MediumItalic",
+          "path": "ABCIkarusFlairCondensed-MediumItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-Regular",
+          "label": "ABCIkarusFlairCondensed Regular",
+          "path": "ABCIkarusFlairCondensed-Regular.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-RegularItalic",
+          "label": "ABCIkarusFlairCondensed RegularItalic",
+          "path": "ABCIkarusFlairCondensed-RegularItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-Thin",
+          "label": "ABCIkarusFlairCondensed Thin",
+          "path": "ABCIkarusFlairCondensed-Thin.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-ThinItalic",
+          "label": "ABCIkarusFlairCondensed ThinItalic",
+          "path": "ABCIkarusFlairCondensed-ThinItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-Ultra",
+          "label": "ABCIkarusFlairCondensed Ultra",
+          "path": "ABCIkarusFlairCondensed-Ultra.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairCondensed-UltraItalic",
+          "label": "ABCIkarusFlairCondensed UltraItalic",
+          "path": "ABCIkarusFlairCondensed-UltraItalic.otf",
+          "cssFamily": "anim-abcikarusflaircondensed-ultraitalic",
+          "weight": 950,
+          "style": "italic"
+        }
+      ]
+    },
+    {
+      "id": "flair-extended",
+      "label": "Flair extended",
+      "fonts": [
+        {
+          "id": "ABCIkarusFlairExtended-Black",
+          "label": "ABCIkarusFlairExtended Black",
+          "path": "ABCIkarusFlairExtended-Black.otf",
+          "cssFamily": "anim-abcikarusflairextended-black",
+          "weight": 900,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-BlackItalic",
+          "label": "ABCIkarusFlairExtended BlackItalic",
+          "path": "ABCIkarusFlairExtended-BlackItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-blackitalic",
+          "weight": 900,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-Bold",
+          "label": "ABCIkarusFlairExtended Bold",
+          "path": "ABCIkarusFlairExtended-Bold.otf",
+          "cssFamily": "anim-abcikarusflairextended-bold",
+          "weight": 700,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-BoldItalic",
+          "label": "ABCIkarusFlairExtended BoldItalic",
+          "path": "ABCIkarusFlairExtended-BoldItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-bolditalic",
+          "weight": 700,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-Heavy",
+          "label": "ABCIkarusFlairExtended Heavy",
+          "path": "ABCIkarusFlairExtended-Heavy.otf",
+          "cssFamily": "anim-abcikarusflairextended-heavy",
+          "weight": 800,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-HeavyItalic",
+          "label": "ABCIkarusFlairExtended HeavyItalic",
+          "path": "ABCIkarusFlairExtended-HeavyItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-heavyitalic",
+          "weight": 800,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-Light",
+          "label": "ABCIkarusFlairExtended Light",
+          "path": "ABCIkarusFlairExtended-Light.otf",
+          "cssFamily": "anim-abcikarusflairextended-light",
+          "weight": 300,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-LightItalic",
+          "label": "ABCIkarusFlairExtended LightItalic",
+          "path": "ABCIkarusFlairExtended-LightItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-lightitalic",
+          "weight": 300,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-Medium",
+          "label": "ABCIkarusFlairExtended Medium",
+          "path": "ABCIkarusFlairExtended-Medium.otf",
+          "cssFamily": "anim-abcikarusflairextended-medium",
+          "weight": 500,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-MediumItalic",
+          "label": "ABCIkarusFlairExtended MediumItalic",
+          "path": "ABCIkarusFlairExtended-MediumItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-mediumitalic",
+          "weight": 500,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-Regular",
+          "label": "ABCIkarusFlairExtended Regular",
+          "path": "ABCIkarusFlairExtended-Regular.otf",
+          "cssFamily": "anim-abcikarusflairextended-regular",
+          "weight": 400,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-RegularItalic",
+          "label": "ABCIkarusFlairExtended RegularItalic",
+          "path": "ABCIkarusFlairExtended-RegularItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-regularitalic",
+          "weight": 400,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-Thin",
+          "label": "ABCIkarusFlairExtended Thin",
+          "path": "ABCIkarusFlairExtended-Thin.otf",
+          "cssFamily": "anim-abcikarusflairextended-thin",
+          "weight": 100,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-ThinItalic",
+          "label": "ABCIkarusFlairExtended ThinItalic",
+          "path": "ABCIkarusFlairExtended-ThinItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-thinitalic",
+          "weight": 100,
+          "style": "italic"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-Ultra",
+          "label": "ABCIkarusFlairExtended Ultra",
+          "path": "ABCIkarusFlairExtended-Ultra.otf",
+          "cssFamily": "anim-abcikarusflairextended-ultra",
+          "weight": 950,
+          "style": "normal"
+        },
+        {
+          "id": "ABCIkarusFlairExtended-UltraItalic",
+          "label": "ABCIkarusFlairExtended UltraItalic",
+          "path": "ABCIkarusFlairExtended-UltraItalic.otf",
+          "cssFamily": "anim-abcikarusflairextended-ultraitalic",
+          "weight": 950,
+          "style": "italic"
         }
       ]
     },
@@ -48,10 +1212,10 @@
       "label": "Variables",
       "fonts": [
         {
-          "id": "inter-vf",
-          "label": "Inter",
-          "path": "variables/InterVariable.woff2",
-          "cssFamily": "anim-inter-vf",
+          "id": "ABCIkarusCondensedVariable",
+          "label": "ABCIkarusCondensedVariable",
+          "path": "ABCIkarusCondensedVariable.ttf",
+          "cssFamily": "anim-abcikaruscondensedvariable",
           "variable": true,
           "axes": [
             {
@@ -59,15 +1223,231 @@
               "name": "Weight",
               "min": 100,
               "max": 900,
-              "default": 450
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusContrastCondensedVariable",
+          "label": "ABCIkarusContrastCondensedVariable",
+          "path": "ABCIkarusContrastCondensedVariable.ttf",
+          "cssFamily": "anim-abcikaruscontrastcondensedvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusContrastExtendedVariable",
+          "label": "ABCIkarusContrastExtendedVariable",
+          "path": "ABCIkarusContrastExtendedVariable.ttf",
+          "cssFamily": "anim-abcikaruscontrastextendedvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusContrastVariable",
+          "label": "ABCIkarusContrastVariable",
+          "path": "ABCIkarusContrastVariable.ttf",
+          "cssFamily": "anim-abcikaruscontrastvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusContrastWidthVariable",
+          "label": "ABCIkarusContrastWidthVariable",
+          "path": "ABCIkarusContrastWidthVariable.ttf",
+          "cssFamily": "anim-abcikaruscontrastwidthvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
             },
             {
-              "tag": "slnt",
-              "name": "Slant",
-              "min": -10,
-              "max": 0,
-              "default": 0,
-              "step": 0.5
+              "tag": "wdth",
+              "name": "Width",
+              "min": 50,
+              "max": 200,
+              "default": 100,
+              "step": 1
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusExtendedVariable",
+          "label": "ABCIkarusExtendedVariable",
+          "path": "ABCIkarusExtendedVariable.ttf",
+          "cssFamily": "anim-abcikarusextendedvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusFlairCondensedVariable",
+          "label": "ABCIkarusFlairCondensedVariable",
+          "path": "ABCIkarusFlairCondensedVariable.ttf",
+          "cssFamily": "anim-abcikarusflaircondensedvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusFlairExtendedVariable",
+          "label": "ABCIkarusFlairExtendedVariable",
+          "path": "ABCIkarusFlairExtendedVariable.ttf",
+          "cssFamily": "anim-abcikarusflairextendedvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusFlairVariable",
+          "label": "ABCIkarusFlairVariable",
+          "path": "ABCIkarusFlairVariable.ttf",
+          "cssFamily": "anim-abcikarusflairvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusFlairWidthVariable",
+          "label": "ABCIkarusFlairWidthVariable",
+          "path": "ABCIkarusFlairWidthVariable.ttf",
+          "cssFamily": "anim-abcikarusflairwidthvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            },
+            {
+              "tag": "wdth",
+              "name": "Width",
+              "min": 50,
+              "max": 200,
+              "default": 100,
+              "step": 1
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusPlusVariable",
+          "label": "ABCIkarusPlusVariable",
+          "path": "ABCIkarusPlusVariable.ttf",
+          "cssFamily": "anim-abcikarusplusvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            },
+            {
+              "tag": "wdth",
+              "name": "Width",
+              "min": 60,
+              "max": 140,
+              "default": 100,
+              "step": 1
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusVariable",
+          "label": "ABCIkarusVariable",
+          "path": "ABCIkarusVariable.ttf",
+          "cssFamily": "anim-abcikarusvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            }
+          ]
+        },
+        {
+          "id": "ABCIkarusWidthVariable",
+          "label": "ABCIkarusWidthVariable",
+          "path": "ABCIkarusWidthVariable.ttf",
+          "cssFamily": "anim-abcikaruswidthvariable",
+          "variable": true,
+          "axes": [
+            {
+              "tag": "wght",
+              "name": "Weight",
+              "min": 100,
+              "max": 900,
+              "default": 400
+            },
+            {
+              "tag": "wdth",
+              "name": "Width",
+              "min": 50,
+              "max": 200,
+              "default": 100,
+              "step": 1
             }
           ]
         }

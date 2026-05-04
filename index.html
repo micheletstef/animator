@@ -240,6 +240,8 @@
         position: relative;
         background: var(--artboard-bg);
         overflow: hidden;
+        outline: 1px solid rgba(31, 31, 31, 0.32);
+        outline-offset: -1px;
       }
 
       .scene-mirror {
@@ -807,26 +809,59 @@
           syncMirrorSoon(32);
         });
 
+        function fontFaceUrl(path) {
+          return "fonts/" + String(path).replace(/^\//, "");
+        }
+
+        function fontFaceFormat(path, variable) {
+          var lower = String(path).toLowerCase();
+          if (variable) {
+            if (lower.endsWith(".woff2")) return "format('woff2-variations')";
+            if (lower.endsWith(".ttf")) return "format('truetype-variations')";
+            if (lower.endsWith(".otf")) return "format('opentype-variations')";
+            return "format('truetype-variations')";
+          }
+          if (lower.endsWith(".woff2")) return "format('woff2')";
+          if (lower.endsWith(".otf")) return "format('opentype')";
+          if (lower.endsWith(".ttf")) return "format('truetype')";
+          return "format('opentype')";
+        }
+
         function injectFontFaces(manifest) {
+          var old = document.getElementById("dynamic-font-faces");
+          if (old) old.remove();
           var css = "";
           manifest.groups.forEach(function (g) {
             g.fonts.forEach(function (f) {
               if (!f.path || !f.cssFamily) return;
-              var u = "fonts/" + f.path.replace(/^\//, "");
+              var u = fontFaceUrl(f.path);
+              var fmt = fontFaceFormat(f.path, !!f.variable);
               if (f.variable) {
+                var hasWdth =
+                  f.axes &&
+                  f.axes.some(function (a) {
+                    return a.tag === "wdth";
+                  });
+                var stretch = hasWdth ? "font-stretch:50% 200%;" : "";
                 css +=
                   "@font-face{font-family:'" +
                   f.cssFamily +
                   "';src:url('" +
                   u +
-                  "') format('woff2-variations');font-weight:100 900;font-style:oblique 0deg 10deg;font-display:swap;}";
+                  "') " +
+                  fmt +
+                  ";font-weight:100 900;" +
+                  stretch +
+                  "font-display:swap;}";
               } else {
                 css +=
                   "@font-face{font-family:'" +
                   f.cssFamily +
                   "';src:url('" +
                   u +
-                  "') format('woff2');font-weight:" +
+                  "') " +
+                  fmt +
+                  ";font-weight:" +
                   (f.weight != null ? f.weight : 400) +
                   ";font-style:" +
                   (f.style || "normal") +
@@ -1080,18 +1115,14 @@
           .catch(function () {
             activeTextFontSelect.innerHTML = "";
             var og = document.createElement("optgroup");
-            og.label = "system";
+            og.label = "fonts";
             var opt = document.createElement("option");
-            opt.value = "system-ui";
-            opt.textContent = "system ui";
+            opt.value = "";
+            opt.textContent = "could not load fonts/fonts.json";
             og.appendChild(opt);
             activeTextFontSelect.appendChild(og);
-            fontRegistry["system-ui"] = {
-              id: "system-ui",
-              label: "system ui",
-              stack: "system-ui, sans-serif",
-            };
-            fontManifest = { defaultFontId: "system-ui", groups: [] };
+            fontRegistry = {};
+            fontManifest = { defaultFontId: null, groups: [] };
             boot();
           });
       })();
