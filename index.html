@@ -1103,6 +1103,7 @@
         var textDecStrike = document.getElementById("textDecStrike");
         var TEXT_RUN_CLASS = "artboard-text-run";
         var typographySelectionSyncTimer = null;
+        var lastTypographyRangeForPanel = null;
 
         var outputViewport = document.getElementById("outputViewport");
         var outputMarqueeTrack = document.getElementById("outputMarqueeTrack");
@@ -1611,12 +1612,76 @@
             clearTimeout(typographySelectionSyncTimer);
             typographySelectionSyncTimer = null;
           }
+          clearTypographyRangeStash();
           clearTextFrameSelection();
           activeTextInner = null;
           typographyBlock.hidden = true;
           vfAxisHost.hidden = true;
           vfAxisHost.innerHTML = "";
           if (vfAxesTitle) vfAxesTitle.hidden = true;
+        }
+
+        function clearTypographyRangeStash() {
+          lastTypographyRangeForPanel = null;
+        }
+
+        function stashTypographyRangeForPanel(inner) {
+          if (!inner) return;
+          var sel = window.getSelection();
+          if (!sel.rangeCount || !inner.contains(sel.commonAncestorContainer)) return;
+          try {
+            lastTypographyRangeForPanel = {
+              inner: inner,
+              range: sel.getRangeAt(0).cloneRange(),
+            };
+          } catch (e) {
+            /* ignore */
+          }
+        }
+
+        function getTypographyRangeForPanelApply(inner) {
+          if (!inner) return null;
+          var sel = window.getSelection();
+          if (sel.rangeCount && inner.contains(sel.commonAncestorContainer)) {
+            try {
+              return sel.getRangeAt(0).cloneRange();
+            } catch (e) {
+              /* fall through */
+            }
+          }
+          if (
+            lastTypographyRangeForPanel &&
+            lastTypographyRangeForPanel.inner === inner &&
+            lastTypographyRangeForPanel.range
+          ) {
+            try {
+              var sr = lastTypographyRangeForPanel.range.cloneRange();
+              if (inner.contains(sr.commonAncestorContainer)) return sr;
+            } catch (e2) {
+              /* ignore */
+            }
+          }
+          return null;
+        }
+
+        function refreshTypographyStashAfterPanelApply(inner, target) {
+          if (!inner || !target) return;
+          try {
+            var r = document.createRange();
+            if (target.classList && target.classList.contains(TEXT_RUN_CLASS)) {
+              r.selectNodeContents(target);
+            } else if (target === inner) {
+              r.selectNodeContents(inner);
+            } else {
+              clearTypographyRangeStash();
+              return;
+            }
+            if (inner.contains(r.commonAncestorContainer)) {
+              lastTypographyRangeForPanel = { inner: inner, range: r.cloneRange() };
+            }
+          } catch (e) {
+            clearTypographyRangeStash();
+          }
         }
 
         function rangeCoversNodeContents(node, range) {
@@ -1628,11 +1693,10 @@
           );
         }
 
-        function getCollapsedStyleTarget(inner) {
-          var sel = window.getSelection();
-          if (!sel.rangeCount || !inner.contains(sel.anchorNode)) return inner;
-          var r = sel.getRangeAt(0);
-          if (!r.collapsed) return inner;
+        function getCollapsedStyleTargetFromRange(inner, r) {
+          if (!inner || !r || !r.collapsed || !inner.contains(r.startContainer)) {
+            return inner;
+          }
           var n = r.startContainer;
           if (n.nodeType === Node.TEXT_NODE) {
             var p = n.parentElement;
@@ -1652,13 +1716,20 @@
           return inner;
         }
 
+        function getCollapsedStyleTarget(inner) {
+          var sel = window.getSelection();
+          if (!sel.rangeCount || !inner.contains(sel.anchorNode)) return inner;
+          var r = sel.getRangeAt(0);
+          if (!r.collapsed) return inner;
+          return getCollapsedStyleTargetFromRange(inner, r);
+        }
+
         function getTypographySyncElement(inner) {
           if (!inner) return null;
-          var sel = window.getSelection();
-          if (!sel.rangeCount || !inner.contains(sel.commonAncestorContainer)) {
+          var range = getTypographyRangeForPanelApply(inner);
+          if (!range || !inner.contains(range.commonAncestorContainer)) {
             return inner;
           }
-          var range = sel.getRangeAt(0);
           if (!range.collapsed) {
             var n = range.startContainer;
             var el = n.nodeType === Node.TEXT_NODE ? n.parentElement : n;
@@ -1668,20 +1739,25 @@
             }
             return inner;
           }
-          return getCollapsedStyleTarget(inner);
+          return getCollapsedStyleTargetFromRange(inner, range);
         }
 
         function resolveTypographyApplyTarget(inner) {
-          var sel = window.getSelection();
-          if (!sel.rangeCount || !inner.contains(sel.commonAncestorContainer)) {
-            return { target: inner, wrapped: false };
+          var out = { target: inner, wrapped: false };
+          var range = getTypographyRangeForPanelApply(inner);
+          if (!range || !inner.contains(range.commonAncestorContainer)) {
+            clearTypographyRangeStash();
+            return out;
           }
-          var range = sel.getRangeAt(0);
           if (range.collapsed) {
-            return { target: getCollapsedStyleTarget(inner), wrapped: false };
+            out.target = getCollapsedStyleTargetFromRange(inner, range);
+            refreshTypographyStashAfterPanelApply(inner, out.target);
+            return out;
           }
           if (rangeCoversNodeContents(inner, range)) {
-            return { target: inner, wrapped: false };
+            out.target = inner;
+            refreshTypographyStashAfterPanelApply(inner, out.target);
+            return out;
           }
           var ca = range.commonAncestorContainer;
           if (
@@ -1689,9 +1765,12 @@
             ca.classList.contains(TEXT_RUN_CLASS) &&
             rangeCoversNodeContents(ca, range)
           ) {
-            return { target: ca, wrapped: false };
+            out.target = ca;
+            refreshTypographyStashAfterPanelApply(inner, out.target);
+            return out;
           }
           try {
+            var sel = window.getSelection();
             var frag = range.extractContents();
             var span = document.createElement("span");
             span.className = TEXT_RUN_CLASS;
@@ -1702,9 +1781,12 @@
             var nr = document.createRange();
             nr.selectNodeContents(span);
             sel.addRange(nr);
-            return { target: span, wrapped: true };
+            out = { target: span, wrapped: true };
+            refreshTypographyStashAfterPanelApply(inner, span);
+            return out;
           } catch (err) {
-            return { target: inner, wrapped: false };
+            clearTypographyRangeStash();
+            return out;
           }
         }
 
@@ -2032,6 +2114,13 @@
 
         document.addEventListener("selectionchange", function () {
           if (!activeTextInner || typographyBlock.hidden) return;
+          var sel = window.getSelection();
+          if (
+            sel.rangeCount &&
+            activeTextInner.contains(sel.commonAncestorContainer)
+          ) {
+            stashTypographyRangeForPanel(activeTextInner);
+          }
           var ae = document.activeElement;
           if (
             ae !== activeTextInner &&
@@ -2050,8 +2139,19 @@
           }, 48);
         });
 
+        if (settingsPanelEl) {
+          settingsPanelEl.addEventListener(
+            "pointerdown",
+            function () {
+              if (activeTextInner) stashTypographyRangeForPanel(activeTextInner);
+            },
+            true
+          );
+        }
+
         function setActiveTextInner(inner) {
           if (!inner || !scene.contains(inner)) return;
+          if (activeTextInner !== inner) clearTypographyRangeStash();
           activeTextInner = inner;
           var tw = inner.closest && inner.closest(".artboard-text");
           if (tw) selectTextWrap(tw);
