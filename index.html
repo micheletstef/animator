@@ -514,6 +514,10 @@
         line-height: 1.35;
       }
 
+      ::highlight(typography-panel-sel) {
+        background-color: rgba(51, 153, 255, 0.38);
+      }
+
       .artboard-item.artboard-text {
         display: flex;
         flex-direction: column;
@@ -1105,8 +1109,10 @@
         var textDecUnderline = document.getElementById("textDecUnderline");
         var textDecStrike = document.getElementById("textDecStrike");
         var TEXT_RUN_CLASS = "artboard-text-run";
+        var TYPO_HIGHLIGHT_NAME = "typography-panel-sel";
         var typographySelectionSyncTimer = null;
         var lastTypographyRangeForPanel = null;
+        var typographyInteractionStartedOutsideInner = false;
 
         var outputViewport = document.getElementById("outputViewport");
         var outputMarqueeTrack = document.getElementById("outputMarqueeTrack");
@@ -1624,8 +1630,51 @@
           if (vfAxesTitle) vfAxesTitle.hidden = true;
         }
 
+        function clearTypographyHighlight() {
+          if (typeof CSS === "undefined" || !CSS.highlights) return;
+          try {
+            CSS.highlights.delete(TYPO_HIGHLIGHT_NAME);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+
+        function syncTypographyHighlightFromStash() {
+          clearTypographyHighlight();
+          if (
+            typeof CSS === "undefined" ||
+            !CSS.highlights ||
+            typeof Highlight === "undefined"
+          ) {
+            return;
+          }
+          var data = lastTypographyRangeForPanel;
+          var inner = data && data.inner;
+          if (
+            !inner ||
+            !data.range ||
+            data.range.collapsed ||
+            !inner.contains(data.range.commonAncestorContainer)
+          ) {
+            return;
+          }
+          var ae = document.activeElement;
+          var innerFocused =
+            ae === inner || (ae && inner.contains(ae));
+          if (innerFocused) return;
+          try {
+            CSS.highlights.set(
+              TYPO_HIGHLIGHT_NAME,
+              new Highlight(data.range.cloneRange())
+            );
+          } catch (e) {
+            /* ignore */
+          }
+        }
+
         function clearTypographyRangeStash() {
           lastTypographyRangeForPanel = null;
+          clearTypographyHighlight();
         }
 
         function stashTypographyRangeForPanel(inner) {
@@ -1640,6 +1689,7 @@
           } catch (e) {
             /* ignore */
           }
+          syncTypographyHighlightFromStash();
         }
 
         function getTypographyRangeForPanelApply(inner) {
@@ -1687,6 +1737,7 @@
             }
             if (inner.contains(r.commonAncestorContainer)) {
               lastTypographyRangeForPanel = { inner: inner, range: r.cloneRange() };
+              syncTypographyHighlightFromStash();
             }
           } catch (e) {
             clearTypographyRangeStash();
@@ -2130,20 +2181,31 @@
           ) {
             var r = sel.getRangeAt(0);
             var aeFocus = document.activeElement;
-            var editingInside =
+            var innerFocused =
               aeFocus === activeTextInner ||
               (aeFocus && activeTextInner.contains(aeFocus));
-            var preserveCharRange =
-              r.collapsed &&
-              !editingInside &&
+
+            var hadNonCollapsedStash =
               lastTypographyRangeForPanel &&
               lastTypographyRangeForPanel.inner === activeTextInner &&
               lastTypographyRangeForPanel.range &&
               !lastTypographyRangeForPanel.range.collapsed;
-            if (!preserveCharRange) {
+
+            var keepStoredRange =
+              r.collapsed &&
+              hadNonCollapsedStash &&
+              (!innerFocused || typographyInteractionStartedOutsideInner);
+
+            if (keepStoredRange) {
+              typographyInteractionStartedOutsideInner = false;
+            } else {
+              if (typographyInteractionStartedOutsideInner) {
+                typographyInteractionStartedOutsideInner = false;
+              }
               stashTypographyRangeForPanel(activeTextInner);
             }
           }
+          syncTypographyHighlightFromStash();
           var ae = document.activeElement;
           if (
             ae !== activeTextInner &&
@@ -2161,6 +2223,37 @@
             renderVfPanel();
           }, 48);
         });
+
+        window.addEventListener(
+          "mousedown",
+          function (e) {
+            if (!activeTextInner || typographyBlock.hidden) return;
+            var t = e.target;
+            if (activeTextInner.contains(t)) {
+              typographyInteractionStartedOutsideInner = false;
+              return;
+            }
+            typographyInteractionStartedOutsideInner = true;
+            try {
+              var sel = window.getSelection();
+              if (
+                sel.rangeCount &&
+                activeTextInner.contains(sel.commonAncestorContainer)
+              ) {
+                var r = sel.getRangeAt(0);
+                if (!r.collapsed) {
+                  stashTypographyRangeForPanel(activeTextInner);
+                  requestAnimationFrame(function () {
+                    requestAnimationFrame(syncTypographyHighlightFromStash);
+                  });
+                }
+              }
+            } catch (err) {
+              /* ignore */
+            }
+          },
+          true
+        );
 
         if (settingsPanelEl) {
           settingsPanelEl.addEventListener(
@@ -2646,6 +2739,34 @@
         function attachTextBoxDrag(wrap, inner, parent) {
           var handle = wrap.querySelector(".artboard-drag-handle");
           if (handle) attachDragFixed(handle, wrap, parent);
+          inner.addEventListener("focusin", function () {
+            clearTypographyHighlight();
+          });
+          inner.addEventListener(
+            "focusout",
+            function (e) {
+              var rt = e.relatedTarget;
+              if (rt && inner.contains(rt)) return;
+              try {
+                var sel = window.getSelection();
+                if (
+                  sel.rangeCount &&
+                  inner.contains(sel.commonAncestorContainer)
+                ) {
+                  var r = sel.getRangeAt(0);
+                  if (!r.collapsed) {
+                    stashTypographyRangeForPanel(inner);
+                  }
+                }
+              } catch (err) {
+                /* ignore */
+              }
+              requestAnimationFrame(function () {
+                requestAnimationFrame(syncTypographyHighlightFromStash);
+              });
+            },
+            true
+          );
           inner.addEventListener("mousedown", function (e) {
             if (e.button !== 0) return;
             if (!e.altKey) return;
