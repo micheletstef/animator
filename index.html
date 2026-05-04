@@ -10,7 +10,7 @@
         --ar-w: 1080;
         --ar-h: 1440;
         --artboard-bg: #ffffff;
-        --editor-view-h: 320px;
+        --editor-view-h: min(78vh, 820px);
       }
 
       * {
@@ -376,37 +376,24 @@
       }
 
       .scene-mirror .artboard-item {
-        border-color: transparent;
-        background: transparent;
+        border: 0 !important;
+        border-color: transparent !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      .scene-mirror .artboard-item.is-text-selected {
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+
+      .scene-mirror .artboard-text-inner {
+        outline: none !important;
       }
 
       .scene-mirror .scene-height-grip,
       .scene-mirror .frame-handles {
         display: none !important;
-      }
-
-      .scene-height-grip {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 12px;
-        cursor: ns-resize;
-        z-index: 55;
-        touch-action: none;
-        background: linear-gradient(
-          to bottom,
-          transparent,
-          rgba(0, 0, 0, 0.08)
-        );
-      }
-
-      .scene-height-grip:hover {
-        background: linear-gradient(
-          to bottom,
-          transparent,
-          rgba(0, 0, 0, 0.14)
-        );
       }
 
       .scene-badge {
@@ -446,17 +433,17 @@
       }
 
       .editor-resize-handle {
-        margin-top: 4px;
-        height: 10px;
+        margin-top: 6px;
+        height: 14px;
         border-radius: 2px;
-        background: rgba(0, 0, 0, 0.1);
+        background: rgba(0, 0, 0, 0.12);
         cursor: ns-resize;
         flex-shrink: 0;
         touch-action: none;
       }
 
       .editor-resize-handle:hover {
-        background: rgba(0, 0, 0, 0.16);
+        background: rgba(0, 0, 0, 0.2);
       }
 
       .artboard-item {
@@ -1057,12 +1044,6 @@
                 aria-label="Frame 1080 by 1440 pixels"
               >
                 <span class="scene-badge" id="sceneBadge">3:4</span>
-                <div
-                  class="scene-height-grip"
-                  id="sceneHeightGrip"
-                  aria-hidden="true"
-                  title="Drag to extend artboard height"
-                ></div>
               </div>
             </div>
           </div>
@@ -1072,7 +1053,8 @@
           id="editorResizeHandle"
           role="separator"
           aria-orientation="horizontal"
-          aria-label="Drag to change artboard panel height"
+          aria-label="Drag down to extend artboard height from format size"
+          title="Drag down to extend artboard canvas (starts at format height)"
         ></div>
       </section>
     </div>
@@ -1120,7 +1102,6 @@
         var editorScaleOuter = document.getElementById("editorScaleOuter");
         var editorScaleInner = document.getElementById("editorScaleInner");
         var editorResizeHandle = document.getElementById("editorResizeHandle");
-        var sceneHeightGrip = document.getElementById("sceneHeightGrip");
         var outputZoomInBtn = document.getElementById("outputZoomIn");
         var outputZoomOutBtn = document.getElementById("outputZoomOut");
         var outputZoomFitBtn = document.getElementById("outputZoomFit");
@@ -1246,10 +1227,8 @@
           clearArtboardItems();
           var holder = document.createElement("div");
           holder.innerHTML = html || "";
-          var before = sceneHeightGrip || null;
           [].slice.call(holder.children).forEach(function (el) {
-            if (before) scene.insertBefore(el, before);
-            else scene.appendChild(el);
+            scene.appendChild(el);
           });
           rehydrateAllArtboardItems();
         }
@@ -1481,9 +1460,6 @@
             characterData: true
           });
           editorResizeHandle.addEventListener("mouseup", scheduleSessionPersist);
-          if (sceneHeightGrip) {
-            sceneHeightGrip.addEventListener("mouseup", scheduleSessionPersist);
-          }
           if (saveArtboardBtn) {
             saveArtboardBtn.addEventListener("click", function () {
               var label = (saveArtboardName && saveArtboardName.value.trim()) || "";
@@ -2379,11 +2355,7 @@
           });
           wrap.appendChild(inner);
           attachTextFrameChrome(wrap, inner);
-          if (sceneHeightGrip) {
-            scene.insertBefore(wrap, sceneHeightGrip);
-          } else {
-            scene.appendChild(wrap);
-          }
+          scene.appendChild(wrap);
           attachTextBoxDrag(wrap, inner, scene);
           if (fontManifest && fontManifest.defaultFontId) {
             applyFontIdToInner(inner, fontManifest.defaultFontId);
@@ -2415,11 +2387,7 @@
           img.src = url;
           wrap.appendChild(handle);
           wrap.appendChild(img);
-          if (sceneHeightGrip) {
-            scene.insertBefore(wrap, sceneHeightGrip);
-          } else {
-            scene.appendChild(wrap);
-          }
+          scene.appendChild(wrap);
           attachDragFixed(handle, wrap, scene);
           syncMirrorSoon(0);
           scheduleSessionPersist();
@@ -2428,61 +2396,37 @@
         editorResizeHandle.addEventListener("mousedown", function (e) {
           if (e.button !== 0) return;
           e.preventDefault();
+          e.stopPropagation();
+          hideTypography();
+          var scale = editorScaleStored || 0.2;
           var startY = e.clientY;
-          var startH = editorScroll.getBoundingClientRect().height;
+          var startH = logicalH;
           function onMove(ev) {
-            var next = startH + (ev.clientY - startY);
-            var minH = 180;
-            var maxH = Math.min(window.innerHeight * 0.92, 900);
-            next = Math.max(minH, Math.min(maxH, next));
-            root.style.setProperty("--editor-view-h", next + "px");
-            layoutEditorScale();
+            var dy = (ev.clientY - startY) / scale;
+            var minH = formatPresetMinH > 0 ? formatPresetMinH : 200;
+            logicalH = Math.round(Math.max(minH, startH + dy));
+            root.style.setProperty("--ar-h", String(logicalH));
+            if (outputSizeReadout) {
+              outputSizeReadout.textContent =
+                "(" + logicalW + " × " + logicalH + ")";
+            }
+            scene.setAttribute(
+              "aria-label",
+              "Frame " + logicalW + " by " + logicalH + " pixels"
+            );
+            applyLogicalSize(logicalW, logicalH);
+            layoutScales();
+            syncMirrorSoon(8);
           }
           function onUp() {
             window.removeEventListener("mousemove", onMove);
             window.removeEventListener("mouseup", onUp);
+            syncMirrorSoon(0);
             scheduleSessionPersist();
           }
           window.addEventListener("mousemove", onMove);
           window.addEventListener("mouseup", onUp);
         });
-
-        if (sceneHeightGrip) {
-          sceneHeightGrip.addEventListener("mousedown", function (e) {
-            if (e.button !== 0) return;
-            e.preventDefault();
-            e.stopPropagation();
-            hideTypography();
-            var scale = editorScaleStored || 0.2;
-            var startY = e.clientY;
-            var startH = logicalH;
-            function onMove(ev) {
-              var dy = (ev.clientY - startY) / scale;
-              var minH = formatPresetMinH > 0 ? formatPresetMinH : 200;
-              logicalH = Math.round(Math.max(minH, startH + dy));
-              root.style.setProperty("--ar-h", String(logicalH));
-              if (outputSizeReadout) {
-                outputSizeReadout.textContent =
-                  "(" + logicalW + " × " + logicalH + ")";
-              }
-              scene.setAttribute(
-                "aria-label",
-                "Frame " + logicalW + " by " + logicalH + " pixels"
-              );
-              applyLogicalSize(logicalW, logicalH);
-              layoutScales();
-              syncMirrorSoon(8);
-            }
-            function onUp() {
-              window.removeEventListener("mousemove", onMove);
-              window.removeEventListener("mouseup", onUp);
-              syncMirrorSoon(0);
-              scheduleSessionPersist();
-            }
-            window.addEventListener("mousemove", onMove);
-            window.addEventListener("mouseup", onUp);
-          });
-        }
 
         function boot() {
           var session = readJSON(LS_SESSION);
