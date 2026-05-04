@@ -179,6 +179,17 @@
         letter-spacing: 0.06em;
       }
 
+      .panel .group-title .group-face {
+        color: #9a9a9a;
+      }
+
+      .panel .group-note {
+        margin: -4px 0 10px 0;
+        color: #5a5a5a;
+        font-size: 10px;
+        letter-spacing: 0.04em;
+      }
+
       .row-ctl {
         display: grid;
         grid-template-columns: 72px 1fr 56px;
@@ -298,7 +309,7 @@
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom · min/max drive the loop</p>
+      <p class="hint">shift + scroll to zoom · min/max drive the loop · type is per face</p>
 
       <div class="group">
         <p class="group-title">font</p>
@@ -328,7 +339,8 @@
       </div>
 
       <div class="group">
-        <p class="group-title">type</p>
+        <p class="group-title">type <span id="typeFaceLbl" class="group-face">· plus</span></p>
+        <p class="group-note">size, leading, kerning · saved for each face</p>
         <div class="row-ctl">
           <label for="fs">size</label>
           <input id="fs" type="range" min="60" max="260" step="1" value="156" />
@@ -449,18 +461,38 @@
         var rCntr = document.getElementById("rCntr");
         var rPhase = document.getElementById("rPhase");
 
-        var LS_KEY = "axes-diagram:settings:v7";
+        var LS_KEY = "axes-diagram:settings:v8";
+
+        var DEFAULT_TYPE = {
+          fs: 156,
+          lhMin: 0.96,
+          lhMax: 0.96,
+          trMin: 0,
+          trMax: 0,
+        };
+
+        var FAMILIES = ["plus", "flair", "contrast"];
+
+        function cloneType(o) {
+          return {
+            fs: o.fs,
+            lhMin: o.lhMin,
+            lhMax: o.lhMax,
+            trMin: o.trMin,
+            trMax: o.trMax,
+          };
+        }
+
+        function defaultTypes() {
+          var t = cloneType(DEFAULT_TYPE);
+          return { plus: cloneType(t), flair: cloneType(t), contrast: cloneType(t) };
+        }
 
         var DEFAULTS = {
           zm: 1,
           family: "plus",
           bg: "#000000",
           fg: "#f5d100",
-          fs: 156,
-          lhMin: 0.96,
-          lhMax: 0.96,
-          trMin: 0,
-          trMax: 0,
           pd: 36,
           wMin: 200,
           wMax: 1000,
@@ -471,6 +503,11 @@
           cMax: 100,
           cy: 32,
         };
+
+        var types = defaultTypes();
+        var lastFamily = "plus";
+
+        var TYPE_KEYS = ["fs", "lhMin", "lhMax", "trMin", "trMax"];
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
         var FAMILY_LABEL = {
@@ -522,6 +559,45 @@
 
         function getFamily() {
           return els.family.value || "plus";
+        }
+
+        function readTypeFromUI() {
+          return {
+            fs: parseFloat(els.fs.value),
+            lhMin: parseFloat(els.lhMin.value),
+            lhMax: parseFloat(els.lhMax.value),
+            trMin: parseFloat(els.trMin.value),
+            trMax: parseFloat(els.trMax.value),
+          };
+        }
+
+        function writeTypeToUI(t) {
+          TYPE_KEYS.forEach(function (k) {
+            var v = t[k];
+            if (typeof v !== "number" || isNaN(v)) v = DEFAULT_TYPE[k];
+            els[k].value = v;
+            if (vals[k]) vals[k].textContent = fmt(k, v);
+            applyVar(k, v);
+          });
+        }
+
+        function mergeParsedTypes(parsedTypes) {
+          var out = defaultTypes();
+          if (!parsedTypes || typeof parsedTypes !== "object") return out;
+          FAMILIES.forEach(function (fam) {
+            var p = parsedTypes[fam];
+            if (!p || typeof p !== "object") return;
+            TYPE_KEYS.forEach(function (k) {
+              var x = parseFloat(p[k]);
+              if (!isNaN(x)) out[fam][k] = x;
+            });
+          });
+          return out;
+        }
+
+        function updateTypeFaceLbl() {
+          var el = document.getElementById("typeFaceLbl");
+          if (el) el.textContent = "· " + (FAMILY_LABEL[getFamily()] || getFamily());
         }
 
         function applyFamilyClass(fam) {
@@ -576,16 +652,27 @@
         }
 
         function save() {
-          var out = {};
-          Object.keys(els).forEach(function (k) {
-            if (k === "family") {
-              out[k] = els.family.value;
-            } else if (COLOR_KEYS[k]) {
-              out[k] = els[k].value;
-            } else {
-              out[k] = parseFloat(els[k].value);
-            }
-          });
+          types[getFamily()] = readTypeFromUI();
+          var out = {
+            zm: parseFloat(els.zm.value),
+            family: els.family.value,
+            bg: els.bg.value,
+            fg: els.fg.value,
+            pd: parseFloat(els.pd.value),
+            wMin: parseFloat(els.wMin.value),
+            wMax: parseFloat(els.wMax.value),
+            dMin: parseFloat(els.dMin.value),
+            dMax: parseFloat(els.dMax.value),
+            slnt: parseFloat(els.slnt.value),
+            cMin: parseFloat(els.cMin.value),
+            cMax: parseFloat(els.cMax.value),
+            cy: parseFloat(els.cy.value),
+            types: {
+              plus: cloneType(types.plus),
+              flair: cloneType(types.flair),
+              contrast: cloneType(types.contrast),
+            },
+          };
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(out));
           } catch (e) {}
@@ -595,15 +682,31 @@
           var raw;
           try {
             raw = localStorage.getItem(LS_KEY);
+            if (!raw) raw = localStorage.getItem("axes-diagram:settings:v7");
             if (!raw) raw = localStorage.getItem("axes-diagram:settings:v6");
           } catch (e) {
             raw = null;
           }
-          var data = DEFAULTS;
+          types = defaultTypes();
+          var data = Object.assign({}, DEFAULTS);
           if (raw) {
             try {
               var parsed = JSON.parse(raw);
-              data = Object.assign({}, DEFAULTS, parsed);
+              Object.keys(DEFAULTS).forEach(function (k) {
+                if (parsed[k] !== undefined && parsed[k] !== null) data[k] = parsed[k];
+              });
+              if (parsed.types) {
+                types = mergeParsedTypes(parsed.types);
+              } else {
+                TYPE_KEYS.forEach(function (k) {
+                  var x = parseFloat(parsed[k]);
+                  if (!isNaN(x)) {
+                    types.plus[k] = x;
+                    types.flair[k] = x;
+                    types.contrast[k] = x;
+                  }
+                });
+              }
               if (data.slnt == null && (parsed.sMin != null || parsed.sMax != null)) {
                 var sm = parseFloat(parsed.sMin);
                 var sx = parseFloat(parsed.sMax);
@@ -614,27 +717,54 @@
             } catch (e) {}
           }
           Object.keys(els).forEach(function (k) {
+            if (TYPE_KEYS.indexOf(k) >= 0) return;
+            if (k === "family") {
+              var fam =
+                data.family != null && FAMILY_LABEL[data.family] != null
+                  ? data.family
+                  : DEFAULTS.family;
+              setValue("family", fam, false);
+              lastFamily = getFamily();
+              return;
+            }
             if (data[k] === undefined) data[k] = DEFAULTS[k];
             setValue(k, data[k], false);
           });
+          writeTypeToUI(types[lastFamily]);
+          updateTypeFaceLbl();
         }
 
         Object.keys(els).forEach(function (k) {
-          if (k === "zm") return;
-          var target = k === "family" ? els.family : els[k];
-          target.addEventListener(k === "family" ? "change" : "input", function () {
+          if (k === "zm" || k === "family") return;
+          els[k].addEventListener("input", function () {
             var v;
-            if (k === "family") v = els.family.value;
-            else if (COLOR_KEYS[k]) v = els[k].value;
+            if (COLOR_KEYS[k]) v = els[k].value;
             else v = parseFloat(els[k].value);
             setValue(k, v);
           });
         });
 
+        els.family.addEventListener("change", function () {
+          types[lastFamily] = readTypeFromUI();
+          lastFamily = getFamily();
+          writeTypeToUI(types[lastFamily]);
+          applyFamilyClass(lastFamily);
+          if (vals.family) vals.family.textContent = fmt("family", lastFamily);
+          updateTypeFaceLbl();
+          save();
+        });
+
         document.getElementById("resetBtn").addEventListener("click", function () {
+          types = defaultTypes();
           Object.keys(DEFAULTS).forEach(function (k) {
-            setValue(k, DEFAULTS[k]);
+            setValue(k, DEFAULTS[k], false);
           });
+          lastFamily = getFamily();
+          writeTypeToUI(types[lastFamily]);
+          applyFamilyClass(lastFamily);
+          if (vals.family) vals.family.textContent = fmt("family", lastFamily);
+          updateTypeFaceLbl();
+          save();
         });
 
         var stageWrap = document.getElementById("stageWrap");
