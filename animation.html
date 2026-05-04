@@ -14,10 +14,16 @@
       }
 
       :root {
-        color-scheme: light;
+        color-scheme: dark;
         --bg: #ffffff;
         --fg: #000000;
-        --pad: 6.2vmin;
+        --pad-t: 6.2;
+        --pad-r: 6.2;
+        --pad-b: 6.2;
+        --pad-l: 6.2;
+        --fs: 38;
+        --lh: 0.86;
+        --tracking: -0.035;
       }
 
       * {
@@ -30,16 +36,27 @@
         height: 100%;
         background: #111;
         overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #e9e9e9;
       }
 
       body {
         display: grid;
+        grid-template-columns: 1fr 280px;
+        align-items: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        display: grid;
         place-items: center;
-        font-family: "IkarusVariable", system-ui, sans-serif;
+        height: 100%;
+        min-width: 0;
       }
 
       .stage {
-        --w: min(96vmin, 96vw, 96vh);
+        --w: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
         width: var(--w);
         aspect-ratio: 1 / 1;
         background: var(--bg);
@@ -47,50 +64,180 @@
         position: relative;
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        font-family: "IkarusVariable", system-ui, sans-serif;
       }
 
       .lockup {
         position: absolute;
-        top: var(--pad);
-        left: var(--pad);
-        right: var(--pad);
-        line-height: 0.86;
-        letter-spacing: -0.035em;
-        font-feature-settings: "ss01";
+        top: calc(var(--pad-t) * 1%);
+        right: calc(var(--pad-r) * 1%);
+        bottom: calc(var(--pad-b) * 1%);
+        left: calc(var(--pad-l) * 1%);
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
         font-variation-settings: "wght" 1000;
       }
 
-      .line {
-        display: block;
-        font-size: clamp(40px, 38vmin, 600px);
-        font-variation-settings: inherit;
-        white-space: nowrap;
-      }
-
+      .line,
       .num {
         display: block;
-        font-size: clamp(40px, 38vmin, 600px);
+        font-size: calc(var(--fs) * 1%);
         font-variation-settings: inherit;
         white-space: nowrap;
+        letter-spacing: inherit;
       }
 
-      .num .plus {
+      .stage .num .plus {
         display: inline-block;
         transition: opacity 0.12s ease;
       }
 
-      .num.no-plus .plus {
+      .stage .num.no-plus .plus {
         opacity: 0;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 12px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
       }
     </style>
   </head>
   <body>
-    <div class="stage" id="stage" aria-label="SPF animation">
-      <div class="lockup" id="lockup">
-        <span class="line">SPF</span>
-        <span class="num" id="num"><span class="digits" id="digits">100</span><span class="plus" id="plus">+</span></span>
+    <div class="stage-wrap">
+      <div class="stage" id="stage" aria-label="SPF animation">
+        <div class="lockup" id="lockup">
+          <span class="line">SPF</span>
+          <span class="num" id="num"><span class="digits" id="digits">100</span><span class="plus" id="plus">+</span></span>
+        </div>
       </div>
     </div>
+
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="8" max="80" step="0.5" value="38" />
+          <span class="val" id="fsVal">38%</span>
+        </div>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.86" />
+          <span class="val" id="lhVal">0.86</span>
+        </div>
+        <div class="row">
+          <label for="tr">kerning</label>
+          <input id="tr" type="range" min="-0.12" max="0.2" step="0.001" value="-0.035" />
+          <span class="val" id="trVal">-35</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">margins</p>
+        <div class="row">
+          <label for="pt">top</label>
+          <input id="pt" type="range" min="0" max="40" step="0.1" value="6.2" />
+          <span class="val" id="ptVal">6.2%</span>
+        </div>
+        <div class="row">
+          <label for="pr">right</label>
+          <input id="pr" type="range" min="0" max="40" step="0.1" value="6.2" />
+          <span class="val" id="prVal">6.2%</span>
+        </div>
+        <div class="row">
+          <label for="pb">bottom</label>
+          <input id="pb" type="range" min="0" max="40" step="0.1" value="6.2" />
+          <span class="val" id="pbVal">6.2%</span>
+        </div>
+        <div class="row">
+          <label for="pl">left</label>
+          <input id="pl" type="range" min="0" max="40" step="0.1" value="6.2" />
+          <span class="val" id="plVal">6.2%</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+        <button type="button" id="copyBtn">copy css</button>
+      </div>
+    </aside>
 
     <script>
       (function () {
@@ -158,6 +305,131 @@
             frame(n, t0);
           });
         }
+
+        var LS_KEY = "spf-anim:settings:v1";
+        var root = document.documentElement;
+
+        var DEFAULTS = {
+          fs: 38,
+          lh: 0.86,
+          tr: -0.035,
+          pt: 6.2,
+          pr: 6.2,
+          pb: 6.2,
+          pl: 6.2,
+        };
+
+        var els = {
+          fs: document.getElementById("fs"),
+          lh: document.getElementById("lh"),
+          tr: document.getElementById("tr"),
+          pt: document.getElementById("pt"),
+          pr: document.getElementById("pr"),
+          pb: document.getElementById("pb"),
+          pl: document.getElementById("pl"),
+        };
+        var vals = {
+          fs: document.getElementById("fsVal"),
+          lh: document.getElementById("lhVal"),
+          tr: document.getElementById("trVal"),
+          pt: document.getElementById("ptVal"),
+          pr: document.getElementById("prVal"),
+          pb: document.getElementById("pbVal"),
+          pl: document.getElementById("plVal"),
+        };
+
+        function fmt(key, v) {
+          if (key === "fs") return v + "%";
+          if (key === "lh") return Number(v).toFixed(2);
+          if (key === "tr") return Math.round(Number(v) * 1000) + "";
+          return Number(v).toFixed(1) + "%";
+        }
+
+        function applyVar(key, v) {
+          if (key === "fs") root.style.setProperty("--fs", v);
+          else if (key === "lh") root.style.setProperty("--lh", v);
+          else if (key === "tr") root.style.setProperty("--tracking", v);
+          else if (key === "pt") root.style.setProperty("--pad-t", v);
+          else if (key === "pr") root.style.setProperty("--pad-r", v);
+          else if (key === "pb") root.style.setProperty("--pad-b", v);
+          else if (key === "pl") root.style.setProperty("--pad-l", v);
+        }
+
+        function setValue(key, v, persist) {
+          els[key].value = v;
+          vals[key].textContent = fmt(key, v);
+          applyVar(key, v);
+          if (persist !== false) save();
+        }
+
+        function save() {
+          var out = {};
+          Object.keys(els).forEach(function (k) {
+            out[k] = parseFloat(els[k].value);
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(out));
+          } catch (e) {}
+        }
+
+        function load() {
+          var raw;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {
+            raw = null;
+          }
+          var data = DEFAULTS;
+          if (raw) {
+            try {
+              var parsed = JSON.parse(raw);
+              data = Object.assign({}, DEFAULTS, parsed);
+            } catch (e) {}
+          }
+          Object.keys(els).forEach(function (k) {
+            setValue(k, data[k], false);
+          });
+        }
+
+        Object.keys(els).forEach(function (k) {
+          els[k].addEventListener("input", function () {
+            setValue(k, parseFloat(els[k].value));
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", function () {
+          Object.keys(DEFAULTS).forEach(function (k) {
+            setValue(k, DEFAULTS[k]);
+          });
+        });
+
+        document.getElementById("copyBtn").addEventListener("click", function (e) {
+          var btn = e.currentTarget;
+          var css =
+            ":root{\n" +
+            "  --fs: " + els.fs.value + ";\n" +
+            "  --lh: " + els.lh.value + ";\n" +
+            "  --tracking: " + els.tr.value + ";\n" +
+            "  --pad-t: " + els.pt.value + ";\n" +
+            "  --pad-r: " + els.pr.value + ";\n" +
+            "  --pad-b: " + els.pb.value + ";\n" +
+            "  --pad-l: " + els.pl.value + ";\n" +
+            "}";
+          var done = function () {
+            var prev = btn.textContent;
+            btn.textContent = "copied";
+            setTimeout(function () {
+              btn.textContent = prev;
+            }, 900);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(css).then(done, done);
+          } else {
+            done();
+          }
+        });
+
+        load();
 
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(start);
