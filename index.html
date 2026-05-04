@@ -232,7 +232,17 @@
       .output-viewport.is-marquee {
         overflow: hidden;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
+      }
+
+      .output-marquee-window {
+        display: contents;
+      }
+
+      .output-viewport.is-marquee .output-marquee-window {
+        display: block;
+        overflow: hidden;
+        flex-shrink: 0;
       }
 
       .output-marquee-track {
@@ -308,7 +318,7 @@
       .scene {
         position: relative;
         background: var(--artboard-bg);
-        overflow: hidden;
+        overflow: visible;
         outline: 1px solid rgba(31, 31, 31, 0.32);
         outline-offset: -1px;
       }
@@ -324,6 +334,35 @@
       .scene-mirror .artboard-item {
         border-color: transparent;
         background: transparent;
+      }
+
+      .scene-mirror .scene-height-grip,
+      .scene-mirror .frame-handles {
+        display: none !important;
+      }
+
+      .scene-height-grip {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        cursor: ns-resize;
+        z-index: 55;
+        touch-action: none;
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          rgba(0, 0, 0, 0.08)
+        );
+      }
+
+      .scene-height-grip:hover {
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          rgba(0, 0, 0, 0.14)
+        );
       }
 
       .scene-badge {
@@ -434,9 +473,74 @@
       .artboard-item.artboard-text {
         display: flex;
         flex-direction: column;
-        left: 8%;
-        top: 42%;
-        width: 84%;
+      }
+
+      .artboard-text--sized .artboard-text-inner {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+      }
+
+      .artboard-item.artboard-text.is-text-selected {
+        border-color: rgba(31, 31, 31, 0.55);
+        z-index: 12;
+      }
+
+      .frame-handles {
+        position: absolute;
+        left: 0;
+        top: 36px;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 6;
+        opacity: 0;
+        transition: opacity 0.1s ease;
+      }
+
+      .artboard-text.is-text-selected .frame-handles {
+        opacity: 1;
+      }
+
+      .frame-handle {
+        position: absolute;
+        width: 11px;
+        height: 11px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid rgba(31, 31, 31, 0.45);
+        background: #fff;
+        border-radius: 1px;
+        pointer-events: auto;
+        box-sizing: border-box;
+      }
+
+      .frame-handle:focus {
+        outline: none;
+      }
+
+      .frame-handle--nw {
+        left: -6px;
+        top: -6px;
+        cursor: nwse-resize;
+      }
+
+      .frame-handle--ne {
+        right: -6px;
+        top: -6px;
+        cursor: nesw-resize;
+      }
+
+      .frame-handle--sw {
+        left: -6px;
+        bottom: -6px;
+        cursor: nesw-resize;
+      }
+
+      .frame-handle--se {
+        right: -6px;
+        bottom: -6px;
+        cursor: nwse-resize;
       }
 
       .artboard-item.artboard-image {
@@ -779,28 +883,30 @@
         </div>
         <p class="output-zoom-hint">ctrl / ⌘ + scroll to zoom</p>
         <div class="output-viewport" id="outputViewport">
-          <div class="output-marquee-track" id="outputMarqueeTrack">
-            <div class="output-marquee-panel">
-              <div class="output-scale-outer" id="outputScaleOuter">
-                <div class="output-scale-inner" id="outputScaleInner">
-                  <div
-                    class="scene scene-mirror"
-                    id="sceneMirror"
-                    role="presentation"
-                    aria-hidden="true"
-                  ></div>
+          <div class="output-marquee-window" id="outputMarqueeWindow">
+            <div class="output-marquee-track" id="outputMarqueeTrack">
+              <div class="output-marquee-panel">
+                <div class="output-scale-outer" id="outputScaleOuter">
+                  <div class="output-scale-inner" id="outputScaleInner">
+                    <div
+                      class="scene scene-mirror"
+                      id="sceneMirror"
+                      role="presentation"
+                      aria-hidden="true"
+                    ></div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="output-marquee-panel is-marquee-clone" id="outputMarqueePanelB">
-              <div class="output-scale-outer" id="outputScaleOuterB">
-                <div class="output-scale-inner" id="outputScaleInnerB">
-                  <div
-                    class="scene scene-mirror"
-                    id="sceneMirrorB"
-                    role="presentation"
-                    aria-hidden="true"
-                  ></div>
+              <div class="output-marquee-panel is-marquee-clone" id="outputMarqueePanelB">
+                <div class="output-scale-outer" id="outputScaleOuterB">
+                  <div class="output-scale-inner" id="outputScaleInnerB">
+                    <div
+                      class="scene scene-mirror"
+                      id="sceneMirrorB"
+                      role="presentation"
+                      aria-hidden="true"
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -820,6 +926,12 @@
                 aria-label="Frame 1080 by 1440 pixels"
               >
                 <span class="scene-badge" id="sceneBadge">3:4</span>
+                <div
+                  class="scene-height-grip"
+                  id="sceneHeightGrip"
+                  aria-hidden="true"
+                  title="Drag to extend artboard height"
+                ></div>
               </div>
             </div>
           </div>
@@ -863,6 +975,7 @@
 
         var outputViewport = document.getElementById("outputViewport");
         var outputMarqueeTrack = document.getElementById("outputMarqueeTrack");
+        var outputMarqueeWindow = document.getElementById("outputMarqueeWindow");
         var outputScaleOuter = document.getElementById("outputScaleOuter");
         var outputScaleInner = document.getElementById("outputScaleInner");
         var outputScaleOuterB = document.getElementById("outputScaleOuterB");
@@ -878,6 +991,7 @@
         var editorScaleOuter = document.getElementById("editorScaleOuter");
         var editorScaleInner = document.getElementById("editorScaleInner");
         var editorResizeHandle = document.getElementById("editorResizeHandle");
+        var sceneHeightGrip = document.getElementById("sceneHeightGrip");
         var outputZoomInBtn = document.getElementById("outputZoomIn");
         var outputZoomOutBtn = document.getElementById("outputZoomOut");
         var outputZoomFitBtn = document.getElementById("outputZoomFit");
@@ -893,6 +1007,23 @@
         var fontManifest = null;
         var fontRegistry = {};
         var activeTextInner = null;
+        var selectedTextWrap = null;
+        var formatPresetMinH = 1440;
+
+        function clearTextFrameSelection() {
+          if (selectedTextWrap) {
+            selectedTextWrap.classList.remove("is-text-selected");
+            selectedTextWrap = null;
+          }
+        }
+
+        function selectTextWrap(wrap) {
+          if (!wrap || !wrap.classList.contains("artboard-text")) return;
+          if (selectedTextWrap === wrap) return;
+          clearTextFrameSelection();
+          selectedTextWrap = wrap;
+          wrap.classList.add("is-text-selected");
+        }
 
         function applyLogicalSize(w, h) {
           logicalW = w;
@@ -908,6 +1039,7 @@
         }
 
         function setRatio(w, h, shortLabel) {
+          formatPresetMinH = h;
           root.style.setProperty("--ar-w", String(w));
           root.style.setProperty("--ar-h", String(h));
           if (outputSizeReadout) {
@@ -942,6 +1074,7 @@
         syncBgFromPicker();
 
         function hideTypography() {
+          clearTextFrameSelection();
           activeTextInner = null;
           typographyBlock.hidden = true;
           vfAxisHost.hidden = true;
@@ -1232,6 +1365,8 @@
         function setActiveTextInner(inner) {
           if (!inner || !scene.contains(inner)) return;
           activeTextInner = inner;
+          var tw = inner.closest && inner.closest(".artboard-text");
+          if (tw) selectTextWrap(tw);
           typographyBlock.hidden = false;
           if (
             (!inner.dataset.fontId || !fontRegistry[inner.dataset.fontId]) &&
@@ -1373,6 +1508,12 @@
         function syncMirrorToElement(mirrorEl) {
           if (!mirrorEl) return;
           mirrorEl.innerHTML = scene.innerHTML;
+          mirrorEl.querySelectorAll(".scene-height-grip").forEach(function (n) {
+            n.remove();
+          });
+          mirrorEl.querySelectorAll(".frame-handles").forEach(function (n) {
+            n.remove();
+          });
           mirrorEl.querySelectorAll(".artboard-drag-handle").forEach(function (n) {
             n.remove();
           });
@@ -1427,6 +1568,15 @@
           var s = sFit * outputZoomFactor;
           applyOutputScaleToPair(outputScaleInner, outputScaleOuter, s);
           applyOutputScaleToPair(outputScaleInnerB, outputScaleOuterB, s);
+          if (outputMarqueeWindow && outputViewport) {
+            if (outputViewport.classList.contains("is-marquee")) {
+              outputMarqueeWindow.style.width = logicalW * s + "px";
+              outputMarqueeWindow.style.height = logicalH * s + "px";
+            } else {
+              outputMarqueeWindow.style.width = "";
+              outputMarqueeWindow.style.height = "";
+            }
+          }
         }
 
         function applyMarqueeState() {
@@ -1510,6 +1660,91 @@
 
         var TEXT_DRAG_THRESHOLD = 6;
 
+        function attachFrameResize(wrap, inner, btn, corner) {
+          btn.addEventListener("mousedown", function (e) {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            selectTextWrap(wrap);
+            setActiveTextInner(inner);
+            var scale = editorScaleStored || 0.2;
+            var sx = e.clientX;
+            var sy = e.clientY;
+            var l0 = wrap.offsetLeft;
+            var t0 = wrap.offsetTop;
+            var w0 = wrap.offsetWidth;
+            var h0 = wrap.offsetHeight;
+            var MIN_W = 48;
+            var MIN_H = 44;
+            function onMove(ev) {
+              var dx = (ev.clientX - sx) / scale;
+              var dy = (ev.clientY - sy) / scale;
+              var l = l0;
+              var t = t0;
+              var wv = w0;
+              var hv = h0;
+              if (corner === "se") {
+                wv = w0 + dx;
+                hv = h0 + dy;
+              } else if (corner === "ne") {
+                wv = w0 + dx;
+                hv = h0 - dy;
+                t = t0 + dy;
+              } else if (corner === "sw") {
+                wv = w0 - dx;
+                hv = h0 + dy;
+                l = l0 + dx;
+              } else if (corner === "nw") {
+                wv = w0 - dx;
+                hv = h0 - dy;
+                l = l0 + dx;
+                t = t0 + dy;
+              }
+              if (wv < MIN_W) {
+                if (corner === "sw" || corner === "nw") {
+                  l = l0 + w0 - MIN_W;
+                }
+                wv = MIN_W;
+              }
+              if (hv < MIN_H) {
+                if (corner === "nw" || corner === "ne") {
+                  t = t0 + h0 - MIN_H;
+                }
+                hv = MIN_H;
+              }
+              wrap.classList.add("artboard-text--sized");
+              wrap.style.left = l + "px";
+              wrap.style.top = t + "px";
+              wrap.style.width = wv + "px";
+              wrap.style.height = hv + "px";
+              syncMirrorSoon(12);
+            }
+            function onUp() {
+              window.removeEventListener("mousemove", onMove);
+              window.removeEventListener("mouseup", onUp);
+              syncMirrorSoon(0);
+            }
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onUp);
+          });
+        }
+
+        function attachTextFrameChrome(wrap, inner) {
+          if (wrap.querySelector(".frame-handles")) return;
+          var fh = document.createElement("div");
+          fh.className = "frame-handles";
+          fh.setAttribute("aria-hidden", "true");
+          ["nw", "ne", "sw", "se"].forEach(function (corner) {
+            var h = document.createElement("button");
+            h.type = "button";
+            h.className = "frame-handle frame-handle--" + corner;
+            h.tabIndex = -1;
+            attachFrameResize(wrap, inner, h, corner);
+            fh.appendChild(h);
+          });
+          wrap.appendChild(fh);
+        }
+
         function beginDragItem(item, parent, startClientX, startClientY, startLeft, startTop) {
           var scale = editorScaleStored || 0.2;
           var sx = startClientX;
@@ -1521,10 +1756,8 @@
             var dy = (ev.clientY - sy) / scale;
             var nl = sl + dx;
             var nt = st + dy;
-            var maxL = parent.clientWidth - item.offsetWidth;
-            var maxT = parent.clientHeight - item.offsetHeight;
-            item.style.left = Math.max(0, Math.min(maxL, nl)) + "px";
-            item.style.top = Math.max(0, Math.min(maxT, nt)) + "px";
+            item.style.left = nl + "px";
+            item.style.top = nt + "px";
             syncMirrorSoon(16);
           }
           function onUp() {
@@ -1541,6 +1774,10 @@
             if (e.button !== 0) return;
             e.preventDefault();
             e.stopPropagation();
+            if (item.classList.contains("artboard-text")) {
+              var tin = item.querySelector(".artboard-text-inner");
+              if (tin) setActiveTextInner(tin);
+            }
             beginDragItem(item, parent, e.clientX, e.clientY);
           });
         }
@@ -1553,6 +1790,8 @@
             if (e.altKey) {
               e.preventDefault();
               if (document.activeElement === inner) inner.blur();
+              selectTextWrap(wrap);
+              setActiveTextInner(inner);
               beginDragItem(wrap, parent, e.clientX, e.clientY);
               return;
             }
@@ -1588,9 +1827,9 @@
         addText.addEventListener("click", function () {
           var wrap = document.createElement("div");
           wrap.className = "artboard-item artboard-text";
-          wrap.style.left = "8%";
-          wrap.style.top = "42%";
-          wrap.style.width = "84%";
+          wrap.style.left = "72px";
+          wrap.style.top = "120px";
+          wrap.style.width = "560px";
           var handle = document.createElement("div");
           handle.className = "artboard-drag-handle";
           handle.textContent = "move · alt-drag";
@@ -1606,7 +1845,12 @@
           });
           wrap.appendChild(handle);
           wrap.appendChild(inner);
-          scene.appendChild(wrap);
+          attachTextFrameChrome(wrap, inner);
+          if (sceneHeightGrip) {
+            scene.insertBefore(wrap, sceneHeightGrip);
+          } else {
+            scene.appendChild(wrap);
+          }
           attachTextBoxDrag(wrap, inner, scene);
           if (fontManifest && fontManifest.defaultFontId) {
             applyFontIdToInner(inner, fontManifest.defaultFontId);
@@ -1637,7 +1881,11 @@
           img.src = url;
           wrap.appendChild(handle);
           wrap.appendChild(img);
-          scene.appendChild(wrap);
+          if (sceneHeightGrip) {
+            scene.insertBefore(wrap, sceneHeightGrip);
+          } else {
+            scene.appendChild(wrap);
+          }
           attachDragFixed(handle, wrap, scene);
           syncMirrorSoon(0);
         });
@@ -1663,11 +1911,52 @@
           window.addEventListener("mouseup", onUp);
         });
 
+        if (sceneHeightGrip) {
+          sceneHeightGrip.addEventListener("mousedown", function (e) {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            hideTypography();
+            var scale = editorScaleStored || 0.2;
+            var startY = e.clientY;
+            var startH = logicalH;
+            function onMove(ev) {
+              var dy = (ev.clientY - startY) / scale;
+              var minH = formatPresetMinH > 0 ? formatPresetMinH : 200;
+              logicalH = Math.round(Math.max(minH, startH + dy));
+              root.style.setProperty("--ar-h", String(logicalH));
+              if (outputSizeReadout) {
+                outputSizeReadout.textContent =
+                  "(" + logicalW + " × " + logicalH + ")";
+              }
+              scene.setAttribute(
+                "aria-label",
+                "Frame " + logicalW + " by " + logicalH + " pixels"
+              );
+              applyLogicalSize(logicalW, logicalH);
+              layoutScales();
+              syncMirrorSoon(8);
+            }
+            function onUp() {
+              window.removeEventListener("mousemove", onMove);
+              window.removeEventListener("mouseup", onUp);
+              syncMirrorSoon(0);
+            }
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onUp);
+          });
+        }
+
         function boot() {
+          var fo = formatSelect && formatSelect.selectedOptions[0];
+          if (fo) {
+            var ph = parseInt(fo.getAttribute("data-h"), 10);
+            if (isFinite(ph) && ph > 0) formatPresetMinH = ph;
+          }
           applyLogicalSize(1080, 1440);
+          applyMarqueeState();
           layoutScales();
           syncMirror();
-          applyMarqueeState();
         }
 
         fetch("fonts/fonts.json")
