@@ -278,8 +278,11 @@
         }
 
         function discover() {
-          return loadFromDirectory().catch(function () {
-            return loadFromManifest();
+          // Prefer animations.json — it is version-controlled and lists every
+          // page explicitly. Directory listings are fragile (host differences,
+          // caching, deployment gaps) and often omit new files.
+          return loadFromManifest().catch(function () {
+            return loadFromDirectory();
           });
         }
 
