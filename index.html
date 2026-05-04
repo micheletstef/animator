@@ -1645,13 +1645,15 @@
         function getTypographyRangeForPanelApply(inner) {
           if (!inner) return null;
           var sel = window.getSelection();
+          var live = null;
           if (sel.rangeCount && inner.contains(sel.commonAncestorContainer)) {
             try {
-              return sel.getRangeAt(0).cloneRange();
+              live = sel.getRangeAt(0).cloneRange();
             } catch (e) {
-              /* fall through */
+              /* ignore */
             }
           }
+          var stashed = null;
           if (
             lastTypographyRangeForPanel &&
             lastTypographyRangeForPanel.inner === inner &&
@@ -1659,11 +1661,15 @@
           ) {
             try {
               var sr = lastTypographyRangeForPanel.range.cloneRange();
-              if (inner.contains(sr.commonAncestorContainer)) return sr;
+              if (inner.contains(sr.commonAncestorContainer)) stashed = sr;
             } catch (e2) {
               /* ignore */
             }
           }
+          if (live && !live.collapsed) return live;
+          if (stashed && !stashed.collapsed) return stashed;
+          if (live) return live;
+          if (stashed) return stashed;
           return null;
         }
 
@@ -2122,7 +2128,21 @@
             sel.rangeCount &&
             activeTextInner.contains(sel.commonAncestorContainer)
           ) {
-            stashTypographyRangeForPanel(activeTextInner);
+            var r = sel.getRangeAt(0);
+            var aeFocus = document.activeElement;
+            var editingInside =
+              aeFocus === activeTextInner ||
+              (aeFocus && activeTextInner.contains(aeFocus));
+            var preserveCharRange =
+              r.collapsed &&
+              !editingInside &&
+              lastTypographyRangeForPanel &&
+              lastTypographyRangeForPanel.inner === activeTextInner &&
+              lastTypographyRangeForPanel.range &&
+              !lastTypographyRangeForPanel.range.collapsed;
+            if (!preserveCharRange) {
+              stashTypographyRangeForPanel(activeTextInner);
+            }
           }
           var ae = document.activeElement;
           if (
