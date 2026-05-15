@@ -13,6 +13,12 @@
       "mtime": 1777929519
     },
     {
+      "id": "ghost-b",
+      "label": "ghost · B",
+      "url": "animations/ghost-b.html",
+      "mtime": 1778853156
+    },
+    {
       "id": "ghost-contrast-variable",
       "label": "ghost · contrast variable",
       "url": "animations/ghost-contrast-variable.html",
@@ -28,7 +34,7 @@
       "id": "ghost-plus-variable",
       "label": "ghost · plus variable",
       "url": "animations/ghost-plus-variable.html",
-      "mtime": 1778852446
+      "mtime": 1778852876
     },
     {
       "id": "matrix",
