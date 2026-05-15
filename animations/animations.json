@@ -28,7 +28,13 @@
       "id": "matrix",
       "label": "matrix",
       "url": "animations/matrix.html",
-      "mtime": 1778846317
+      "mtime": 1778848165
+    },
+    {
+      "id": "matrix-v2",
+      "label": "matrix v2",
+      "url": "animations/matrix-v2.html",
+      "mtime": 1778848223
     },
     {
       "id": "marquee",
