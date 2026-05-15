@@ -105,6 +105,7 @@
         line-height: 1;
         cursor: grab;
         touch-action: none;
+        user-select: none;
       }
 
       .nav-drag-handle:hover,
@@ -220,7 +221,7 @@
         var ANIMATIONS = [];
         var navList = document.getElementById("navList");
         var frame = document.getElementById("frame");
-        var dragId = null;
+        var pointerDrag = null;
         var reorderReady = false;
 
         function slugify(stem) {
@@ -410,55 +411,74 @@
           render(activeNavId());
         }
 
+        function clearDragUi() {
+          navList.querySelectorAll("li.is-dragging, li.drag-over").forEach(function (n) {
+            n.classList.remove("is-dragging", "drag-over");
+          });
+        }
+
+        function dragTargetAt(x, y) {
+          var items = navList.querySelectorAll("li[data-id]");
+          for (var i = 0; i < items.length; i++) {
+            var rect = items[i].getBoundingClientRect();
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+              return items[i];
+            }
+          }
+          return null;
+        }
+
+        function setDragOver(li) {
+          navList.querySelectorAll("li.drag-over").forEach(function (n) {
+            n.classList.remove("drag-over");
+          });
+          if (li && li !== pointerDrag.li) li.classList.add("drag-over");
+        }
+
+        function finishPointerDrag(e) {
+          if (!pointerDrag) return;
+          var fromId = pointerDrag.id;
+          try {
+            pointerDrag.handle.releasePointerCapture(e.pointerId);
+          } catch (err) {}
+          pointerDrag = null;
+          var targetLi = dragTargetAt(e.clientX, e.clientY);
+          if (targetLi) {
+            var toId = targetLi.getAttribute("data-id");
+            if (toId !== fromId) {
+              reorderAnimation(fromId, toId);
+              return;
+            }
+          }
+          clearDragUi();
+        }
+
         function setupReorder() {
           if (reorderReady) return;
           reorderReady = true;
 
-          navList.addEventListener("dragstart", function (e) {
-            var li = e.target.closest("li[data-id]");
-            if (!li || !e.target.closest(".nav-drag-handle")) {
-              e.preventDefault();
-              return;
-            }
-            dragId = li.getAttribute("data-id");
+          navList.addEventListener("pointerdown", function (e) {
+            var handle = e.target.closest(".nav-drag-handle");
+            if (!handle || e.button !== 0) return;
+            var li = handle.closest("li[data-id]");
+            if (!li) return;
+            e.preventDefault();
+            pointerDrag = {
+              id: li.getAttribute("data-id"),
+              li: li,
+              handle: handle,
+            };
             li.classList.add("is-dragging");
-            e.dataTransfer.effectAllowed = "move";
-            e.dataTransfer.setData("text/plain", dragId);
+            handle.setPointerCapture(e.pointerId);
           });
 
-          navList.addEventListener("dragend", function () {
-            navList.querySelectorAll("li.is-dragging, li.drag-over").forEach(function (n) {
-              n.classList.remove("is-dragging", "drag-over");
-            });
-            dragId = null;
+          navList.addEventListener("pointermove", function (e) {
+            if (!pointerDrag) return;
+            setDragOver(dragTargetAt(e.clientX, e.clientY));
           });
 
-          navList.addEventListener("dragover", function (e) {
-            var li = e.target.closest("li[data-id]");
-            if (!li || !dragId || li.getAttribute("data-id") === dragId) return;
-            e.preventDefault();
-            navList.querySelectorAll("li.drag-over").forEach(function (n) {
-              n.classList.remove("drag-over");
-            });
-            li.classList.add("drag-over");
-            e.dataTransfer.dropEffect = "move";
-          });
-
-          navList.addEventListener("dragleave", function (e) {
-            var li = e.target.closest("li[data-id]");
-            if (li && !li.contains(e.relatedTarget)) {
-              li.classList.remove("drag-over");
-            }
-          });
-
-          navList.addEventListener("drop", function (e) {
-            e.preventDefault();
-            var li = e.target.closest("li[data-id]");
-            if (!li || !dragId) return;
-            var targetId = li.getAttribute("data-id");
-            li.classList.remove("drag-over");
-            reorderAnimation(dragId, targetId);
-          });
+          navList.addEventListener("pointerup", finishPointerDrag);
+          navList.addEventListener("pointercancel", finishPointerDrag);
         }
 
         function render(activeId) {
@@ -476,12 +496,12 @@
           ANIMATIONS.forEach(function (a) {
             var li = document.createElement("li");
             li.setAttribute("data-id", a.id);
-            li.draggable = true;
 
             var handle = document.createElement("button");
             handle.type = "button";
             handle.className = "nav-drag-handle";
             handle.setAttribute("aria-label", "drag to reorder " + a.label);
+            handle.setAttribute("aria-grabbed", "false");
             handle.textContent = "⋮⋮";
 
             var aEl = document.createElement("a");
