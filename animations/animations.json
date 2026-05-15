@@ -4,7 +4,7 @@
       "id": "axes-diagram",
       "label": "axes · variable states",
       "url": "animations/axes-diagram.html",
-      "mtime": 1777930968
+      "mtime": 1777931304
     },
     {
       "id": "ghost",
@@ -23,6 +23,12 @@
       "label": "ghost · flair variable",
       "url": "animations/ghost-flair-variable.html",
       "mtime": 1777929972
+    },
+    {
+      "id": "matrix",
+      "label": "matrix",
+      "url": "animations/matrix.html",
+      "mtime": 1778846317
     },
     {
       "id": "marquee",
