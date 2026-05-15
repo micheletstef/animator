@@ -25,6 +25,12 @@
       "mtime": 1777929972
     },
     {
+      "id": "ghost-plus-variable",
+      "label": "ghost · plus variable",
+      "url": "animations/ghost-plus-variable.html",
+      "mtime": 1778852446
+    },
+    {
       "id": "matrix",
       "label": "matrix",
       "url": "animations/matrix.html",
@@ -44,9 +50,9 @@
     },
     {
       "id": "spf",
-      "label": "SPF 50 → 8",
+      "label": "SPF 50+ → 8",
       "url": "animations/spf.html",
-      "mtime": 1778851857
+      "mtime": 1778852253
     },
     {
       "id": "wave",
