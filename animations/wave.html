@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wave</title>
+    <style>
+      @font-face {
+        font-family: "IkarusCondensedVariable";
+        src: url("../fonts/ABCIkarusCondensedVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusVariable";
+        src: url("../fonts/ABCIkarusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusExtendedVariable";
+        src: url("../fonts/ABCIkarusExtendedVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: dark;
+        --bg: #ffffff;
+        --fg: #000000;
+        --glyph-size: 120;
+        --row-gap: 28;
+        --overlap: 72;
+        --condensed-gap: 6;
+        --pad-t: 48;
+        --pad-r: 48;
+        --pad-b: 48;
+        --pad-l: 48;
+        --zoom: 1;
+        --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #e9e9e9;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: center;
+        gap: 24px;
+        padding: 24px;
+        min-width: 0;
+      }
+
+      .stage-wrap {
+        display: flex;
+        align-items: safe center;
+        justify-content: safe center;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+      }
+
+      .stage-outer {
+        width: calc(var(--base) * var(--zoom));
+        height: calc(var(--base) * var(--zoom));
+        position: relative;
+        flex: 0 0 auto;
+      }
+
+      .stage {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--base);
+        height: var(--base);
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        transform: scale(var(--zoom));
+        transform-origin: top left;
+      }
+
+      .wave {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: calc(var(--row-gap) * 1px);
+        width: 100%;
+        height: 100%;
+        padding: calc(var(--pad-t) * 1px) calc(var(--pad-r) * 1px)
+          calc(var(--pad-b) * 1px) calc(var(--pad-l) * 1px);
+      }
+
+      .row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        flex: 0 0 auto;
+      }
+
+      .row.overlap .glyph + .glyph {
+        margin-left: calc(var(--overlap) * -1px);
+      }
+
+      .row.spaced {
+        gap: calc(var(--condensed-gap) * 1px);
+      }
+
+      .glyph {
+        display: block;
+        font-size: calc(var(--glyph-size) * 1px);
+        line-height: 1;
+        font-variation-settings: "wght" 200, "slnt" 0;
+        user-select: none;
+        flex: 0 0 auto;
+      }
+
+      .row-extended .glyph {
+        font-family: "IkarusExtendedVariable", system-ui, sans-serif;
+      }
+
+      .row-standard .glyph {
+        font-family: "IkarusVariable", system-ui, sans-serif;
+      }
+
+      .row-condensed .glyph {
+        font-family: "IkarusCondensedVariable", system-ui, sans-serif;
+      }
+
+      .panel {
+        align-self: stretch;
+        width: 280px;
+        flex-shrink: 0;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row-ui {
+        display: grid;
+        grid-template-columns: 80px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row-ui label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row-ui input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row-ui input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row-ui input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row-ui input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row-ui .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-wrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage">
+          <div class="wave" id="wave" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">Extended · Standard · Condensed — weight wave across O</p>
+
+      <div class="group">
+        <p class="group-title">appearance</p>
+        <div class="row-ui">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bg-val">#ffffff</span>
+        </div>
+        <div class="row-ui">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fg-val">#000000</span>
+        </div>
+        <div class="row-ui">
+          <label for="fs">glyph</label>
+          <input id="fs" type="range" min="48" max="220" step="2" value="120" />
+          <span class="val" id="fs-val">120px</span>
+        </div>
+        <div class="row-ui">
+          <label for="rg">row gap</label>
+          <input id="rg" type="range" min="0" max="120" step="2" value="28" />
+          <span class="val" id="rg-val">28px</span>
+        </div>
+        <div class="row-ui">
+          <label for="ov">overlap</label>
+          <input id="ov" type="range" min="20" max="140" step="2" value="72" />
+          <span class="val" id="ov-val">72px</span>
+        </div>
+        <div class="row-ui">
+          <label for="cg">cond. gap</label>
+          <input id="cg" type="range" min="0" max="48" step="1" value="6" />
+          <span class="val" id="cg-val">6px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">artboard</p>
+        <div class="row-ui">
+          <label for="py">top/bottom</label>
+          <input id="py" type="range" min="0" max="200" step="2" value="48" />
+          <span class="val" id="py-val">48px</span>
+        </div>
+        <div class="row-ui">
+          <label for="px">left/right</label>
+          <input id="px" type="range" min="0" max="200" step="2" value="48" />
+          <span class="val" id="px-val">48px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">animation</p>
+        <div class="row-ui">
+          <label for="cy">cycle</label>
+          <input id="cy" type="range" min="800" max="12000" step="100" value="5000" />
+          <span class="val" id="cy-val">5.0s</span>
+        </div>
+        <div class="row-ui">
+          <label for="wl">wght min</label>
+          <input id="wl" type="range" min="100" max="600" step="10" value="150" />
+          <span class="val" id="wl-val">150</span>
+        </div>
+        <div class="row-ui">
+          <label for="wh">wght max</label>
+          <input id="wh" type="range" min="400" max="1000" step="10" value="1000" />
+          <span class="val" id="wh-val">1000</span>
+        </div>
+        <div class="actions">
+          <button type="button" id="resetBtn">reset</button>
+        </div>
+      </div>
+    </aside>
+
+    <script>
+      (function () {
+        var ROWS = [
+          { id: "extended", className: "row-extended", count: 8, overlap: true },
+          { id: "standard", className: "row-standard", count: 8, overlap: true },
+          { id: "condensed", className: "row-condensed", count: 9, overlap: false },
+        ];
+
+        var root = document.documentElement;
+        var wave = document.getElementById("wave");
+        var glyphs = [];
+
+        ROWS.forEach(function (row) {
+          var rowEl = document.createElement("div");
+          rowEl.className =
+            "row " + row.className + (row.overlap ? " overlap" : " spaced");
+
+          for (var i = 0; i < row.count; i++) {
+            var glyph = document.createElement("span");
+            glyph.className = "glyph";
+            glyph.textContent = "O";
+            rowEl.appendChild(glyph);
+            glyphs.push({ row: row.id, index: i, count: row.count, el: glyph });
+          }
+
+          wave.appendChild(rowEl);
+        });
+
+        var LS_KEY = "wave-anim:settings:v1";
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          fs: 120,
+          rg: 28,
+          ov: 72,
+          cg: 6,
+          py: 48,
+          px: 48,
+          cy: 5000,
+          wl: 150,
+          wh: 1000,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+
+        var els = {
+          bg: document.getElementById("bg"),
+          fg: document.getElementById("fg"),
+          fs: document.getElementById("fs"),
+          rg: document.getElementById("rg"),
+          ov: document.getElementById("ov"),
+          cg: document.getElementById("cg"),
+          py: document.getElementById("py"),
+          px: document.getElementById("px"),
+          cy: document.getElementById("cy"),
+          wl: document.getElementById("wl"),
+          wh: document.getElementById("wh"),
+        };
+
+        var vals = {
+          bg: document.getElementById("bg-val"),
+          fg: document.getElementById("fg-val"),
+          fs: document.getElementById("fs-val"),
+          rg: document.getElementById("rg-val"),
+          ov: document.getElementById("ov-val"),
+          cg: document.getElementById("cg-val"),
+          py: document.getElementById("py-val"),
+          px: document.getElementById("px-val"),
+          cy: document.getElementById("cy-val"),
+          wl: document.getElementById("wl-val"),
+          wh: document.getElementById("wh-val"),
+        };
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function weightForGlyph(index, count, phase, wMin, wMax) {
+          var local = (phase + index / count) % 1;
+          var wave = 0.5 + 0.5 * Math.sin(local * Math.PI * 2 - Math.PI / 2);
+          return lerp(wMin, wMax, wave);
+        }
+
+        function formatVal(key, v) {
+          if (key === "bg" || key === "fg") return String(v).toLowerCase();
+          if (
+            key === "fs" ||
+            key === "rg" ||
+            key === "ov" ||
+            key === "cg" ||
+            key === "py" ||
+            key === "px"
+          ) {
+            return Math.round(Number(v)) + "px";
+          }
+          if (key === "cy") return formatMs(Number(v));
+          if (key === "wl" || key === "wh") return String(Math.round(Number(v)));
+          return String(v);
+        }
+
+        function formatMs(ms) {
+          if (ms >= 1000) return (ms / 1000).toFixed(1) + "s";
+          return Math.round(ms) + "ms";
+        }
+
+        function applyAppearance() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
+          root.style.setProperty("--row-gap", parseFloat(els.rg.value));
+          root.style.setProperty("--overlap", parseFloat(els.ov.value));
+          root.style.setProperty("--condensed-gap", parseFloat(els.cg.value));
+          var py = parseFloat(els.py.value);
+          var px = parseFloat(els.px.value);
+          root.style.setProperty("--pad-t", py);
+          root.style.setProperty("--pad-b", py);
+          root.style.setProperty("--pad-r", px);
+          root.style.setProperty("--pad-l", px);
+        }
+
+        function setValue(key, v, persist) {
+          els[key].value = v;
+          if (vals[key]) vals[key].textContent = formatVal(key, v);
+          if (
+            key === "bg" ||
+            key === "fg" ||
+            key === "fs" ||
+            key === "rg" ||
+            key === "ov" ||
+            key === "cg" ||
+            key === "py" ||
+            key === "px"
+          ) {
+            applyAppearance();
+          }
+          if (persist !== false) save();
+        }
+
+        function save() {
+          var out = {};
+          Object.keys(els).forEach(function (k) {
+            out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(out));
+          } catch (e) {}
+        }
+
+        function load() {
+          var raw;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {
+            raw = null;
+          }
+          var data = DEFAULTS;
+          if (raw) {
+            try {
+              data = Object.assign({}, DEFAULTS, JSON.parse(raw));
+            } catch (e) {}
+          }
+          Object.keys(els).forEach(function (k) {
+            setValue(k, data[k], false);
+          });
+        }
+
+        Object.keys(els).forEach(function (k) {
+          els[k].addEventListener("input", function () {
+            var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+            setValue(k, v);
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", function () {
+          Object.keys(DEFAULTS).forEach(function (k) {
+            setValue(k, DEFAULTS[k]);
+          });
+        });
+
+        function setWeights(phase) {
+          var wMin = Math.min(
+            parseFloat(els.wl.value),
+            parseFloat(els.wh.value)
+          );
+          var wMax = Math.max(
+            parseFloat(els.wl.value),
+            parseFloat(els.wh.value)
+          );
+
+          for (var i = 0; i < glyphs.length; i++) {
+            var g = glyphs[i];
+            var w = weightForGlyph(g.index, g.count, phase, wMin, wMax);
+            g.el.style.fontVariationSettings =
+              '"wght" ' + w.toFixed(1) + ', "slnt" 0';
+          }
+        }
+
+        function frame(now, t0) {
+          var cycle = Math.max(400, parseFloat(els.cy.value));
+          var phase = ((now - t0) % cycle) / cycle;
+          setWeights(phase);
+
+          requestAnimationFrame(function (n2) {
+            frame(n2, t0);
+          });
+        }
+
+        load();
+        applyAppearance();
+
+        function start() {
+          requestAnimationFrame(function (n) {
+            frame(n, n);
+          });
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start);
+        } else {
+          start();
+        }
+      })();
+    </script>
+  </body>
+</html>
