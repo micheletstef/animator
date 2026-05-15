@@ -724,29 +724,6 @@
           buildGhosts();
         });
 
-        var stageWrap = document.getElementById("stageWrap");
-        window.addEventListener(
-          "wheel",
-          function (e) {
-            if (!e.shiftKey) return;
-            e.preventDefault();
-            var current = parseFloat(els.zm.value) || 1;
-            var factor = Math.exp(-e.deltaY * 0.0015);
-            var next = Math.max(0.1, Math.min(4, current * factor));
-            if (next === current) return;
-            var rect = stageWrap.getBoundingClientRect();
-            var anchorX = Math.max(rect.left, Math.min(rect.right, e.clientX));
-            var anchorY = Math.max(rect.top, Math.min(rect.bottom, e.clientY));
-            var contentX = anchorX - rect.left + stageWrap.scrollLeft;
-            var contentY = anchorY - rect.top + stageWrap.scrollTop;
-            var ratio = next / current;
-            setValue("zm", next);
-            stageWrap.scrollLeft = contentX * ratio - (anchorX - rect.left);
-            stageWrap.scrollTop = contentY * ratio - (anchorY - rect.top);
-          },
-          { passive: false }
-        );
-
         load();
         buildGhosts();
 

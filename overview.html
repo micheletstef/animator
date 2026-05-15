@@ -693,8 +693,9 @@
 
         function iframeSrc(anim) {
           var u = anim.url;
-          if (anim.mtime == null) return u;
-          return u + (u.indexOf("?") >= 0 ? "&" : "?") + "v=" + anim.mtime;
+          var q = "embed=overview";
+          if (anim.mtime != null) q += "&v=" + anim.mtime;
+          return u + (u.indexOf("?") >= 0 ? "&" : "?") + q;
         }
 
         function load(id) {
