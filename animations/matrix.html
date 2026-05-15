@@ -286,7 +286,7 @@
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
       <p class="hint">
-        Condensed · Ikarus · Extended — per-row weight paths
+        Condensed · Ikarus · Extended — diagonal weight wave
       </p>
 
       <div class="group">
@@ -485,6 +485,14 @@
           return a + (b - a) * t;
         }
 
+        var WAVE_SPREAD = 0.65;
+
+        function phaseForCell(row, col, p) {
+          var diagMax = (ROW_COUNT - 1) * 2;
+          var offset = ((row + col) / diagMax) * WAVE_SPREAD;
+          return Math.max(0, Math.min(1, (p - offset) / (1 - WAVE_SPREAD)));
+        }
+
         function weightForRow(row, p) {
           var kf = ROW_KEYFRAMES[row];
           var t;
@@ -592,7 +600,7 @@
         function setRowWeights(p) {
           for (var i = 0; i < cells.length; i++) {
             var c = cells[i];
-            var w = weightForRow(c.row, p);
+            var w = weightForRow(c.row, phaseForCell(c.row, c.col, p));
             c.weight = w;
             c.glyph.style.fontVariationSettings =
               '"wght" ' + w.toFixed(1) + ', "slnt" 0';

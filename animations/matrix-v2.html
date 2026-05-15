@@ -157,6 +157,10 @@
 
       .metric {
         position: absolute;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
         font-family: "Courier New", Courier, monospace;
         font-size: calc(var(--metric-size) * 1px);
         font-weight: 400;
@@ -164,8 +168,17 @@
         color: var(--fg);
         white-space: nowrap;
         pointer-events: none;
+      }
+
+      .metric-font {
+        flex: 0 1 auto;
+        text-align: left;
+      }
+
+      .metric-weight {
+        flex: 0 0 auto;
+        text-align: right;
         font-variant-numeric: tabular-nums;
-        transform: translateX(-50%);
       }
 
       .panel {
@@ -365,6 +378,11 @@
           default: "col-default",
           extended: "col-extended",
         };
+        var COL_LABELS = {
+          condensed: "Condensed",
+          default: "Standard",
+          extended: "Extended",
+        };
 
         var root = document.documentElement;
         var matrix = document.getElementById("matrix");
@@ -385,7 +403,17 @@
 
             var metric = document.createElement("span");
             metric.className = "metric";
-            metric.textContent = "200";
+
+            var metricFont = document.createElement("span");
+            metricFont.className = "metric-font";
+            metricFont.textContent = COL_LABELS[COLS[c]];
+
+            var metricWeight = document.createElement("span");
+            metricWeight.className = "metric-weight";
+            metricWeight.textContent = "200";
+
+            metric.appendChild(metricFont);
+            metric.appendChild(metricWeight);
 
             var lineLeft = document.createElement("span");
             lineLeft.className = "line line-left";
@@ -415,6 +443,7 @@
               lineLeft: lineLeft,
               lineRight: lineRight,
               metric: metric,
+              metricWeight: metricWeight,
               weight: W_MIN,
             });
           }
@@ -643,8 +672,9 @@
               c.lineRight.style.top = lineTop + "px";
               c.lineRight.style.height = lineHeight + "px";
 
-              c.metric.textContent = String(Math.round(c.weight));
-              c.metric.style.left = (leftX + rightX) / 2 + "px";
+              c.metricWeight.textContent = String(Math.round(c.weight));
+              c.metric.style.left = leftX + "px";
+              c.metric.style.width = rightX - leftX + "px";
               c.metric.style.top = "0";
             }
           }
