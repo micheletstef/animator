@@ -356,7 +356,7 @@
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="ghost animation">
           <div class="ghost-layer" id="ghosts"></div>
-          <span class="glyph" id="glyph">B</span>
+          <span class="glyph" id="glyph">A</span>
         </div>
       </div>
     </div>
@@ -488,7 +488,7 @@
             var w = wMin + ((wMax - wMin) * i) / denom;
             var el = document.createElement("span");
             el.className = "ghost";
-            el.textContent = "B";
+            el.textContent = "A";
             el.style.fontVariationSettings = '"wght" ' + w.toFixed(1);
             ghostLayer.appendChild(el);
           }
