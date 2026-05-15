@@ -108,11 +108,15 @@
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
-        gap: calc(var(--row-gap) * 1px);
+        gap: 0;
         width: 100%;
         height: 100%;
         padding: calc(var(--pad-t) * 1px) calc(var(--pad-r) * 1px)
           calc(var(--pad-b) * 1px) calc(var(--pad-l) * 1px);
+      }
+
+      .row + .row {
+        margin-top: calc(var(--row-gap) * 1px);
       }
 
       .row {
@@ -298,7 +302,7 @@
         </div>
         <div class="row-ui">
           <label for="rg">row gap</label>
-          <input id="rg" type="range" min="-80" max="120" step="1" value="0" />
+          <input id="rg" type="range" min="-600" max="120" step="1" value="0" />
           <span class="val" id="rg-val">0px</span>
         </div>
         <div class="row-ui">
