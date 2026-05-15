@@ -523,7 +523,7 @@
             wMax = t;
           }
 
-          var weight = wMax - (wMax - wMin) * eased;
+          var weight = wMin + (wMax - wMin) * eased;
           glyph.style.fontVariationSettings = '"wght" ' + weight.toFixed(1);
 
           requestAnimationFrame(function (n2) {

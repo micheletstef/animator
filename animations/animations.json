@@ -4,49 +4,49 @@
       "id": "ghost",
       "label": "ghost",
       "url": "animations/ghost.html",
-      "mtime": 1777929519
-    },
-    {
-      "id": "ghost-b",
-      "label": "ghost · C",
-      "url": "animations/ghost-b.html",
-      "mtime": 1778853156
+      "mtime": 1778855903
     },
     {
       "id": "ghost-plus-variable",
       "label": "ghost · plus variable",
       "url": "animations/ghost-plus-variable.html",
-      "mtime": 1778852876
+      "mtime": 1778855749
+    },
+    {
+      "id": "ghost-slant",
+      "label": "ghost · slant",
+      "url": "animations/ghost-slant.html",
+      "mtime": 1778855995
     },
     {
       "id": "matrix",
       "label": "matrix",
       "url": "animations/matrix.html",
-      "mtime": 1778849892
+      "mtime": 1778855129
     },
     {
       "id": "matrix-v2",
       "label": "matrix v2",
       "url": "animations/matrix-v2.html",
-      "mtime": 1778849184
+      "mtime": 1778855128
     },
     {
       "id": "marquee",
       "label": "names marquee",
       "url": "animations/marquee.html",
-      "mtime": 1778851836
+      "mtime": 1778855146
     },
     {
       "id": "spf",
       "label": "SPF 50+ → 8",
       "url": "animations/spf.html",
-      "mtime": 1778852253
+      "mtime": 1778855150
     },
     {
       "id": "wave",
       "label": "wave",
       "url": "animations/wave.html",
-      "mtime": 1778850585
+      "mtime": 1778855129
     }
   ]
 }
