@@ -106,16 +106,19 @@
       }
 
       .cell {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
         user-select: none;
+        height: 100%;
+        width: 100%;
       }
 
       .measure {
         position: relative;
         display: inline-block;
-        padding-top: calc(var(--metric-size) * 1px + 6px);
+        padding-top: calc(var(--metric-size) * 1px + 4px);
       }
 
       .glyph {
@@ -333,6 +336,7 @@
         var W_MIN = 200;
         var W_MAX = 1000;
         var ROW_COUNT = 3;
+        var ROW_SIN_PHASE = [-Math.PI / 2, 0, Math.PI / 2];
 
         for (var r = 0; r < ROW_COUNT; r++) {
           for (var c = 0; c < ROW_COUNT; c++) {
@@ -367,6 +371,8 @@
 
             cells.push({
               row: r,
+              col: c,
+              cell: cell,
               measure: measure,
               glyph: glyph,
               lineLeft: lineLeft,
@@ -422,20 +428,10 @@
           return 0;
         }
 
-        function weightFromUnitPhase(phase) {
-          var p = Math.max(0, Math.min(1, phase));
-          var eased = easeInOutCubic(p);
-          return W_MIN + (W_MAX - W_MIN) * eased;
-        }
-
         function weightForRow(row, g) {
-          // Row anchors at g=0: 200 · 600 · 1000 (phase 0, 0.5, 1.0)
-          var offset = row / (ROW_COUNT - 1);
-          var phase = g + offset;
-          if (phase > 1) {
-            phase = 2 - phase;
-          }
-          return weightFromUnitPhase(phase);
+          var theta = g * Math.PI * 2;
+          var wave = (Math.sin(theta + ROW_SIN_PHASE[row]) + 1) / 2;
+          return W_MIN + (W_MAX - W_MIN) * wave;
         }
 
         function formatVal(key, v) {
@@ -522,31 +518,48 @@
         }
 
         function layoutGuides() {
-          for (var i = 0; i < cells.length; i++) {
-            var c = cells[i];
-            var glyph = c.glyph;
-            var measure = c.measure;
-            var g = glyph.getBoundingClientRect();
-            var m = measure.getBoundingClientRect();
+          for (var r = 0; r < ROW_COUNT; r++) {
+            var rowTop = Infinity;
+            var rowBottom = -Infinity;
 
-            if (!g.width) continue;
+            for (var i = 0; i < cells.length; i++) {
+              if (cells[i].row !== r) continue;
+              var cellRect = cells[i].cell.getBoundingClientRect();
+              rowTop = Math.min(rowTop, cellRect.top);
+              rowBottom = Math.max(rowBottom, cellRect.bottom);
+            }
 
-            var leftX = g.left - m.left;
-            var rightX = g.right - m.left;
-            var top = g.top - m.top;
-            var height = g.height;
+            if (!isFinite(rowTop)) continue;
+            var rowHeight = rowBottom - rowTop;
 
-            c.lineLeft.style.left = leftX + "px";
-            c.lineLeft.style.top = top + "px";
-            c.lineLeft.style.height = height + "px";
+            for (var j = 0; j < cells.length; j++) {
+              var c = cells[j];
+              if (c.row !== r) continue;
 
-            c.lineRight.style.left = rightX - 1 + "px";
-            c.lineRight.style.top = top + "px";
-            c.lineRight.style.height = height + "px";
+              var glyph = c.glyph;
+              var measure = c.measure;
+              var g = glyph.getBoundingClientRect();
+              var m = measure.getBoundingClientRect();
 
-            c.metric.textContent = String(Math.round(c.weight));
-            c.metric.style.left = (leftX + rightX) / 2 + "px";
-            c.metric.style.top = "0";
+              if (!g.width) continue;
+
+              var leftX = g.left - m.left;
+              var rightX = g.right - m.left;
+              var lineTop = rowTop - m.top;
+              var lineHeight = rowHeight;
+
+              c.lineLeft.style.left = leftX + "px";
+              c.lineLeft.style.top = lineTop + "px";
+              c.lineLeft.style.height = lineHeight + "px";
+
+              c.lineRight.style.left = rightX - 1 + "px";
+              c.lineRight.style.top = lineTop + "px";
+              c.lineRight.style.height = lineHeight + "px";
+
+              c.metric.textContent = String(Math.round(c.weight));
+              c.metric.style.left = (leftX + rightX) / 2 + "px";
+              c.metric.style.top = "0";
+            }
           }
         }
 
