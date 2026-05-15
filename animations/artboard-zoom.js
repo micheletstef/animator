@@ -66,21 +66,6 @@
     });
   }
 
-  function isOverviewEmbed() {
-    return /(?:^|[?&])embed=overview(?:&|$)/.test(global.location.search);
-  }
-
-  function injectOverviewStyles() {
-    if (!isOverviewEmbed()) return;
-    global.document.documentElement.classList.add("overview-embed");
-    var style = global.document.createElement("style");
-    style.textContent =
-      "html.overview-embed{--base:min(calc(100vh - 48px),calc(100vw - 48px))!important}" +
-      "html.overview-embed body{grid-template-columns:1fr!important}" +
-      "html.overview-embed .panel{display:none!important}";
-    global.document.head.appendChild(style);
-  }
-
   function stageWrapEl() {
     return (
       global.document.getElementById("stageWrap") ||
@@ -116,7 +101,6 @@
   }
 
   function init() {
-    injectOverviewStyles();
     apply(read() != null ? read() : DEFAULT);
     bindWheel();
   }
@@ -132,7 +116,6 @@
     write: write,
     resolve: resolve,
     onChange: onChange,
-    isOverviewEmbed: isOverviewEmbed,
     bindWheel: bindWheel,
     init: init,
   };
