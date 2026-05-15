@@ -599,7 +599,16 @@
           }
         }
 
+        function readZoom() {
+          var z = parseFloat(
+            getComputedStyle(root).getPropertyValue("--zoom")
+          );
+          return isFinite(z) && z > 0 ? z : 1;
+        }
+
         function layoutGuides() {
+          var zoom = readZoom();
+
           for (var r = 0; r < ROW_COUNT; r++) {
             var rowTop = Infinity;
             var rowBottom = -Infinity;
@@ -612,7 +621,7 @@
             }
 
             if (!isFinite(rowTop)) continue;
-            var rowHeight = rowBottom - rowTop;
+            var rowHeight = (rowBottom - rowTop) / zoom;
 
             for (var j = 0; j < cells.length; j++) {
               var c = cells[j];
@@ -625,9 +634,9 @@
 
               if (!g.width) continue;
 
-              var leftX = g.left - m.left;
-              var rightX = g.right - m.left;
-              var lineTop = rowTop - m.top;
+              var leftX = (g.left - m.left) / zoom;
+              var rightX = (g.right - m.left) / zoom;
+              var lineTop = (rowTop - m.top) / zoom;
               var lineHeight = rowHeight;
 
               c.lineLeft.style.left = leftX + "px";
@@ -662,6 +671,9 @@
         }
 
         window.addEventListener("resize", layoutGuides);
+        if (window.ArtboardZoom) {
+          ArtboardZoom.onChange(layoutGuides);
+        }
 
         load();
 
