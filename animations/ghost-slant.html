@@ -207,6 +207,18 @@
         border: 0;
       }
 
+      .row input[type="text"] {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
+        text-transform: none;
+      }
+
       .row .val {
         text-align: right;
         color: #9a9a9a;
@@ -398,6 +410,10 @@
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
+          <label for="ch">char</label>
+          <input id="ch" type="text" value="C" maxlength="8" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row">
           <label for="fs">size</label>
           <input id="fs" type="range" min="200" max="1600" step="1" value="900" />
           <span class="val" id="fsVal">900px</span>
@@ -406,6 +422,15 @@
           <label for="sk">stroke</label>
           <input id="sk" type="range" min="0.5" max="6" step="0.1" value="1" />
           <span class="val" id="skVal">1.0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">weight · wght</p>
+        <div class="row">
+          <label for="wght">wght</label>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="500" />
+          <span class="val" id="wghtVal">500</span>
         </div>
       </div>
 
@@ -503,10 +528,11 @@
         }
 
         function fvarSettings(slnt) {
+          var w = clampAxis("wght", els.wght.value);
           var c = clampAxis("CNTR", els.cntr.value);
           return (
             '"wght" ' +
-            fmtAxis("wght", AXES.wght.default) +
+            fmtAxis("wght", w) +
             ', "wdth" ' +
             AXES.wdth.default +
             ', "slnt" ' +
@@ -521,6 +547,10 @@
           els.cntr.min = c.min;
           els.cntr.max = c.max;
           els.cntr.step = c.step;
+          var w = AXES.wght;
+          els.wght.min = w.min;
+          els.wght.max = w.max;
+          els.wght.step = w.step;
           var s = AXES.slnt;
           [els.sMin, els.sMax].forEach(function (el) {
             el.min = s.min;
@@ -531,6 +561,16 @@
 
         function easeInOutCubic(t) {
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function getChar() {
+          var v = els.ch ? els.ch.value : "";
+          if (!v) return DEFAULTS.ch;
+          return Array.from(v)[0];
+        }
+
+        function applyChar() {
+          glyph.textContent = getChar();
         }
 
         function buildGhosts() {
@@ -548,7 +588,7 @@
             var s = sMin + ((sMax - sMin) * i) / denom;
             var el = document.createElement("span");
             el.className = "ghost";
-            el.textContent = "C";
+            el.textContent = getChar();
             el.style.fontFamily = FONT_FAMILY;
             el.style.fontVariationSettings = fvarSettings(s);
             ghostLayer.appendChild(el);
@@ -593,15 +633,17 @@
           });
         }
 
-        var LS_KEY = "ghost-anim:c:v1";
+        var LS_KEY = "ghost-anim:slant:v2";
         var root = document.documentElement;
 
         var DEFAULTS = {
           zm: 1,
           bg: "#ffffff",
           fg: "#000000",
+          ch: "C",
           fs: 900,
           sk: 1,
+          wght: AXES.wght.default,
           cntr: AXES.CNTR.default,
           sMin: AXES.slnt.min,
           sMax: AXES.slnt.max,
@@ -611,13 +653,16 @@
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
+        var STRING_KEYS = { ch: 1 };
 
         var els = {
           zm: document.getElementById("zm"),
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
+          ch: document.getElementById("ch"),
           fs: document.getElementById("fs"),
           sk: document.getElementById("sk"),
+          wght: document.getElementById("wght"),
           cntr: document.getElementById("cntr"),
           sMin: document.getElementById("sMin"),
           sMax: document.getElementById("sMax"),
@@ -630,6 +675,7 @@
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           sk: document.getElementById("skVal"),
+          wght: document.getElementById("wghtVal"),
           cntr: document.getElementById("cntrVal"),
           gh: document.getElementById("ghVal"),
           cy: document.getElementById("cyVal"),
@@ -683,15 +729,19 @@
           if (key === "zm") {
             v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
           } else if (key === "cntr") v = clampAxis("CNTR", v);
+          else if (key === "wght") v = clampAxis("wght", v);
           else if (key === "sMin" || key === "sMax") v = clampAxis("slnt", v);
           els[key].value = v;
           if (key === "sMin" || key === "sMax") {
             updateSlntUI();
+          } else if (key === "wght" && vals.wght) {
+            vals.wght.textContent = fmtAxis("wght", v);
           } else if (key === "cntr" && vals.cntr) {
             vals.cntr.textContent = fmtAxis("CNTR", v);
           } else if (vals[key]) {
             vals[key].textContent = fmt(key, v);
           }
+          if (key === "ch") applyChar();
           applyVar(key, v);
           if (persist !== false) save();
         }
@@ -700,7 +750,9 @@
           var out = {};
           Object.keys(els).forEach(function (k) {
             if (k === "zm") return;
-            out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+            out[k] = COLOR_KEYS[k] || STRING_KEYS[k]
+              ? els[k].value
+              : parseFloat(els[k].value);
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(out));
@@ -734,9 +786,18 @@
         Object.keys(els).forEach(function (k) {
           if (k === "zm") return;
           els[k].addEventListener("input", function () {
-            var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+            var v = COLOR_KEYS[k] || STRING_KEYS[k]
+              ? els[k].value
+              : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "gh" || k === "sMin" || k === "sMax" || k === "cntr") {
+            if (
+              k === "ch" ||
+              k === "gh" ||
+              k === "sMin" ||
+              k === "sMax" ||
+              k === "cntr" ||
+              k === "wght"
+            ) {
               buildGhosts();
             }
           });
