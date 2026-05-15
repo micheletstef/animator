@@ -278,7 +278,7 @@
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
       <p class="hint">
-        Condensed · Ikarus · Extended — thin top, ultra bottom
+        Condensed · Ikarus · Extended — 200 · 600 · 1000 wave
       </p>
 
       <div class="group">
@@ -422,13 +422,20 @@
           return 0;
         }
 
-        function weightForRow(row, p) {
-          var rowBlend = row / (ROW_COUNT - 1);
+        function weightFromUnitPhase(phase) {
+          var p = Math.max(0, Math.min(1, phase));
           var eased = easeInOutCubic(p);
-          return (
-            W_MIN +
-            (W_MAX - W_MIN) * (rowBlend * (1 - eased) + (1 - rowBlend) * eased)
-          );
+          return W_MIN + (W_MAX - W_MIN) * eased;
+        }
+
+        function weightForRow(row, g) {
+          // Row anchors at g=0: 200 · 600 · 1000 (phase 0, 0.5, 1.0)
+          var offset = row / (ROW_COUNT - 1);
+          var phase = g + offset;
+          if (phase > 1) {
+            phase = 2 - phase;
+          }
+          return weightFromUnitPhase(phase);
         }
 
         function formatVal(key, v) {
