@@ -119,7 +119,7 @@
         cursor: grabbing;
       }
 
-      .nav-list a {
+      .nav-list .nav-item {
         flex: 1 1 auto;
         min-width: 0;
         display: block;
@@ -131,27 +131,45 @@
         border: 1px solid transparent;
       }
 
-      .nav-list a:hover,
-      .nav-list a:focus {
+      .nav-list .nav-item:hover,
+      .nav-list .nav-item:focus {
         background: #1d1d1d;
         color: #fff;
         outline: none;
       }
 
-      .nav-list a.is-active {
+      .nav-list .nav-item.is-active {
         background: #fff;
         color: #0e0e0e;
         border-color: #fff;
       }
 
-      .nav-list a .nav-meta {
+      .nav-list .nav-label {
+        display: block;
+        cursor: text;
+      }
+
+      .nav-rename-input {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-transform: inherit;
+        outline: none;
+      }
+
+      .nav-list .nav-item .nav-meta {
         display: block;
         color: #6a6a6a;
         font-size: 10px;
         margin-top: 1px;
       }
 
-      .nav-list a.is-active .nav-meta {
+      .nav-list .nav-item.is-active .nav-meta {
         color: #555;
       }
 
@@ -216,6 +234,7 @@
         var ANIMATIONS_DIR = "animations/";
         var MANIFEST_URL = ANIMATIONS_DIR + "animations.json";
         var ORDER_KEY = "animator:overview:order";
+        var LABELS_KEY = "animator:overview:labels";
         var LAST_KEY = "animator:overview:last";
 
         var ANIMATIONS = [];
@@ -223,6 +242,7 @@
         var frame = document.getElementById("frame");
         var pointerDrag = null;
         var reorderReady = false;
+        var renameReady = false;
 
         function slugify(stem) {
           return (
@@ -239,9 +259,11 @@
 
         function entryFromFilename(filename) {
           var stem = filename.replace(/\.html?$/i, "");
+          var label = humanise(stem);
           return {
             id: slugify(stem),
-            label: humanise(stem),
+            label: label,
+            defaultLabel: label,
             url: ANIMATIONS_DIR + filename,
           };
         }
@@ -293,7 +315,10 @@
               if (!r.ok) return entry;
               return r.text().then(function (text) {
                 var m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
-                if (m && m[1].trim()) entry.label = m[1].trim();
+                if (m && m[1].trim()) {
+                  entry.label = m[1].trim();
+                  entry.defaultLabel = entry.label;
+                }
                 return entry;
               });
             })
@@ -318,9 +343,11 @@
             .then(function (data) {
               var list = (data && data.animations) || [];
               return list.map(function (a) {
+                var label = a.label || humanise(a.id || "");
                 return {
                   id: a.id || slugify(a.url || a.label || ""),
-                  label: a.label || humanise(a.id || ""),
+                  label: label,
+                  defaultLabel: label,
                   url: a.url,
                   mtime: a.mtime != null ? a.mtime : null,
                   meta: a.meta || null,
@@ -382,6 +409,54 @@
           return ordered.concat(defaultSort(rest));
         }
 
+        function readLabels() {
+          try {
+            var raw = localStorage.getItem(LABELS_KEY);
+            if (!raw) return {};
+            var obj = JSON.parse(raw);
+            return obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+          } catch (e) {
+            return {};
+          }
+        }
+
+        function writeLabels(map) {
+          try {
+            localStorage.setItem(LABELS_KEY, JSON.stringify(map));
+          } catch (e) {}
+        }
+
+        function applyLabels(list) {
+          var saved = readLabels();
+          return list.map(function (a) {
+            var defaultLabel = a.defaultLabel != null ? a.defaultLabel : a.label;
+            var label = saved[a.id] || defaultLabel;
+            return {
+              id: a.id,
+              label: label,
+              defaultLabel: defaultLabel,
+              url: a.url,
+              mtime: a.mtime,
+              meta: a.meta,
+            };
+          });
+        }
+
+        function setLabel(id, text) {
+          var anim = findById(id);
+          if (!anim) return;
+          var trimmed = String(text || "").trim();
+          var labels = readLabels();
+          if (!trimmed || trimmed === anim.defaultLabel) {
+            delete labels[id];
+            anim.label = anim.defaultLabel;
+          } else {
+            labels[id] = trimmed;
+            anim.label = trimmed;
+          }
+          writeLabels(labels);
+        }
+
         function persistOrder() {
           writeOrder(
             ANIMATIONS.map(function (a) {
@@ -391,7 +466,7 @@
         }
 
         function activeNavId() {
-          var el = navList.querySelector("a.is-active");
+          var el = navList.querySelector(".nav-item.is-active");
           if (!el) return null;
           var li = el.closest("li[data-id]");
           return li ? li.getAttribute("data-id") : null;
@@ -453,6 +528,83 @@
           clearDragUi();
         }
 
+        function liForId(id) {
+          var items = navList.querySelectorAll("li[data-id]");
+          for (var i = 0; i < items.length; i++) {
+            if (items[i].getAttribute("data-id") === id) return items[i];
+          }
+          return null;
+        }
+
+        function startRename(id) {
+          if (pointerDrag) return;
+          var li = liForId(id);
+          if (!li || li.querySelector(".nav-rename-input")) return;
+          var anim = findById(id);
+          if (!anim) return;
+
+          var link = li.querySelector(".nav-item");
+          var labelEl = li.querySelector(".nav-label");
+          if (!link || !labelEl) return;
+
+          var input = document.createElement("input");
+          input.type = "text";
+          input.className = "nav-rename-input";
+          input.value = anim.label;
+          input.setAttribute("aria-label", "rename " + anim.defaultLabel);
+          labelEl.replaceWith(input);
+          input.focus();
+          input.select();
+
+          var done = false;
+          function finish(save) {
+            if (done) return;
+            done = true;
+            if (save) setLabel(id, input.value);
+            var activeId = activeNavId() || id;
+            render(activeId);
+            if (activeId === id) {
+              var current = findById(id);
+              if (current) document.title = "animator — " + current.label;
+            }
+          }
+
+          input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              finish(true);
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              finish(false);
+            }
+          });
+          input.addEventListener("blur", function () {
+            finish(true);
+          });
+          input.addEventListener("click", function (e) {
+            e.stopPropagation();
+          });
+          input.addEventListener("pointerdown", function (e) {
+            e.stopPropagation();
+          });
+        }
+
+        function setupRename() {
+          if (renameReady) return;
+          renameReady = true;
+
+          navList.addEventListener("dblclick", function (e) {
+            if (e.target.closest(".nav-drag-handle")) return;
+            var label = e.target.closest(".nav-label");
+            if (!label) return;
+            var li = label.closest("li[data-id]");
+            if (!li) return;
+            e.preventDefault();
+            startRename(li.getAttribute("data-id"));
+          });
+        }
+
         function setupReorder() {
           if (reorderReady) return;
           reorderReady = true;
@@ -506,7 +658,14 @@
 
             var aEl = document.createElement("a");
             aEl.href = "#" + a.id;
-            aEl.textContent = a.label;
+            aEl.className = "nav-item";
+
+            var labelSpan = document.createElement("span");
+            labelSpan.className = "nav-label";
+            labelSpan.textContent = a.label;
+            labelSpan.title = "double-click to rename";
+            aEl.appendChild(labelSpan);
+
             if (a.meta) {
               var meta = document.createElement("span");
               meta.className = "nav-meta";
@@ -522,6 +681,7 @@
             navList.appendChild(li);
           });
           setupReorder();
+          setupRename();
         }
 
         function findById(id) {
@@ -580,7 +740,7 @@
 
         discover()
           .then(function (list) {
-            ANIMATIONS = applyOrder(list || []);
+            ANIMATIONS = applyLabels(applyOrder(list || []));
             var startId = initial();
             if (startId && !readHash()) {
               history.replaceState(null, "", "#" + startId);
