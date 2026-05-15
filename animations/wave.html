@@ -362,10 +362,24 @@
     <script>
       (function () {
         var ROWS = [
-          { id: "extended", className: "row-extended", count: 8 },
-          { id: "standard", className: "row-standard", count: 8 },
-          { id: "condensed", className: "row-condensed", count: 9 },
+          { id: "extended", className: "row-extended", count: 8, phase: 0, speed: 1 },
+          {
+            id: "standard",
+            className: "row-standard",
+            count: 8,
+            phase: 1 / 3,
+            speed: 1.07,
+          },
+          {
+            id: "condensed",
+            className: "row-condensed",
+            count: 9,
+            phase: 2 / 3,
+            speed: 0.93,
+          },
         ];
+
+        var WAVE_CYCLES = 1.25;
 
         var root = document.documentElement;
         var wave = document.getElementById("wave");
@@ -380,7 +394,14 @@
             glyph.className = "glyph";
             glyph.textContent = "O";
             rowEl.appendChild(glyph);
-            glyphs.push({ row: row.id, index: i, count: row.count, el: glyph });
+            glyphs.push({
+              row: row.id,
+              index: i,
+              count: row.count,
+              rowPhase: row.phase,
+              rowSpeed: row.speed,
+              el: glyph,
+            });
           }
 
           wave.appendChild(rowEl);
@@ -439,10 +460,23 @@
           return a + (b - a) * t;
         }
 
-        function weightForGlyph(index, count, phase, wMin, wMax) {
-          var local = (phase + index / count) % 1;
-          var wave = 0.5 + 0.5 * Math.sin(local * Math.PI * 2 - Math.PI / 2);
-          return lerp(wMin, wMax, wave);
+        function fract(t) {
+          return t - Math.floor(t);
+        }
+
+        function weightForGlyph(
+          index,
+          count,
+          rowPhase,
+          rowSpeed,
+          phase,
+          wMin,
+          wMax
+        ) {
+          var spacing = count > 1 ? WAVE_CYCLES / (count - 1) : 0;
+          var local = fract(phase * rowSpeed + rowPhase + index * spacing);
+          var tri = local < 0.5 ? local * 2 : 2 - local * 2;
+          return lerp(wMin, wMax, tri);
         }
 
         function formatVal(key, v) {
@@ -563,9 +597,17 @@
 
           for (var i = 0; i < glyphs.length; i++) {
             var g = glyphs[i];
-            var w = weightForGlyph(g.index, g.count, phase, wMin, wMax);
+            var w = weightForGlyph(
+              g.index,
+              g.count,
+              g.rowPhase,
+              g.rowSpeed,
+              phase,
+              wMin,
+              wMax
+            );
             g.el.style.fontVariationSettings =
-              '"wght" ' + w.toFixed(1) + ', "slnt" 0';
+              '"wght" ' + w.toFixed(2) + ', "slnt" 0';
           }
         }
 

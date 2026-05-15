@@ -106,7 +106,7 @@
         display: block;
         font-size: 220px;
         white-space: nowrap;
-        text-align: center;
+        text-align: left;
         font-variation-settings: "wght" 1000;
       }
 
@@ -405,17 +405,20 @@
           // styles. Per-line font-size shifts the layout, so reading and
           // writing in the same loop would make later lines see stale
           // positions and produce the wrong `t`.
+          // Use the line's bottom edge for `t` so scaling keeps going until
+          // the name has fully scrolled out the top (center-based `t` hit 0
+          // while the line was still partly visible).
           var n = lineEls.length;
-          var centers = new Array(n);
+          var bottoms = new Array(n);
           for (var i = 0; i < n; i++) {
             var el = lineEls[i];
             var yTop = el.offsetTop - offset;
-            centers[i] = yTop + el.offsetHeight / 2;
+            bottoms[i] = yTop + el.offsetHeight;
           }
 
           for (var j = 0; j < n; j++) {
             var node = lineEls[j];
-            var t = centers[j] / marqueeH;
+            var t = bottoms[j] / marqueeH;
             if (t < 0) t = 0;
             else if (t > 1) t = 1;
             var tt = Math.pow(t, gamma);
