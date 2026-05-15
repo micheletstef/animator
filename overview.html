@@ -74,7 +74,53 @@
         gap: 2px;
       }
 
+      .nav-list li {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        border-radius: 4px;
+      }
+
+      .nav-list li.is-dragging {
+        opacity: 0.45;
+      }
+
+      .nav-list li.drag-over {
+        outline: 1px dashed #4a4a4a;
+        outline-offset: -1px;
+      }
+
+      .nav-drag-handle {
+        flex: 0 0 auto;
+        align-self: stretch;
+        width: 18px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 4px 0 0 4px;
+        background: transparent;
+        color: #4a4a4a;
+        font: inherit;
+        font-size: 10px;
+        line-height: 1;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .nav-drag-handle:hover,
+      .nav-drag-handle:focus {
+        color: #9a9a9a;
+        background: #1a1a1a;
+        outline: none;
+      }
+
+      .nav-drag-handle:active {
+        cursor: grabbing;
+      }
+
       .nav-list a {
+        flex: 1 1 auto;
+        min-width: 0;
         display: block;
         padding: 6px 8px;
         border-radius: 4px;
@@ -168,10 +214,14 @@
       (function () {
         var ANIMATIONS_DIR = "animations/";
         var MANIFEST_URL = ANIMATIONS_DIR + "animations.json";
+        var ORDER_KEY = "animator:overview:order";
+        var LAST_KEY = "animator:overview:last";
 
         var ANIMATIONS = [];
         var navList = document.getElementById("navList");
         var frame = document.getElementById("frame");
+        var dragId = null;
+        var reorderReady = false;
 
         function slugify(stem) {
           return (
@@ -287,6 +337,130 @@
           });
         }
 
+        function readOrder() {
+          try {
+            var raw = localStorage.getItem(ORDER_KEY);
+            if (!raw) return null;
+            var arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr : null;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function writeOrder(ids) {
+          try {
+            localStorage.setItem(ORDER_KEY, JSON.stringify(ids));
+          } catch (e) {}
+        }
+
+        function defaultSort(list) {
+          return list.slice().sort(function (a, b) {
+            return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
+          });
+        }
+
+        function applyOrder(list) {
+          var saved = readOrder();
+          if (!saved || !saved.length) return defaultSort(list);
+          var byId = {};
+          list.forEach(function (a) {
+            byId[a.id] = a;
+          });
+          var ordered = [];
+          var used = {};
+          saved.forEach(function (id) {
+            if (byId[id] && !used[id]) {
+              ordered.push(byId[id]);
+              used[id] = true;
+            }
+          });
+          var rest = list.filter(function (a) {
+            return !used[a.id];
+          });
+          return ordered.concat(defaultSort(rest));
+        }
+
+        function persistOrder() {
+          writeOrder(
+            ANIMATIONS.map(function (a) {
+              return a.id;
+            })
+          );
+        }
+
+        function activeNavId() {
+          var el = navList.querySelector("a.is-active");
+          if (!el) return null;
+          var li = el.closest("li[data-id]");
+          return li ? li.getAttribute("data-id") : null;
+        }
+
+        function reorderAnimation(fromId, toId) {
+          var fromIdx = -1;
+          var toIdx = -1;
+          for (var i = 0; i < ANIMATIONS.length; i++) {
+            if (ANIMATIONS[i].id === fromId) fromIdx = i;
+            if (ANIMATIONS[i].id === toId) toIdx = i;
+          }
+          if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+          var item = ANIMATIONS.splice(fromIdx, 1)[0];
+          ANIMATIONS.splice(toIdx, 0, item);
+          persistOrder();
+          render(activeNavId());
+        }
+
+        function setupReorder() {
+          if (reorderReady) return;
+          reorderReady = true;
+
+          navList.addEventListener("dragstart", function (e) {
+            var li = e.target.closest("li[data-id]");
+            if (!li || !e.target.closest(".nav-drag-handle")) {
+              e.preventDefault();
+              return;
+            }
+            dragId = li.getAttribute("data-id");
+            li.classList.add("is-dragging");
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", dragId);
+          });
+
+          navList.addEventListener("dragend", function () {
+            navList.querySelectorAll("li.is-dragging, li.drag-over").forEach(function (n) {
+              n.classList.remove("is-dragging", "drag-over");
+            });
+            dragId = null;
+          });
+
+          navList.addEventListener("dragover", function (e) {
+            var li = e.target.closest("li[data-id]");
+            if (!li || !dragId || li.getAttribute("data-id") === dragId) return;
+            e.preventDefault();
+            navList.querySelectorAll("li.drag-over").forEach(function (n) {
+              n.classList.remove("drag-over");
+            });
+            li.classList.add("drag-over");
+            e.dataTransfer.dropEffect = "move";
+          });
+
+          navList.addEventListener("dragleave", function (e) {
+            var li = e.target.closest("li[data-id]");
+            if (li && !li.contains(e.relatedTarget)) {
+              li.classList.remove("drag-over");
+            }
+          });
+
+          navList.addEventListener("drop", function (e) {
+            e.preventDefault();
+            var li = e.target.closest("li[data-id]");
+            if (!li || !dragId) return;
+            var targetId = li.getAttribute("data-id");
+            li.classList.remove("drag-over");
+            reorderAnimation(dragId, targetId);
+          });
+        }
+
         function render(activeId) {
           navList.innerHTML = "";
           if (!ANIMATIONS.length) {
@@ -301,6 +475,15 @@
           }
           ANIMATIONS.forEach(function (a) {
             var li = document.createElement("li");
+            li.setAttribute("data-id", a.id);
+            li.draggable = true;
+
+            var handle = document.createElement("button");
+            handle.type = "button";
+            handle.className = "nav-drag-handle";
+            handle.setAttribute("aria-label", "drag to reorder " + a.label);
+            handle.textContent = "⋮⋮";
+
             var aEl = document.createElement("a");
             aEl.href = "#" + a.id;
             aEl.textContent = a.label;
@@ -314,9 +497,11 @@
               aEl.classList.add("is-active");
               aEl.setAttribute("aria-current", "page");
             }
+            li.appendChild(handle);
             li.appendChild(aEl);
             navList.appendChild(li);
           });
+          setupReorder();
         }
 
         function findById(id) {
@@ -348,7 +533,7 @@
           render(anim.id);
           document.title = "animator — " + anim.label;
           try {
-            localStorage.setItem("animator:overview:last", anim.id);
+            localStorage.setItem(LAST_KEY, anim.id);
           } catch (e) {}
         }
 
@@ -362,7 +547,7 @@
           if (fromHash && findById(fromHash)) return fromHash;
           var saved = null;
           try {
-            saved = localStorage.getItem("animator:overview:last");
+            saved = localStorage.getItem(LAST_KEY);
           } catch (e) {}
           if (saved && findById(saved)) return saved;
           return ANIMATIONS.length ? ANIMATIONS[0].id : null;
@@ -375,9 +560,7 @@
 
         discover()
           .then(function (list) {
-            ANIMATIONS = (list || []).slice().sort(function (a, b) {
-              return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
-            });
+            ANIMATIONS = applyOrder(list || []);
             var startId = initial();
             if (startId && !readHash()) {
               history.replaceState(null, "", "#" + startId);
