@@ -79,43 +79,34 @@
         transform-origin: top left;
       }
 
-      .glyph-wrap {
+      .var-label {
         position: absolute;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        z-index: 2;
-        pointer-events: none;
-      }
-
-      .var-label {
+        transform: translate(-50%, calc(-50% - var(--fs) * 0.56px));
         font-family: "Courier New", Courier, monospace;
         font-size: calc(var(--fs) * 0.038px);
         line-height: 1;
         letter-spacing: 0.02em;
         color: var(--fg);
-        margin-bottom: calc(var(--fs) * 0.012px);
         font-variant-numeric: tabular-nums;
         user-select: none;
+        z-index: 3;
+        pointer-events: none;
       }
 
       .glyph,
-      .ghost {
-        font-size: calc(var(--fs) * 1px);
-        line-height: 1;
-        white-space: nowrap;
-        user-select: none;
-        font-variation-settings: "wght" 500, "wdth" 100, "slnt" 0, "CNTR" 0;
-      }
-
       .ghost {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        font-family: "IkarusPlusVariable", system-ui, sans-serif;
+        font-size: calc(var(--fs) * 1px);
+        line-height: 1;
+        white-space: nowrap;
+        user-select: none;
+        font-variation-settings: "wght" 500, "wdth" 100, "slnt" 0;
       }
 
       .ghost-layer {
@@ -124,12 +115,16 @@
         z-index: 1;
         pointer-events: none;
         color: var(--fg);
+        font-family: "IkarusPlusVariable", system-ui, sans-serif;
       }
 
       .glyph {
         color: var(--fg);
+        z-index: 2;
       }
 
+      /* Filter per ghost so each CNTR step renders its own outline; a parent-level
+         filter would merge all glyphs into one combined mask (single ring). */
       .ghost {
         color: var(--fg);
         -webkit-text-fill-color: currentColor;
@@ -373,10 +368,8 @@
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="ghost plus variable">
           <div class="ghost-layer" id="ghosts"></div>
-          <div class="glyph-wrap">
-            <span class="var-label" id="varLabel" aria-hidden="true">0.0</span>
-            <span class="glyph" id="glyph">A</span>
-          </div>
+          <span class="var-label" id="varLabel" aria-hidden="true">0.0</span>
+          <span class="glyph" id="glyph">A</span>
         </div>
       </div>
     </div>
@@ -477,6 +470,8 @@
         var varLabel = document.getElementById("varLabel");
         var ghostLayer = document.getElementById("ghosts");
 
+        var FONT_FAMILY = '"IkarusPlusVariable", system-ui, sans-serif';
+
         function fvarCntr(c) {
           return (
             '"wght" 500, "wdth" 100, "slnt" 0, "CNTR" ' +
@@ -508,6 +503,7 @@
             var el = document.createElement("span");
             el.className = "ghost";
             el.textContent = "A";
+            el.style.fontFamily = FONT_FAMILY;
             el.style.fontVariationSettings = fvarCntr(c);
             ghostLayer.appendChild(el);
           }
@@ -716,18 +712,25 @@
         );
 
         load();
-        buildGhosts();
-
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(start);
-        } else {
-          start();
-        }
 
         function start() {
+          buildGhosts();
           requestAnimationFrame(function (n) {
             frame(n, n);
           });
+        }
+
+        if (document.fonts && document.fonts.load) {
+          Promise.all([
+            document.fonts.load('1 500 100px ' + FONT_FAMILY),
+            document.fonts.ready,
+          ])
+            .then(start)
+            .catch(start);
+        } else if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start);
+        } else {
+          start();
         }
       })();
     </script>
