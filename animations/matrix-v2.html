@@ -305,7 +305,7 @@
         </div>
         <div class="row">
           <label for="fs">glyph</label>
-          <input id="fs" type="range" min="60" max="360" step="2" value="180" />
+          <input id="fs" type="range" min="60" max="1200" step="4" value="180" />
           <span class="val" id="fs-val">180px</span>
         </div>
         <div class="row">
@@ -629,9 +629,15 @@
               var lineTop = rowTop - m.top;
               var lineHeight = rowHeight;
 
-              c.lineLeft.style.left = leftX + "px";
-              c.lineLeft.style.top = lineTop + "px";
-              c.lineLeft.style.height = lineHeight + "px";
+              var showLeft = c.col === 0;
+              c.lineLeft.style.display = showLeft ? "block" : "none";
+              c.lineRight.style.display = "block";
+
+              if (showLeft) {
+                c.lineLeft.style.left = leftX + "px";
+                c.lineLeft.style.top = lineTop + "px";
+                c.lineLeft.style.height = lineHeight + "px";
+              }
 
               c.lineRight.style.left = rightX - 1 + "px";
               c.lineRight.style.top = lineTop + "px";
