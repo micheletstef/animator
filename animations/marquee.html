@@ -96,7 +96,7 @@
       }
 
       .track {
-        position: absolute;
+        position: relative;
         left: 0;
         right: 0;
         top: 0;
@@ -104,7 +104,10 @@
       }
 
       .line {
-        display: block;
+        position: absolute;
+        left: 0;
+        right: 0;
+        margin: 0;
         font-size: 220px;
         white-space: nowrap;
         text-align: left;
@@ -392,22 +395,73 @@
         buildLines();
 
         var loopHeight = 0;
+        var cycleTotal = 0;
+        var refHeights = [];
+        var refTops = [];
+        var lineBaseY = [];
+        var prevHeights = [];
         var needsMeasure = true;
 
-        function measureLoop() {
-          var first = lineEls[0];
-          var second = lineEls[NAMES.length];
-          var next = 0;
-          if (first && second) {
-            next = second.offsetTop - first.offsetTop;
+        function applyStyleAt(node, tt) {
+          var wTop = parseFloat(els.wTop.value);
+          var wBot = parseFloat(els.wBot.value);
+          var cTop = parseFloat(els.cTop.value);
+          var cBot = parseFloat(els.cBot.value);
+          var kTop = parseFloat(els.kTop.value);
+          var kBot = parseFloat(els.kBot.value);
+          var sTop = parseFloat(els.sTop.value);
+          var sBot = parseFloat(els.sBot.value);
+          var lhTop = parseFloat(els.lhTop.value);
+          var lhBot = parseFloat(els.lhBot.value);
+          var oTop = parseFloat(els.oTop.value);
+          var oBot = parseFloat(els.oBot.value);
+          var w = Math.round(wTop + (wBot - wTop) * tt);
+          var c = cTop + (cBot - cTop) * tt;
+          var cS = (Math.round(c * 10) / 10).toFixed(1);
+          node.style.fontVariationSettings =
+            '"wght" ' + w + ', "CNTR" ' + cS;
+          node.style.letterSpacing =
+            (kTop + (kBot - kTop) * tt).toFixed(4) + "em";
+          node.style.fontSize = sTop + (sBot - sTop) * tt + "px";
+          node.style.lineHeight = (lhTop + (lhBot - lhTop) * tt).toFixed(4);
+          node.style.opacity = oTop + (oBot - oTop) * tt;
+        }
+
+        function measureCycle() {
+          var n = NAMES.length;
+          if (!n || !lineEls.length) return;
+
+          var savedOffset = offset;
+          refHeights = new Array(n);
+          for (var i = 0; i < n; i++) {
+            applyStyleAt(lineEls[i], 0);
+            var hTop = lineEls[i].offsetHeight || 1;
+            applyStyleAt(lineEls[i], 1);
+            var hBot = lineEls[i].offsetHeight || 1;
+            refHeights[i] = Math.max(hTop, hBot, 1);
           }
-          if (next <= 0) next = track.scrollHeight / 2;
-          if (next <= 0) return;
-          var prev = loopHeight;
-          loopHeight = next;
-          if (prev > 0 && prev !== loopHeight) {
-            offset = (offset / prev) * loopHeight;
-            while (offset >= loopHeight) offset -= loopHeight;
+
+          refTops = [0];
+          for (var j = 0; j < n; j++) {
+            refTops.push(refTops[j] + refHeights[j]);
+          }
+          cycleTotal = refTops[n];
+          loopHeight = cycleTotal;
+
+          lineBaseY = new Array(lineEls.length);
+          prevHeights = new Array(lineEls.length);
+          for (var k = 0; k < lineEls.length; k++) {
+            var copy = Math.floor(k / n);
+            var ni = k % n;
+            lineBaseY[k] = refTops[ni] + copy * cycleTotal;
+            lineEls[k].style.top = lineBaseY[k] + "px";
+            prevHeights[k] = refHeights[ni];
+          }
+
+          track.style.height = cycleTotal * 2 + "px";
+
+          if (loopHeight > 0) {
+            offset = ((savedOffset % loopHeight) + loopHeight) % loopHeight;
           }
         }
 
@@ -432,60 +486,25 @@
 
         function updateWeights() {
           var marqueeH = marquee.clientHeight || 1;
-          var wTop = parseFloat(els.wTop.value);
-          var wBot = parseFloat(els.wBot.value);
-          var cTop = parseFloat(els.cTop.value);
-          var cBot = parseFloat(els.cBot.value);
-          var kTop = parseFloat(els.kTop.value);
-          var kBot = parseFloat(els.kBot.value);
-          var sTop = parseFloat(els.sTop.value);
-          var sBot = parseFloat(els.sBot.value);
-          var lhTop = parseFloat(els.lhTop.value);
-          var lhBot = parseFloat(els.lhBot.value);
-          var oTop = parseFloat(els.oTop.value);
-          var oBot = parseFloat(els.oBot.value);
           var gamma = parseFloat(els.gm.value);
-
-          // Read every line's current vertical position BEFORE writing any
-          // styles. Per-line font-size shifts the layout, so reading and
-          // writing in the same loop would make later lines see stale
-          // positions and produce the wrong `t`.
           var n = lineEls.length;
-          var positions = new Array(n);
-          for (var i = 0; i < n; i++) {
-            var el = lineEls[i];
-            var yTop = el.offsetTop - offset;
-            positions[i] = {
-              yTop: yTop,
-              yBottom: yTop + el.offsetHeight,
-            };
-          }
+          var nameCount = NAMES.length;
 
           for (var j = 0; j < n; j++) {
             var node = lineEls[j];
-            var pos = positions[j];
-            var t = tForLine(pos.yTop, pos.yBottom, marqueeH);
+            var yTop = lineBaseY[j] - offset;
+            var h = prevHeights[j] || refHeights[j % nameCount] || 1;
+            var t = tForLine(yTop, yTop + h, marqueeH);
             if (t < 0) t = 0;
             else if (t > 1) t = 1;
-            var tt = Math.pow(t, gamma);
-            var w = Math.round(wTop + (wBot - wTop) * tt);
-            var c = cTop + (cBot - cTop) * tt;
-            var cS = (Math.round(c * 10) / 10).toFixed(1);
-            node.style.fontVariationSettings =
-              '"wght" ' + w + ', "CNTR" ' + cS;
-            var k = kTop + (kBot - kTop) * tt;
-            node.style.letterSpacing = k.toFixed(4) + "em";
-            var s = sTop + (sBot - sTop) * tt;
-            node.style.fontSize = s + "px";
-            var lh = lhTop + (lhBot - lhTop) * tt;
-            node.style.lineHeight = lh.toFixed(4);
-            node.style.opacity = oTop + (oBot - oTop) * tt;
+            applyStyleAt(node, Math.pow(t, gamma));
+            prevHeights[j] = node.offsetHeight || h;
           }
         }
 
         function frame(now) {
           if (!lastNow) lastNow = now;
-          var dt = (now - lastNow) / 1000;
+          var dt = Math.min((now - lastNow) / 1000, 0.05);
           lastNow = now;
 
           var speed = parseFloat(els.sp.value);
@@ -495,13 +514,13 @@
           }
           track.style.transform = "translateY(" + -offset + "px)";
 
-          updateWeights();
-          updateWeights();
-
           if (needsMeasure) {
-            measureLoop();
+            measureCycle();
             needsMeasure = false;
           }
+
+          updateWeights();
+          updateWeights();
 
           requestAnimationFrame(frame);
         }
@@ -658,7 +677,11 @@
               k === "sTop" ||
               k === "sBot" ||
               k === "lhTop" ||
-              k === "lhBot"
+              k === "lhBot" ||
+              k === "wTop" ||
+              k === "wBot" ||
+              k === "cTop" ||
+              k === "cBot"
             ) {
               requestMeasure();
             }
@@ -702,7 +725,9 @@
         load();
 
         function start() {
-          requestMeasure();
+          measureCycle();
+          needsMeasure = false;
+          updateWeights();
           requestAnimationFrame(frame);
         }
 
