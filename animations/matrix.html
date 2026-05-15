@@ -37,6 +37,10 @@
         --fg: #000000;
         --glyph-size: 180;
         --metric-size: 14;
+        --pad-t: 40;
+        --pad-r: 40;
+        --pad-b: 40;
+        --pad-l: 40;
         --zoom: 1;
         --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
       }
@@ -102,7 +106,8 @@
         grid-template-rows: repeat(3, 1fr);
         width: 100%;
         height: 100%;
-        padding: 6%;
+        padding: calc(var(--pad-t) * 1px) calc(var(--pad-r) * 1px)
+          calc(var(--pad-b) * 1px) calc(var(--pad-l) * 1px);
       }
 
       .cell {
@@ -128,15 +133,15 @@
         font-variation-settings: "wght" 200, "slnt" 0;
       }
 
-      .measure .col-condensed {
+      .glyph.col-condensed {
         font-family: "IkarusCondensedVariable", system-ui, sans-serif;
       }
 
-      .measure .col-default {
+      .glyph.col-default {
         font-family: "IkarusVariable", system-ui, sans-serif;
       }
 
-      .measure .col-extended {
+      .glyph.col-extended {
         font-family: "IkarusExtendedVariable", system-ui, sans-serif;
       }
 
@@ -150,12 +155,14 @@
 
       .metric {
         position: absolute;
+        font-family: "Courier New", Courier, monospace;
         font-size: calc(var(--metric-size) * 1px);
+        font-weight: 400;
         line-height: 1;
         color: var(--fg);
         white-space: nowrap;
         pointer-events: none;
-        font-variation-settings: "wght" 400, "slnt" 0;
+        font-variant-numeric: tabular-nums;
         transform: translateX(-50%);
       }
 
@@ -307,6 +314,30 @@
       </div>
 
       <div class="group">
+        <p class="group-title">artboard</p>
+        <div class="row">
+          <label for="pt">top</label>
+          <input id="pt" type="range" min="0" max="200" step="2" value="40" />
+          <span class="val" id="pt-val">40px</span>
+        </div>
+        <div class="row">
+          <label for="pr">right</label>
+          <input id="pr" type="range" min="0" max="200" step="2" value="40" />
+          <span class="val" id="pr-val">40px</span>
+        </div>
+        <div class="row">
+          <label for="pb">bottom</label>
+          <input id="pb" type="range" min="0" max="200" step="2" value="40" />
+          <span class="val" id="pb-val">40px</span>
+        </div>
+        <div class="row">
+          <label for="pl">left</label>
+          <input id="pl" type="range" min="0" max="200" step="2" value="40" />
+          <span class="val" id="pl-val">40px</span>
+        </div>
+      </div>
+
+      <div class="group">
         <p class="group-title">animation</p>
         <div class="row">
           <label for="cy">cycle</label>
@@ -354,7 +385,7 @@
             measure.className = "measure";
 
             var metric = document.createElement("span");
-            metric.className = "metric " + COL_CLASS[COLS[c]];
+            metric.className = "metric";
             metric.textContent = "200";
 
             var lineLeft = document.createElement("span");
@@ -397,6 +428,10 @@
           fg: "#000000",
           fs: 180,
           ms: 14,
+          pt: 40,
+          pr: 40,
+          pb: 40,
+          pl: 40,
           cy: 4000,
           hd: 0,
         };
@@ -408,6 +443,10 @@
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           ms: document.getElementById("ms"),
+          pt: document.getElementById("pt"),
+          pr: document.getElementById("pr"),
+          pb: document.getElementById("pb"),
+          pl: document.getElementById("pl"),
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
         };
@@ -417,6 +456,10 @@
           fg: document.getElementById("fg-val"),
           fs: document.getElementById("fs-val"),
           ms: document.getElementById("ms-val"),
+          pt: document.getElementById("pt-val"),
+          pr: document.getElementById("pr-val"),
+          pb: document.getElementById("pb-val"),
+          pl: document.getElementById("pl-val"),
           cy: document.getElementById("cy-val"),
           hd: document.getElementById("hd-val"),
         };
@@ -455,7 +498,16 @@
 
         function formatVal(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
-          if (key === "fs" || key === "ms") return Math.round(Number(v)) + "px";
+          if (
+            key === "fs" ||
+            key === "ms" ||
+            key === "pt" ||
+            key === "pr" ||
+            key === "pb" ||
+            key === "pl"
+          ) {
+            return Math.round(Number(v)) + "px";
+          }
           if (key === "cy") return formatMs(Number(v));
           if (key === "hd") return formatMs(Number(v));
           return String(v);
@@ -471,13 +523,26 @@
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
           root.style.setProperty("--metric-size", parseFloat(els.ms.value));
+          root.style.setProperty("--pad-t", parseFloat(els.pt.value));
+          root.style.setProperty("--pad-r", parseFloat(els.pr.value));
+          root.style.setProperty("--pad-b", parseFloat(els.pb.value));
+          root.style.setProperty("--pad-l", parseFloat(els.pl.value));
           layoutGuides();
         }
 
         function setValue(key, v, persist) {
           els[key].value = v;
           if (vals[key]) vals[key].textContent = formatVal(key, v);
-          if (key === "bg" || key === "fg" || key === "fs" || key === "ms") {
+          if (
+            key === "bg" ||
+            key === "fg" ||
+            key === "fs" ||
+            key === "ms" ||
+            key === "pt" ||
+            key === "pr" ||
+            key === "pb" ||
+            key === "pl"
+          ) {
             applyAppearance();
           }
           if (persist !== false) save();
@@ -529,9 +594,8 @@
             var c = cells[i];
             var w = weightForRow(c.row, p);
             c.weight = w;
-            var settings = '"wght" ' + w.toFixed(1) + ', "slnt" 0';
-            c.glyph.style.fontVariationSettings = settings;
-            c.metric.style.fontVariationSettings = settings;
+            c.glyph.style.fontVariationSettings =
+              '"wght" ' + w.toFixed(1) + ', "slnt" 0';
           }
         }
 
