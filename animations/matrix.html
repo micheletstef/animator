@@ -150,14 +150,12 @@
 
       .metric {
         position: absolute;
-        font-family: "Courier New", Courier, monospace;
         font-size: calc(var(--metric-size) * 1px);
-        font-weight: 400;
-        color: var(--fg);
         line-height: 1;
+        color: var(--fg);
         white-space: nowrap;
         pointer-events: none;
-        font-variant-numeric: tabular-nums;
+        font-variation-settings: "wght" 400, "slnt" 0;
         transform: translateX(-50%);
       }
 
@@ -281,7 +279,7 @@
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
       <p class="hint">
-        Condensed · Ikarus · Extended — 200 · 600 · 1000 wave
+        Condensed · Ikarus · Extended — per-row weight paths
       </p>
 
       <div class="group">
@@ -297,9 +295,14 @@
           <span class="val" id="fg-val">#000000</span>
         </div>
         <div class="row">
-          <label for="fs">size</label>
+          <label for="fs">glyph</label>
           <input id="fs" type="range" min="60" max="360" step="2" value="180" />
           <span class="val" id="fs-val">180px</span>
+        </div>
+        <div class="row">
+          <label for="ms">values</label>
+          <input id="ms" type="range" min="8" max="72" step="1" value="14" />
+          <span class="val" id="ms-val">14px</span>
         </div>
       </div>
 
@@ -336,7 +339,11 @@
         var W_MIN = 200;
         var W_MAX = 1000;
         var ROW_COUNT = 3;
-        var ROW_SIN_PHASE = [-Math.PI / 2, 0, Math.PI / 2];
+        var ROW_KEYFRAMES = [
+          [200, 1000, 200],
+          [600, 1000, 200],
+          [1000, 200, 1000],
+        ];
 
         for (var r = 0; r < ROW_COUNT; r++) {
           for (var c = 0; c < ROW_COUNT; c++) {
@@ -347,7 +354,7 @@
             measure.className = "measure";
 
             var metric = document.createElement("span");
-            metric.className = "metric";
+            metric.className = "metric " + COL_CLASS[COLS[c]];
             metric.textContent = "200";
 
             var lineLeft = document.createElement("span");
@@ -389,6 +396,7 @@
           bg: "#b8b8b8",
           fg: "#000000",
           fs: 180,
+          ms: 14,
           cy: 4000,
           hd: 0,
         };
@@ -399,6 +407,7 @@
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
+          ms: document.getElementById("ms"),
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
         };
@@ -407,6 +416,7 @@
           bg: document.getElementById("bg-val"),
           fg: document.getElementById("fg-val"),
           fs: document.getElementById("fs-val"),
+          ms: document.getElementById("ms-val"),
           cy: document.getElementById("cy-val"),
           hd: document.getElementById("hd-val"),
         };
@@ -428,15 +438,24 @@
           return 0;
         }
 
-        function weightForRow(row, g) {
-          var theta = g * Math.PI * 2;
-          var wave = (Math.sin(theta + ROW_SIN_PHASE[row]) + 1) / 2;
-          return W_MIN + (W_MAX - W_MIN) * wave;
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function weightForRow(row, p) {
+          var kf = ROW_KEYFRAMES[row];
+          var t;
+          if (p <= 0.5) {
+            t = easeInOutCubic(p / 0.5);
+            return lerp(kf[0], kf[1], t);
+          }
+          t = easeInOutCubic((p - 0.5) / 0.5);
+          return lerp(kf[1], kf[2], t);
         }
 
         function formatVal(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
-          if (key === "fs") return Math.round(Number(v)) + "px";
+          if (key === "fs" || key === "ms") return Math.round(Number(v)) + "px";
           if (key === "cy") return formatMs(Number(v));
           if (key === "hd") return formatMs(Number(v));
           return String(v);
@@ -450,19 +469,17 @@
         function applyAppearance() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          var fs = parseFloat(els.fs.value);
-          root.style.setProperty("--glyph-size", fs);
-          root.style.setProperty(
-            "--metric-size",
-            Math.max(10, Math.round(fs * 0.08))
-          );
+          root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
+          root.style.setProperty("--metric-size", parseFloat(els.ms.value));
           layoutGuides();
         }
 
         function setValue(key, v, persist) {
           els[key].value = v;
           if (vals[key]) vals[key].textContent = formatVal(key, v);
-          if (key === "bg" || key === "fg" || key === "fs") applyAppearance();
+          if (key === "bg" || key === "fg" || key === "fs" || key === "ms") {
+            applyAppearance();
+          }
           if (persist !== false) save();
         }
 
@@ -512,8 +529,9 @@
             var c = cells[i];
             var w = weightForRow(c.row, p);
             c.weight = w;
-            c.glyph.style.fontVariationSettings =
-              '"wght" ' + w.toFixed(1) + ', "slnt" 0';
+            var settings = '"wght" ' + w.toFixed(1) + ', "slnt" 0';
+            c.glyph.style.fontVariationSettings = settings;
+            c.metric.style.fontVariationSettings = settings;
           }
         }
 
