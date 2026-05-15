@@ -225,7 +225,7 @@
 
       .row {
         display: grid;
-        grid-template-columns: 64px 1fr 52px;
+        grid-template-columns: 80px 1fr 52px;
         align-items: center;
         gap: 8px;
         margin-bottom: 6px;
@@ -332,24 +332,14 @@
       <div class="group">
         <p class="group-title">artboard</p>
         <div class="row">
-          <label for="pt">top</label>
-          <input id="pt" type="range" min="0" max="200" step="2" value="40" />
-          <span class="val" id="pt-val">40px</span>
+          <label for="py">top/bottom</label>
+          <input id="py" type="range" min="0" max="200" step="2" value="40" />
+          <span class="val" id="py-val">40px</span>
         </div>
         <div class="row">
-          <label for="pr">right</label>
-          <input id="pr" type="range" min="0" max="200" step="2" value="40" />
-          <span class="val" id="pr-val">40px</span>
-        </div>
-        <div class="row">
-          <label for="pb">bottom</label>
-          <input id="pb" type="range" min="0" max="200" step="2" value="40" />
-          <span class="val" id="pb-val">40px</span>
-        </div>
-        <div class="row">
-          <label for="pl">left</label>
-          <input id="pl" type="range" min="0" max="200" step="2" value="40" />
-          <span class="val" id="pl-val">40px</span>
+          <label for="px">left/right</label>
+          <input id="px" type="range" min="0" max="200" step="2" value="40" />
+          <span class="val" id="px-val">40px</span>
         </div>
       </div>
 
@@ -457,10 +447,8 @@
           fg: "#000000",
           fs: 180,
           ms: 14,
-          pt: 40,
-          pr: 40,
-          pb: 40,
-          pl: 40,
+          py: 40,
+          px: 40,
           cy: 4000,
           hd: 0,
         };
@@ -472,10 +460,8 @@
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           ms: document.getElementById("ms"),
-          pt: document.getElementById("pt"),
-          pr: document.getElementById("pr"),
-          pb: document.getElementById("pb"),
-          pl: document.getElementById("pl"),
+          py: document.getElementById("py"),
+          px: document.getElementById("px"),
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
         };
@@ -485,10 +471,8 @@
           fg: document.getElementById("fg-val"),
           fs: document.getElementById("fs-val"),
           ms: document.getElementById("ms-val"),
-          pt: document.getElementById("pt-val"),
-          pr: document.getElementById("pr-val"),
-          pb: document.getElementById("pb-val"),
-          pl: document.getElementById("pl-val"),
+          py: document.getElementById("py-val"),
+          px: document.getElementById("px-val"),
           cy: document.getElementById("cy-val"),
           hd: document.getElementById("hd-val"),
         };
@@ -530,10 +514,8 @@
           if (
             key === "fs" ||
             key === "ms" ||
-            key === "pt" ||
-            key === "pr" ||
-            key === "pb" ||
-            key === "pl"
+            key === "py" ||
+            key === "px"
           ) {
             return Math.round(Number(v)) + "px";
           }
@@ -552,10 +534,12 @@
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
           root.style.setProperty("--metric-size", parseFloat(els.ms.value));
-          root.style.setProperty("--pad-t", parseFloat(els.pt.value));
-          root.style.setProperty("--pad-r", parseFloat(els.pr.value));
-          root.style.setProperty("--pad-b", parseFloat(els.pb.value));
-          root.style.setProperty("--pad-l", parseFloat(els.pl.value));
+          var py = parseFloat(els.py.value);
+          var px = parseFloat(els.px.value);
+          root.style.setProperty("--pad-t", py);
+          root.style.setProperty("--pad-b", py);
+          root.style.setProperty("--pad-r", px);
+          root.style.setProperty("--pad-l", px);
           layoutGuides();
         }
 
@@ -567,10 +551,8 @@
             key === "fg" ||
             key === "fs" ||
             key === "ms" ||
-            key === "pt" ||
-            key === "pr" ||
-            key === "pb" ||
-            key === "pl"
+            key === "py" ||
+            key === "px"
           ) {
             applyAppearance();
           }
@@ -599,6 +581,16 @@
             try {
               data = Object.assign({}, DEFAULTS, JSON.parse(raw));
             } catch (e) {}
+          }
+          if (data.py == null && (data.pt != null || data.pb != null)) {
+            var padTop = data.pt != null ? data.pt : DEFAULTS.py;
+            var padBottom = data.pb != null ? data.pb : padTop;
+            data.py = Math.round((padTop + padBottom) / 2);
+          }
+          if (data.px == null && (data.pl != null || data.pr != null)) {
+            var padLeft = data.pl != null ? data.pl : DEFAULTS.px;
+            var padRight = data.pr != null ? data.pr : padLeft;
+            data.px = Math.round((padLeft + padRight) / 2);
           }
           Object.keys(els).forEach(function (k) {
             setValue(k, data[k], false);
