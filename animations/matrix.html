@@ -286,7 +286,7 @@
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
       <p class="hint">
-        Condensed · Ikarus · Extended — vertical weight wave
+        Condensed · Ikarus · Extended — 200–1000 wave, row phase offset
       </p>
 
       <div class="group">
@@ -370,12 +370,6 @@
         var W_MIN = 200;
         var W_MAX = 1000;
         var ROW_COUNT = 3;
-        var ROW_KEYFRAMES = [
-          [200, 1000, 200],
-          [600, 800, 600],
-          [1000, 200, 1000],
-        ];
-
         for (var r = 0; r < ROW_COUNT; r++) {
           for (var c = 0; c < ROW_COUNT; c++) {
             var cell = document.createElement("div");
@@ -485,23 +479,20 @@
           return a + (b - a) * t;
         }
 
-        var WAVE_SPREAD = 0.65;
+        function fract(x) {
+          return x - Math.floor(x);
+        }
 
-        function phaseForRow(row, p) {
-          var offset =
-            ROW_COUNT > 1 ? (row / (ROW_COUNT - 1)) * WAVE_SPREAD : 0;
-          return Math.max(0, Math.min(1, (p - offset) / (1 - WAVE_SPREAD)));
+        function weightFromPhase(t) {
+          if (t <= 0.5) {
+            return lerp(W_MIN, W_MAX, easeInOutCubic(t / 0.5));
+          }
+          return lerp(W_MAX, W_MIN, easeInOutCubic((t - 0.5) / 0.5));
         }
 
         function weightForRow(row, p) {
-          var kf = ROW_KEYFRAMES[row];
-          var t;
-          if (p <= 0.5) {
-            t = easeInOutCubic(p / 0.5);
-            return lerp(kf[0], kf[1], t);
-          }
-          t = easeInOutCubic((p - 0.5) / 0.5);
-          return lerp(kf[1], kf[2], t);
+          var offset = ROW_COUNT > 0 ? row / ROW_COUNT : 0;
+          return weightFromPhase(fract(p + offset));
         }
 
         function formatVal(key, v) {
@@ -600,7 +591,7 @@
         function setRowWeights(p) {
           for (var i = 0; i < cells.length; i++) {
             var c = cells[i];
-            var w = weightForRow(c.row, phaseForRow(c.row, p));
+            var w = weightForRow(c.row, p);
             c.weight = w;
             c.glyph.style.fontVariationSettings =
               '"wght" ' + w.toFixed(1) + ', "slnt" 0';

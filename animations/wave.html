@@ -36,9 +36,10 @@
         --bg: #ffffff;
         --fg: #000000;
         --glyph-size: 120;
-        --row-gap: 28;
-        --overlap: 72;
-        --condensed-gap: 6;
+        --row-gap: 0;
+        --overlap-ext: 72;
+        --overlap-std: 72;
+        --overlap-con: 0;
         --pad-t: 48;
         --pad-r: 48;
         --pad-b: 48;
@@ -105,7 +106,7 @@
       .wave {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         gap: calc(var(--row-gap) * 1px);
         width: 100%;
@@ -118,17 +119,22 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         line-height: 1;
         flex: 0 0 auto;
+        width: 100%;
       }
 
-      .row.overlap .glyph + .glyph {
-        margin-left: calc(var(--overlap) * -1px);
+      .row-extended .glyph + .glyph {
+        margin-left: calc(var(--overlap-ext) * -1px);
       }
 
-      .row.spaced {
-        gap: calc(var(--condensed-gap) * 1px);
+      .row-standard .glyph + .glyph {
+        margin-left: calc(var(--overlap-std) * -1px);
+      }
+
+      .row-condensed .glyph + .glyph {
+        margin-left: calc(var(--overlap-con) * -1px);
       }
 
       .glyph {
@@ -287,23 +293,28 @@
         </div>
         <div class="row-ui">
           <label for="fs">glyph</label>
-          <input id="fs" type="range" min="48" max="220" step="2" value="120" />
+          <input id="fs" type="range" min="48" max="1200" step="4" value="120" />
           <span class="val" id="fs-val">120px</span>
         </div>
         <div class="row-ui">
           <label for="rg">row gap</label>
-          <input id="rg" type="range" min="0" max="120" step="2" value="28" />
-          <span class="val" id="rg-val">28px</span>
+          <input id="rg" type="range" min="-80" max="120" step="1" value="0" />
+          <span class="val" id="rg-val">0px</span>
         </div>
         <div class="row-ui">
-          <label for="ov">overlap</label>
-          <input id="ov" type="range" min="20" max="140" step="2" value="72" />
-          <span class="val" id="ov-val">72px</span>
+          <label for="oex">ext. overlap</label>
+          <input id="oex" type="range" min="-40" max="200" step="2" value="72" />
+          <span class="val" id="oex-val">72px</span>
         </div>
         <div class="row-ui">
-          <label for="cg">cond. gap</label>
-          <input id="cg" type="range" min="0" max="48" step="1" value="6" />
-          <span class="val" id="cg-val">6px</span>
+          <label for="ost">std. overlap</label>
+          <input id="ost" type="range" min="-40" max="200" step="2" value="72" />
+          <span class="val" id="ost-val">72px</span>
+        </div>
+        <div class="row-ui">
+          <label for="oco">cond. overlap</label>
+          <input id="oco" type="range" min="-40" max="200" step="2" value="0" />
+          <span class="val" id="oco-val">0px</span>
         </div>
       </div>
 
@@ -347,9 +358,9 @@
     <script>
       (function () {
         var ROWS = [
-          { id: "extended", className: "row-extended", count: 8, overlap: true },
-          { id: "standard", className: "row-standard", count: 8, overlap: true },
-          { id: "condensed", className: "row-condensed", count: 9, overlap: false },
+          { id: "extended", className: "row-extended", count: 8 },
+          { id: "standard", className: "row-standard", count: 8 },
+          { id: "condensed", className: "row-condensed", count: 9 },
         ];
 
         var root = document.documentElement;
@@ -358,8 +369,7 @@
 
         ROWS.forEach(function (row) {
           var rowEl = document.createElement("div");
-          rowEl.className =
-            "row " + row.className + (row.overlap ? " overlap" : " spaced");
+          rowEl.className = "row " + row.className;
 
           for (var i = 0; i < row.count; i++) {
             var glyph = document.createElement("span");
@@ -372,15 +382,16 @@
           wave.appendChild(rowEl);
         });
 
-        var LS_KEY = "wave-anim:settings:v1";
+        var LS_KEY = "wave-anim:settings:v2";
 
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
           fs: 120,
-          rg: 28,
-          ov: 72,
-          cg: 6,
+          rg: 0,
+          oex: 72,
+          ost: 72,
+          oco: 0,
           py: 48,
           px: 48,
           cy: 5000,
@@ -395,8 +406,9 @@
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           rg: document.getElementById("rg"),
-          ov: document.getElementById("ov"),
-          cg: document.getElementById("cg"),
+          oex: document.getElementById("oex"),
+          ost: document.getElementById("ost"),
+          oco: document.getElementById("oco"),
           py: document.getElementById("py"),
           px: document.getElementById("px"),
           cy: document.getElementById("cy"),
@@ -409,8 +421,9 @@
           fg: document.getElementById("fg-val"),
           fs: document.getElementById("fs-val"),
           rg: document.getElementById("rg-val"),
-          ov: document.getElementById("ov-val"),
-          cg: document.getElementById("cg-val"),
+          oex: document.getElementById("oex-val"),
+          ost: document.getElementById("ost-val"),
+          oco: document.getElementById("oco-val"),
           py: document.getElementById("py-val"),
           px: document.getElementById("px-val"),
           cy: document.getElementById("cy-val"),
@@ -433,8 +446,9 @@
           if (
             key === "fs" ||
             key === "rg" ||
-            key === "ov" ||
-            key === "cg" ||
+            key === "oex" ||
+            key === "ost" ||
+            key === "oco" ||
             key === "py" ||
             key === "px"
           ) {
@@ -455,8 +469,9 @@
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
           root.style.setProperty("--row-gap", parseFloat(els.rg.value));
-          root.style.setProperty("--overlap", parseFloat(els.ov.value));
-          root.style.setProperty("--condensed-gap", parseFloat(els.cg.value));
+          root.style.setProperty("--overlap-ext", parseFloat(els.oex.value));
+          root.style.setProperty("--overlap-std", parseFloat(els.ost.value));
+          root.style.setProperty("--overlap-con", parseFloat(els.oco.value));
           var py = parseFloat(els.py.value);
           var px = parseFloat(els.px.value);
           root.style.setProperty("--pad-t", py);
@@ -473,8 +488,9 @@
             key === "fg" ||
             key === "fs" ||
             key === "rg" ||
-            key === "ov" ||
-            key === "cg" ||
+            key === "oex" ||
+            key === "ost" ||
+            key === "oco" ||
             key === "py" ||
             key === "px"
           ) {
@@ -505,6 +521,13 @@
             try {
               data = Object.assign({}, DEFAULTS, JSON.parse(raw));
             } catch (e) {}
+          }
+          if (data.ov != null) {
+            if (data.oex == null) data.oex = data.ov;
+            if (data.ost == null) data.ost = data.ov;
+          }
+          if (data.cg != null && data.oco == null) {
+            data.oco = -data.cg;
           }
           Object.keys(els).forEach(function (k) {
             setValue(k, data[k], false);
