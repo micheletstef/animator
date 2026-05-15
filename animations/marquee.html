@@ -6,12 +6,11 @@
     <title>names marquee</title>
     <style>
       @font-face {
-        font-family: "IkarusPlusVariable";
-        src: url("../fonts/ABCIkarusPlusVariable.ttf")
+        font-family: "IkarusCondensedVariable";
+        src: url("../fonts/ABCIkarusCondensedVariable.ttf")
           format("truetype-variations");
-        font-weight: 200 1000;
-        font-stretch: 65% 130%;
-        font-style: oblique -12deg 0deg;
+        font-weight: 100 1000;
+        font-style: normal;
         font-display: block;
       }
 
@@ -79,7 +78,7 @@
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        font-family: "IkarusPlusVariable", system-ui, sans-serif;
+        font-family: "IkarusCondensedVariable", system-ui, sans-serif;
         transform: scale(var(--zoom));
         transform-origin: top left;
       }
@@ -96,7 +95,7 @@
       }
 
       .track {
-        position: relative;
+        position: absolute;
         left: 0;
         right: 0;
         top: 0;
@@ -104,14 +103,11 @@
       }
 
       .line {
-        position: absolute;
-        left: 0;
-        right: 0;
-        margin: 0;
+        display: block;
         font-size: 220px;
         white-space: nowrap;
         text-align: left;
-        font-variation-settings: "wght" 1000, "CNTR" 100;
+        font-variation-settings: "wght" 1000;
       }
 
       .panel {
@@ -269,13 +265,8 @@
         </div>
         <div class="row">
           <label for="wTop">weight</label>
-          <input id="wTop" type="range" min="200" max="1000" step="1" value="1000" />
+          <input id="wTop" type="range" min="100" max="1000" step="1" value="1000" />
           <span class="val" id="wTopVal">1000</span>
-        </div>
-        <div class="row">
-          <label for="cTop">cntr</label>
-          <input id="cTop" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="cTopVal">100</span>
         </div>
         <div class="row">
           <label for="oTop">opacity</label>
@@ -303,13 +294,8 @@
         </div>
         <div class="row">
           <label for="wBot">weight</label>
-          <input id="wBot" type="range" min="200" max="1000" step="1" value="500" />
+          <input id="wBot" type="range" min="100" max="1000" step="1" value="500" />
           <span class="val" id="wBotVal">500</span>
-        </div>
-        <div class="row">
-          <label for="cBot">cntr</label>
-          <input id="cBot" type="range" min="0" max="100" step="1" value="0" />
-          <span class="val" id="cBotVal">0</span>
         </div>
         <div class="row">
           <label for="oBot">opacity</label>
@@ -395,18 +381,20 @@
         buildLines();
 
         var loopHeight = 0;
-        var cycleTotal = 0;
-        var refHeights = [];
-        var refTops = [];
-        var lineBaseY = [];
-        var prevHeights = [];
-        var needsMeasure = true;
+        function measure() {
+          var first = lineEls[0];
+          var firstSecond = lineEls[NAMES.length];
+          if (!first || !firstSecond) return;
+          loopHeight = firstSecond.offsetTop - first.offsetTop;
+        }
 
-        function applyStyleAt(node, tt) {
+        var offset = 0;
+        var lastNow = 0;
+
+        function updateWeights() {
+          var marqueeH = marquee.clientHeight || 1;
           var wTop = parseFloat(els.wTop.value);
           var wBot = parseFloat(els.wBot.value);
-          var cTop = parseFloat(els.cTop.value);
-          var cBot = parseFloat(els.cBot.value);
           var kTop = parseFloat(els.kTop.value);
           var kBot = parseFloat(els.kBot.value);
           var sTop = parseFloat(els.sTop.value);
@@ -415,112 +403,63 @@
           var lhBot = parseFloat(els.lhBot.value);
           var oTop = parseFloat(els.oTop.value);
           var oBot = parseFloat(els.oBot.value);
-          var w = Math.round(wTop + (wBot - wTop) * tt);
-          var c = cTop + (cBot - cTop) * tt;
-          var cS = (Math.round(c * 10) / 10).toFixed(1);
-          node.style.fontVariationSettings =
-            '"wght" ' + w + ', "CNTR" ' + cS;
-          node.style.letterSpacing =
-            (kTop + (kBot - kTop) * tt).toFixed(4) + "em";
-          node.style.fontSize = sTop + (sBot - sTop) * tt + "px";
-          node.style.lineHeight = (lhTop + (lhBot - lhTop) * tt).toFixed(4);
-          node.style.opacity = oTop + (oBot - oTop) * tt;
-        }
-
-        function measureCycle() {
-          var n = NAMES.length;
-          if (!n || !lineEls.length) return;
-
-          var savedOffset = offset;
-          refHeights = new Array(n);
-          for (var i = 0; i < n; i++) {
-            applyStyleAt(lineEls[i], 0);
-            var hTop = lineEls[i].offsetHeight || 1;
-            applyStyleAt(lineEls[i], 1);
-            var hBot = lineEls[i].offsetHeight || 1;
-            refHeights[i] = Math.max(hTop, hBot, 1);
-          }
-
-          refTops = [0];
-          for (var j = 0; j < n; j++) {
-            refTops.push(refTops[j] + refHeights[j]);
-          }
-          cycleTotal = refTops[n];
-          loopHeight = cycleTotal;
-
-          lineBaseY = new Array(lineEls.length);
-          prevHeights = new Array(lineEls.length);
-          for (var k = 0; k < lineEls.length; k++) {
-            var copy = Math.floor(k / n);
-            var ni = k % n;
-            lineBaseY[k] = refTops[ni] + copy * cycleTotal;
-            lineEls[k].style.top = lineBaseY[k] + "px";
-            prevHeights[k] = refHeights[ni];
-          }
-
-          track.style.height = cycleTotal * 2 + "px";
-
-          if (loopHeight > 0) {
-            offset = ((savedOffset % loopHeight) + loopHeight) % loopHeight;
-          }
-        }
-
-        function requestMeasure() {
-          needsMeasure = true;
-        }
-
-        var offset = 0;
-        var lastNow = 0;
-
-        // t: 0 = largest (top), 1 = smallest (bottom). Entering lines use the
-        // top edge; exiting lines use the bottom edge so size keeps growing
-        // until the name has left the frame (bottom-only mapping clamped early
-        // and made names shrink at the bottom before they grew).
-        function tForLine(yTop, yBottom, marqueeH) {
-          if (yBottom <= 0) return 0;
-          if (yTop >= marqueeH) return 1;
-          if (yBottom > marqueeH) return yTop / marqueeH;
-          if (yTop < 0) return yBottom / marqueeH;
-          return (yTop + yBottom) * 0.5 / marqueeH;
-        }
-
-        function updateWeights() {
-          var marqueeH = marquee.clientHeight || 1;
           var gamma = parseFloat(els.gm.value);
+
+          // Read every line's current vertical position BEFORE writing any
+          // styles. Per-line font-size shifts the layout, so reading and
+          // writing in the same loop would make later lines see stale
+          // positions and produce the wrong `t`.
+          // Use the line's bottom edge for `t` so scaling keeps going until
+          // the name has fully scrolled out the top (center-based `t` hit 0
+          // while the line was still partly visible).
           var n = lineEls.length;
-          var nameCount = NAMES.length;
+          var bottoms = new Array(n);
+          for (var i = 0; i < n; i++) {
+            var el = lineEls[i];
+            var yTop = el.offsetTop - offset;
+            bottoms[i] = yTop + el.offsetHeight;
+          }
 
           for (var j = 0; j < n; j++) {
             var node = lineEls[j];
-            var yTop = lineBaseY[j] - offset;
-            var h = prevHeights[j] || refHeights[j % nameCount] || 1;
-            var t = tForLine(yTop, yTop + h, marqueeH);
+            var t = bottoms[j] / marqueeH;
             if (t < 0) t = 0;
             else if (t > 1) t = 1;
-            applyStyleAt(node, Math.pow(t, gamma));
-            prevHeights[j] = node.offsetHeight || h;
+            var tt = Math.pow(t, gamma);
+            var w = Math.round(wTop + (wBot - wTop) * tt);
+            node.style.fontVariationSettings = '"wght" ' + w;
+            var k = kTop + (kBot - kTop) * tt;
+            node.style.letterSpacing = k.toFixed(4) + "em";
+            var s = sTop + (sBot - sTop) * tt;
+            node.style.fontSize = s + "px";
+            var lh = lhTop + (lhBot - lhTop) * tt;
+            node.style.lineHeight = lh.toFixed(4);
+            node.style.opacity = oTop + (oBot - oTop) * tt;
           }
         }
 
         function frame(now) {
           if (!lastNow) lastNow = now;
-          var dt = Math.min((now - lastNow) / 1000, 0.05);
+          var dt = (now - lastNow) / 1000;
           lastNow = now;
 
           var speed = parseFloat(els.sp.value);
           offset += speed * dt;
           if (loopHeight > 0) {
-            while (offset >= loopHeight) offset -= loopHeight;
+            offset = ((offset % loopHeight) + loopHeight) % loopHeight;
           }
           track.style.transform = "translateY(" + -offset + "px)";
 
-          if (needsMeasure) {
-            measureCycle();
-            needsMeasure = false;
-          }
+          updateWeights();
 
-          updateWeights();
-          updateWeights();
+          // Per-line font-size means line heights (and therefore the loop
+          // length) can drift between frames. Re-measure and rescale offset
+          // so the visible position is preserved across the change.
+          var prev = loopHeight;
+          measure();
+          if (prev > 0 && loopHeight > 0 && prev !== loopHeight) {
+            offset = (offset / prev) * loopHeight;
+          }
 
           requestAnimationFrame(frame);
         }
@@ -540,8 +479,6 @@
           kBot: 0.02,
           wTop: 1000,
           wBot: 500,
-          cTop: 100,
-          cBot: 0,
           gm: 1,
           oTop: 1,
           oBot: 0.2,
@@ -565,8 +502,6 @@
           kBot: document.getElementById("kBot"),
           wTop: document.getElementById("wTop"),
           wBot: document.getElementById("wBot"),
-          cTop: document.getElementById("cTop"),
-          cBot: document.getElementById("cBot"),
           gm: document.getElementById("gm"),
           oTop: document.getElementById("oTop"),
           oBot: document.getElementById("oBot"),
@@ -586,8 +521,6 @@
           kBot: document.getElementById("kBotVal"),
           wTop: document.getElementById("wTopVal"),
           wBot: document.getElementById("wBotVal"),
-          cTop: document.getElementById("cTopVal"),
-          cBot: document.getElementById("cBotVal"),
           gm: document.getElementById("gmVal"),
           oTop: document.getElementById("oTopVal"),
           oBot: document.getElementById("oBotVal"),
@@ -607,7 +540,7 @@
             return Number(v).toFixed(2);
           if (key === "kTop" || key === "kBot")
             return Math.round(Number(v) * 1000) + "";
-          if (key === "wTop" || key === "wBot" || key === "cTop" || key === "cBot" || key === "sp")
+          if (key === "wTop" || key === "wBot" || key === "sp")
             return Math.round(Number(v)) + "";
           return Math.round(Number(v)) + "px";
         }
@@ -677,13 +610,9 @@
               k === "sTop" ||
               k === "sBot" ||
               k === "lhTop" ||
-              k === "lhBot" ||
-              k === "wTop" ||
-              k === "wBot" ||
-              k === "cTop" ||
-              k === "cBot"
+              k === "lhBot"
             ) {
-              requestMeasure();
+              requestAnimationFrame(measure);
             }
           });
         });
@@ -692,7 +621,7 @@
           Object.keys(DEFAULTS).forEach(function (k) {
             setValue(k, DEFAULTS[k]);
           });
-          requestMeasure();
+          requestAnimationFrame(measure);
         });
 
         var stageWrap = document.getElementById("stageWrap");
@@ -719,15 +648,13 @@
         );
 
         window.addEventListener("resize", function () {
-          requestMeasure();
+          requestAnimationFrame(measure);
         });
 
         load();
 
         function start() {
-          measureCycle();
-          needsMeasure = false;
-          updateWeights();
+          measure();
           requestAnimationFrame(frame);
         }
 
