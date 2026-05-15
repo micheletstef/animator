@@ -356,7 +356,7 @@
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="ghost animation">
           <div class="ghost-layer" id="ghosts"></div>
-          <span class="glyph" id="glyph">A</span>
+          <span class="glyph" id="glyph">B</span>
         </div>
       </div>
     </div>
@@ -463,6 +463,7 @@
       </div>
     </aside>
 
+    <script src="artboard-zoom.js"></script>
     <script>
       (function () {
         var glyph = document.getElementById("glyph");
@@ -487,7 +488,7 @@
             var w = wMin + ((wMax - wMin) * i) / denom;
             var el = document.createElement("span");
             el.className = "ghost";
-            el.textContent = "A";
+            el.textContent = "B";
             el.style.fontVariationSettings = '"wght" ' + w.toFixed(1);
             ghostLayer.appendChild(el);
           }
@@ -657,6 +658,9 @@
         }
 
         function setValue(key, v, persist) {
+          if (key === "zm") {
+            v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
+          }
           els[key].value = v;
           if (key === "wMin" || key === "wMax") {
             updateWeightUI();
@@ -670,6 +674,7 @@
         function save() {
           var out = {};
           Object.keys(els).forEach(function (k) {
+            if (k === "zm") return;
             out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
           });
           try {
@@ -691,10 +696,15 @@
               data = Object.assign({}, DEFAULTS, parsed);
             } catch (e) {}
           }
+          data.zm = ArtboardZoom.resolve(data.zm);
           Object.keys(els).forEach(function (k) {
             setValue(k, data[k], false);
           });
         }
+
+        ArtboardZoom.onChange(function (z) {
+          setValue("zm", z, false);
+        });
 
         Object.keys(els).forEach(function (k) {
           if (k === "zm") return;

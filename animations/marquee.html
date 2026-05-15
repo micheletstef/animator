@@ -110,7 +110,7 @@
         white-space: nowrap;
         text-align: left;
         font-variation-settings: "wght" 1000;
-        overflow: hidden;
+        overflow: visible;
       }
 
       .panel {
@@ -301,7 +301,7 @@
         <p class="group-title">spacing</p>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
+          <input id="lh" type="range" min="-0.3" max="1.6" step="0.01" value="0.92" />
           <span class="val" id="lhVal">0.92</span>
         </div>
       </div>
@@ -348,6 +348,7 @@
       </div>
     </aside>
 
+    <script src="artboard-zoom.js"></script>
     <script>
       (function () {
         var NAMES = [
@@ -415,6 +416,26 @@
           node.style.opacity = p.oTop + (p.oBot - p.oTop) * tt;
         }
 
+        // Max height across the full top→bottom gradient so animated
+        // typography never outgrows its slot and gets clipped.
+        function measureMaxLineHeight(node, p) {
+          var maxH = 0;
+          node.style.height = "auto";
+          node.style.minHeight = "0";
+          for (var step = 0; step <= 12; step++) {
+            applyTypography(node, step / 12, p);
+            var s = p.sTop + (p.sBot - p.sTop) * (step / 12);
+            // Tight/negative leading shrinks the line box but not the glyphs.
+            var ink = Math.max(
+              node.offsetHeight,
+              node.scrollHeight,
+              s * Math.max(p.lh, 0.55)
+            );
+            maxH = Math.max(maxH, ink);
+          }
+          return Math.ceil(maxH);
+        }
+
         // Fixed slot layout decouples scroll position from live DOM metrics.
         // Typography still interpolates by viewport position, but changing
         // font-size no longer shifts the track and retriggers loop rescaling.
@@ -426,17 +447,16 @@
           slotHeights = [];
           for (var i = 0; i < lineEls.length; i++) {
             var node = lineEls[i];
+            var h = measureMaxLineHeight(node, p);
             var t = 0;
-            var h = 1;
             for (var iter = 0; iter < 8; iter++) {
               applyTypography(node, t, p);
-              node.style.height = "auto";
-              h = node.offsetHeight;
               t = marqueeH > 0 ? Math.min(1, (y + h) / marqueeH) : 0;
             }
             slotHeights[i] = h;
             slotTops[i] = y;
-            node.style.height = h + "px";
+            node.style.height = "auto";
+            node.style.minHeight = h + "px";
             y += h;
           }
           loopHeight = slotTops[NAMES.length] || 0;
@@ -574,6 +594,9 @@
         }
 
         function setValue(key, v, persist) {
+          if (key === "zm") {
+            v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
+          }
           els[key].value = v;
           if (vals[key]) {
             vals[key].textContent = fmt(key, v);
@@ -585,6 +608,7 @@
         function save() {
           var out = {};
           Object.keys(els).forEach(function (k) {
+            if (k === "zm") return;
             out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
           });
           try {
@@ -613,10 +637,20 @@
               data = Object.assign({}, DEFAULTS, parsed);
             } catch (e) {}
           }
+          if (els.lh) {
+            var lhMin = parseFloat(els.lh.min);
+            var lhMax = parseFloat(els.lh.max);
+            data.lh = Math.max(lhMin, Math.min(lhMax, data.lh));
+          }
+          data.zm = ArtboardZoom.resolve(data.zm);
           Object.keys(els).forEach(function (k) {
             setValue(k, data[k], false);
           });
         }
+
+        ArtboardZoom.onChange(function (z) {
+          setValue("zm", z, false);
+        });
 
         Object.keys(els).forEach(function (k) {
           if (k === "zm") return;

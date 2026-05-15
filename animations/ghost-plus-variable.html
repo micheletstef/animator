@@ -473,6 +473,7 @@
       </div>
     </aside>
 
+    <script src="artboard-zoom.js"></script>
     <script>
       (function () {
         var glyph = document.getElementById("glyph");
@@ -679,7 +680,9 @@
         }
 
         function setValue(key, v, persist) {
-          if (key === "cMin" || key === "cMax") v = clampAxis("CNTR", v);
+          if (key === "zm") {
+            v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
+          } else if (key === "cMin" || key === "cMax") v = clampAxis("CNTR", v);
           else if (key === "wght") v = clampAxis("wght", v);
           els[key].value = v;
           if (key === "cMin" || key === "cMax") {
@@ -696,6 +699,7 @@
         function save() {
           var out = {};
           Object.keys(els).forEach(function (k) {
+            if (k === "zm") return;
             out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
           });
           try {
@@ -717,10 +721,15 @@
               data = Object.assign({}, DEFAULTS, parsed);
             } catch (e) {}
           }
+          data.zm = ArtboardZoom.resolve(data.zm);
           Object.keys(els).forEach(function (k) {
             setValue(k, data[k], false);
           });
         }
+
+        ArtboardZoom.onChange(function (z) {
+          setValue("zm", z, false);
+        });
 
         Object.keys(els).forEach(function (k) {
           if (k === "zm") return;

@@ -1,12 +1,6 @@
 {
   "animations": [
     {
-      "id": "axes-diagram",
-      "label": "axes · variable states",
-      "url": "animations/axes-diagram.html",
-      "mtime": 1777931304
-    },
-    {
       "id": "ghost",
       "label": "ghost",
       "url": "animations/ghost.html",
@@ -23,12 +17,6 @@
       "label": "ghost · contrast variable",
       "url": "animations/ghost-contrast-variable.html",
       "mtime": 1777930002
-    },
-    {
-      "id": "ghost-flair-variable",
-      "label": "ghost · flair variable",
-      "url": "animations/ghost-flair-variable.html",
-      "mtime": 1777929972
     },
     {
       "id": "ghost-plus-variable",
