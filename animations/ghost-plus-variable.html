@@ -378,7 +378,7 @@
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
       <p class="hint">
-        ABCIkarusPlusVariable (CNTR) — shift + scroll to zoom
+        ABCIkarusPlusVariable (wght · CNTR) — shift + scroll to zoom
       </p>
 
       <div class="group">
@@ -406,6 +406,15 @@
           <label for="sk">stroke</label>
           <input id="sk" type="range" min="0.5" max="6" step="0.1" value="1" />
           <span class="val" id="skVal">1.0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">weight · wght</p>
+        <div class="row">
+          <label for="wght">wght</label>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="500" />
+          <span class="val" id="wghtVal">500</span>
         </div>
       </div>
 
@@ -472,15 +481,51 @@
 
         var FONT_FAMILY = '"IkarusPlusVariable", system-ui, sans-serif';
 
-        function fvarCntr(c) {
+        /* ABCIkarusPlusVariable axis bounds (fonts/fonts.json) */
+        var AXES = {
+          CNTR: { min: 0, max: 100, step: 1, default: 0 },
+          wght: { min: 200, max: 1000, step: 1, default: 500 },
+          wdth: { min: 65, max: 130, step: 1, default: 100 },
+          slnt: { min: -12, max: 0, step: 0.25, default: 0 },
+        };
+
+        function clampAxis(tag, v) {
+          var a = AXES[tag];
+          return Math.max(a.min, Math.min(a.max, Number(v)));
+        }
+
+        function fmtAxis(tag, v) {
+          var a = AXES[tag];
+          if (tag === "CNTR") return (Math.round(v * 10) / 10).toFixed(1);
+          if (tag === "wght") return Math.round(v).toString();
+          return String(v);
+        }
+
+        function fvarSettings(cntr) {
+          var w = clampAxis("wght", els.wght.value);
           return (
-            '"wght" 500, "wdth" 100, "slnt" 0, "CNTR" ' +
-            (Math.round(c * 10) / 10).toFixed(1)
+            '"wght" ' +
+            fmtAxis("wght", w) +
+            ', "wdth" ' +
+            AXES.wdth.default +
+            ', "slnt" ' +
+            AXES.slnt.default +
+            ', "CNTR" ' +
+            fmtAxis("CNTR", cntr)
           );
         }
 
-        function fmtCntr(c) {
-          return (Math.round(c * 10) / 10).toFixed(1);
+        function applyAxisLimits() {
+          var c = AXES.CNTR;
+          [els.cMin, els.cMax].forEach(function (el) {
+            el.min = c.min;
+            el.max = c.max;
+            el.step = c.step;
+          });
+          var w = AXES.wght;
+          els.wght.min = w.min;
+          els.wght.max = w.max;
+          els.wght.step = w.step;
         }
 
         function easeInOutCubic(t) {
@@ -504,7 +549,7 @@
             el.className = "ghost";
             el.textContent = "A";
             el.style.fontFamily = FONT_FAMILY;
-            el.style.fontVariationSettings = fvarCntr(c);
+            el.style.fontVariationSettings = fvarSettings(c);
             ghostLayer.appendChild(el);
           }
         }
@@ -539,15 +584,15 @@
           }
 
           var cntr = cMax - (cMax - cMin) * eased;
-          glyph.style.fontVariationSettings = fvarCntr(cntr);
-          varLabel.textContent = fmtCntr(cntr);
+          glyph.style.fontVariationSettings = fvarSettings(cntr);
+          varLabel.textContent = fmtAxis("CNTR", cntr);
 
           requestAnimationFrame(function (n2) {
             frame(n2, t0);
           });
         }
 
-        var LS_KEY = "ghost-anim:plus-variable:v1";
+        var LS_KEY = "ghost-anim:plus-variable:v2";
         var root = document.documentElement;
 
         var DEFAULTS = {
@@ -556,8 +601,9 @@
           fg: "#000000",
           fs: 900,
           sk: 1,
-          cMin: 0,
-          cMax: 100,
+          wght: AXES.wght.default,
+          cMin: AXES.CNTR.min,
+          cMax: AXES.CNTR.max,
           gh: 14,
           cy: 5200,
           hd: 450,
@@ -571,6 +617,7 @@
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           sk: document.getElementById("sk"),
+          wght: document.getElementById("wght"),
           cMin: document.getElementById("cMin"),
           cMax: document.getElementById("cMax"),
           gh: document.getElementById("gh"),
@@ -582,6 +629,7 @@
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           sk: document.getElementById("skVal"),
+          wght: document.getElementById("wghtVal"),
           gh: document.getElementById("ghVal"),
           cy: document.getElementById("cyVal"),
           hd: document.getElementById("hdVal"),
@@ -612,7 +660,7 @@
           var hiPct = ((hi - min) / (max - min)) * 100;
           cFill.style.left = loPct + "%";
           cFill.style.width = Math.max(0, hiPct - loPct) + "%";
-          cVal.textContent = fmtCntr(lo) + " / " + fmtCntr(hi);
+          cVal.textContent = fmtAxis("CNTR", lo) + " / " + fmtAxis("CNTR", hi);
         }
 
         var ghostErode = document.getElementById("ghost-erode");
@@ -631,9 +679,13 @@
         }
 
         function setValue(key, v, persist) {
+          if (key === "cMin" || key === "cMax") v = clampAxis("CNTR", v);
+          else if (key === "wght") v = clampAxis("wght", v);
           els[key].value = v;
           if (key === "cMin" || key === "cMax") {
             updateCntrUI();
+          } else if (key === "wght" && vals.wght) {
+            vals.wght.textContent = fmtAxis("wght", v);
           } else if (vals[key]) {
             vals[key].textContent = fmt(key, v);
           }
@@ -675,7 +727,7 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "gh" || k === "cMin" || k === "cMax") {
+            if (k === "gh" || k === "cMin" || k === "cMax" || k === "wght") {
               buildGhosts();
             }
           });
@@ -711,6 +763,7 @@
           { passive: false }
         );
 
+        applyAxisLimits();
         load();
 
         function start() {
@@ -722,7 +775,9 @@
 
         if (document.fonts && document.fonts.load) {
           Promise.all([
-            document.fonts.load('1 500 100px ' + FONT_FAMILY),
+            document.fonts.load(
+              "1 " + AXES.wght.default + " 100px " + FONT_FAMILY
+            ),
             document.fonts.ready,
           ])
             .then(start)
