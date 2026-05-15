@@ -123,16 +123,13 @@
         z-index: 2;
       }
 
-      /* SVG text per ghost — dashed stroke. */
+      /* Filter per ghost so each CNTR step renders its own outline; a parent-level
+         filter would merge all glyphs into one combined mask (single ring). */
       .ghost {
-        overflow: visible;
-      }
-
-      .ghost text {
-        fill: none;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        vector-effect: non-scaling-stroke;
+        color: var(--fg);
+        -webkit-text-fill-color: currentColor;
+        -webkit-text-stroke: 0;
+        filter: url(#ghost-outline);
       }
 
       .panel {
@@ -342,7 +339,29 @@
       style="position: absolute; pointer-events: none"
       aria-hidden="true"
     >
-      <defs></defs>
+      <defs>
+        <filter
+          id="ghost-outline"
+          filterUnits="objectBoundingBox"
+          x="-5%"
+          y="-5%"
+          width="110%"
+          height="110%"
+        >
+          <feMorphology
+            id="ghost-erode"
+            operator="erode"
+            radius="1"
+            in="SourceAlpha"
+            result="eroded"
+          />
+          <feComposite
+            operator="out"
+            in="SourceGraphic"
+            in2="eroded"
+          />
+        </filter>
+      </defs>
     </svg>
 
     <div class="stage-wrap" id="stageWrap">
@@ -389,20 +408,6 @@
           <span class="val" id="skVal">1.0px</span>
         </div>
       </div>
-      <div class="group">
-        <p class="group-title">outline</p>
-        <div class="row">
-          <label for="dash">dash</label>
-          <input id="dash" type="range" min="1" max="48" step="1" value="6" />
-          <span class="val" id="dashVal">6px</span>
-        </div>
-        <div class="row">
-          <label for="gap">gap</label>
-          <input id="gap" type="range" min="1" max="48" step="1" value="6" />
-          <span class="val" id="gapVal">6px</span>
-        </div>
-      </div>
-
 
       <div class="group">
         <p class="group-title">weight · wght</p>
@@ -527,37 +532,6 @@
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         }
 
-        function createGhostSvg(fvs) {
-          var fs = parseFloat(els.fs.value);
-          var sk = Math.max(0.5, parseFloat(els.sk.value));
-          var dash = Math.max(1, parseFloat(els.dash.value));
-          var gap = Math.max(1, parseFloat(els.gap.value));
-          var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-          svg.setAttribute("class", "ghost");
-          svg.setAttribute("viewBox", "0 0 1000 1000");
-          svg.setAttribute("overflow", "visible");
-          svg.style.width = fs + "px";
-          svg.style.height = fs + "px";
-          var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          text.setAttribute("x", "500");
-          text.setAttribute("y", "500");
-          text.setAttribute("text-anchor", "middle");
-          text.setAttribute("dominant-baseline", "central");
-          text.setAttribute("fill", "none");
-          text.setAttribute("stroke", els.fg.value);
-          text.setAttribute("stroke-width", String(sk));
-          text.setAttribute("stroke-dasharray", dash + " " + gap);
-          text.setAttribute("stroke-linecap", "round");
-          text.setAttribute("stroke-linejoin", "round");
-          text.setAttribute("vector-effect", "non-scaling-stroke");
-          text.setAttribute("font-size", "900");
-          text.style.fontFamily = FONT_FAMILY;
-          text.style.fontVariationSettings = fvs;
-          text.textContent = "A";
-          svg.appendChild(text);
-          return svg;
-        }
-
         function buildGhosts() {
           ghostLayer.innerHTML = "";
           var n = Math.max(1, Math.round(parseFloat(els.gh.value)));
@@ -571,7 +545,11 @@
           var denom = n <= 1 ? 1 : n - 1;
           for (var i = 0; i < n; i++) {
             var c = cMin + ((cMax - cMin) * i) / denom;
-            var el = createGhostSvg(fvarSettings(c));
+            var el = document.createElement("span");
+            el.className = "ghost";
+            el.textContent = "A";
+            el.style.fontFamily = FONT_FAMILY;
+            el.style.fontVariationSettings = fvarSettings(c);
             ghostLayer.appendChild(el);
           }
         }
@@ -614,7 +592,7 @@
           });
         }
 
-        var LS_KEY = "ghost-anim:plus-variable:v3";
+        var LS_KEY = "ghost-anim:plus-variable:v2";
         var root = document.documentElement;
 
         var DEFAULTS = {
@@ -623,8 +601,6 @@
           fg: "#000000",
           fs: 900,
           sk: 1,
-          dash: 6,
-          gap: 6,
           wght: AXES.wght.default,
           cMin: AXES.CNTR.min,
           cMax: AXES.CNTR.max,
@@ -641,8 +617,6 @@
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           sk: document.getElementById("sk"),
-          dash: document.getElementById("dash"),
-          gap: document.getElementById("gap"),
           wght: document.getElementById("wght"),
           cMin: document.getElementById("cMin"),
           cMax: document.getElementById("cMax"),
@@ -655,8 +629,6 @@
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           sk: document.getElementById("skVal"),
-          dash: document.getElementById("dashVal"),
-          gap: document.getElementById("gapVal"),
           wght: document.getElementById("wghtVal"),
           gh: document.getElementById("ghVal"),
           cy: document.getElementById("cyVal"),
@@ -691,26 +663,18 @@
           cVal.textContent = fmtAxis("CNTR", lo) + " / " + fmtAxis("CNTR", hi);
         }
 
-        function updateGhostFilter() {
-          var sk = Math.max(0.5, parseFloat(els.sk.value));
-          var dash = Math.max(1, parseFloat(els.dash.value));
-          var gap = Math.max(1, parseFloat(els.gap.value));
-          var stroke = els.fg.value;
-          ghostLayer.querySelectorAll(".ghost text").forEach(function (text) {
-            text.setAttribute("stroke", stroke);
-            text.setAttribute("stroke-width", String(sk));
-            text.setAttribute("stroke-dasharray", dash + " " + gap);
-          });
-        }
+        var ghostErode = document.getElementById("ghost-erode");
 
         function applyVar(key, v) {
           if (key === "zm") root.style.setProperty("--zoom", v);
           else if (key === "bg") root.style.setProperty("--bg", v);
           else if (key === "fg") root.style.setProperty("--fg", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
-          else if (key === "sk") root.style.setProperty("--stroke", v);
-          if (key === "sk" || key === "dash" || key === "gap" || key === "fg" || key === "fs") {
-            updateGhostFilter();
+          else if (key === "sk") {
+            root.style.setProperty("--stroke", v);
+            if (ghostErode) {
+              ghostErode.setAttribute("radius", String(Math.max(0.1, Number(v))));
+            }
           }
         }
 
@@ -763,7 +727,7 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "gh" || k === "cMin" || k === "cMax" || k === "wght" || k === "dash" || k === "gap" || k === "fs") {
+            if (k === "gh" || k === "cMin" || k === "cMax" || k === "wght") {
               buildGhosts();
             }
           });
@@ -801,7 +765,6 @@
 
         applyAxisLimits();
         load();
-        updateGhostFilter();
 
         function start() {
           buildGhosts();

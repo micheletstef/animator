@@ -257,11 +257,6 @@
           <span class="val" id="sTopVal">240px</span>
         </div>
         <div class="row">
-          <label for="lhTop">leading</label>
-          <input id="lhTop" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
-          <span class="val" id="lhTopVal">0.92</span>
-        </div>
-        <div class="row">
           <label for="kTop">kern</label>
           <input id="kTop" type="range" min="-0.5" max="0.5" step="0.001" value="-0.02" />
           <span class="val" id="kTopVal">-20</span>
@@ -286,11 +281,6 @@
           <span class="val" id="sBotVal">120px</span>
         </div>
         <div class="row">
-          <label for="lhBot">leading</label>
-          <input id="lhBot" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
-          <span class="val" id="lhBotVal">0.92</span>
-        </div>
-        <div class="row">
           <label for="kBot">kern</label>
           <input id="kBot" type="range" min="-0.5" max="0.5" step="0.001" value="0.02" />
           <span class="val" id="kBotVal">20</span>
@@ -304,6 +294,15 @@
           <label for="oBot">opacity</label>
           <input id="oBot" type="range" min="0" max="1" step="0.01" value="0.2" />
           <span class="val" id="oBotVal">20%</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">spacing</p>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.92" />
+          <span class="val" id="lhVal">0.92</span>
         </div>
       </div>
 
@@ -395,32 +394,25 @@
             kBot: parseFloat(els.kBot.value),
             sTop: parseFloat(els.sTop.value),
             sBot: parseFloat(els.sBot.value),
-            lhTop: parseFloat(els.lhTop.value),
-            lhBot: parseFloat(els.lhBot.value),
+            lh: parseFloat(els.lh.value),
             oTop: parseFloat(els.oTop.value),
             oBot: parseFloat(els.oBot.value),
             gamma: parseFloat(els.gm.value),
           };
         }
 
-        function heightForT(t, p) {
+        function applyTypography(node, t, p) {
           if (t < 0) t = 0;
           else if (t > 1) t = 1;
           var tt = Math.pow(t, p.gamma);
+          var w = Math.round(p.wTop + (p.wBot - p.wTop) * tt);
+          node.style.fontVariationSettings = '"wght" ' + w;
+          var k = p.kTop + (p.kBot - p.kTop) * tt;
+          node.style.letterSpacing = k.toFixed(4) + "em";
           var s = p.sTop + (p.sBot - p.sTop) * tt;
-          var lh = p.lhTop + (p.lhBot - p.lhTop) * tt;
-          return s * lh;
-        }
-
-        // Slot height uses the same viewport t as updateWeights (line bottom /
-        // marquee height), so reserved space matches rendered size × leading.
-        function slotHeightAtY(y, p, marqueeH) {
-          var h = heightForT(marqueeH > 0 ? y / marqueeH : 0, p);
-          for (var iter = 0; iter < 5; iter++) {
-            var t = marqueeH > 0 ? (y + h) / marqueeH : 0;
-            h = heightForT(t, p);
-          }
-          return h;
+          node.style.fontSize = s + "px";
+          node.style.lineHeight = p.lh.toFixed(4);
+          node.style.opacity = p.oTop + (p.oBot - p.oTop) * tt;
         }
 
         // Fixed slot layout decouples scroll position from live DOM metrics.
@@ -433,10 +425,18 @@
           slotTops = [];
           slotHeights = [];
           for (var i = 0; i < lineEls.length; i++) {
-            var h = slotHeightAtY(y, p, marqueeH);
+            var node = lineEls[i];
+            var t = 0;
+            var h = 1;
+            for (var iter = 0; iter < 8; iter++) {
+              applyTypography(node, t, p);
+              node.style.height = "auto";
+              h = node.offsetHeight;
+              t = marqueeH > 0 ? Math.min(1, (y + h) / marqueeH) : 0;
+            }
             slotHeights[i] = h;
             slotTops[i] = y;
-            lineEls[i].style.height = h + "px";
+            node.style.height = h + "px";
             y += h;
           }
           loopHeight = slotTops[NAMES.length] || 0;
@@ -460,17 +460,7 @@
             var t = bottom / marqueeH;
             if (t < 0) t = 0;
             else if (t > 1) t = 1;
-            var tt = Math.pow(t, p.gamma);
-            var node = lineEls[j];
-            var w = Math.round(p.wTop + (p.wBot - p.wTop) * tt);
-            node.style.fontVariationSettings = '"wght" ' + w;
-            var k = p.kTop + (p.kBot - p.kTop) * tt;
-            node.style.letterSpacing = k.toFixed(4) + "em";
-            var s = p.sTop + (p.sBot - p.sTop) * tt;
-            node.style.fontSize = s + "px";
-            var lh = p.lhTop + (p.lhBot - p.lhTop) * tt;
-            node.style.lineHeight = lh.toFixed(4);
-            node.style.opacity = p.oTop + (p.oBot - p.oTop) * tt;
+            applyTypography(lineEls[j], t, p);
           }
         }
 
@@ -500,8 +490,7 @@
           fg: "#f5d100",
           sTop: 240,
           sBot: 120,
-          lhTop: 0.92,
-          lhBot: 0.92,
+          lh: 0.92,
           kTop: -0.02,
           kBot: 0.02,
           wTop: 1000,
@@ -523,8 +512,7 @@
           fg: document.getElementById("fg"),
           sTop: document.getElementById("sTop"),
           sBot: document.getElementById("sBot"),
-          lhTop: document.getElementById("lhTop"),
-          lhBot: document.getElementById("lhBot"),
+          lh: document.getElementById("lh"),
           kTop: document.getElementById("kTop"),
           kBot: document.getElementById("kBot"),
           wTop: document.getElementById("wTop"),
@@ -542,8 +530,7 @@
           fg: document.getElementById("fgVal"),
           sTop: document.getElementById("sTopVal"),
           sBot: document.getElementById("sBotVal"),
-          lhTop: document.getElementById("lhTopVal"),
-          lhBot: document.getElementById("lhBotVal"),
+          lh: document.getElementById("lhVal"),
           kTop: document.getElementById("kTopVal"),
           kBot: document.getElementById("kBotVal"),
           wTop: document.getElementById("wTopVal"),
@@ -563,7 +550,7 @@
             return Math.round(Number(v) * 100) + "%";
           if (key === "sTop" || key === "sBot")
             return Math.round(Number(v)) + "px";
-          if (key === "lhTop" || key === "lhBot" || key === "gm")
+          if (key === "lh" || key === "gm")
             return Number(v).toFixed(2);
           if (key === "kTop" || key === "kBot")
             return Math.round(Number(v) * 1000) + "";
@@ -620,6 +607,9 @@
                 parsed.pl = parsed.ph;
                 parsed.pr = parsed.ph;
               }
+              if (parsed.lh == null && parsed.lhTop != null) {
+                parsed.lh = parsed.lhTop;
+              }
               data = Object.assign({}, DEFAULTS, parsed);
             } catch (e) {}
           }
@@ -636,9 +626,12 @@
             if (
               k === "sTop" ||
               k === "sBot" ||
-              k === "lhTop" ||
-              k === "lhBot" ||
-              k === "gm"
+              k === "lh" ||
+              k === "gm" ||
+              k === "wTop" ||
+              k === "wBot" ||
+              k === "kTop" ||
+              k === "kBot"
             ) {
               requestAnimationFrame(computeLayout);
             }
