@@ -57,10 +57,11 @@
 
       body {
         display: grid;
-        grid-template-columns: 1fr 280px;
+        grid-template-columns: minmax(0, 1fr) 280px;
         align-items: center;
         gap: 24px;
         padding: 24px;
+        min-width: 0;
       }
 
       .stage-wrap {
@@ -69,6 +70,7 @@
         justify-content: safe center;
         height: 100%;
         min-width: 0;
+        min-height: 0;
         overflow: auto;
         overscroll-behavior: contain;
       }
@@ -158,6 +160,8 @@
 
       .panel {
         align-self: stretch;
+        width: 280px;
+        flex-shrink: 0;
         max-height: 100%;
         overflow: auto;
         padding: 16px 18px;
@@ -237,6 +241,29 @@
         color: #9a9a9a;
         font-variant-numeric: tabular-nums;
       }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
     </style>
   </head>
   <body>
@@ -248,10 +275,10 @@
       </div>
     </div>
 
-    <aside class="panel">
-      <h2>matrix</h2>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
       <p class="hint">
-        Condensed · Ikarus · Extended — weight wave top → bottom
+        Condensed · Ikarus · Extended — thin top, ultra bottom
       </p>
 
       <div class="group">
@@ -284,6 +311,9 @@
           <label for="hd">hold</label>
           <input id="hd" type="range" min="0" max="2000" step="50" value="0" />
           <span class="val" id="hd-val">0ms</span>
+        </div>
+        <div class="actions">
+          <button type="button" id="resetBtn">reset</button>
         </div>
       </div>
     </aside>
@@ -347,17 +377,32 @@
           }
         }
 
+        var LS_KEY = "matrix-anim:settings:v1";
+
+        var DEFAULTS = {
+          bg: "#b8b8b8",
+          fg: "#000000",
+          fs: 180,
+          cy: 4000,
+          hd: 0,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+
         var els = {
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
           fs: document.getElementById("fs"),
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
-          bgVal: document.getElementById("bg-val"),
-          fgVal: document.getElementById("fg-val"),
-          fsVal: document.getElementById("fs-val"),
-          cyVal: document.getElementById("cy-val"),
-          hdVal: document.getElementById("hd-val"),
+        };
+
+        var vals = {
+          bg: document.getElementById("bg-val"),
+          fg: document.getElementById("fg-val"),
+          fs: document.getElementById("fs-val"),
+          cy: document.getElementById("cy-val"),
+          hd: document.getElementById("hd-val"),
         };
 
         function easeInOutCubic(t) {
@@ -377,9 +422,21 @@
           return 0;
         }
 
-        function weightFromPhase(p) {
+        function weightForRow(row, p) {
+          var rowBlend = row / (ROW_COUNT - 1);
           var eased = easeInOutCubic(p);
-          return W_MAX - (W_MAX - W_MIN) * eased;
+          return (
+            W_MIN +
+            (W_MAX - W_MIN) * (rowBlend * (1 - eased) + (1 - rowBlend) * eased)
+          );
+        }
+
+        function formatVal(key, v) {
+          if (key === "bg" || key === "fg") return String(v).toLowerCase();
+          if (key === "fs") return Math.round(Number(v)) + "px";
+          if (key === "cy") return formatMs(Number(v));
+          if (key === "hd") return formatMs(Number(v));
+          return String(v);
         }
 
         function formatMs(ms) {
@@ -387,44 +444,73 @@
           return Math.round(ms) + "ms";
         }
 
-        function syncLabels() {
-          els.bgVal.textContent = els.bg.value.toLowerCase();
-          els.fgVal.textContent = els.fg.value.toLowerCase();
-          els.fsVal.textContent = Math.round(parseFloat(els.fs.value)) + "px";
-          els.cyVal.textContent = formatMs(parseFloat(els.cy.value));
-          els.hdVal.textContent = formatMs(parseFloat(els.hd.value));
-        }
-
         function applyAppearance() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
           var fs = parseFloat(els.fs.value);
           root.style.setProperty("--glyph-size", fs);
-          root.style.setProperty("--metric-size", Math.max(10, Math.round(fs * 0.08)));
-          syncLabels();
+          root.style.setProperty(
+            "--metric-size",
+            Math.max(10, Math.round(fs * 0.08))
+          );
           layoutGuides();
         }
 
-        els.bg.addEventListener("input", applyAppearance);
-        els.fg.addEventListener("input", applyAppearance);
-        els.fs.addEventListener("input", applyAppearance);
-        els.cy.addEventListener("input", syncLabels);
-        els.hd.addEventListener("input", syncLabels);
-        applyAppearance();
+        function setValue(key, v, persist) {
+          els[key].value = v;
+          if (vals[key]) vals[key].textContent = formatVal(key, v);
+          if (key === "bg" || key === "fg" || key === "fs") applyAppearance();
+          if (persist !== false) save();
+        }
 
-        function setRowWeights(elapsed, halfCycle, hold, total) {
-          var rowDelay = total / ROW_COUNT;
+        function save() {
+          var out = {};
+          Object.keys(els).forEach(function (k) {
+            out[k] = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(out));
+          } catch (e) {}
+        }
 
+        function load() {
+          var raw;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {
+            raw = null;
+          }
+          var data = DEFAULTS;
+          if (raw) {
+            try {
+              data = Object.assign({}, DEFAULTS, JSON.parse(raw));
+            } catch (e) {}
+          }
+          Object.keys(els).forEach(function (k) {
+            setValue(k, data[k], false);
+          });
+        }
+
+        Object.keys(els).forEach(function (k) {
+          els[k].addEventListener("input", function () {
+            var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
+            setValue(k, v);
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", function () {
+          Object.keys(DEFAULTS).forEach(function (k) {
+            setValue(k, DEFAULTS[k]);
+          });
+        });
+
+        function setRowWeights(p) {
           for (var i = 0; i < cells.length; i++) {
             var c = cells[i];
-            var rowElapsed =
-              (((elapsed - c.row * rowDelay) % total) + total) % total;
-            var p = phaseFromElapsed(rowElapsed, halfCycle, hold);
-            var w = weightFromPhase(p);
+            var w = weightForRow(c.row, p);
             c.weight = w;
             c.glyph.style.fontVariationSettings =
               '"wght" ' + w.toFixed(1) + ', "slnt" 0';
-            c.metric.textContent = String(Math.round(w));
           }
         }
 
@@ -464,7 +550,8 @@
           var total = cycle + 2 * hold;
 
           var elapsed = (now - t0) % total;
-          setRowWeights(elapsed, halfCycle, hold, total);
+          var p = phaseFromElapsed(elapsed, halfCycle, hold);
+          setRowWeights(p);
           layoutGuides();
 
           requestAnimationFrame(function (n2) {
@@ -474,9 +561,19 @@
 
         window.addEventListener("resize", layoutGuides);
 
-        requestAnimationFrame(function (n) {
-          frame(n, n);
-        });
+        load();
+
+        function start() {
+          requestAnimationFrame(function (n) {
+            frame(n, n);
+          });
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start);
+        } else {
+          start();
+        }
       })();
     </script>
   </body>
