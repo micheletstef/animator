@@ -125,6 +125,7 @@
       .measure {
         position: relative;
         display: inline-block;
+        padding-top: calc(var(--metric-size) * 1px + 4px);
       }
 
       .glyph {
@@ -287,7 +288,7 @@
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
       <p class="hint">
-        Condensed · Ikarus · Extended — 200 · 600 · 1000
+        Condensed · Ikarus · Extended — single row, no column gap
       </p>
 
       <div class="group">
@@ -372,11 +373,7 @@
         var W_MAX = 1000;
         var ROW_COUNT = 1;
         var COL_COUNT = 3;
-        var COL_KEYFRAMES = [
-          [200, 1000, 200],
-          [600, 1000, 600],
-          [1000, 200, 1000],
-        ];
+        var ROW_KEYFRAMES = [[200, 1000, 200]];
 
         for (var r = 0; r < ROW_COUNT; r++) {
           for (var c = 0; c < COL_COUNT; c++) {
@@ -402,10 +399,10 @@
             lineRight.className = "line line-right";
             lineRight.setAttribute("aria-hidden", "true");
 
+            measure.appendChild(metric);
             measure.appendChild(lineLeft);
             measure.appendChild(glyph);
             measure.appendChild(lineRight);
-            cell.appendChild(metric);
             cell.appendChild(measure);
             matrix.appendChild(cell);
 
@@ -487,8 +484,8 @@
           return a + (b - a) * t;
         }
 
-        function weightForCol(col, p) {
-          var kf = COL_KEYFRAMES[col];
+        function weightForRow(row, p) {
+          var kf = ROW_KEYFRAMES[row];
           var t;
           if (p <= 0.5) {
             t = easeInOutCubic(p / 0.5);
@@ -591,10 +588,10 @@
           });
         });
 
-        function setColWeights(p) {
+        function setRowWeights(p) {
           for (var i = 0; i < cells.length; i++) {
             var c = cells[i];
-            var w = weightForCol(c.col, p);
+            var w = weightForRow(c.row, p);
             c.weight = w;
             c.glyph.style.fontVariationSettings =
               '"wght" ' + w.toFixed(1) + ', "slnt" 0';
@@ -629,9 +626,8 @@
 
               var leftX = g.left - m.left;
               var rightX = g.right - m.left;
-              var metricOffset = parseFloat(els.ms.value) + 6;
-              var lineTop = rowTop - m.top + metricOffset;
-              var lineHeight = Math.max(0, rowHeight - metricOffset);
+              var lineTop = rowTop - m.top;
+              var lineHeight = rowHeight;
 
               var showLeft = c.col === 0;
               c.lineLeft.style.display = showLeft ? "block" : "none";
@@ -647,10 +643,8 @@
               c.lineRight.style.top = lineTop + "px";
               c.lineRight.style.height = lineHeight + "px";
 
-              var cellRect = c.cell.getBoundingClientRect();
               c.metric.textContent = String(Math.round(c.weight));
-              c.metric.style.left =
-                (g.left + g.right) / 2 - cellRect.left + "px";
+              c.metric.style.left = (leftX + rightX) / 2 + "px";
               c.metric.style.top = "0";
             }
           }
@@ -664,7 +658,7 @@
 
           var elapsed = (now - t0) % total;
           var p = phaseFromElapsed(elapsed, halfCycle, hold);
-          setColWeights(p);
+          setRowWeights(p);
           layoutGuides();
 
           requestAnimationFrame(function (n2) {
