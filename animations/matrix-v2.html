@@ -159,7 +159,7 @@
         position: absolute;
         display: flex;
         justify-content: space-between;
-        align-items: baseline;
+        align-items: flex-start;
         gap: 8px;
         padding: 0 24px;
         font-family: "Courier New", Courier, monospace;
@@ -676,7 +676,7 @@
               c.metricWeight.textContent = String(Math.round(c.weight));
               c.metric.style.left = leftX + "px";
               c.metric.style.width = rightX - leftX + "px";
-              c.metric.style.top = "0";
+              c.metric.style.top = lineTop + "px";
             }
           }
         }
