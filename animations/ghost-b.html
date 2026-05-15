@@ -368,7 +368,7 @@
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="ghost B">
           <div class="ghost-layer" id="ghosts"></div>
-          <span class="var-label" id="varLabel" aria-hidden="true">500</span>
+          <span class="var-label" id="varLabel" aria-hidden="true">0</span>
           <span class="glyph" id="glyph">B</span>
         </div>
       </div>
@@ -378,7 +378,7 @@
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
       <p class="hint">
-        ABCIkarusPlusVariable (wght) — shift + scroll to zoom
+        ABCIkarusPlusVariable (slnt) — shift + scroll to zoom
       </p>
 
       <div class="group">
@@ -419,33 +419,33 @@
       </div>
 
       <div class="group">
-        <p class="group-title">weight · wght</p>
+        <p class="group-title">slant · slnt</p>
         <div class="row row-wide-val">
-          <label for="wMin">range</label>
-          <div class="dual-range" id="wDual">
-            <div class="dual-track"><div class="dual-fill" id="wFill"></div></div>
+          <label for="sMin">range</label>
+          <div class="dual-range" id="sDual">
+            <div class="dual-track"><div class="dual-fill" id="sFill"></div></div>
             <input
-              id="wMin"
+              id="sMin"
               class="is-start"
               type="range"
-              min="200"
-              max="1000"
-              step="1"
-              value="200"
-              aria-label="Weight min"
+              min="-12"
+              max="0"
+              step="0.25"
+              value="-12"
+              aria-label="Slant min"
             />
             <input
-              id="wMax"
+              id="sMax"
               class="is-end"
               type="range"
-              min="200"
-              max="1000"
-              step="1"
-              value="1000"
-              aria-label="Weight max"
+              min="-12"
+              max="0"
+              step="0.25"
+              value="0"
+              aria-label="Slant max"
             />
           </div>
-          <span class="val" id="wVal">200 / 1000</span>
+          <span class="val" id="sVal">-12 / 0</span>
         </div>
         <div class="row">
           <label for="gh">ghosts</label>
@@ -502,15 +502,15 @@
           return String(v);
         }
 
-        function fvarSettings(wght) {
+        function fvarSettings(slnt) {
           var c = clampAxis("CNTR", els.cntr.value);
           return (
             '"wght" ' +
-            fmtAxis("wght", wght) +
+            fmtAxis("wght", AXES.wght.default) +
             ', "wdth" ' +
             AXES.wdth.default +
             ', "slnt" ' +
-            AXES.slnt.default +
+            fmtAxis("slnt", slnt) +
             ', "CNTR" ' +
             fmtAxis("CNTR", c)
           );
@@ -521,11 +521,11 @@
           els.cntr.min = c.min;
           els.cntr.max = c.max;
           els.cntr.step = c.step;
-          var w = AXES.wght;
-          [els.wMin, els.wMax].forEach(function (el) {
-            el.min = w.min;
-            el.max = w.max;
-            el.step = w.step;
+          var s = AXES.slnt;
+          [els.sMin, els.sMax].forEach(function (el) {
+            el.min = s.min;
+            el.max = s.max;
+            el.step = s.step;
           });
         }
 
@@ -536,21 +536,21 @@
         function buildGhosts() {
           ghostLayer.innerHTML = "";
           var n = Math.max(1, Math.round(parseFloat(els.gh.value)));
-          var wMin = parseFloat(els.wMin.value);
-          var wMax = parseFloat(els.wMax.value);
-          if (wMin > wMax) {
-            var t = wMin;
-            wMin = wMax;
-            wMax = t;
+          var sMin = parseFloat(els.sMin.value);
+          var sMax = parseFloat(els.sMax.value);
+          if (sMin > sMax) {
+            var t = sMin;
+            sMin = sMax;
+            sMax = t;
           }
           var denom = n <= 1 ? 1 : n - 1;
           for (var i = 0; i < n; i++) {
-            var w = wMin + ((wMax - wMin) * i) / denom;
+            var s = sMin + ((sMax - sMin) * i) / denom;
             var el = document.createElement("span");
             el.className = "ghost";
             el.textContent = "B";
             el.style.fontFamily = FONT_FAMILY;
-            el.style.fontVariationSettings = fvarSettings(w);
+            el.style.fontVariationSettings = fvarSettings(s);
             ghostLayer.appendChild(el);
           }
         }
@@ -576,24 +576,24 @@
 
           var eased = easeInOutCubic(p);
 
-          var wMin = parseFloat(els.wMin.value);
-          var wMax = parseFloat(els.wMax.value);
-          if (wMin > wMax) {
-            var t = wMin;
-            wMin = wMax;
-            wMax = t;
+          var sMin = parseFloat(els.sMin.value);
+          var sMax = parseFloat(els.sMax.value);
+          if (sMin > sMax) {
+            var t = sMin;
+            sMin = sMax;
+            sMax = t;
           }
 
-          var wght = wMax - (wMax - wMin) * eased;
-          glyph.style.fontVariationSettings = fvarSettings(wght);
-          varLabel.textContent = fmtAxis("wght", wght);
+          var slnt = sMax - (sMax - sMin) * eased;
+          glyph.style.fontVariationSettings = fvarSettings(slnt);
+          varLabel.textContent = fmtAxis("slnt", slnt);
 
           requestAnimationFrame(function (n2) {
             frame(n2, t0);
           });
         }
 
-        var LS_KEY = "ghost-anim:b:v1";
+        var LS_KEY = "ghost-anim:c:v1";
         var root = document.documentElement;
 
         var DEFAULTS = {
@@ -603,8 +603,8 @@
           fs: 900,
           sk: 1,
           cntr: AXES.CNTR.default,
-          wMin: AXES.wght.min,
-          wMax: AXES.wght.max,
+          sMin: AXES.slnt.min,
+          sMax: AXES.slnt.max,
           gh: 14,
           cy: 5200,
           hd: 450,
@@ -619,8 +619,8 @@
           fs: document.getElementById("fs"),
           sk: document.getElementById("sk"),
           cntr: document.getElementById("cntr"),
-          wMin: document.getElementById("wMin"),
-          wMax: document.getElementById("wMax"),
+          sMin: document.getElementById("sMin"),
+          sMax: document.getElementById("sMax"),
           gh: document.getElementById("gh"),
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
@@ -636,8 +636,8 @@
           hd: document.getElementById("hdVal"),
         };
 
-        var wVal = document.getElementById("wVal");
-        var wFill = document.getElementById("wFill");
+        var sVal = document.getElementById("sVal");
+        var sFill = document.getElementById("sFill");
 
         function fmt(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
@@ -650,18 +650,18 @@
           return String(v);
         }
 
-        function updateWghtUI() {
-          var a = parseFloat(els.wMin.value);
-          var b = parseFloat(els.wMax.value);
-          var min = parseFloat(els.wMin.min);
-          var max = parseFloat(els.wMin.max);
+        function updateSlntUI() {
+          var a = parseFloat(els.sMin.value);
+          var b = parseFloat(els.sMax.value);
+          var min = parseFloat(els.sMin.min);
+          var max = parseFloat(els.sMin.max);
           var lo = Math.min(a, b);
           var hi = Math.max(a, b);
           var loPct = ((lo - min) / (max - min)) * 100;
           var hiPct = ((hi - min) / (max - min)) * 100;
-          wFill.style.left = loPct + "%";
-          wFill.style.width = Math.max(0, hiPct - loPct) + "%";
-          wVal.textContent = fmtAxis("wght", lo) + " / " + fmtAxis("wght", hi);
+          sFill.style.left = loPct + "%";
+          sFill.style.width = Math.max(0, hiPct - loPct) + "%";
+          sVal.textContent = fmtAxis("slnt", lo) + " / " + fmtAxis("slnt", hi);
         }
 
         var ghostErode = document.getElementById("ghost-erode");
@@ -683,10 +683,10 @@
           if (key === "zm") {
             v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
           } else if (key === "cntr") v = clampAxis("CNTR", v);
-          else if (key === "wMin" || key === "wMax") v = clampAxis("wght", v);
+          else if (key === "sMin" || key === "sMax") v = clampAxis("slnt", v);
           els[key].value = v;
-          if (key === "wMin" || key === "wMax") {
-            updateWghtUI();
+          if (key === "sMin" || key === "sMax") {
+            updateSlntUI();
           } else if (key === "cntr" && vals.cntr) {
             vals.cntr.textContent = fmtAxis("CNTR", v);
           } else if (vals[key]) {
@@ -736,7 +736,7 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "gh" || k === "wMin" || k === "wMax" || k === "cntr") {
+            if (k === "gh" || k === "sMin" || k === "sMax" || k === "cntr") {
               buildGhosts();
             }
           });

@@ -369,7 +369,7 @@
         <div class="stage" id="stage" aria-label="ghost plus variable">
           <div class="ghost-layer" id="ghosts"></div>
           <span class="var-label" id="varLabel" aria-hidden="true">0.0</span>
-          <span class="glyph" id="glyph">A</span>
+          <span class="glyph" id="glyph">B</span>
         </div>
       </div>
     </div>
@@ -548,7 +548,7 @@
             var c = cMin + ((cMax - cMin) * i) / denom;
             var el = document.createElement("span");
             el.className = "ghost";
-            el.textContent = "A";
+            el.textContent = "B";
             el.style.fontFamily = FONT_FAMILY;
             el.style.fontVariationSettings = fvarSettings(c);
             ghostLayer.appendChild(el);
