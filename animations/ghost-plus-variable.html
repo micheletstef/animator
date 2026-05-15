@@ -123,13 +123,16 @@
         z-index: 2;
       }
 
-      /* Filter per ghost so each CNTR step renders its own outline; a parent-level
-         filter would merge all glyphs into one combined mask (single ring). */
+      /* SVG text per ghost — dashed stroke. */
       .ghost {
-        color: var(--fg);
-        -webkit-text-fill-color: currentColor;
-        -webkit-text-stroke: 0;
-        filter: url(#ghost-outline);
+        overflow: visible;
+      }
+
+      .ghost text {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
       }
 
       .panel {
@@ -339,36 +342,7 @@
       style="position: absolute; pointer-events: none"
       aria-hidden="true"
     >
-      <defs>
-        <filter
-          id="ghost-outline"
-          filterUnits="objectBoundingBox"
-          x="-20%"
-          y="-20%"
-          width="140%"
-          height="140%"
-          color-interpolation-filters="sRGB"
-        >
-          <feMorphology
-            id="ghost-erode"
-            operator="erode"
-            radius="1"
-            in="SourceAlpha"
-            result="eroded"
-          />
-          <feComposite
-            operator="out"
-            in="SourceAlpha"
-            in2="eroded"
-            result="ring"
-          />
-          <feImage id="ghost-pattern" preserveAspectRatio="none" result="patternImg" />
-          <feTile in="patternImg" result="pattern" />
-          <feComposite operator="in" in="ring" in2="pattern" result="dotted" />
-          <feFlood id="ghost-flood" flood-color="#000000" result="flood" />
-          <feComposite operator="in" in="flood" in2="dotted" result="colored" />
-        </filter>
-      </defs>
+      <defs></defs>
     </svg>
 
     <div class="stage-wrap" id="stageWrap">
@@ -553,6 +527,37 @@
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         }
 
+        function createGhostSvg(fvs) {
+          var fs = parseFloat(els.fs.value);
+          var sk = Math.max(0.5, parseFloat(els.sk.value));
+          var dash = Math.max(1, parseFloat(els.dash.value));
+          var gap = Math.max(1, parseFloat(els.gap.value));
+          var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("class", "ghost");
+          svg.setAttribute("viewBox", "0 0 1000 1000");
+          svg.setAttribute("overflow", "visible");
+          svg.style.width = fs + "px";
+          svg.style.height = fs + "px";
+          var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", "500");
+          text.setAttribute("y", "500");
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("dominant-baseline", "central");
+          text.setAttribute("fill", "none");
+          text.setAttribute("stroke", els.fg.value);
+          text.setAttribute("stroke-width", String(sk));
+          text.setAttribute("stroke-dasharray", dash + " " + gap);
+          text.setAttribute("stroke-linecap", "round");
+          text.setAttribute("stroke-linejoin", "round");
+          text.setAttribute("vector-effect", "non-scaling-stroke");
+          text.setAttribute("font-size", "900");
+          text.style.fontFamily = FONT_FAMILY;
+          text.style.fontVariationSettings = fvs;
+          text.textContent = "A";
+          svg.appendChild(text);
+          return svg;
+        }
+
         function buildGhosts() {
           ghostLayer.innerHTML = "";
           var n = Math.max(1, Math.round(parseFloat(els.gh.value)));
@@ -566,11 +571,7 @@
           var denom = n <= 1 ? 1 : n - 1;
           for (var i = 0; i < n; i++) {
             var c = cMin + ((cMax - cMin) * i) / denom;
-            var el = document.createElement("span");
-            el.className = "ghost";
-            el.textContent = "A";
-            el.style.fontFamily = FONT_FAMILY;
-            el.style.fontVariationSettings = fvarSettings(c);
+            var el = createGhostSvg(fvarSettings(c));
             ghostLayer.appendChild(el);
           }
         }
@@ -690,45 +691,16 @@
           cVal.textContent = fmtAxis("CNTR", lo) + " / " + fmtAxis("CNTR", hi);
         }
 
-        var ghostErode = document.getElementById("ghost-erode");
-        var ghostPattern = document.getElementById("ghost-pattern");
-        var ghostFlood = document.getElementById("ghost-flood");
-
         function updateGhostFilter() {
-          if (!ghostErode) return;
+          var sk = Math.max(0.5, parseFloat(els.sk.value));
           var dash = Math.max(1, parseFloat(els.dash.value));
           var gap = Math.max(1, parseFloat(els.gap.value));
-          var tile = dash + gap;
-          var r = Math.max(0.5, dash * 0.45);
-          var svg =
-            '<svg xmlns="http://www.w3.org/2000/svg" width="' +
-            tile +
-            '" height="' +
-            tile +
-            '"><rect width="' +
-            tile +
-            '" height="' +
-            tile +
-            '" fill="black"/><circle cx="' +
-            dash * 0.5 +
-            '" cy="' +
-            tile * 0.5 +
-            '" r="' +
-            r +
-            '" fill="white"/></svg>';
-          if (ghostPattern) {
-            ghostPattern.setAttribute(
-              "href",
-              "data:image/svg+xml," + encodeURIComponent(svg)
-            );
-          }
-          ghostErode.setAttribute(
-            "radius",
-            String(Math.max(0.1, parseFloat(els.sk.value)))
-          );
-          if (ghostFlood) {
-            ghostFlood.setAttribute("flood-color", els.fg.value);
-          }
+          var stroke = els.fg.value;
+          ghostLayer.querySelectorAll(".ghost text").forEach(function (text) {
+            text.setAttribute("stroke", stroke);
+            text.setAttribute("stroke-width", String(sk));
+            text.setAttribute("stroke-dasharray", dash + " " + gap);
+          });
         }
 
         function applyVar(key, v) {
@@ -737,7 +709,7 @@
           else if (key === "fg") root.style.setProperty("--fg", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
           else if (key === "sk") root.style.setProperty("--stroke", v);
-          if (key === "sk" || key === "dash" || key === "gap" || key === "fg") {
+          if (key === "sk" || key === "dash" || key === "gap" || key === "fg" || key === "fs") {
             updateGhostFilter();
           }
         }
@@ -791,7 +763,7 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (k === "gh" || k === "cMin" || k === "cMax" || k === "wght") {
+            if (k === "gh" || k === "cMin" || k === "cMax" || k === "wght" || k === "dash" || k === "gap" || k === "fs") {
               buildGhosts();
             }
           });
