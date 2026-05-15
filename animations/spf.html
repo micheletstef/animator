@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SPF 100+ → 8</title>
+    <title>SPF 50 → 8</title>
     <style>
       @font-face {
         font-family: "IkarusVariable";
@@ -100,15 +100,6 @@
         font-variation-settings: inherit;
         white-space: nowrap;
         letter-spacing: inherit;
-      }
-
-      .stage .num .plus {
-        display: inline-block;
-        transition: opacity 0.12s ease;
-      }
-
-      .stage .num.no-plus .plus {
-        opacity: 0;
       }
 
       .panel {
@@ -318,7 +309,7 @@
         <div class="stage" id="stage" aria-label="SPF animation">
           <div class="lockup" id="lockup">
             <span class="line">SPF</span>
-            <span class="num" id="num"><span class="digits" id="digits">100</span><span class="plus" id="plus">+</span></span>
+            <span class="num" id="num"><span class="digits" id="digits">50</span></span>
           </div>
         </div>
       </div>
@@ -407,10 +398,9 @@
     <script>
       (function () {
         var lockup = document.getElementById("lockup");
-        var num = document.getElementById("num");
         var digits = document.getElementById("digits");
 
-        var START = 100;
+        var START = 50;
         var END = 8;
         var W_MAX = 1000;
         var W_MIN = 200;
@@ -459,12 +449,6 @@
 
           if (digits.textContent !== String(value)) {
             digits.textContent = String(value);
-          }
-
-          if (p > 0.001) {
-            num.classList.add("no-plus");
-          } else {
-            num.classList.remove("no-plus");
           }
 
           lockup.style.fontVariationSettings = '"wght" ' + weight;

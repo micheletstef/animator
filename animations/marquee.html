@@ -103,11 +103,14 @@
       }
 
       .line {
-        display: block;
+        display: flex;
+        align-items: flex-end;
+        box-sizing: border-box;
         font-size: 220px;
         white-space: nowrap;
         text-align: left;
         font-variation-settings: "wght" 1000;
+        overflow: hidden;
       }
 
       .panel {
@@ -381,11 +384,54 @@
         buildLines();
 
         var loopHeight = 0;
-        function measure() {
-          var first = lineEls[0];
-          var firstSecond = lineEls[NAMES.length];
-          if (!first || !firstSecond) return;
-          loopHeight = firstSecond.offsetTop - first.offsetTop;
+        var slotTops = [];
+        var slotHeights = [];
+
+        function layoutParams() {
+          return {
+            wTop: parseFloat(els.wTop.value),
+            wBot: parseFloat(els.wBot.value),
+            kTop: parseFloat(els.kTop.value),
+            kBot: parseFloat(els.kBot.value),
+            sTop: parseFloat(els.sTop.value),
+            sBot: parseFloat(els.sBot.value),
+            lhTop: parseFloat(els.lhTop.value),
+            lhBot: parseFloat(els.lhBot.value),
+            oTop: parseFloat(els.oTop.value),
+            oBot: parseFloat(els.oBot.value),
+            gamma: parseFloat(els.gm.value),
+          };
+        }
+
+        function slotHeightForIndex(iInList, p) {
+          var denom = Math.max(1, NAMES.length - 1);
+          var tIndex = iInList / denom;
+          var tt = Math.pow(tIndex, p.gamma);
+          var s = p.sTop + (p.sBot - p.sTop) * tt;
+          var lh = p.lhTop + (p.lhBot - p.lhTop) * tt;
+          return s * lh;
+        }
+
+        // Fixed slot layout decouples scroll position from live DOM metrics.
+        // Typography still interpolates by viewport position, but changing
+        // font-size no longer shifts the track and retriggers loop rescaling.
+        function computeLayout() {
+          var p = layoutParams();
+          var y = 0;
+          slotTops = [];
+          slotHeights = [];
+          for (var i = 0; i < lineEls.length; i++) {
+            var iInList = i % NAMES.length;
+            var h = slotHeightForIndex(iInList, p);
+            slotHeights[i] = h;
+            slotTops[i] = y;
+            lineEls[i].style.height = h + "px";
+            y += h;
+          }
+          loopHeight = slotTops[NAMES.length] || 0;
+          if (loopHeight > 0) {
+            offset = ((offset % loopHeight) + loopHeight) % loopHeight;
+          }
         }
 
         var offset = 0;
@@ -393,48 +439,27 @@
 
         function updateWeights() {
           var marqueeH = marquee.clientHeight || 1;
-          var wTop = parseFloat(els.wTop.value);
-          var wBot = parseFloat(els.wBot.value);
-          var kTop = parseFloat(els.kTop.value);
-          var kBot = parseFloat(els.kBot.value);
-          var sTop = parseFloat(els.sTop.value);
-          var sBot = parseFloat(els.sBot.value);
-          var lhTop = parseFloat(els.lhTop.value);
-          var lhBot = parseFloat(els.lhBot.value);
-          var oTop = parseFloat(els.oTop.value);
-          var oBot = parseFloat(els.oBot.value);
-          var gamma = parseFloat(els.gm.value);
+          var p = layoutParams();
 
-          // Read every line's current vertical position BEFORE writing any
-          // styles. Per-line font-size shifts the layout, so reading and
-          // writing in the same loop would make later lines see stale
-          // positions and produce the wrong `t`.
-          // Use the line's bottom edge for `t` so scaling keeps going until
-          // the name has fully scrolled out the top (center-based `t` hit 0
-          // while the line was still partly visible).
+          // Bottom edge in viewport coordinates; fixed slots avoid layout feedback.
           var n = lineEls.length;
-          var bottoms = new Array(n);
-          for (var i = 0; i < n; i++) {
-            var el = lineEls[i];
-            var yTop = el.offsetTop - offset;
-            bottoms[i] = yTop + el.offsetHeight;
-          }
-
           for (var j = 0; j < n; j++) {
-            var node = lineEls[j];
-            var t = bottoms[j] / marqueeH;
+            var yTop = slotTops[j] - offset;
+            var bottom = yTop + slotHeights[j];
+            var t = bottom / marqueeH;
             if (t < 0) t = 0;
             else if (t > 1) t = 1;
-            var tt = Math.pow(t, gamma);
-            var w = Math.round(wTop + (wBot - wTop) * tt);
+            var tt = Math.pow(t, p.gamma);
+            var node = lineEls[j];
+            var w = Math.round(p.wTop + (p.wBot - p.wTop) * tt);
             node.style.fontVariationSettings = '"wght" ' + w;
-            var k = kTop + (kBot - kTop) * tt;
+            var k = p.kTop + (p.kBot - p.kTop) * tt;
             node.style.letterSpacing = k.toFixed(4) + "em";
-            var s = sTop + (sBot - sTop) * tt;
+            var s = p.sTop + (p.sBot - p.sTop) * tt;
             node.style.fontSize = s + "px";
-            var lh = lhTop + (lhBot - lhTop) * tt;
+            var lh = p.lhTop + (p.lhBot - p.lhTop) * tt;
             node.style.lineHeight = lh.toFixed(4);
-            node.style.opacity = oTop + (oBot - oTop) * tt;
+            node.style.opacity = p.oTop + (p.oBot - p.oTop) * tt;
           }
         }
 
@@ -448,18 +473,9 @@
           if (loopHeight > 0) {
             offset = ((offset % loopHeight) + loopHeight) % loopHeight;
           }
-          track.style.transform = "translateY(" + -offset + "px)";
+          track.style.transform = "translate3d(0," + -offset + "px,0)";
 
           updateWeights();
-
-          // Per-line font-size means line heights (and therefore the loop
-          // length) can drift between frames. Re-measure and rescale offset
-          // so the visible position is preserved across the change.
-          var prev = loopHeight;
-          measure();
-          if (prev > 0 && loopHeight > 0 && prev !== loopHeight) {
-            offset = (offset / prev) * loopHeight;
-          }
 
           requestAnimationFrame(frame);
         }
@@ -610,9 +626,10 @@
               k === "sTop" ||
               k === "sBot" ||
               k === "lhTop" ||
-              k === "lhBot"
+              k === "lhBot" ||
+              k === "gm"
             ) {
-              requestAnimationFrame(measure);
+              requestAnimationFrame(computeLayout);
             }
           });
         });
@@ -621,7 +638,7 @@
           Object.keys(DEFAULTS).forEach(function (k) {
             setValue(k, DEFAULTS[k]);
           });
-          requestAnimationFrame(measure);
+          requestAnimationFrame(computeLayout);
         });
 
         var stageWrap = document.getElementById("stageWrap");
@@ -648,13 +665,13 @@
         );
 
         window.addEventListener("resize", function () {
-          requestAnimationFrame(measure);
+          requestAnimationFrame(computeLayout);
         });
 
         load();
 
         function start() {
-          measure();
+          computeLayout();
           requestAnimationFrame(frame);
         }
 
