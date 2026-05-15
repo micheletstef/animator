@@ -6,11 +6,12 @@
     <title>names marquee</title>
     <style>
       @font-face {
-        font-family: "IkarusCondensedVariable";
-        src: url("../fonts/ABCIkarusCondensedVariable.ttf")
+        font-family: "IkarusPlusVariable";
+        src: url("../fonts/ABCIkarusPlusVariable.ttf")
           format("truetype-variations");
-        font-weight: 100 1000;
-        font-style: normal;
+        font-weight: 200 1000;
+        font-stretch: 65% 130%;
+        font-style: oblique -12deg 0deg;
         font-display: block;
       }
 
@@ -78,7 +79,7 @@
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        font-family: "IkarusCondensedVariable", system-ui, sans-serif;
+        font-family: "IkarusPlusVariable", system-ui, sans-serif;
         transform: scale(var(--zoom));
         transform-origin: top left;
       }
@@ -107,7 +108,7 @@
         font-size: 220px;
         white-space: nowrap;
         text-align: left;
-        font-variation-settings: "wght" 1000;
+        font-variation-settings: "wght" 1000, "CNTR" 100;
       }
 
       .panel {
@@ -265,8 +266,13 @@
         </div>
         <div class="row">
           <label for="wTop">weight</label>
-          <input id="wTop" type="range" min="100" max="1000" step="1" value="1000" />
+          <input id="wTop" type="range" min="200" max="1000" step="1" value="1000" />
           <span class="val" id="wTopVal">1000</span>
+        </div>
+        <div class="row">
+          <label for="cTop">cntr</label>
+          <input id="cTop" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="cTopVal">100</span>
         </div>
         <div class="row">
           <label for="oTop">opacity</label>
@@ -294,8 +300,13 @@
         </div>
         <div class="row">
           <label for="wBot">weight</label>
-          <input id="wBot" type="range" min="100" max="1000" step="1" value="500" />
+          <input id="wBot" type="range" min="200" max="1000" step="1" value="500" />
           <span class="val" id="wBotVal">500</span>
+        </div>
+        <div class="row">
+          <label for="cBot">cntr</label>
+          <input id="cBot" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="cBotVal">0</span>
         </div>
         <div class="row">
           <label for="oBot">opacity</label>
@@ -330,9 +341,14 @@
           <span class="val" id="pvVal">0px</span>
         </div>
         <div class="row">
-          <label for="ph">horizontal</label>
-          <input id="ph" type="range" min="0" max="600" step="1" value="0" />
-          <span class="val" id="phVal">0px</span>
+          <label for="pl">left</label>
+          <input id="pl" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="plVal">0px</span>
+        </div>
+        <div class="row">
+          <label for="pr">right</label>
+          <input id="pr" type="range" min="0" max="600" step="1" value="0" />
+          <span class="val" id="prVal">0px</span>
         </div>
       </div>
 
@@ -347,7 +363,6 @@
           "Ikarus",
           "Dädalus",
           "Minos",
-          "Pasiphaë",
           "Ariadne",
           "Theseus",
           "Poseidon",
@@ -377,20 +392,50 @@
         buildLines();
 
         var loopHeight = 0;
-        function measure() {
+        var needsMeasure = true;
+
+        function measureLoop() {
           var first = lineEls[0];
-          var firstSecond = lineEls[NAMES.length];
-          if (!first || !firstSecond) return;
-          loopHeight = firstSecond.offsetTop - first.offsetTop;
+          var second = lineEls[NAMES.length];
+          var next = 0;
+          if (first && second) {
+            next = second.offsetTop - first.offsetTop;
+          }
+          if (next <= 0) next = track.scrollHeight / 2;
+          if (next <= 0) return;
+          var prev = loopHeight;
+          loopHeight = next;
+          if (prev > 0 && prev !== loopHeight) {
+            offset = (offset / prev) * loopHeight;
+            while (offset >= loopHeight) offset -= loopHeight;
+          }
+        }
+
+        function requestMeasure() {
+          needsMeasure = true;
         }
 
         var offset = 0;
         var lastNow = 0;
 
+        // t: 0 = largest (top), 1 = smallest (bottom). Entering lines use the
+        // top edge; exiting lines use the bottom edge so size keeps growing
+        // until the name has left the frame (bottom-only mapping clamped early
+        // and made names shrink at the bottom before they grew).
+        function tForLine(yTop, yBottom, marqueeH) {
+          if (yBottom <= 0) return 0;
+          if (yTop >= marqueeH) return 1;
+          if (yBottom > marqueeH) return yTop / marqueeH;
+          if (yTop < 0) return yBottom / marqueeH;
+          return (yTop + yBottom) * 0.5 / marqueeH;
+        }
+
         function updateWeights() {
           var marqueeH = marquee.clientHeight || 1;
           var wTop = parseFloat(els.wTop.value);
           var wBot = parseFloat(els.wBot.value);
+          var cTop = parseFloat(els.cTop.value);
+          var cBot = parseFloat(els.cBot.value);
           var kTop = parseFloat(els.kTop.value);
           var kBot = parseFloat(els.kBot.value);
           var sTop = parseFloat(els.sTop.value);
@@ -405,25 +450,29 @@
           // styles. Per-line font-size shifts the layout, so reading and
           // writing in the same loop would make later lines see stale
           // positions and produce the wrong `t`.
-          // Use the line's bottom edge for `t` so scaling keeps going until
-          // the name has fully scrolled out the top (center-based `t` hit 0
-          // while the line was still partly visible).
           var n = lineEls.length;
-          var bottoms = new Array(n);
+          var positions = new Array(n);
           for (var i = 0; i < n; i++) {
             var el = lineEls[i];
             var yTop = el.offsetTop - offset;
-            bottoms[i] = yTop + el.offsetHeight;
+            positions[i] = {
+              yTop: yTop,
+              yBottom: yTop + el.offsetHeight,
+            };
           }
 
           for (var j = 0; j < n; j++) {
             var node = lineEls[j];
-            var t = bottoms[j] / marqueeH;
+            var pos = positions[j];
+            var t = tForLine(pos.yTop, pos.yBottom, marqueeH);
             if (t < 0) t = 0;
             else if (t > 1) t = 1;
             var tt = Math.pow(t, gamma);
             var w = Math.round(wTop + (wBot - wTop) * tt);
-            node.style.fontVariationSettings = '"wght" ' + w;
+            var c = cTop + (cBot - cTop) * tt;
+            var cS = (Math.round(c * 10) / 10).toFixed(1);
+            node.style.fontVariationSettings =
+              '"wght" ' + w + ', "CNTR" ' + cS;
             var k = kTop + (kBot - kTop) * tt;
             node.style.letterSpacing = k.toFixed(4) + "em";
             var s = sTop + (sBot - sTop) * tt;
@@ -442,19 +491,16 @@
           var speed = parseFloat(els.sp.value);
           offset += speed * dt;
           if (loopHeight > 0) {
-            offset = ((offset % loopHeight) + loopHeight) % loopHeight;
+            while (offset >= loopHeight) offset -= loopHeight;
           }
           track.style.transform = "translateY(" + -offset + "px)";
 
           updateWeights();
+          updateWeights();
 
-          // Per-line font-size means line heights (and therefore the loop
-          // length) can drift between frames. Re-measure and rescale offset
-          // so the visible position is preserved across the change.
-          var prev = loopHeight;
-          measure();
-          if (prev > 0 && loopHeight > 0 && prev !== loopHeight) {
-            offset = (offset / prev) * loopHeight;
+          if (needsMeasure) {
+            measureLoop();
+            needsMeasure = false;
           }
 
           requestAnimationFrame(frame);
@@ -475,12 +521,15 @@
           kBot: 0.02,
           wTop: 1000,
           wBot: 500,
+          cTop: 100,
+          cBot: 0,
           gm: 1,
           oTop: 1,
           oBot: 0.2,
           sp: 80,
           pv: 0,
-          ph: 0,
+          pl: 0,
+          pr: 0,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
@@ -497,12 +546,15 @@
           kBot: document.getElementById("kBot"),
           wTop: document.getElementById("wTop"),
           wBot: document.getElementById("wBot"),
+          cTop: document.getElementById("cTop"),
+          cBot: document.getElementById("cBot"),
           gm: document.getElementById("gm"),
           oTop: document.getElementById("oTop"),
           oBot: document.getElementById("oBot"),
           sp: document.getElementById("sp"),
           pv: document.getElementById("pv"),
-          ph: document.getElementById("ph"),
+          pl: document.getElementById("pl"),
+          pr: document.getElementById("pr"),
         };
         var vals = {
           bg: document.getElementById("bgVal"),
@@ -515,12 +567,15 @@
           kBot: document.getElementById("kBotVal"),
           wTop: document.getElementById("wTopVal"),
           wBot: document.getElementById("wBotVal"),
+          cTop: document.getElementById("cTopVal"),
+          cBot: document.getElementById("cBotVal"),
           gm: document.getElementById("gmVal"),
           oTop: document.getElementById("oTopVal"),
           oBot: document.getElementById("oBotVal"),
           sp: document.getElementById("spVal"),
           pv: document.getElementById("pvVal"),
-          ph: document.getElementById("phVal"),
+          pl: document.getElementById("plVal"),
+          pr: document.getElementById("prVal"),
         };
 
         function fmt(key, v) {
@@ -533,7 +588,7 @@
             return Number(v).toFixed(2);
           if (key === "kTop" || key === "kBot")
             return Math.round(Number(v) * 1000) + "";
-          if (key === "wTop" || key === "wBot" || key === "sp")
+          if (key === "wTop" || key === "wBot" || key === "cTop" || key === "cBot" || key === "sp")
             return Math.round(Number(v)) + "";
           return Math.round(Number(v)) + "px";
         }
@@ -545,8 +600,9 @@
           else if (key === "pv") {
             root.style.setProperty("--pad-t", v);
             root.style.setProperty("--pad-b", v);
-          } else if (key === "ph") {
+          } else if (key === "pl") {
             root.style.setProperty("--pad-l", v);
+          } else if (key === "pr") {
             root.style.setProperty("--pad-r", v);
           }
         }
@@ -581,6 +637,10 @@
           if (raw) {
             try {
               var parsed = JSON.parse(raw);
+              if (parsed.ph != null && parsed.pl == null && parsed.pr == null) {
+                parsed.pl = parsed.ph;
+                parsed.pr = parsed.ph;
+              }
               data = Object.assign({}, DEFAULTS, parsed);
             } catch (e) {}
           }
@@ -600,7 +660,7 @@
               k === "lhTop" ||
               k === "lhBot"
             ) {
-              requestAnimationFrame(measure);
+              requestMeasure();
             }
           });
         });
@@ -609,7 +669,7 @@
           Object.keys(DEFAULTS).forEach(function (k) {
             setValue(k, DEFAULTS[k]);
           });
-          requestAnimationFrame(measure);
+          requestMeasure();
         });
 
         var stageWrap = document.getElementById("stageWrap");
@@ -636,13 +696,13 @@
         );
 
         window.addEventListener("resize", function () {
-          requestAnimationFrame(measure);
+          requestMeasure();
         });
 
         load();
 
         function start() {
-          measure();
+          requestMeasure();
           requestAnimationFrame(frame);
         }
 

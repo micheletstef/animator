@@ -40,7 +40,7 @@
       "id": "marquee",
       "label": "names marquee",
       "url": "animations/marquee.html",
-      "mtime": 1778850490
+      "mtime": 1778850989
     },
     {
       "id": "spf",
@@ -52,7 +52,7 @@
       "id": "wave",
       "label": "wave",
       "url": "animations/wave.html",
-      "mtime": 1778850448
+      "mtime": 1778850585
     }
   ]
 }
