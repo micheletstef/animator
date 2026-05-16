@@ -56,40 +56,38 @@
   }
 
   /**
-   * Center path on artboard; scale from opentype metrics + computed font-size.
+   * getPath(…, fontSize) is already in px at the rendered size — use uniform
+   * scale only (never stretch X/Y separately). Center on the glyph element.
    */
-  function placement(stageEl, root, bb, font, char, fontSize, variation) {
+  function placement(stageEl, root, bb, el) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
+    var elRect = el.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
     var stageH = stageRect.height / zoom;
+
     var stageCx = stageW / 2;
     var stageCy = stageH / 2;
+    var cx = stageCx;
+    var cy = stageCy;
 
-    var pathW = bb.x2 - bb.x1;
-    var pathH = bb.y2 - bb.y1;
-    if (pathW <= 0) pathW = 1;
-    if (pathH <= 0) pathH = 1;
+    if (elRect.width > 1 && elRect.height > 1) {
+      cx = (elRect.left + elRect.right) / 2 - stageRect.left;
+      cx = cx / zoom;
+      cy = (elRect.top + elRect.bottom) / 2 - stageRect.top;
+      cy = cy / zoom;
+    }
+
     var pathCx = (bb.x1 + bb.x2) / 2;
     var pathCy = (bb.y1 + bb.y2) / 2;
 
-    var advance = font.getAdvanceWidth(char, fontSize, {
-      variation: variation,
-    });
-    if (!isFinite(advance) || advance <= 0) advance = pathW;
-
-    var targetW = advance;
-    var targetH = fontSize;
-
-    var scaleX = targetW / pathW;
-    var scaleY = targetH / pathH;
-    if (!isFinite(scaleX) || scaleX <= 0) scaleX = 1;
-    if (!isFinite(scaleY) || scaleY <= 0) scaleY = 1;
+    // getPath(…, fontSize) is already in px at the live glyph size — no extra scale
+    var scale = 1;
 
     function map(ox, oy) {
       return {
-        x: stageCx + (ox - pathCx) * scaleX,
-        y: stageCy + (oy - pathCy) * scaleY,
+        x: cx + (ox - pathCx) * scale,
+        y: cy + (oy - pathCy) * scale,
       };
     }
 
@@ -211,7 +209,7 @@
 
     var geom = collectGeometry(commands);
 
-    var place = placement(stageEl, root, bb, font, char, fontSize, variation);
+    var place = placement(stageEl, root, bb, el);
     var map = place.map;
     var d = pathDFromCommands(commands, map);
     if (!d || d.indexOf("NaN") !== -1) return;
