@@ -5,6 +5,7 @@
 (function (global) {
   var fontPromise = null;
   var fontUrl = null;
+  var measureCanvas = null;
 
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
@@ -52,11 +53,33 @@
     return isFinite(z) && z > 0 ? z : 1;
   }
 
+  function measureInk(el, char) {
+    if (!measureCanvas) measureCanvas = document.createElement("canvas");
+    var ctx = measureCanvas.getContext("2d");
+    var cs = getComputedStyle(el);
+    ctx.font = cs.font;
+    if (ctx.fontVariationSettings !== undefined && cs.fontVariationSettings) {
+      ctx.fontVariationSettings = cs.fontVariationSettings;
+    }
+    var m = ctx.measureText(char);
+    return {
+      left: m.actualBoundingBoxLeft,
+      right: m.actualBoundingBoxRight,
+      ascent: m.actualBoundingBoxAscent,
+      descent: m.actualBoundingBoxDescent,
+      advance: m.width,
+    };
+  }
+
+  function fontSizePx(el) {
+    return parseFloat(getComputedStyle(el).fontSize) || 72;
+  }
+
   /**
-   * Map font.getPath() coordinates onto the stage SVG.
-   * Commands and bbox must both come from getPath() (y flipped, fontSize scaled).
+   * Align getPath(0,0) coords to where the browser draws the glyph.
+   * Uses canvas ink metrics + path bbox for sub-pixel fit.
    */
-  function placement(el, stageEl, root, bb) {
+  function placement(el, stageEl, root, char, bb) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var elRect = el.getBoundingClientRect();
@@ -68,22 +91,52 @@
       height: elRect.height / zoom,
     };
 
-    var inkW = bb.x2 - bb.x1;
-    var inkH = bb.y2 - bb.y1;
-    if (inkW <= 0) inkW = 1;
-    if (inkH <= 0) inkH = 1;
+    var ink = measureInk(el, char);
+    var pathW = bb.x2 - bb.x1;
+    var pathH = bb.y2 - bb.y1;
+    if (pathW <= 0) pathW = 1;
+    if (pathH <= 0) pathH = 1;
 
-    var inkLeft = local.left + (local.width - inkW) / 2;
-    var inkTop = local.top + (local.height - inkH) / 2;
+    var canvasInkW = ink.left + ink.right;
+    var canvasInkH = ink.ascent + ink.descent;
+    var hasCanvasInk =
+      canvasInkW > 0.5 && canvasInkH > 0.5 && isFinite(ink.ascent);
 
-    function map(ox, oy) {
+    var originX;
+    var baselineY;
+
+    if (hasCanvasInk) {
+      // Pen origin at start of glyph (left edge of span), alphabetic baseline.
+      originX = local.left;
+      baselineY = local.top + local.height - ink.descent;
+
+      var inkLeft = originX - ink.left;
+      var inkTop = baselineY - ink.ascent;
+      var scaleX = canvasInkW / pathW;
+      var scaleY = canvasInkH / pathH;
+
+      function map(ox, oy) {
+        return {
+          x: inkLeft + (ox - bb.x1) * scaleX,
+          y: inkTop + (oy - bb.y1) * scaleY,
+        };
+      }
+
+      return { map: map };
+    }
+
+    // Fallback: center path bbox in element box
+    var inkLeft = local.left + (local.width - pathW) / 2;
+    var inkTop = local.top + (local.height - pathH) / 2;
+
+    function mapFallback(ox, oy) {
       return {
         x: inkLeft + (ox - bb.x1),
         y: inkTop + (oy - bb.y1),
       };
     }
 
-    return { map: map };
+    return { map: mapFallback };
   }
 
   function collectGeometry(commands) {
@@ -187,7 +240,7 @@
   function renderTarget(svg, font, target, stageEl, root, opacity) {
     var el = target.el;
     var char = target.char;
-    var fontSize = target.fontSize;
+    var fontSize = fontSizePx(el);
     var variation =
       target.variation != null ? target.variation : parseVariationFromElement(el);
 
@@ -202,7 +255,7 @@
     var textRect = el.getBoundingClientRect();
     if (!textRect.width) return;
 
-    var map = placement(el, stageEl, root, bb).map;
+    var map = placement(el, stageEl, root, char, bb).map;
 
     var g = ns("g");
     g.setAttribute("class", "glyph-outline-group");
