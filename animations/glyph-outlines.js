@@ -56,77 +56,38 @@
     return parseFloat(getComputedStyle(el).fontSize) || 72;
   }
 
-  function measureInk(el, char) {
-    var canvas = document.createElement("canvas");
-    var ctx = canvas.getContext("2d");
-    var cs = getComputedStyle(el);
-    ctx.font = cs.font;
-    if (ctx.fontVariationSettings !== undefined && cs.fontVariationSettings) {
-      ctx.fontVariationSettings = cs.fontVariationSettings;
-    }
-    if (ctx.letterSpacing !== undefined && cs.letterSpacing && cs.letterSpacing !== "normal") {
-      ctx.letterSpacing = cs.letterSpacing;
-    }
-    var m = ctx.measureText(char);
-    return {
-      left: typeof m.actualBoundingBoxLeft === "number" ? m.actualBoundingBoxLeft : 0,
-      right:
-        typeof m.actualBoundingBoxRight === "number" ? m.actualBoundingBoxRight : 0,
-      ascent:
-        typeof m.actualBoundingBoxAscent === "number" ? m.actualBoundingBoxAscent : 0,
-      descent:
-        typeof m.actualBoundingBoxDescent === "number"
-          ? m.actualBoundingBoxDescent
-          : 0,
-    };
-  }
-
   /**
-   * getPath(0,0, fontSize): pen at (0,0), y up. Match browser pen via ink metrics.
+   * getPath(…, fontSize): 1:1 px. Center path bbox on artboard (stage) center.
    */
-  function placement(stageEl, root, el, char, pathBb) {
+  function placement(stageEl, root, pathBb) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
-    var elRect = el.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
     var stageH = stageRect.height / zoom;
+    var stageCx = stageW / 2;
+    var stageCy = stageH / 2;
 
-    var localLeft = (elRect.left - stageRect.left) / zoom;
-    var localTop = (elRect.top - stageRect.top) / zoom;
-    var localH = elRect.height / zoom;
-    var localBottom = (elRect.bottom - stageRect.top) / zoom;
-    var fs = fontSizePx(el);
+    var pathCx = (pathBb.x1 + pathBb.x2) / 2;
+    var pathCy = (pathBb.y1 + pathBb.y2) / 2;
 
-    var ink = measureInk(el, char);
-    // Canvas often under-reports variable-font ink boxes at large sizes
-    var metricsOk = ink.ascent + ink.descent > fs * 0.35;
-
-    var originX = localLeft;
-    var baselineY = localTop + localH;
-
-    if (metricsOk) {
-      originX = localLeft + ink.left;
-      baselineY = localTop + ink.ascent;
-    } else if (pathBb && isFinite(pathBb.x1) && isFinite(pathBb.y1)) {
-      // 1:1 with getPath fontSize — never stretch X/Y separately (breaks slant)
-      originX = localLeft - pathBb.x1;
-      baselineY = localBottom - (isFinite(pathBb.y2) ? pathBb.y2 : 0);
-    }
-
-    // getPath(…, fontSize): 1 unit = 1 px at the rendered size
     var map = function (ox, oy) {
-      return { x: originX + ox, y: baselineY + oy };
+      return {
+        x: stageCx + (ox - pathCx),
+        y: stageCy + (oy - pathCy),
+      };
     };
 
-    return { map: map, stageW: stageW, stageH: stageH };
+    return { map: map, stageW: stageW, stageH: stageH, stageCx: stageCx, stageCy: stageCy };
   }
 
-  function wrapMapScale(map, scale, bb) {
-    if (!scale || scale === 1 || !isFinite(scale) || !bb) return map;
-    var ax = (bb.x1 + bb.x2) / 2;
-    var ay = (bb.y1 + bb.y2) / 2;
+  function wrapScreenScale(map, scale, cx, cy) {
+    if (!scale || scale === 1 || !isFinite(scale)) return map;
     return function (ox, oy) {
-      return map(ax + (ox - ax) * scale, ay + (oy - ay) * scale);
+      var p = map(ox, oy);
+      return {
+        x: cx + (p.x - cx) * scale,
+        y: cy + (p.y - cy) * scale,
+      };
     };
   }
 
@@ -476,12 +437,12 @@
     var commands = path.commands;
     if (!commands || !commands.length) return;
 
-    var place = placement(stageEl, root, el, char, bb);
+    var place = placement(stageEl, root, bb);
     var map = place.map;
     var scale =
       opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
     if (isFinite(scale) && scale > 0 && scale !== 1) {
-      map = wrapMapScale(map, scale, bb);
+      map = wrapScreenScale(map, scale, place.stageCx, place.stageCy);
     }
     var subpaths = splitSubpaths(commands);
     var tol = Math.max(0.2, fontSize * 0.0004);
