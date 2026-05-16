@@ -86,9 +86,11 @@
   }
 
   /**
-   * Map font.getPath() coords onto the stage SVG.
+   * Map font.getPath(0,0) coords onto the stage SVG.
+   * X: pen origin from advance width (matches browser layout).
+   * Y: alphabetic baseline from canvas metrics when available.
    */
-  function placement(el, stageEl, root, char, bb) {
+  function placement(el, stageEl, root, char, bb, font, fontSize, variation) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var elRect = el.getBoundingClientRect();
@@ -105,45 +107,36 @@
     if (pathW <= 0) pathW = 1;
     if (pathH <= 0) pathH = 1;
 
-    // Reliable default: center path ink box in the element box
-    var inkLeft = local.left + (local.width - pathW) / 2;
-    var inkTop = local.top + (local.height - pathH) / 2;
+    var advance = safeNum(
+      font.getAdvanceWidth(char, fontSize, { variation: variation }),
+      pathW
+    );
+    var originX = local.left + (local.width - advance) / 2;
+
     var scaleX = 1;
     var scaleY = 1;
+    var useBaseline = false;
+    var baselineY = 0;
+    var inkTop = local.top + (local.height - pathH) / 2;
 
     var ink = measureInk(el, char);
     if (hasCanvasInk(ink)) {
-      var canvasInkW = ink.left + ink.right;
       var canvasInkH = ink.ascent + ink.descent;
-      var sx = canvasInkW / pathW;
       var sy = canvasInkH / pathH;
 
-      if (sx > 0.4 && sx < 2.5 && sy > 0.4 && sy < 2.5) {
-        var originX = local.left;
-        var baselineY = local.top + local.height - ink.descent;
-        var canvasLeft = originX - ink.left;
-        var canvasTop = baselineY - ink.ascent;
-
-        if (
-          isFinite(canvasLeft) &&
-          isFinite(canvasTop) &&
-          isFinite(sx) &&
-          isFinite(sy)
-        ) {
-          inkLeft = canvasLeft;
-          inkTop = canvasTop;
-          scaleX = sx;
-          scaleY = sy;
-        }
+      if (sy > 0.4 && sy < 2.5) {
+        scaleY = sy;
+        useBaseline = true;
+        baselineY = local.top + local.height - ink.descent;
       }
     }
 
     function map(ox, oy) {
-      var x = inkLeft + (ox - bb.x1) * scaleX;
-      var y = inkTop + (oy - bb.y1) * scaleY;
+      var x = originX + ox * scaleX;
+      var y = useBaseline ? baselineY + oy * scaleY : inkTop + (oy - bb.y1);
       if (!isFinite(x) || !isFinite(y)) {
         x = local.left + (local.width - pathW) / 2 + (ox - bb.x1);
-        y = local.top + (local.height - pathH) / 2 + (oy - bb.y1);
+        y = inkTop + (oy - bb.y1);
       }
       return { x: x, y: y };
     }
@@ -268,7 +261,7 @@
     var textRect = el.getBoundingClientRect();
     if (!textRect.width) return;
 
-    var map = placement(el, stageEl, root, char, bb).map;
+    var map = placement(el, stageEl, root, char, bb, font, fontSize, variation).map;
     var d = pathDFromCommands(commands, map);
     if (!d || d.indexOf("NaN") !== -1) return;
 
