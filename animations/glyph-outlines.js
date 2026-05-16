@@ -53,6 +53,10 @@
     return isFinite(z) && z > 0 ? z : 1;
   }
 
+  function safeNum(n, fallback) {
+    return typeof n === "number" && isFinite(n) ? n : fallback;
+  }
+
   function measureInk(el, char) {
     if (!measureCanvas) measureCanvas = document.createElement("canvas");
     var ctx = measureCanvas.getContext("2d");
@@ -63,11 +67,11 @@
     }
     var m = ctx.measureText(char);
     return {
-      left: m.actualBoundingBoxLeft,
-      right: m.actualBoundingBoxRight,
-      ascent: m.actualBoundingBoxAscent,
-      descent: m.actualBoundingBoxDescent,
-      advance: m.width,
+      left: safeNum(m.actualBoundingBoxLeft, 0),
+      right: safeNum(m.actualBoundingBoxRight, 0),
+      ascent: safeNum(m.actualBoundingBoxAscent, 0),
+      descent: safeNum(m.actualBoundingBoxDescent, 0),
+      advance: safeNum(m.width, 0),
     };
   }
 
@@ -75,9 +79,14 @@
     return parseFloat(getComputedStyle(el).fontSize) || 72;
   }
 
+  function hasCanvasInk(ink) {
+    var w = ink.left + ink.right;
+    var h = ink.ascent + ink.descent;
+    return w > 1 && h > 1;
+  }
+
   /**
-   * Align getPath(0,0) coords to where the browser draws the glyph.
-   * Uses canvas ink metrics + path bbox for sub-pixel fit.
+   * Map font.getPath() coords onto the stage SVG.
    */
   function placement(el, stageEl, root, char, bb) {
     var zoom = readZoom(root);
@@ -91,52 +100,55 @@
       height: elRect.height / zoom,
     };
 
-    var ink = measureInk(el, char);
     var pathW = bb.x2 - bb.x1;
     var pathH = bb.y2 - bb.y1;
     if (pathW <= 0) pathW = 1;
     if (pathH <= 0) pathH = 1;
 
-    var canvasInkW = ink.left + ink.right;
-    var canvasInkH = ink.ascent + ink.descent;
-    var hasCanvasInk =
-      canvasInkW > 0.5 && canvasInkH > 0.5 && isFinite(ink.ascent);
-
-    var originX;
-    var baselineY;
-
-    if (hasCanvasInk) {
-      // Pen origin at start of glyph (left edge of span), alphabetic baseline.
-      originX = local.left;
-      baselineY = local.top + local.height - ink.descent;
-
-      var inkLeft = originX - ink.left;
-      var inkTop = baselineY - ink.ascent;
-      var scaleX = canvasInkW / pathW;
-      var scaleY = canvasInkH / pathH;
-
-      function map(ox, oy) {
-        return {
-          x: inkLeft + (ox - bb.x1) * scaleX,
-          y: inkTop + (oy - bb.y1) * scaleY,
-        };
-      }
-
-      return { map: map };
-    }
-
-    // Fallback: center path bbox in element box
+    // Reliable default: center path ink box in the element box
     var inkLeft = local.left + (local.width - pathW) / 2;
     var inkTop = local.top + (local.height - pathH) / 2;
+    var scaleX = 1;
+    var scaleY = 1;
 
-    function mapFallback(ox, oy) {
-      return {
-        x: inkLeft + (ox - bb.x1),
-        y: inkTop + (oy - bb.y1),
-      };
+    var ink = measureInk(el, char);
+    if (hasCanvasInk(ink)) {
+      var canvasInkW = ink.left + ink.right;
+      var canvasInkH = ink.ascent + ink.descent;
+      var sx = canvasInkW / pathW;
+      var sy = canvasInkH / pathH;
+
+      if (sx > 0.4 && sx < 2.5 && sy > 0.4 && sy < 2.5) {
+        var originX = local.left;
+        var baselineY = local.top + local.height - ink.descent;
+        var canvasLeft = originX - ink.left;
+        var canvasTop = baselineY - ink.ascent;
+
+        if (
+          isFinite(canvasLeft) &&
+          isFinite(canvasTop) &&
+          isFinite(sx) &&
+          isFinite(sy)
+        ) {
+          inkLeft = canvasLeft;
+          inkTop = canvasTop;
+          scaleX = sx;
+          scaleY = sy;
+        }
+      }
     }
 
-    return { map: mapFallback };
+    function map(ox, oy) {
+      var x = inkLeft + (ox - bb.x1) * scaleX;
+      var y = inkTop + (oy - bb.y1) * scaleY;
+      if (!isFinite(x) || !isFinite(y)) {
+        x = local.left + (local.width - pathW) / 2 + (ox - bb.x1);
+        y = local.top + (local.height - pathH) / 2 + (oy - bb.y1);
+      }
+      return { x: x, y: y };
+    }
+
+    return { map: map };
   }
 
   function collectGeometry(commands) {
@@ -226,6 +238,7 @@
   }
 
   function fmt(n) {
+    if (!isFinite(n)) return "0";
     return (Math.round(n * 100) / 100).toFixed(2);
   }
 
@@ -256,6 +269,8 @@
     if (!textRect.width) return;
 
     var map = placement(el, stageEl, root, char, bb).map;
+    var d = pathDFromCommands(commands, map);
+    if (!d || d.indexOf("NaN") !== -1) return;
 
     var g = ns("g");
     g.setAttribute("class", "glyph-outline-group");
@@ -264,7 +279,7 @@
 
     var pathEl = ns("path");
     pathEl.setAttribute("class", "glyph-outline-path");
-    pathEl.setAttribute("d", pathDFromCommands(commands, map));
+    pathEl.setAttribute("d", d);
     pathEl.setAttribute("fill", "none");
     pathEl.setAttribute("stroke", COLORS.path);
     pathEl.setAttribute("stroke-width", "1.25");
@@ -341,14 +356,25 @@
         return Promise.resolve();
       }
       var root = opts.root || document.documentElement;
+      var fontsReady =
+        document.fonts && document.fonts.ready
+          ? document.fonts.ready
+          : Promise.resolve();
 
-      return loadFont(opts.fontUrl).then(function (font) {
-        clearSvg(svg);
-        targets.forEach(function (t) {
-          var opacity = t.kind === "ghost" ? 0.35 : 1;
-          renderTarget(svg, font, t, stageEl, root, opacity);
+      return fontsReady
+        .then(function () {
+          return loadFont(opts.fontUrl);
+        })
+        .then(function (font) {
+          clearSvg(svg);
+          targets.forEach(function (t) {
+            var opacity = t.kind === "ghost" ? 0.35 : 1;
+            renderTarget(svg, font, t, stageEl, root, opacity);
+          });
+        })
+        .catch(function () {
+          /* keep last frame on error */
         });
-      });
     },
   };
 })(typeof window !== "undefined" ? window : this);
