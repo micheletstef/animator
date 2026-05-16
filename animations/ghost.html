@@ -112,6 +112,45 @@
         filter: url(#ghost-outline);
       }
 
+      .outline-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+        color: var(--fg);
+      }
+
+      .outline-layer .glyph-outline-path {
+        stroke-width: 1;
+        opacity: 0.55;
+      }
+
+      .outline-layer .glyph-outline-handle-line {
+        stroke-width: 1;
+        opacity: 0.35;
+      }
+
+      .outline-layer .glyph-outline-handle {
+        opacity: 0.7;
+      }
+
+      .outline-layer .glyph-outline-node {
+        opacity: 0.9;
+      }
+
+      .outline-layer .glyph-outline-group[data-kind="ghost"] .glyph-outline-path {
+        opacity: 0.22;
+      }
+
+      .outline-layer .glyph-outline-group[data-kind="ghost"] .glyph-outline-handle-line,
+      .outline-layer .glyph-outline-group[data-kind="ghost"] .glyph-outline-handle,
+      .outline-layer .glyph-outline-group[data-kind="ghost"] .glyph-outline-node {
+        opacity: 0.18;
+      }
+
       .panel {
         align-self: stretch;
         max-height: 100%;
@@ -360,6 +399,7 @@
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="ghost animation">
+          <svg class="outline-layer" id="outlines" aria-hidden="true"></svg>
           <div class="ghost-layer" id="ghosts"></div>
           <span class="glyph" id="glyph">A</span>
         </div>
@@ -450,6 +490,11 @@
           <input id="hd" type="range" min="0" max="2000" step="50" value="450" />
           <span class="val" id="hdVal">450ms</span>
         </div>
+        <div class="row">
+          <label for="nd">nodes</label>
+          <input id="nd" type="range" min="0" max="1" step="1" value="1" />
+          <span class="val" id="ndVal">on</span>
+        </div>
       </div>
 
       <div class="actions">
@@ -457,11 +502,17 @@
       </div>
     </aside>
 
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
+    <script src="glyph-outlines.js"></script>
     <script src="artboard-zoom.js"></script>
     <script>
       (function () {
         var glyph = document.getElementById("glyph");
         var ghostLayer = document.getElementById("ghosts");
+        var outlineSvg = document.getElementById("outlines");
+        var stage = document.getElementById("stage");
+        var FONT_URL = "../fonts/ABCIkarusVariable.ttf";
+        var ghostEls = [];
 
         function easeInOutCubic(t) {
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -479,6 +530,7 @@
 
         function buildGhosts() {
           ghostLayer.innerHTML = "";
+          ghostEls = [];
           var n = Math.max(1, Math.round(parseFloat(els.gh.value)));
           var wMin = parseFloat(els.wMin.value);
           var wMax = parseFloat(els.wMax.value);
@@ -495,7 +547,64 @@
             el.textContent = getChar();
             el.style.fontVariationSettings = '"wght" ' + w.toFixed(1);
             ghostLayer.appendChild(el);
+            ghostEls.push({ el: el, weight: w });
           }
+          syncOutlines();
+        }
+
+        function showNodes() {
+          return parseFloat(els.nd.value) >= 1;
+        }
+
+        function fontSizePx() {
+          return parseFloat(getComputedStyle(root).getPropertyValue("--fs"));
+        }
+
+        function outlineTargets(includeGhosts) {
+          var ch = getChar();
+          var fs = fontSizePx();
+          var targets = [
+            {
+              el: glyph,
+              char: ch,
+              fontSize: fs,
+              variation: GlyphOutlines.parseVariationFromElement(glyph),
+              kind: "glyph",
+            },
+          ];
+          if (includeGhosts) {
+            var i;
+            for (i = 0; i < ghostEls.length; i++) {
+              targets.push({
+                el: ghostEls[i].el,
+                char: ch,
+                fontSize: fs,
+                variation: { wght: ghostEls[i].weight },
+                kind: "ghost",
+              });
+            }
+          }
+          return targets;
+        }
+
+        function syncOutlines(includeGhosts) {
+          if (!showNodes() || !window.GlyphOutlines) {
+            outlineSvg.style.display = "none";
+            return;
+          }
+          outlineSvg.style.display = "block";
+          GlyphOutlines.sync(
+            outlineSvg,
+            stage,
+            outlineTargets(includeGhosts !== false),
+            {
+              fontUrl: FONT_URL,
+              root: root,
+              strokeColor: getComputedStyle(root)
+                .getPropertyValue("--fg")
+                .trim(),
+            }
+          );
         }
 
         function frame(now, t0) {
@@ -529,6 +638,7 @@
 
           var weight = wMin + (wMax - wMin) * eased;
           glyph.style.fontVariationSettings = '"wght" ' + weight.toFixed(1);
+          syncOutlines(false);
 
           requestAnimationFrame(function (n2) {
             frame(n2, t0);
@@ -550,6 +660,7 @@
           gh: 14,
           cy: 5200,
           hd: 450,
+          nd: 1,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
@@ -567,6 +678,7 @@
           gh: document.getElementById("gh"),
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
+          nd: document.getElementById("nd"),
         };
         var vals = {
           bg: document.getElementById("bgVal"),
@@ -576,6 +688,7 @@
           gh: document.getElementById("ghVal"),
           cy: document.getElementById("cyVal"),
           hd: document.getElementById("hdVal"),
+          nd: document.getElementById("ndVal"),
         };
 
         var wVal = document.getElementById("wVal");
@@ -589,6 +702,7 @@
           if (key === "gh") return Math.round(Number(v)) + "";
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
           if (key === "hd") return Math.round(Number(v)) + "ms";
+          if (key === "nd") return Number(v) >= 1 ? "on" : "off";
           return String(v);
         }
 
@@ -633,6 +747,7 @@
           }
           if (key === "ch") applyChar();
           applyVar(key, v);
+          if (key === "nd" || key === "fg" || key === "fs") syncOutlines();
           if (persist !== false) save();
         }
 
@@ -671,6 +786,7 @@
 
         ArtboardZoom.onChange(function (z) {
           setValue("zm", z, false);
+          syncOutlines();
         });
 
         Object.keys(els).forEach(function (k) {
@@ -683,6 +799,7 @@
             if (k === "ch" || k === "gh" || k === "wMin" || k === "wMax") {
               buildGhosts();
             }
+            if (k === "nd" || k === "fs" || k === "fg") syncOutlines();
           });
         });
 
