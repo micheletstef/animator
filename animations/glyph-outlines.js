@@ -104,33 +104,19 @@
     var originX = localLeft;
     var baselineY = localTop + localH;
 
-    var map;
-
     if (metricsOk) {
       originX = localLeft + ink.left;
       baselineY = localTop + ink.ascent;
-      map = function (ox, oy) {
-        return { x: originX + ox, y: baselineY + oy };
-      };
     } else if (pathBb && isFinite(pathBb.x1) && isFinite(pathBb.y1)) {
-      var pathW = pathBb.x2 - pathBb.x1;
-      var pathH = pathBb.y2 - pathBb.y1;
-      var elW = elRect.width / zoom;
-      if (pathW > 0 && pathH > 0 && elW > 0 && localH > 0) {
-        map = function (ox, oy) {
-          return {
-            x: localLeft + ((ox - pathBb.x1) / pathW) * elW,
-            y: localTop + ((oy - pathBb.y1) / pathH) * localH,
-          };
-        };
-      }
+      // 1:1 with getPath fontSize — never stretch X/Y separately (breaks slant)
+      originX = localLeft - pathBb.x1;
+      baselineY = localBottom - (isFinite(pathBb.y2) ? pathBb.y2 : 0);
     }
 
-    if (!map) {
-      map = function (ox, oy) {
-        return { x: originX + ox, y: baselineY + oy };
-      };
-    }
+    // getPath(…, fontSize): 1 unit = 1 px at the rendered size
+    var map = function (ox, oy) {
+      return { x: originX + ox, y: baselineY + oy };
+    };
 
     return { map: map, stageW: stageW, stageH: stageH };
   }
