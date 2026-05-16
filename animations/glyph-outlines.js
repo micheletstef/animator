@@ -5,8 +5,6 @@
 (function (global) {
   var fontPromise = null;
   var fontUrl = null;
-  var measureCanvas = null;
-
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
     handleLine: "rgba(0, 120, 255, 0.45)",
@@ -53,43 +51,15 @@
     return isFinite(z) && z > 0 ? z : 1;
   }
 
-  function safeNum(n, fallback) {
-    return typeof n === "number" && isFinite(n) ? n : fallback;
-  }
-
-  function measureInk(el, char) {
-    if (!measureCanvas) measureCanvas = document.createElement("canvas");
-    var ctx = measureCanvas.getContext("2d");
-    var cs = getComputedStyle(el);
-    ctx.font = cs.font;
-    if (ctx.fontVariationSettings !== undefined && cs.fontVariationSettings) {
-      ctx.fontVariationSettings = cs.fontVariationSettings;
-    }
-    var m = ctx.measureText(char);
-    return {
-      left: safeNum(m.actualBoundingBoxLeft, 0),
-      right: safeNum(m.actualBoundingBoxRight, 0),
-      ascent: safeNum(m.actualBoundingBoxAscent, 0),
-      descent: safeNum(m.actualBoundingBoxDescent, 0),
-      advance: safeNum(m.width, 0),
-    };
-  }
-
   function fontSizePx(el) {
     return parseFloat(getComputedStyle(el).fontSize) || 72;
   }
 
-  function hasCanvasInk(ink) {
-    var w = ink.left + ink.right;
-    var h = ink.ascent + ink.descent;
-    return w > 1 && h > 1;
-  }
-
   /**
    * Center path on artboard (glyphs use top/left 50% + translate -50%).
-   * Scale path bbox to match rendered glyph size from canvas ink metrics.
+   * Scale path bbox to the glyph element box (same size as rendered text).
    */
-  function placement(el, stageEl, root, char, bb) {
+  function placement(el, stageEl, root, bb) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var elRect = el.getBoundingClientRect();
@@ -108,12 +78,6 @@
 
     var targetW = elRect.width / zoom;
     var targetH = elRect.height / zoom;
-
-    var ink = measureInk(el, char);
-    if (hasCanvasInk(ink)) {
-      targetW = ink.left + ink.right;
-      targetH = ink.ascent + ink.descent;
-    }
 
     var scaleX = targetW / pathW;
     var scaleY = targetH / pathH;
