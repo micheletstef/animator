@@ -1,6 +1,7 @@
 /**
  * Glyphs-style glyph outline overlay (paths, on-curve nodes, off-curve handles).
  * Uses opentype.js variable-font outlines aligned to live DOM text.
+ * Overlapping components are merged via martinez polygon union (pathfind).
  */
 (function (global) {
   var fontPromise = null;
@@ -55,43 +56,293 @@
     return parseFloat(getComputedStyle(el).fontSize) || 72;
   }
 
+  function measureInk(el, char) {
+    var canvas = document.createElement("canvas");
+    var ctx = canvas.getContext("2d");
+    var cs = getComputedStyle(el);
+    ctx.font = cs.font;
+    if (ctx.fontVariationSettings !== undefined && cs.fontVariationSettings) {
+      ctx.fontVariationSettings = cs.fontVariationSettings;
+    }
+    if (ctx.letterSpacing !== undefined && cs.letterSpacing && cs.letterSpacing !== "normal") {
+      ctx.letterSpacing = cs.letterSpacing;
+    }
+    var m = ctx.measureText(char);
+    return {
+      left: typeof m.actualBoundingBoxLeft === "number" ? m.actualBoundingBoxLeft : 0,
+      right:
+        typeof m.actualBoundingBoxRight === "number" ? m.actualBoundingBoxRight : 0,
+      ascent:
+        typeof m.actualBoundingBoxAscent === "number" ? m.actualBoundingBoxAscent : 0,
+      descent:
+        typeof m.actualBoundingBoxDescent === "number"
+          ? m.actualBoundingBoxDescent
+          : 0,
+    };
+  }
+
   /**
-   * getPath(…, fontSize) is already in px at the rendered size — use uniform
-   * scale only (never stretch X/Y separately). Center on the glyph element.
+   * getPath(0,0, fontSize): pen at (0,0), y up. Match browser pen via ink metrics.
    */
-  function placement(stageEl, root, bb, el) {
+  function placement(stageEl, root, el, char) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var elRect = el.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
     var stageH = stageRect.height / zoom;
 
-    var stageCx = stageW / 2;
-    var stageCy = stageH / 2;
-    var cx = stageCx;
-    var cy = stageCy;
+    var localLeft = (elRect.left - stageRect.left) / zoom;
+    var localTop = (elRect.top - stageRect.top) / zoom;
+    var localH = elRect.height / zoom;
 
-    if (elRect.width > 1 && elRect.height > 1) {
-      cx = (elRect.left + elRect.right) / 2 - stageRect.left;
-      cx = cx / zoom;
-      cy = (elRect.top + elRect.bottom) / 2 - stageRect.top;
-      cy = cy / zoom;
-    }
+    var ink = measureInk(el, char);
+    var hasInk = ink.ascent + ink.descent > 1;
 
-    var pathCx = (bb.x1 + bb.x2) / 2;
-    var pathCy = (bb.y1 + bb.y2) / 2;
-
-    // getPath(…, fontSize) is already in px at the live glyph size — no extra scale
-    var scale = 1;
+    // Canvas anchor: ink left at -actualBoundingBoxLeft, baseline at y=0
+    var originX = localLeft + (hasInk ? ink.left : 0);
+    var baselineY = hasInk ? localTop + ink.ascent : localTop + localH;
 
     function map(ox, oy) {
       return {
-        x: cx + (ox - pathCx) * scale,
-        y: cy + (oy - pathCy) * scale,
+        x: originX + ox,
+        y: baselineY + oy,
       };
     }
 
     return { map: map, stageW: stageW, stageH: stageH };
+  }
+
+  function splitSubpaths(commands) {
+    var subs = [];
+    var cur = null;
+    commands.forEach(function (cmd) {
+      if (cmd.type === "M") {
+        if (cur && cur.length) subs.push(cur);
+        cur = [cmd];
+      } else if (cur) {
+        cur.push(cmd);
+      }
+    });
+    if (cur && cur.length) subs.push(cur);
+    return subs;
+  }
+
+  function mid(a, b) {
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  function distToSegment(p, a, b) {
+    var dx = b.x - a.x;
+    var dy = b.y - a.y;
+    var len2 = dx * dx + dy * dy;
+    if (len2 < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y);
+    var t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  }
+
+  function flattenCubic(p0, p1, p2, p3, tol, out) {
+    if (
+      distToSegment(p1, p0, p3) <= tol &&
+      distToSegment(p2, p0, p3) <= tol
+    ) {
+      var last = out[out.length - 1];
+      if (!last || last.x !== p3.x || last.y !== p3.y) out.push({ x: p3.x, y: p3.y });
+      return;
+    }
+    var p01 = mid(p0, p1);
+    var p12 = mid(p1, p2);
+    var p23 = mid(p2, p3);
+    var p012 = mid(p01, p12);
+    var p123 = mid(p12, p23);
+    var p0123 = mid(p012, p123);
+    flattenCubic(p0, p01, p012, p0123, tol, out);
+    flattenCubic(p0123, p123, p23, p3, tol, out);
+  }
+
+  function flattenQuad(p0, p1, p2, tol, out) {
+    flattenCubic(p0, mid(p0, p1), mid(p1, p2), p2, tol, out);
+  }
+
+  function flattenContour(commands, tol) {
+    var pts = [];
+    var cur = { x: 0, y: 0 };
+    commands.forEach(function (cmd) {
+      if (cmd.type === "M") {
+        cur = { x: cmd.x, y: cmd.y };
+        pts.push(cur);
+      } else if (cmd.type === "L") {
+        cur = { x: cmd.x, y: cmd.y };
+        pts.push(cur);
+      } else if (cmd.type === "C") {
+        flattenCubic(
+          cur,
+          { x: cmd.x1, y: cmd.y1 },
+          { x: cmd.x2, y: cmd.y2 },
+          { x: cmd.x, y: cmd.y },
+          tol,
+          pts
+        );
+        cur = { x: cmd.x, y: cmd.y };
+      } else if (cmd.type === "Q") {
+        flattenQuad(
+          cur,
+          { x: cmd.x1, y: cmd.y1 },
+          { x: cmd.x, y: cmd.y },
+          tol,
+          pts
+        );
+        cur = { x: cmd.x, y: cmd.y };
+      }
+    });
+    if (pts.length > 1) {
+      var first = pts[0];
+      var last = pts[pts.length - 1];
+      if (first.x === last.x && first.y === last.y) pts.pop();
+    }
+    return pts;
+  }
+
+  function ringArea(ring) {
+    var a = 0;
+    for (var i = 0; i < ring.length; i++) {
+      var j = (i + 1) % ring.length;
+      a += ring[i][0] * ring[j][1] - ring[j][0] * ring[i][1];
+    }
+    return a / 2;
+  }
+
+  function ringCentroid(ring) {
+    var x = 0;
+    var y = 0;
+    ring.forEach(function (p) {
+      x += p[0];
+      y += p[1];
+    });
+    return { x: x / ring.length, y: y / ring.length };
+  }
+
+  function pointInRing(pt, ring) {
+    var inside = false;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      var xi = ring[i][0];
+      var yi = ring[i][1];
+      var xj = ring[j][0];
+      var yj = ring[j][1];
+      var hit =
+        yi > pt.y !== yj > pt.y &&
+        pt.x < ((xj - xi) * (pt.y - yi)) / (yj - yi + 1e-12) + xi;
+      if (hit) inside = !inside;
+    }
+    return inside;
+  }
+
+  function insideFraction(inner, outer) {
+    if (!inner.length) return 0;
+    var inside = 0;
+    inner.forEach(function (p) {
+      if (pointInRing({ x: p[0], y: p[1] }, outer)) inside++;
+    });
+    return inside / inner.length;
+  }
+
+  function multiPolyToPathD(multi) {
+    var parts = [];
+    multi.forEach(function (poly) {
+      poly.forEach(function (ring) {
+        if (ring.length < 2) return;
+        ring.forEach(function (pt, i) {
+          if (i === 0) parts.push("M" + fmt(pt[0]) + " " + fmt(pt[1]));
+          else parts.push("L" + fmt(pt[0]) + " " + fmt(pt[1]));
+        });
+        parts.push("Z");
+      });
+    });
+    return parts.join(" ");
+  }
+
+  function nodesFromMulti(multi) {
+    var nodes = [];
+    multi.forEach(function (poly) {
+      poly.forEach(function (ring) {
+        ring.forEach(function (pt) {
+          nodes.push({ x: pt[0], y: pt[1], smooth: false });
+        });
+      });
+    });
+    return nodes;
+  }
+
+  /**
+   * Union overlapping solids, subtract counter holes (by winding in SVG space).
+   */
+  function pathfindContours(subpaths, map, tolerance) {
+    var clip = global.martinez;
+    if (!clip || !clip.union || !clip.diff || subpaths.length < 2) return null;
+
+    var contours = [];
+    subpaths.forEach(function (sub) {
+      var flat = flattenContour(sub, tolerance);
+      if (flat.length < 3) return;
+      var ring = flat.map(function (p) {
+        var m = map(p.x, p.y);
+        return [m.x, m.y];
+      });
+      var area = Math.abs(ringArea(ring));
+      if (area < 0.5) return;
+      contours.push({ ring: ring, area: area });
+    });
+    if (contours.length < 2) return null;
+
+    contours.sort(function (a, b) {
+      return b.area - a.area;
+    });
+
+    var solids = [];
+    var holes = [];
+    contours.forEach(function (c, i) {
+      var isHole = false;
+      for (var j = 0; j < i; j++) {
+        var parent = contours[j];
+        var frac = insideFraction(c.ring, parent.ring);
+        if (frac >= 0.75 && c.area < parent.area * 0.4) {
+          isHole = true;
+          break;
+        }
+      }
+      if (isHole) holes.push(c.ring);
+      else solids.push(c.ring);
+    });
+    if (!solids.length) return null;
+    if (solids.length < 2) return null;
+
+    var overlapSolids = false;
+    for (var si = 0; si < solids.length; si++) {
+      for (var sj = si + 1; sj < solids.length; sj++) {
+        if (
+          insideFraction(solids[si], solids[sj]) > 0 ||
+          insideFraction(solids[sj], solids[si]) > 0
+        ) {
+          overlapSolids = true;
+          break;
+        }
+      }
+      if (overlapSolids) break;
+    }
+    if (!overlapSolids) return null;
+
+    var acc = [solids[0]];
+    for (var i = 1; i < solids.length; i++) {
+      acc = clip.union(acc, [solids[i]]);
+      if (!acc || !acc.length) return null;
+    }
+    for (var h = 0; h < holes.length; h++) {
+      acc = clip.diff(acc, [holes[h]]);
+      if (!acc || !acc.length) return null;
+    }
+
+    var d = multiPolyToPathD(acc);
+    if (!d || d.indexOf("NaN") !== -1) return null;
+    return { d: d, nodes: nodesFromMulti(acc) };
   }
 
   function collectGeometry(commands) {
@@ -207,11 +458,16 @@
     var commands = path.commands;
     if (!commands || !commands.length) return;
 
-    var geom = collectGeometry(commands);
-
-    var place = placement(stageEl, root, bb, el);
+    var place = placement(stageEl, root, el, char);
     var map = place.map;
-    var d = pathDFromCommands(commands, map);
+    var subpaths = splitSubpaths(commands);
+    var tol = Math.max(0.2, fontSize * 0.0004);
+    var merged =
+      subpaths.length > 1 ? pathfindContours(subpaths, map, tol) : null;
+    var d = merged ? merged.d : pathDFromCommands(commands, map);
+    var geom = merged
+      ? { nodes: merged.nodes, handles: [], handleLines: [] }
+      : collectGeometry(commands);
     if (!d || d.indexOf("NaN") !== -1) return;
 
     var g = ns("g");
