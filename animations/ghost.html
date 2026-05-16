@@ -466,6 +466,11 @@
           <input id="nd" type="range" min="0" max="1" step="1" value="1" />
           <span class="val" id="ndVal">on</span>
         </div>
+        <div class="row">
+          <label for="os">outline</label>
+          <input id="os" type="range" min="25" max="200" step="1" value="100" />
+          <span class="val" id="osVal">1.00×</span>
+        </div>
       </div>
 
       <div class="actions">
@@ -559,6 +564,10 @@
           return targets;
         }
 
+        function outlineScale() {
+          return parseFloat(els.os.value) / 100;
+        }
+
         function syncOutlines(includeGhosts) {
           if (!showNodes() || !window.GlyphOutlines) {
             outlineSvg.style.display = "none";
@@ -572,6 +581,7 @@
             {
               fontUrl: FONT_URL,
               root: root,
+              outlineScale: outlineScale(),
               strokeColor: getComputedStyle(root)
                 .getPropertyValue("--fg")
                 .trim(),
@@ -633,6 +643,7 @@
           cy: 5200,
           hd: 450,
           nd: 1,
+          os: 100,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
@@ -651,6 +662,7 @@
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
           nd: document.getElementById("nd"),
+          os: document.getElementById("os"),
         };
         var vals = {
           bg: document.getElementById("bgVal"),
@@ -661,6 +673,7 @@
           cy: document.getElementById("cyVal"),
           hd: document.getElementById("hdVal"),
           nd: document.getElementById("ndVal"),
+          os: document.getElementById("osVal"),
         };
 
         var wVal = document.getElementById("wVal");
@@ -675,6 +688,7 @@
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
           if (key === "hd") return Math.round(Number(v)) + "ms";
           if (key === "nd") return Number(v) >= 1 ? "on" : "off";
+          if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
           return String(v);
         }
 
@@ -719,7 +733,8 @@
           }
           if (key === "ch") applyChar();
           applyVar(key, v);
-          if (key === "nd" || key === "fg" || key === "fs") syncOutlines();
+          if (key === "nd" || key === "fg" || key === "fs" || key === "os")
+            syncOutlines();
           if (persist !== false) save();
         }
 
@@ -771,7 +786,8 @@
             if (k === "ch" || k === "gh" || k === "wMin" || k === "wMax") {
               buildGhosts();
             }
-            if (k === "nd" || k === "fs" || k === "fg") syncOutlines();
+            if (k === "nd" || k === "fs" || k === "fg" || k === "os")
+              syncOutlines();
           });
         });
 

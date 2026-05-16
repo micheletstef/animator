@@ -135,6 +135,15 @@
     return { map: map, stageW: stageW, stageH: stageH };
   }
 
+  function wrapMapScale(map, scale, bb) {
+    if (!scale || scale === 1 || !isFinite(scale) || !bb) return map;
+    var ax = (bb.x1 + bb.x2) / 2;
+    var ay = (bb.y1 + bb.y2) / 2;
+    return function (ox, oy) {
+      return map(ax + (ox - ax) * scale, ay + (oy - ay) * scale);
+    };
+  }
+
   function splitSubpaths(commands) {
     var subs = [];
     var cur = null;
@@ -467,7 +476,7 @@
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
   }
 
-  function renderTarget(svg, font, target, stageEl, root, opacity) {
+  function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
     var el = target.el;
     var char = target.char;
     var fontSize = fontSizePx(el);
@@ -483,6 +492,11 @@
 
     var place = placement(stageEl, root, el, char, bb);
     var map = place.map;
+    var scale =
+      opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
+    if (isFinite(scale) && scale > 0 && scale !== 1) {
+      map = wrapMapScale(map, scale, bb);
+    }
     var subpaths = splitSubpaths(commands);
     var tol = Math.max(0.2, fontSize * 0.0004);
     var merged =
@@ -612,7 +626,7 @@
           }
           targets.forEach(function (t) {
             var opacity = t.kind === "ghost" ? 0.35 : 1;
-            renderTarget(svg, font, t, stageEl, root, opacity);
+            renderTarget(svg, font, t, stageEl, root, opacity, opts);
           });
         })
         .catch(function (err) {
