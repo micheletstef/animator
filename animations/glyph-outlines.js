@@ -85,12 +85,62 @@
     return w > 1 && h > 1;
   }
 
+  /** Ink box from layout (tightest to painted pixels). */
+  function layoutInkBox(el, stageEl, zoom) {
+    var stageRect = stageEl.getBoundingClientRect();
+    var range = document.createRange();
+    var node = el.firstChild;
+    if (node && node.nodeType === 3 && node.data && node.data.length) {
+      range.setStart(node, 0);
+      range.setEnd(node, 1);
+    } else {
+      range.selectNodeContents(el);
+    }
+    var rects = range.getClientRects();
+    var i;
+    var best = null;
+    var bestArea = 0;
+
+    for (i = 0; i < rects.length; i++) {
+      var r = rects[i];
+      var area = r.width * r.height;
+      if (area > bestArea) {
+        bestArea = area;
+        best = r;
+      }
+    }
+
+    if (!best || best.width < 1 || best.height < 1) return null;
+
+    return {
+      left: (best.left - stageRect.left) / zoom,
+      top: (best.top - stageRect.top) / zoom,
+      width: best.width / zoom,
+      height: best.height / zoom,
+    };
+  }
+
+  function canvasInkBox(el, local, ink) {
+    var penX = local.left + (local.width - ink.advance) / 2;
+    if (!isFinite(penX)) penX = local.left;
+    var baselineY = local.top + local.height - ink.descent;
+    return {
+      left: penX - ink.left,
+      top: baselineY - ink.ascent,
+      width: ink.left + ink.right,
+      height: ink.ascent + ink.descent,
+    };
+  }
+
+  function clampScale(s) {
+    if (!isFinite(s) || s < 0.88 || s > 1.12) return 1;
+    return s;
+  }
+
   /**
-   * Map font.getPath(0,0) coords onto the stage SVG.
-   * X: pen origin from advance width (matches browser layout).
-   * Y: alphabetic baseline from canvas metrics when available.
+   * Fit opentype path bbox onto the browser's rendered glyph ink box.
    */
-  function placement(el, stageEl, root, char, bb, font, fontSize, variation) {
+  function placement(el, stageEl, root, char, bb) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var elRect = el.getBoundingClientRect();
@@ -107,36 +157,33 @@
     if (pathW <= 0) pathW = 1;
     if (pathH <= 0) pathH = 1;
 
-    var advance = safeNum(
-      font.getAdvanceWidth(char, fontSize, { variation: variation }),
-      pathW
-    );
-    var originX = local.left + (local.width - advance) / 2;
+    var target = layoutInkBox(el, stageEl, zoom);
 
-    var scaleX = 1;
-    var scaleY = 1;
-    var useBaseline = false;
-    var baselineY = 0;
-    var inkTop = local.top + (local.height - pathH) / 2;
-
-    var ink = measureInk(el, char);
-    if (hasCanvasInk(ink)) {
-      var canvasInkH = ink.ascent + ink.descent;
-      var sy = canvasInkH / pathH;
-
-      if (sy > 0.4 && sy < 2.5) {
-        scaleY = sy;
-        useBaseline = true;
-        baselineY = local.top + local.height - ink.descent;
+    if (!target) {
+      var ink = measureInk(el, char);
+      if (hasCanvasInk(ink)) {
+        target = canvasInkBox(el, local, ink);
       }
     }
 
+    if (!target) {
+      target = {
+        left: local.left + (local.width - pathW) / 2,
+        top: local.top + (local.height - pathH) / 2,
+        width: pathW,
+        height: pathH,
+      };
+    }
+
+    var scaleX = clampScale(target.width / pathW);
+    var scaleY = clampScale(target.height / pathH);
+
     function map(ox, oy) {
-      var x = originX + ox * scaleX;
-      var y = useBaseline ? baselineY + oy * scaleY : inkTop + (oy - bb.y1);
+      var x = target.left + (ox - bb.x1) * scaleX;
+      var y = target.top + (oy - bb.y1) * scaleY;
       if (!isFinite(x) || !isFinite(y)) {
         x = local.left + (local.width - pathW) / 2 + (ox - bb.x1);
-        y = inkTop + (oy - bb.y1);
+        y = local.top + (local.height - pathH) / 2 + (oy - bb.y1);
       }
       return { x: x, y: y };
     }
@@ -261,7 +308,7 @@
     var textRect = el.getBoundingClientRect();
     if (!textRect.width) return;
 
-    var map = placement(el, stageEl, root, char, bb, font, fontSize, variation).map;
+    var map = placement(el, stageEl, root, char, bb).map;
     var d = pathDFromCommands(commands, map);
     if (!d || d.indexOf("NaN") !== -1) return;
 
