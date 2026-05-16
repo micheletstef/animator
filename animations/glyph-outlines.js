@@ -84,7 +84,7 @@
   /**
    * getPath(0,0, fontSize): pen at (0,0), y up. Match browser pen via ink metrics.
    */
-  function placement(stageEl, root, el, char) {
+  function placement(stageEl, root, el, char, pathBb) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var elRect = el.getBoundingClientRect();
@@ -94,18 +94,41 @@
     var localLeft = (elRect.left - stageRect.left) / zoom;
     var localTop = (elRect.top - stageRect.top) / zoom;
     var localH = elRect.height / zoom;
+    var localBottom = (elRect.bottom - stageRect.top) / zoom;
+    var fs = fontSizePx(el);
 
     var ink = measureInk(el, char);
-    var hasInk = ink.ascent + ink.descent > 1;
+    // Canvas often under-reports variable-font ink boxes at large sizes
+    var metricsOk = ink.ascent + ink.descent > fs * 0.35;
 
-    // Canvas anchor: ink left at -actualBoundingBoxLeft, baseline at y=0
-    var originX = localLeft + (hasInk ? ink.left : 0);
-    var baselineY = hasInk ? localTop + ink.ascent : localTop + localH;
+    var originX = localLeft;
+    var baselineY = localTop + localH;
 
-    function map(ox, oy) {
-      return {
-        x: originX + ox,
-        y: baselineY + oy,
+    var map;
+
+    if (metricsOk) {
+      originX = localLeft + ink.left;
+      baselineY = localTop + ink.ascent;
+      map = function (ox, oy) {
+        return { x: originX + ox, y: baselineY + oy };
+      };
+    } else if (pathBb && isFinite(pathBb.x1) && isFinite(pathBb.y1)) {
+      var pathW = pathBb.x2 - pathBb.x1;
+      var pathH = pathBb.y2 - pathBb.y1;
+      var elW = elRect.width / zoom;
+      if (pathW > 0 && pathH > 0 && elW > 0 && localH > 0) {
+        map = function (ox, oy) {
+          return {
+            x: localLeft + ((ox - pathBb.x1) / pathW) * elW,
+            y: localTop + ((oy - pathBb.y1) / pathH) * localH,
+          };
+        };
+      }
+    }
+
+    if (!map) {
+      map = function (ox, oy) {
+        return { x: originX + ox, y: baselineY + oy };
       };
     }
 
@@ -342,7 +365,7 @@
 
     var d = multiPolyToPathD(acc);
     if (!d || d.indexOf("NaN") !== -1) return null;
-    return { d: d, nodes: nodesFromMulti(acc) };
+    return { d: d, nodes: nodesFromMulti(acc), screenSpace: true };
   }
 
   function collectGeometry(commands) {
@@ -458,7 +481,7 @@
     var commands = path.commands;
     if (!commands || !commands.length) return;
 
-    var place = placement(stageEl, root, el, char);
+    var place = placement(stageEl, root, el, char, bb);
     var map = place.map;
     var subpaths = splitSubpaths(commands);
     var tol = Math.max(0.2, fontSize * 0.0004);
@@ -466,7 +489,12 @@
       subpaths.length > 1 ? pathfindContours(subpaths, map, tol) : null;
     var d = merged ? merged.d : pathDFromCommands(commands, map);
     var geom = merged
-      ? { nodes: merged.nodes, handles: [], handleLines: [] }
+      ? {
+          nodes: merged.nodes,
+          handles: [],
+          handleLines: [],
+          screenSpace: true,
+        }
       : collectGeometry(commands);
     if (!d || d.indexOf("NaN") !== -1) return;
 
@@ -484,9 +512,17 @@
     pathEl.setAttribute("vector-effect", "non-scaling-stroke");
     g.appendChild(pathEl);
 
+    var toScreen = geom.screenSpace
+      ? function (pt) {
+          return { x: pt.x, y: pt.y };
+        }
+      : function (pt) {
+          return map(pt.x, pt.y);
+        };
+
     geom.handleLines.forEach(function (seg) {
-      var a = map(seg[0].x, seg[0].y);
-      var b = map(seg[1].x, seg[1].y);
+      var a = toScreen(seg[0]);
+      var b = toScreen(seg[1]);
       var line = ns("line");
       line.setAttribute("class", "glyph-outline-handle-line");
       line.setAttribute("x1", a.x);
@@ -500,7 +536,7 @@
     });
 
     geom.handles.forEach(function (h) {
-      var p = map(h.x, h.y);
+      var p = toScreen(h);
       var c = ns("circle");
       c.setAttribute("class", "glyph-outline-handle");
       c.setAttribute("cx", p.x);
@@ -513,7 +549,7 @@
     });
 
     geom.nodes.forEach(function (n) {
-      var p = map(n.x, n.y);
+      var p = toScreen(n);
       var fill = n.smooth ? COLORS.onCurveSmooth : COLORS.onCurve;
       if (n.smooth) {
         var c = ns("circle");
