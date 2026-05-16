@@ -56,14 +56,11 @@
   }
 
   /**
-   * Center path on artboard (glyphs use top/left 50% + translate -50%).
-   * Scale path bbox to the glyph element box (same size as rendered text).
+   * Center path on artboard; scale from opentype metrics + computed font-size.
    */
-  function placement(el, stageEl, root, bb) {
+  function placement(stageEl, root, bb, font, char, fontSize, variation) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
-    var elRect = el.getBoundingClientRect();
-
     var stageW = stageRect.width / zoom;
     var stageH = stageRect.height / zoom;
     var stageCx = stageW / 2;
@@ -76,8 +73,13 @@
     var pathCx = (bb.x1 + bb.x2) / 2;
     var pathCy = (bb.y1 + bb.y2) / 2;
 
-    var targetW = elRect.width / zoom;
-    var targetH = elRect.height / zoom;
+    var advance = font.getAdvanceWidth(char, fontSize, {
+      variation: variation,
+    });
+    if (!isFinite(advance) || advance <= 0) advance = pathW;
+
+    var targetW = advance;
+    var targetH = fontSize;
 
     var scaleX = targetW / pathW;
     var scaleY = targetH / pathH;
@@ -91,7 +93,7 @@
       };
     }
 
-    return { map: map };
+    return { map: map, stageW: stageW, stageH: stageH };
   }
 
   function collectGeometry(commands) {
@@ -208,10 +210,9 @@
     if (!commands || !commands.length) return;
 
     var geom = collectGeometry(commands);
-    var textRect = el.getBoundingClientRect();
-    if (!textRect.width) return;
 
-    var map = placement(el, stageEl, root, char, bb).map;
+    var place = placement(stageEl, root, bb, font, char, fontSize, variation);
+    var map = place.map;
     var d = pathDFromCommands(commands, map);
     if (!d || d.indexOf("NaN") !== -1) return;
 
@@ -310,13 +311,22 @@
         })
         .then(function (font) {
           clearSvg(svg);
+          var zoom = readZoom(root);
+          var sr = stageEl.getBoundingClientRect();
+          var w = sr.width / zoom;
+          var h = sr.height / zoom;
+          if (w > 0 && h > 0) {
+            svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+            svg.setAttribute("width", w);
+            svg.setAttribute("height", h);
+          }
           targets.forEach(function (t) {
             var opacity = t.kind === "ghost" ? 0.35 : 1;
             renderTarget(svg, font, t, stageEl, root, opacity);
           });
         })
-        .catch(function () {
-          /* keep last frame on error */
+        .catch(function (err) {
+          console.warn("GlyphOutlines:", err);
         });
     },
   };
