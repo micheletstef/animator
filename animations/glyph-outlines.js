@@ -52,7 +52,10 @@
     return isFinite(z) && z > 0 ? z : 1;
   }
 
-  /** Map opentype coords (y-up, baseline y=0) to SVG coords inside the stage. */
+  /**
+   * Map font.getPath() coordinates onto the stage SVG.
+   * Commands and bbox must both come from getPath() (y flipped, fontSize scaled).
+   */
   function placement(el, stageEl, root, bb) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
@@ -80,7 +83,7 @@
       };
     }
 
-    return { map: map, inkLeft: inkLeft, inkTop: inkTop };
+    return { map: map };
   }
 
   function collectGeometry(commands) {
@@ -181,16 +184,6 @@
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
   }
 
-  function getCommands(font, char, fontSize, variation) {
-    var glyph = font.charToGlyph(char);
-    var useGlyph = font.variation
-      ? font.variation.getTransform(glyph, variation)
-      : glyph;
-    return useGlyph.path && useGlyph.path.commands
-      ? useGlyph.path.commands
-      : font.getPath(char, 0, 0, fontSize, { variation: variation }).commands;
-  }
-
   function renderTarget(svg, font, target, stageEl, root, opacity) {
     var el = target.el;
     var char = target.char;
@@ -202,13 +195,14 @@
     var bb = path.getBoundingBox();
     if (!isFinite(bb.x1) || !isFinite(bb.y1)) return;
 
-    var commands = getCommands(font, char, fontSize, variation);
+    var commands = path.commands;
+    if (!commands || !commands.length) return;
+
     var geom = collectGeometry(commands);
     var textRect = el.getBoundingClientRect();
     if (!textRect.width) return;
 
-    var place = placement(el, stageEl, root, bb);
-    var map = place.map;
+    var map = placement(el, stageEl, root, bb).map;
 
     var g = ns("g");
     g.setAttribute("class", "glyph-outline-group");
