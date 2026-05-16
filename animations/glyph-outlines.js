@@ -85,107 +85,46 @@
     return w > 1 && h > 1;
   }
 
-  /** Ink box from layout (tightest to painted pixels). */
-  function layoutInkBox(el, stageEl, zoom) {
-    var stageRect = stageEl.getBoundingClientRect();
-    var range = document.createRange();
-    var node = el.firstChild;
-    if (node && node.nodeType === 3 && node.data && node.data.length) {
-      range.setStart(node, 0);
-      range.setEnd(node, 1);
-    } else {
-      range.selectNodeContents(el);
-    }
-    var rects = range.getClientRects();
-    var i;
-    var best = null;
-    var bestArea = 0;
-
-    for (i = 0; i < rects.length; i++) {
-      var r = rects[i];
-      var area = r.width * r.height;
-      if (area > bestArea) {
-        bestArea = area;
-        best = r;
-      }
-    }
-
-    if (!best || best.width < 1 || best.height < 1) return null;
-
-    return {
-      left: (best.left - stageRect.left) / zoom,
-      top: (best.top - stageRect.top) / zoom,
-      width: best.width / zoom,
-      height: best.height / zoom,
-    };
-  }
-
-  function canvasInkBox(el, local, ink) {
-    var penX = local.left + (local.width - ink.advance) / 2;
-    if (!isFinite(penX)) penX = local.left;
-    var baselineY = local.top + local.height - ink.descent;
-    return {
-      left: penX - ink.left,
-      top: baselineY - ink.ascent,
-      width: ink.left + ink.right,
-      height: ink.ascent + ink.descent,
-    };
-  }
-
-  function clampScale(s) {
-    if (!isFinite(s) || s < 0.88 || s > 1.12) return 1;
-    return s;
-  }
-
   /**
-   * Fit opentype path bbox onto the browser's rendered glyph ink box.
+   * Center path on artboard (glyphs use top/left 50% + translate -50%).
+   * Scale path bbox to match rendered glyph size from canvas ink metrics.
    */
   function placement(el, stageEl, root, char, bb) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var elRect = el.getBoundingClientRect();
 
-    var local = {
-      left: (elRect.left - stageRect.left) / zoom,
-      top: (elRect.top - stageRect.top) / zoom,
-      width: elRect.width / zoom,
-      height: elRect.height / zoom,
-    };
+    var stageW = stageRect.width / zoom;
+    var stageH = stageRect.height / zoom;
+    var stageCx = stageW / 2;
+    var stageCy = stageH / 2;
 
     var pathW = bb.x2 - bb.x1;
     var pathH = bb.y2 - bb.y1;
     if (pathW <= 0) pathW = 1;
     if (pathH <= 0) pathH = 1;
+    var pathCx = (bb.x1 + bb.x2) / 2;
+    var pathCy = (bb.y1 + bb.y2) / 2;
 
-    var target = layoutInkBox(el, stageEl, zoom);
+    var targetW = elRect.width / zoom;
+    var targetH = elRect.height / zoom;
 
-    if (!target) {
-      var ink = measureInk(el, char);
-      if (hasCanvasInk(ink)) {
-        target = canvasInkBox(el, local, ink);
-      }
+    var ink = measureInk(el, char);
+    if (hasCanvasInk(ink)) {
+      targetW = ink.left + ink.right;
+      targetH = ink.ascent + ink.descent;
     }
 
-    if (!target) {
-      target = {
-        left: local.left + (local.width - pathW) / 2,
-        top: local.top + (local.height - pathH) / 2,
-        width: pathW,
-        height: pathH,
-      };
-    }
-
-    var scaleX = clampScale(target.width / pathW);
-    var scaleY = clampScale(target.height / pathH);
+    var scaleX = targetW / pathW;
+    var scaleY = targetH / pathH;
+    if (!isFinite(scaleX) || scaleX <= 0) scaleX = 1;
+    if (!isFinite(scaleY) || scaleY <= 0) scaleY = 1;
 
     function map(ox, oy) {
-      var x = target.left + (ox - bb.x1) * scaleX;
-      var y = target.top + (oy - bb.y1) * scaleY;
-      if (!isFinite(x) || !isFinite(y)) {
-        x = local.left + (local.width - pathW) / 2 + (ox - bb.x1);
-        y = local.top + (local.height - pathH) / 2 + (oy - bb.y1);
-      }
-      return { x: x, y: y };
+      return {
+        x: stageCx + (ox - pathCx) * scaleX,
+        y: stageCy + (oy - pathCy) * scaleY,
+      };
     }
 
     return { map: map };
