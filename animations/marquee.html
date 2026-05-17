@@ -684,49 +684,74 @@
           );
         }
 
-        // Stack lines using live font-size × leading; lh0 = top of viewport, lh1 = bottom.
-        function layoutTrack(p) {
+        // Worst-case height so glyphs never clip while lh/size animate in the slot.
+        function measureMaxLineHeight(node, p) {
+          var maxH = 0;
+          for (var step = 0; step <= 24; step++) {
+            maxH = Math.max(maxH, lineBoxHeight(node, p, step / 24));
+          }
+          return maxH;
+        }
+
+        // Fixed stack (settings / resize only). Second copy mirrors the first for seamless wrap.
+        function computeLayout() {
+          var p = layoutParams();
           var marqueeH = marquee.clientHeight || 1;
-          var n = lineEls.length;
-          var y = 0;
           var prevLoop = loopHeight;
+          var y = 0;
 
           slotTops = [];
           slotHeights = [];
 
-          for (var i = 0; i < n; i++) {
+          for (var i = 0; i < NAMES.length; i++) {
             var node = lineEls[i];
+            var h = measureMaxLineHeight(node, p);
             var t = 0;
-            var h = 48;
-            for (var iter = 0; iter < 6; iter++) {
-              var yMid = y - offset + h * 0.5;
+            for (var iter = 0; iter < 8; iter++) {
+              applyTypography(node, t, p);
               t =
                 marqueeH > 0
-                  ? Math.min(1, Math.max(0, yMid / marqueeH))
+                  ? Math.min(1, Math.max(0, (y + h * 0.5) / marqueeH))
                   : 0;
-              h = lineBoxHeight(node, p, t);
+              h = Math.max(h, lineBoxHeight(node, p, t));
             }
             applyTypography(node, t, p);
-            h = lineBoxHeight(node, p, t);
+            slotHeights[i] = h;
+            slotTops[i] = y;
             node.style.height = h + "px";
             node.style.minHeight = h + "px";
-            slotTops[i] = y;
-            slotHeights[i] = h;
             y += h;
           }
 
-          loopHeight = slotTops[NAMES.length] || 0;
+          loopHeight = y;
+
+          for (var j = 0; j < NAMES.length; j++) {
+            var dup = j + NAMES.length;
+            slotTops[dup] = slotTops[j] + loopHeight;
+            slotHeights[dup] = slotHeights[j];
+            lineEls[dup].style.height = slotHeights[j] + "px";
+            lineEls[dup].style.minHeight = slotHeights[j] + "px";
+          }
+
           if (loopHeight > 0) {
             if (prevLoop > 0) {
-              var phase = offset / prevLoop;
-              offset = phase * loopHeight;
+              offset = (offset / prevLoop) * loopHeight;
             }
             offset = ((offset % loopHeight) + loopHeight) % loopHeight;
           }
         }
 
-        function computeLayout() {
-          layoutTrack(layoutParams());
+        function updateWeights() {
+          var marqueeH = marquee.clientHeight || 1;
+          var p = layoutParams();
+          for (var j = 0; j < lineEls.length; j++) {
+            var yMid = slotTops[j] - offset + slotHeights[j] * 0.5;
+            var t =
+              marqueeH > 0
+                ? Math.min(1, Math.max(0, yMid / marqueeH))
+                : 0;
+            applyTypography(lineEls[j], t, p);
+          }
         }
 
         var offset = 0;
@@ -740,12 +765,12 @@
 
           var speed = parseFloat(els.sp.value);
           offset += speed * dt;
-          if (loopHeight > 0) {
-            offset = ((offset % loopHeight) + loopHeight) % loopHeight;
+          while (loopHeight > 0 && offset >= loopHeight) {
+            offset -= loopHeight;
           }
           track.style.transform = "translate3d(0," + -offset + "px,0)";
 
-          layoutTrack(layoutParams());
+          updateWeights();
 
           requestAnimationFrame(frame);
         }
