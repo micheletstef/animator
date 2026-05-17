@@ -1,13 +1,13 @@
 /**
  * Glyphs-style glyph outline overlay (paths, on-curve nodes, off-curve handles).
  * Uses opentype.js variable-font outlines aligned to live DOM text.
- * Overlapping components are merged via martinez polygon union (pathfind).
  */
 (function (global) {
   var fontPromise = null;
   var fontUrl = null;
   var syncGen = 0;
   var fontsPrimed = false;
+  var cachedFont = null;
   var placementAnchor = { cx: null, cy: null };
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
@@ -41,6 +41,7 @@
     if (fontUrl !== url) {
       fontUrl = url;
       fontPromise = null;
+      cachedFont = null;
     }
     if (!fontPromise) {
       fontPromise = fetch(url)
@@ -49,7 +50,8 @@
           return r.arrayBuffer();
         })
         .then(function (buf) {
-          return opentype.parse(buf);
+          cachedFont = opentype.parse(buf);
+          return cachedFont;
         });
     }
     return fontPromise;
@@ -105,13 +107,20 @@
       var alpha =
         opts.placementAlpha != null && isFinite(opts.placementAlpha)
           ? opts.placementAlpha
-          : 0.14;
+          : 0.22;
       if (placementAnchor.cx == null) {
         placementAnchor.cx = pathCx;
         placementAnchor.cy = pathCy;
       } else {
-        placementAnchor.cx += (pathCx - placementAnchor.cx) * alpha;
-        placementAnchor.cy += (pathCy - placementAnchor.cy) * alpha;
+        var dx = pathCx - placementAnchor.cx;
+        var dy = pathCy - placementAnchor.cy;
+        if (Math.hypot(dx, dy) > 120) {
+          placementAnchor.cx = pathCx;
+          placementAnchor.cy = pathCy;
+        } else {
+          placementAnchor.cx += dx * alpha;
+          placementAnchor.cy += dy * alpha;
+        }
       }
       pathCx = placementAnchor.cx;
       pathCy = placementAnchor.cy;
@@ -156,224 +165,6 @@
     return subs;
   }
 
-  function mid(a, b) {
-    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-  }
-
-  function distToSegment(p, a, b) {
-    var dx = b.x - a.x;
-    var dy = b.y - a.y;
-    var len2 = dx * dx + dy * dy;
-    if (len2 < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y);
-    var t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
-    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
-  }
-
-  function flattenCubic(p0, p1, p2, p3, tol, out) {
-    if (
-      distToSegment(p1, p0, p3) <= tol &&
-      distToSegment(p2, p0, p3) <= tol
-    ) {
-      var last = out[out.length - 1];
-      if (!last || last.x !== p3.x || last.y !== p3.y) out.push({ x: p3.x, y: p3.y });
-      return;
-    }
-    var p01 = mid(p0, p1);
-    var p12 = mid(p1, p2);
-    var p23 = mid(p2, p3);
-    var p012 = mid(p01, p12);
-    var p123 = mid(p12, p23);
-    var p0123 = mid(p012, p123);
-    flattenCubic(p0, p01, p012, p0123, tol, out);
-    flattenCubic(p0123, p123, p23, p3, tol, out);
-  }
-
-  function flattenQuad(p0, p1, p2, tol, out) {
-    flattenCubic(p0, mid(p0, p1), mid(p1, p2), p2, tol, out);
-  }
-
-  function flattenContour(commands, tol) {
-    var pts = [];
-    var cur = { x: 0, y: 0 };
-    commands.forEach(function (cmd) {
-      if (cmd.type === "M") {
-        cur = { x: cmd.x, y: cmd.y };
-        pts.push(cur);
-      } else if (cmd.type === "L") {
-        cur = { x: cmd.x, y: cmd.y };
-        pts.push(cur);
-      } else if (cmd.type === "C") {
-        flattenCubic(
-          cur,
-          { x: cmd.x1, y: cmd.y1 },
-          { x: cmd.x2, y: cmd.y2 },
-          { x: cmd.x, y: cmd.y },
-          tol,
-          pts
-        );
-        cur = { x: cmd.x, y: cmd.y };
-      } else if (cmd.type === "Q") {
-        flattenQuad(
-          cur,
-          { x: cmd.x1, y: cmd.y1 },
-          { x: cmd.x, y: cmd.y },
-          tol,
-          pts
-        );
-        cur = { x: cmd.x, y: cmd.y };
-      }
-    });
-    if (pts.length > 1) {
-      var first = pts[0];
-      var last = pts[pts.length - 1];
-      if (first.x === last.x && first.y === last.y) pts.pop();
-    }
-    return pts;
-  }
-
-  function ringArea(ring) {
-    var a = 0;
-    for (var i = 0; i < ring.length; i++) {
-      var j = (i + 1) % ring.length;
-      a += ring[i][0] * ring[j][1] - ring[j][0] * ring[i][1];
-    }
-    return a / 2;
-  }
-
-  function ringCentroid(ring) {
-    var x = 0;
-    var y = 0;
-    ring.forEach(function (p) {
-      x += p[0];
-      y += p[1];
-    });
-    return { x: x / ring.length, y: y / ring.length };
-  }
-
-  function pointInRing(pt, ring) {
-    var inside = false;
-    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      var xi = ring[i][0];
-      var yi = ring[i][1];
-      var xj = ring[j][0];
-      var yj = ring[j][1];
-      var hit =
-        yi > pt.y !== yj > pt.y &&
-        pt.x < ((xj - xi) * (pt.y - yi)) / (yj - yi + 1e-12) + xi;
-      if (hit) inside = !inside;
-    }
-    return inside;
-  }
-
-  function insideFraction(inner, outer) {
-    if (!inner.length) return 0;
-    var inside = 0;
-    inner.forEach(function (p) {
-      if (pointInRing({ x: p[0], y: p[1] }, outer)) inside++;
-    });
-    return inside / inner.length;
-  }
-
-  function multiPolyToPathD(multi) {
-    var parts = [];
-    multi.forEach(function (poly) {
-      poly.forEach(function (ring) {
-        if (ring.length < 2) return;
-        ring.forEach(function (pt, i) {
-          if (i === 0) parts.push("M" + fmt(pt[0]) + " " + fmt(pt[1]));
-          else parts.push("L" + fmt(pt[0]) + " " + fmt(pt[1]));
-        });
-        parts.push("Z");
-      });
-    });
-    return parts.join(" ");
-  }
-
-  function nodesFromMulti(multi) {
-    var nodes = [];
-    multi.forEach(function (poly) {
-      poly.forEach(function (ring) {
-        ring.forEach(function (pt) {
-          nodes.push({ x: pt[0], y: pt[1], smooth: false });
-        });
-      });
-    });
-    return nodes;
-  }
-
-  /**
-   * Union overlapping solids, subtract counter holes (by winding in SVG space).
-   */
-  function pathfindContours(subpaths, map, tolerance) {
-    var clip = global.martinez;
-    if (!clip || !clip.union || !clip.diff || subpaths.length < 2) return null;
-
-    var contours = [];
-    subpaths.forEach(function (sub) {
-      var flat = flattenContour(sub, tolerance);
-      if (flat.length < 3) return;
-      var ring = flat.map(function (p) {
-        var m = map(p.x, p.y);
-        return [m.x, m.y];
-      });
-      var area = Math.abs(ringArea(ring));
-      if (area < 0.5) return;
-      contours.push({ ring: ring, area: area });
-    });
-    if (contours.length < 2) return null;
-
-    contours.sort(function (a, b) {
-      return b.area - a.area;
-    });
-
-    var solids = [];
-    var holes = [];
-    contours.forEach(function (c, i) {
-      var isHole = false;
-      for (var j = 0; j < i; j++) {
-        var parent = contours[j];
-        var frac = insideFraction(c.ring, parent.ring);
-        if (frac >= 0.75 && c.area < parent.area * 0.4) {
-          isHole = true;
-          break;
-        }
-      }
-      if (isHole) holes.push(c.ring);
-      else solids.push(c.ring);
-    });
-    if (!solids.length) return null;
-    if (solids.length < 2) return null;
-
-    var overlapSolids = false;
-    for (var si = 0; si < solids.length; si++) {
-      for (var sj = si + 1; sj < solids.length; sj++) {
-        if (
-          insideFraction(solids[si], solids[sj]) > 0 ||
-          insideFraction(solids[sj], solids[si]) > 0
-        ) {
-          overlapSolids = true;
-          break;
-        }
-      }
-      if (overlapSolids) break;
-    }
-    if (!overlapSolids) return null;
-
-    var acc = [solids[0]];
-    for (var i = 1; i < solids.length; i++) {
-      acc = clip.union(acc, [solids[i]]);
-      if (!acc || !acc.length) return null;
-    }
-    for (var h = 0; h < holes.length; h++) {
-      acc = clip.diff(acc, [holes[h]]);
-      if (!acc || !acc.length) return null;
-    }
-
-    var d = multiPolyToPathD(acc);
-    if (!d || d.indexOf("NaN") !== -1) return null;
-    return { d: d, nodes: nodesFromMulti(acc), screenSpace: true };
-  }
-
   function collectGeometry(commands) {
     var nodes = [];
     var handles = [];
@@ -393,30 +184,53 @@
       return pt;
     }
 
+    function beginContour(x, y) {
+      cur = null;
+      start = null;
+      cur = onNode(x, y, false);
+      start = cur;
+    }
+
     commands.forEach(function (cmd) {
       if (cmd.type === "M") {
-        cur = onNode(cmd.x, cmd.y, false);
-        start = cur;
+        beginContour(cmd.x, cmd.y);
       } else if (cmd.type === "L") {
-        cur = onNode(cmd.x, cmd.y, false);
+        if (!cur) beginContour(cmd.x, cmd.y);
+        else cur = onNode(cmd.x, cmd.y, false);
       } else if (cmd.type === "C") {
+        if (!cur) beginContour(cmd.x, cmd.y);
         var c1 = offNode(cmd.x1, cmd.y1);
         var c2 = offNode(cmd.x2, cmd.y2);
-        if (cur) {
-          handleLines.push([cur, c1]);
-          handleLines.push([c2, { x: cmd.x, y: cmd.y }]);
-        }
+        var endPt = { x: cmd.x, y: cmd.y };
+        handleLines.push([cur, c1]);
+        handleLines.push([c2, endPt]);
         cur = onNode(cmd.x, cmd.y, true);
       } else if (cmd.type === "Q") {
+        if (!cur) beginContour(cmd.x, cmd.y);
         var qc = offNode(cmd.x1, cmd.y1);
-        if (cur) handleLines.push([cur, qc]);
+        handleLines.push([cur, qc]);
         cur = onNode(cmd.x, cmd.y, true);
       } else if (cmd.type === "Z") {
-        if (cur && start) handleLines.push([cur, start]);
+        if (cur && start && cur !== start) handleLines.push([cur, start]);
         cur = start;
       }
     });
 
+    return { nodes: nodes, handles: handles, handleLines: handleLines };
+  }
+
+  function collectGeometryAll(commands) {
+    var subs = splitSubpaths(commands);
+    if (subs.length <= 1) return collectGeometry(commands);
+    var nodes = [];
+    var handles = [];
+    var handleLines = [];
+    subs.forEach(function (sub) {
+      var g = collectGeometry(sub);
+      nodes = nodes.concat(g.nodes);
+      handles = handles.concat(g.handles);
+      handleLines = handleLines.concat(g.handleLines);
+    });
     return { nodes: nodes, handles: handles, handleLines: handleLines };
   }
 
@@ -539,21 +353,21 @@
     return runs;
   }
 
-  function buildOutline(commands, map, tol) {
-    var subpaths = splitSubpaths(commands);
-    var merged =
-      subpaths.length > 1 ? pathfindContours(subpaths, map, tol) : null;
-    var d = merged ? merged.d : pathDFromCommands(commands, map);
-    var geom = merged
-      ? {
-          nodes: merged.nodes,
-          handles: [],
-          handleLines: [],
-          screenSpace: true,
-        }
-      : collectGeometry(commands);
+  /**
+   * Bezier path + nodes always from the same commands so points stay on-curve.
+   * Polygon union (pathfind) is skipped — it toggles during animation and
+   * replaces nodes with flattened vertices that no longer match the stroke.
+   */
+  function buildOutline(commands, map) {
+    var d = pathDFromCommands(commands, map);
+    var geom = collectGeometryAll(commands);
     if (!d || d.indexOf("NaN") !== -1) return null;
     return { d: d, geom: geom };
+  }
+
+  function mapPoint(map, pt) {
+    var p = map(pt.x, pt.y);
+    return { x: fmt(p.x), y: fmt(p.y) };
   }
 
   function appendOutlineToGroup(g, outline, map, colors, strokeW, nodeStrokeW, strokeAttr) {
@@ -567,17 +381,9 @@
     pathEl.setAttribute("vector-effect", "non-scaling-stroke");
     g.appendChild(pathEl);
 
-    var toScreen = geom.screenSpace
-      ? function (pt) {
-          return { x: pt.x, y: pt.y };
-        }
-      : function (pt) {
-          return map(pt.x, pt.y);
-        };
-
     geom.handleLines.forEach(function (seg) {
-      var a = toScreen(seg[0]);
-      var b = toScreen(seg[1]);
+      var a = mapPoint(map, seg[0]);
+      var b = mapPoint(map, seg[1]);
       var line = ns("line");
       line.setAttribute("class", "glyph-outline-handle-line");
       line.setAttribute("x1", a.x);
@@ -591,7 +397,7 @@
     });
 
     geom.handles.forEach(function (h) {
-      var p = toScreen(h);
+      var p = mapPoint(map, h);
       var c = ns("circle");
       c.setAttribute("class", "glyph-outline-handle");
       c.setAttribute("cx", p.x);
@@ -604,7 +410,7 @@
     });
 
     geom.nodes.forEach(function (n) {
-      var p = toScreen(n);
+      var p = mapPoint(map, n);
       var stroke = strokeAttr || (n.smooth ? colors.onCurveSmooth : colors.onCurve);
       if (n.smooth) {
         var c = ns("circle");
@@ -618,10 +424,11 @@
         g.appendChild(c);
       } else {
         var size = 9;
+        var half = size / 2;
         var r = ns("rect");
         r.setAttribute("class", "glyph-outline-node glyph-outline-node-corner");
-        r.setAttribute("x", p.x - size / 2);
-        r.setAttribute("y", p.y - size / 2);
+        r.setAttribute("x", fmt(p.x - half));
+        r.setAttribute("y", fmt(p.y - half));
         r.setAttribute("width", size);
         r.setAttribute("height", size);
         r.setAttribute("fill", "none");
@@ -659,7 +466,6 @@
     if (isFinite(scale) && scale > 0 && scale !== 1) {
       map = wrapScreenScale(map, scale, place.stageCx, place.stageCy);
     }
-    var tol = Math.max(0.2, fontSize * 0.0004);
 
     var colors = resolveColors(opts);
     var singleColor = resolveSingleColor(opts);
@@ -674,7 +480,7 @@
     if (singleColor) g.style.color = singleColor;
 
     runs.forEach(function (run) {
-      var outline = buildOutline(run.commands, map, tol);
+      var outline = buildOutline(run.commands, map);
       if (outline) appendOutlineToGroup(g, outline, map, colors, strokeW, nodeStrokeW, strokeAttr);
     });
 
@@ -718,6 +524,11 @@
       function draw(font) {
         if (gen !== syncGen) return;
         renderAll(svg, stageEl, targets, font, root, opts);
+      }
+
+      if (cachedFont && fontUrl === opts.fontUrl) {
+        draw(cachedFont);
+        return Promise.resolve();
       }
 
       var fontChain;
