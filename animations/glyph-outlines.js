@@ -14,16 +14,24 @@
     onCurveSmooth: "rgba(0, 180, 80, 0.95)",
   };
 
+  function resolveSingleColor(opts) {
+    if (!opts) return null;
+    var c = opts.color || opts.strokeColor || null;
+    return c && String(c).trim() ? String(c).trim() : null;
+  }
+
   function resolveColors(opts) {
-    var c = (opts && (opts.color || opts.strokeColor)) || null;
-    if (!c) return COLORS;
-    return {
-      path: c,
-      handleLine: c,
-      offCurve: c,
-      onCurve: c,
-      onCurveSmooth: c,
-    };
+    var single = resolveSingleColor(opts);
+    if (single) {
+      return {
+        path: single,
+        handleLine: single,
+        offCurve: single,
+        onCurve: single,
+        onCurveSmooth: single,
+      };
+    }
+    return COLORS;
   }
 
   function loadFont(url) {
@@ -472,19 +480,22 @@
     if (!d || d.indexOf("NaN") !== -1) return;
 
     var colors = resolveColors(opts);
+    var singleColor = resolveSingleColor(opts);
     var strokeW = opts && opts.strokeWidth != null ? opts.strokeWidth : 1.25;
     var nodeStrokeW = opts && opts.nodeStrokeWidth != null ? opts.nodeStrokeWidth : 1;
+    var strokeAttr = singleColor ? "currentColor" : null;
 
     var g = ns("g");
     g.setAttribute("class", "glyph-outline-group");
     if (target.kind) g.setAttribute("data-kind", target.kind);
     if (opacity < 1) g.setAttribute("opacity", String(opacity));
+    if (singleColor) g.style.color = singleColor;
 
     var pathEl = ns("path");
     pathEl.setAttribute("class", "glyph-outline-path");
     pathEl.setAttribute("d", d);
     pathEl.setAttribute("fill", "none");
-    pathEl.setAttribute("stroke", colors.path);
+    pathEl.setAttribute("stroke", strokeAttr || colors.path);
     pathEl.setAttribute("stroke-width", String(strokeW));
     pathEl.setAttribute("vector-effect", "non-scaling-stroke");
     g.appendChild(pathEl);
@@ -506,7 +517,7 @@
       line.setAttribute("y1", a.y);
       line.setAttribute("x2", b.x);
       line.setAttribute("y2", b.y);
-      line.setAttribute("stroke", colors.handleLine);
+      line.setAttribute("stroke", strokeAttr || colors.handleLine);
       line.setAttribute("stroke-width", String(nodeStrokeW));
       line.setAttribute("vector-effect", "non-scaling-stroke");
       g.appendChild(line);
@@ -520,14 +531,14 @@
       c.setAttribute("cy", p.y);
       c.setAttribute("r", "4");
       c.setAttribute("fill", "none");
-      c.setAttribute("stroke", colors.offCurve);
+      c.setAttribute("stroke", strokeAttr || colors.offCurve);
       c.setAttribute("stroke-width", String(nodeStrokeW));
       g.appendChild(c);
     });
 
     geom.nodes.forEach(function (n) {
       var p = toScreen(n);
-      var stroke = n.smooth ? colors.onCurveSmooth : colors.onCurve;
+      var stroke = strokeAttr || (n.smooth ? colors.onCurveSmooth : colors.onCurve);
       if (n.smooth) {
         var c = ns("circle");
         c.setAttribute("class", "glyph-outline-node glyph-outline-node-smooth");
@@ -566,7 +577,10 @@
         if (svg) clearSvg(svg);
         return Promise.resolve();
       }
+      opts = opts || {};
       var root = opts.root || document.documentElement;
+      var singleColor = resolveSingleColor(opts);
+      if (singleColor) svg.style.color = singleColor;
       var fontsReady =
         document.fonts && document.fonts.ready
           ? document.fonts.ready

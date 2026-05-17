@@ -82,6 +82,15 @@
         height: 100%;
         pointer-events: none;
         overflow: visible;
+        color: var(--line);
+      }
+
+      .outline-layer .glyph-outline-path,
+      .outline-layer .glyph-outline-handle-line,
+      .outline-layer .glyph-outline-handle,
+      .outline-layer .glyph-outline-node {
+        stroke: currentColor;
+        fill: none;
       }
 
       .var-readout {
@@ -191,21 +200,44 @@
         font-variant-numeric: tabular-nums;
       }
 
-      .row.row-wide-val {
-        grid-template-columns: 64px 1fr 100px;
+      .axis-row {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .axis-row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
       }
 
       .dual-range {
         position: relative;
         width: 100%;
-        height: 22px;
+        height: 40px;
+        min-width: 0;
+      }
+
+      .dual-val {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        font-size: 10px;
+        line-height: 1.2;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+        z-index: 2;
+        white-space: nowrap;
       }
 
       .dual-track {
         position: absolute;
         left: 7px;
         right: 7px;
-        top: 50%;
+        top: 24px;
         height: 3px;
         transform: translateY(-50%);
         background: #2a2a2a;
@@ -223,9 +255,11 @@
 
       .dual-range input[type="range"] {
         position: absolute;
-        inset: 0;
+        left: 0;
+        right: 0;
+        top: 14px;
         width: 100%;
-        height: 100%;
+        height: 22px;
         margin: 0;
         background: transparent;
         pointer-events: none;
@@ -350,41 +384,45 @@
 
       <div class="group">
         <p class="group-title">variables</p>
-        <div class="row row-wide-val">
+        <div class="axis-row">
           <label for="wMin">wght</label>
           <div class="dual-range" id="wDual">
+            <span class="dual-val" id="wMinVal">200</span>
+            <span class="dual-val" id="wMaxVal">1000</span>
             <div class="dual-track"><div class="dual-fill" id="wFill"></div></div>
             <input id="wMin" class="is-start" type="range" min="200" max="1000" step="1" value="200" aria-label="wght start" />
             <input id="wMax" class="is-end" type="range" min="200" max="1000" step="1" value="1000" aria-label="wght end" />
           </div>
-          <span class="val" id="wVal">200 / 1000</span>
         </div>
-        <div class="row row-wide-val">
+        <div class="axis-row">
           <label for="cMin">CNTR</label>
           <div class="dual-range" id="cDual">
+            <span class="dual-val" id="cMinVal">0.0</span>
+            <span class="dual-val" id="cMaxVal">100.0</span>
             <div class="dual-track"><div class="dual-fill" id="cFill"></div></div>
             <input id="cMin" class="is-start" type="range" min="0" max="100" step="0.1" value="0" aria-label="CNTR start" />
             <input id="cMax" class="is-end" type="range" min="0" max="100" step="0.1" value="100" aria-label="CNTR end" />
           </div>
-          <span class="val" id="cVal">0.0 / 100.0</span>
         </div>
-        <div class="row row-wide-val">
+        <div class="axis-row">
           <label for="dMin">wdth</label>
           <div class="dual-range" id="dDual">
+            <span class="dual-val" id="dMinVal">65</span>
+            <span class="dual-val" id="dMaxVal">130</span>
             <div class="dual-track"><div class="dual-fill" id="dFill"></div></div>
             <input id="dMin" class="is-start" type="range" min="65" max="130" step="1" value="65" aria-label="wdth start" />
             <input id="dMax" class="is-end" type="range" min="65" max="130" step="1" value="130" aria-label="wdth end" />
           </div>
-          <span class="val" id="dVal">65 / 130</span>
         </div>
-        <div class="row row-wide-val">
+        <div class="axis-row">
           <label for="sMin">slnt</label>
           <div class="dual-range" id="sDual">
+            <span class="dual-val" id="sMinVal">-12</span>
+            <span class="dual-val" id="sMaxVal">0</span>
             <div class="dual-track"><div class="dual-fill" id="sFill"></div></div>
             <input id="sMin" class="is-start" type="range" min="-12" max="0" step="0.25" value="-12" aria-label="slnt start" />
             <input id="sMax" class="is-end" type="range" min="-12" max="0" step="0.25" value="0" aria-label="slnt end" />
           </div>
-          <span class="val" id="sVal">-12 / 0</span>
         </div>
       </div>
 
@@ -428,10 +466,10 @@
         };
 
         var DUAL_AXES = [
-          { tag: "wght", minKey: "wMin", maxKey: "wMax", fill: "wFill", val: "wVal" },
-          { tag: "CNTR", minKey: "cMin", maxKey: "cMax", fill: "cFill", val: "cVal" },
-          { tag: "wdth", minKey: "dMin", maxKey: "dMax", fill: "dFill", val: "dVal" },
-          { tag: "slnt", minKey: "sMin", maxKey: "sMax", fill: "sFill", val: "sVal" },
+          { tag: "wght", minKey: "wMin", maxKey: "wMax", fill: "wFill", minVal: "wMinVal", maxVal: "wMaxVal" },
+          { tag: "CNTR", minKey: "cMin", maxKey: "cMax", fill: "cFill", minVal: "cMinVal", maxVal: "cMaxVal" },
+          { tag: "wdth", minKey: "dMin", maxKey: "dMax", fill: "dFill", minVal: "dMinVal", maxVal: "dMaxVal" },
+          { tag: "slnt", minKey: "sMin", maxKey: "sMax", fill: "sFill", minVal: "sMinVal", maxVal: "sMaxVal" },
         ];
 
         function clampAxis(tag, v) {
@@ -504,9 +542,17 @@
           return parseFloat(els.os.value) / 100;
         }
 
+        function outlineColor() {
+          return els.ln && els.ln.value
+            ? els.ln.value
+            : getComputedStyle(root).getPropertyValue("--line").trim() || "#0078ff";
+        }
+
         function syncOutlines(v) {
           if (!window.GlyphOutlines) return;
           var variation = v || variationAt(0);
+          var color = outlineColor();
+          outlineSvg.style.color = color;
           GlyphOutlines.sync(
             outlineSvg,
             stage,
@@ -514,7 +560,7 @@
             {
               fontUrl: FONT_URL,
               root: root,
-              color: els.ln.value,
+              color: color,
               outlineScale: outlineScale(),
             }
           );
@@ -531,11 +577,18 @@
           });
         }
 
+        function thumbPct(el) {
+          var min = parseFloat(el.min);
+          var max = parseFloat(el.max);
+          return ((parseFloat(el.value) - min) / (max - min)) * 100;
+        }
+
         function updateDualUI(spec) {
           var minEl = els[spec.minKey];
           var maxEl = els[spec.maxKey];
           var fill = document.getElementById(spec.fill);
-          var valEl = document.getElementById(spec.val);
+          var minValEl = document.getElementById(spec.minVal);
+          var maxValEl = document.getElementById(spec.maxVal);
           var a = parseFloat(minEl.value);
           var b = parseFloat(maxEl.value);
           var min = parseFloat(minEl.min);
@@ -546,10 +599,10 @@
           var hiPct = ((hi - min) / (max - min)) * 100;
           fill.style.left = loPct + "%";
           fill.style.width = Math.max(0, hiPct - loPct) + "%";
-          valEl.textContent =
-            fmtAxis(spec.tag, parseFloat(minEl.value)) +
-            " → " +
-            fmtAxis(spec.tag, parseFloat(maxEl.value));
+          minValEl.textContent = fmtAxis(spec.tag, a);
+          maxValEl.textContent = fmtAxis(spec.tag, b);
+          minValEl.style.left = thumbPct(minEl) + "%";
+          maxValEl.style.left = thumbPct(maxEl) + "%";
         }
 
         function updateAllDualUI() {
@@ -654,8 +707,10 @@
         function applyVar(key, v) {
           if (key === "zm") root.style.setProperty("--zoom", v);
           else if (key === "bg") root.style.setProperty("--bg", v);
-          else if (key === "ln") root.style.setProperty("--line", v);
-          else if (key === "fs") root.style.setProperty("--fs", v);
+          else if (key === "ln") {
+            root.style.setProperty("--line", v);
+            outlineSvg.style.color = v;
+          } else if (key === "fs") root.style.setProperty("--fs", v);
         }
 
         function setValue(key, v, persist) {
@@ -667,6 +722,9 @@
           else if (vals[key]) vals[key].textContent = fmt(key, v);
           if (key === "ch") applyChar();
           applyVar(key, v);
+          if (key === "ln" || key === "bg" || key === "fs" || key === "os" || key === "ch") {
+            syncOutlines();
+          }
           if (persist !== false) save();
         }
 
@@ -713,6 +771,7 @@
 
         ArtboardZoom.onChange(function (z) {
           setValue("zm", z, false);
+          syncOutlines();
         });
 
         Object.keys(els).forEach(function (k) {
