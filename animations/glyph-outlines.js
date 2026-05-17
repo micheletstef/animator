@@ -501,12 +501,21 @@
     return advance;
   }
 
+  function layoutKernPx(opts, fontSize) {
+    if (!opts) return { start: 0, end: 0 };
+    var start =
+      opts.kernStart != null && isFinite(opts.kernStart) ? Number(opts.kernStart) : 0;
+    var end = opts.kernEnd != null && isFinite(opts.kernEnd) ? Number(opts.kernEnd) : 0;
+    return { start: start, end: end };
+  }
+
   /** One path + geometry per glyph so contours never union across letters. */
-  function glyphRunsForText(font, text, fontSize, variation) {
+  function glyphRunsForText(font, text, fontSize, variation, opts) {
     var chars = Array.from(text);
     if (!chars.length) return [];
     var runs = [];
-    var x = 0;
+    var kern = layoutKernPx(opts, fontSize);
+    var x = kern.start;
     var pathOpts = variation != null ? { variation: variation } : {};
 
     for (var i = 0; i < chars.length; i++) {
@@ -517,6 +526,15 @@
         runs.push({ commands: commands, bb: path.getBoundingBox() });
       }
       x += advanceForGlyph(font, ch, chars[i + 1], fontSize);
+    }
+    if (runs.length && kern.end) {
+      var last = runs[runs.length - 1];
+      last.bb = {
+        x1: last.bb.x1,
+        y1: last.bb.y1,
+        x2: last.bb.x2 + kern.end,
+        y2: last.bb.y2,
+      };
     }
     return runs;
   }
@@ -626,7 +644,7 @@
     var variation =
       target.variation != null ? target.variation : parseVariationFromElement(el);
 
-    var runs = glyphRunsForText(font, text, fontSize, variation);
+    var runs = glyphRunsForText(font, text, fontSize, variation, opts);
     if (!runs.length) return;
 
     var bb = unionBBox(runs.map(function (r) {
