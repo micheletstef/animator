@@ -475,12 +475,17 @@
 
   function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
     var el = target.el;
-    var char = target.char;
+    var text =
+      target.text != null
+        ? target.text
+        : target.char != null
+          ? target.char
+          : el.textContent || "";
     var fontSize = fontSizePx(el);
     var variation =
       target.variation != null ? target.variation : parseVariationFromElement(el);
 
-    var path = font.getPath(char, 0, 0, fontSize, { variation: variation });
+    var path = font.getPath(text, 0, 0, fontSize, { variation: variation });
     var bb = path.getBoundingBox();
     if (!isFinite(bb.x1) || !isFinite(bb.y1)) return;
 

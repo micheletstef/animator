@@ -114,6 +114,7 @@
         font-family: "IkarusPlusVariable", system-ui, sans-serif;
         font-size: calc(var(--fs) * 1px);
         line-height: 1;
+        white-space: nowrap;
       }
 
       .panel {
@@ -367,8 +368,8 @@
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
-          <label for="ch">char</label>
-          <input id="ch" type="text" value="A" maxlength="8" spellcheck="false" autocomplete="off" />
+          <label for="ch">text</label>
+          <input id="ch" type="text" value="A" spellcheck="false" autocomplete="off" />
         </div>
         <div class="row">
           <label for="fs">size</label>
@@ -528,14 +529,14 @@
             fmtAxis("slnt", v.slnt);
         }
 
-        function getChar() {
+        function getText() {
           var v = els.ch ? els.ch.value : "";
           if (!v) return DEFAULTS.ch;
-          return Array.from(v)[0];
+          return v;
         }
 
         function applyChar() {
-          probe.textContent = getChar();
+          probe.textContent = getText();
         }
 
         function outlineScale() {
@@ -565,7 +566,7 @@
           GlyphOutlines.sync(
             outlineSvg,
             stage,
-            [{ el: probe, char: getChar(), variation: variation }],
+            [{ el: probe, text: getText(), variation: variation }],
             opts
           );
         }
