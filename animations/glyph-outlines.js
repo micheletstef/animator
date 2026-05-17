@@ -392,20 +392,66 @@
     return String(text).split(/\r\n|\r|\n/);
   }
 
+  function kerningLookupsFor(font, pathOpts) {
+    if (!pathOpts.kerning || !font.position || !font.position.getKerningTables) return null;
+    var script =
+      pathOpts.script ||
+      (font.position.getDefaultScriptName && font.position.getDefaultScriptName());
+    return font.position.getKerningTables(script, pathOpts.language);
+  }
+
+  function measureLineWidth(font, line, fontSize, pathOpts, gap) {
+    if (!line) return 0;
+    var w = font.getAdvanceWidth(line, fontSize, pathOpts);
+    if (!gap) return w;
+
+    var glyphs = font.stringToGlyphs(line, pathOpts);
+    if (glyphs.length < 2) return w;
+
+    var fontScale = (1 / font.unitsPerEm) * fontSize;
+    var kerningLookups = kerningLookupsFor(font, pathOpts);
+    var total = 0;
+
+    for (var i = 0; i < glyphs.length; i++) {
+      total += glyphs[i].advanceWidth * fontScale;
+      if (i < glyphs.length - 1) {
+        if (kerningLookups) {
+          total +=
+            font.position.getKerningValue(
+              kerningLookups,
+              glyphs[i].index,
+              glyphs[i + 1].index
+            ) * fontScale;
+        } else if (font.getKerningValue) {
+          total += font.getKerningValue(glyphs[i], glyphs[i + 1]) * fontScale;
+        }
+        total += gap;
+      }
+    }
+    return total;
+  }
+
   function layoutLineGlyphs(font, line, x0, y0, fontSize, pathOpts, opts, runs) {
+    if (!line) return;
+
+    var gap = kerningGapPx(opts);
+
+    if (!gap && font.getPaths) {
+      var paths = font.getPaths(line, x0, y0, fontSize, pathOpts);
+      for (var pi = 0; pi < paths.length; pi++) {
+        var commands = paths[pi].commands;
+        if (commands && commands.length) {
+          runs.push({ commands: commands, x: x0, advance: 0 });
+        }
+      }
+      return;
+    }
+
     var glyphs = font.stringToGlyphs(line, pathOpts);
     if (!glyphs.length) return;
 
-    var gap = kerningGapPx(opts);
     var fontScale = (1 / font.unitsPerEm) * fontSize;
-    var kerningLookups = null;
-    if (pathOpts.kerning && font.position && font.position.getKerningTables) {
-      var script =
-        pathOpts.script ||
-        (font.position.getDefaultScriptName && font.position.getDefaultScriptName());
-      kerningLookups = font.position.getKerningTables(script, pathOpts.language);
-    }
-
+    var kerningLookups = kerningLookupsFor(font, pathOpts);
     var x = x0;
 
     for (var i = 0; i < glyphs.length; i++) {
@@ -435,18 +481,28 @@
 
   /**
    * Lay out glyphs with opentype.js (stringToGlyphs + GPOS kerning), same as getPath(text).
-   * Supports line breaks; opts.kerning adds animated gap between letters on each line.
+   * Supports line breaks; lines are center-aligned; opts.kerning adds extra letter gap.
    */
   function glyphRunsForText(font, text, fontSize, variation, opts) {
     if (!text) return [];
     var pathOpts = pathOptions(font, variation);
     var lines = splitLines(text);
     var lineHeight = lineHeightPx(font, fontSize);
+    var gap = kerningGapPx(opts);
+    var lineWidths = lines.map(function (line) {
+      return measureLineWidth(font, line, fontSize, pathOpts, gap);
+    });
+    var maxLineWidth = 0;
+    lineWidths.forEach(function (w) {
+      maxLineWidth = Math.max(maxLineWidth, w);
+    });
+
     var runs = [];
 
     for (var li = 0; li < lines.length; li++) {
-      var y = -li * lineHeight;
-      layoutLineGlyphs(font, lines[li], 0, y, fontSize, pathOpts, opts, runs);
+      var y = li * lineHeight;
+      var x0 = (maxLineWidth - lineWidths[li]) / 2;
+      layoutLineGlyphs(font, lines[li], x0, y, fontSize, pathOpts, opts, runs);
     }
 
     return runs;
