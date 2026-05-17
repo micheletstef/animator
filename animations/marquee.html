@@ -6,8 +6,8 @@
     <title>names marquee</title>
     <style>
       @font-face {
-        font-family: "IkarusCondensedVariable";
-        src: url("../fonts/ABCIkarusCondensedVariable.ttf")
+        font-family: "IkarusPlusVariable";
+        src: url("../fonts/ABCIkarusPlusVariable.ttf")
           format("truetype-variations");
         font-weight: 100 1000;
         font-style: normal;
@@ -23,8 +23,6 @@
         --pad-b: 0;
         --pad-l: 0;
         --zoom: 1;
-        --w-top: 1000;
-        --w-bottom: 500;
         --gamma: 1;
         --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
       }
@@ -78,7 +76,7 @@
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        font-family: "IkarusCondensedVariable", system-ui, sans-serif;
+        font-family: "IkarusPlusVariable", system-ui, sans-serif;
         transform: scale(var(--zoom));
         transform-origin: top left;
       }
@@ -195,6 +193,116 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .axis-row {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .axis-row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 40px;
+        min-width: 0;
+      }
+
+      .dual-val {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        font-size: 10px;
+        line-height: 1.2;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+        z-index: 2;
+        white-space: nowrap;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 24px;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 14px;
+        width: 100%;
+        height: 22px;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track,
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb,
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
       .panel .actions {
         display: flex;
         gap: 8px;
@@ -233,7 +341,7 @@
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom the artboard</p>
+      <p class="hint">shift + scroll to zoom · dual thumbs = top → bottom range</p>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -250,50 +358,70 @@
       </div>
 
       <div class="group">
-        <p class="group-title">top</p>
-        <div class="row">
-          <label for="sTop">size</label>
-          <input id="sTop" type="range" min="40" max="800" step="1" value="240" />
-          <span class="val" id="sTopVal">240px</span>
+        <p class="group-title">gradient</p>
+        <div class="axis-row">
+          <label for="s0">size</label>
+          <div class="dual-range" id="sDual">
+            <span class="dual-val" id="s0Val">240px</span>
+            <span class="dual-val" id="s1Val">120px</span>
+            <div class="dual-track"><div class="dual-fill" id="sFill"></div></div>
+            <input id="s0" class="is-start" type="range" min="40" max="800" step="1" value="240" aria-label="size start" />
+            <input id="s1" class="is-end" type="range" min="40" max="800" step="1" value="120" aria-label="size end" />
+          </div>
         </div>
-        <div class="row">
-          <label for="kTop">kern</label>
-          <input id="kTop" type="range" min="-0.5" max="0.5" step="0.001" value="-0.02" />
-          <span class="val" id="kTopVal">-20</span>
+        <div class="axis-row">
+          <label for="k0">kern</label>
+          <div class="dual-range" id="kDual">
+            <span class="dual-val" id="k0Val">-20</span>
+            <span class="dual-val" id="k1Val">20</span>
+            <div class="dual-track"><div class="dual-fill" id="kFill"></div></div>
+            <input id="k0" class="is-start" type="range" min="-0.5" max="0.5" step="0.001" value="-0.02" aria-label="kern start" />
+            <input id="k1" class="is-end" type="range" min="-0.5" max="0.5" step="0.001" value="0.02" aria-label="kern end" />
+          </div>
         </div>
-        <div class="row">
-          <label for="wTop">weight</label>
-          <input id="wTop" type="range" min="100" max="1000" step="1" value="1000" />
-          <span class="val" id="wTopVal">1000</span>
-        </div>
-        <div class="row">
-          <label for="oTop">opacity</label>
-          <input id="oTop" type="range" min="0" max="1" step="0.01" value="1" />
-          <span class="val" id="oTopVal">100%</span>
+        <div class="axis-row">
+          <label for="o0">opacity</label>
+          <div class="dual-range" id="oDual">
+            <span class="dual-val" id="o0Val">100%</span>
+            <span class="dual-val" id="o1Val">20%</span>
+            <div class="dual-track"><div class="dual-fill" id="oFill"></div></div>
+            <input id="o0" class="is-start" type="range" min="0" max="1" step="0.01" value="1" aria-label="opacity start" />
+            <input id="o1" class="is-end" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="opacity end" />
+          </div>
         </div>
       </div>
 
       <div class="group">
-        <p class="group-title">bottom</p>
-        <div class="row">
-          <label for="sBot">size</label>
-          <input id="sBot" type="range" min="40" max="800" step="1" value="120" />
-          <span class="val" id="sBotVal">120px</span>
+        <p class="group-title">variables</p>
+        <div class="axis-row">
+          <label for="wMin">wght</label>
+          <div class="dual-range" id="wDual">
+            <span class="dual-val" id="wMinVal">1000</span>
+            <span class="dual-val" id="wMaxVal">500</span>
+            <div class="dual-track"><div class="dual-fill" id="wFill"></div></div>
+            <input id="wMin" class="is-start" type="range" min="200" max="1000" step="1" value="1000" aria-label="wght start" />
+            <input id="wMax" class="is-end" type="range" min="200" max="1000" step="1" value="500" aria-label="wght end" />
+          </div>
         </div>
-        <div class="row">
-          <label for="kBot">kern</label>
-          <input id="kBot" type="range" min="-0.5" max="0.5" step="0.001" value="0.02" />
-          <span class="val" id="kBotVal">20</span>
+        <div class="axis-row">
+          <label for="cMin">cntr</label>
+          <div class="dual-range" id="cDual">
+            <span class="dual-val" id="cMinVal">0.0</span>
+            <span class="dual-val" id="cMaxVal">0.0</span>
+            <div class="dual-track"><div class="dual-fill" id="cFill"></div></div>
+            <input id="cMin" class="is-start" type="range" min="0" max="100" step="0.1" value="0" aria-label="CNTR start" />
+            <input id="cMax" class="is-end" type="range" min="0" max="100" step="0.1" value="0" aria-label="CNTR end" />
+          </div>
         </div>
-        <div class="row">
-          <label for="wBot">weight</label>
-          <input id="wBot" type="range" min="100" max="1000" step="1" value="500" />
-          <span class="val" id="wBotVal">500</span>
-        </div>
-        <div class="row">
-          <label for="oBot">opacity</label>
-          <input id="oBot" type="range" min="0" max="1" step="0.01" value="0.2" />
-          <span class="val" id="oBotVal">20%</span>
+        <div class="axis-row">
+          <label for="slMin">slnt</label>
+          <div class="dual-range" id="slDual">
+            <span class="dual-val" id="slMinVal">0</span>
+            <span class="dual-val" id="slMaxVal">0</span>
+            <div class="dual-track"><div class="dual-fill" id="slFill"></div></div>
+            <input id="slMin" class="is-start" type="range" min="-12" max="0" step="0.25" value="0" aria-label="slnt start" />
+            <input id="slMax" class="is-end" type="range" min="-12" max="0" step="0.25" value="0" aria-label="slnt end" />
+          </div>
         </div>
       </div>
 
@@ -387,33 +515,131 @@
         var slotTops = [];
         var slotHeights = [];
 
+        var AXES = {
+          CNTR: { min: 0, max: 100, step: 0.1, default: 0 },
+          wght: { min: 200, max: 1000, step: 1, default: 500 },
+          wdth: { min: 65, max: 130, step: 1, default: 100 },
+          slnt: { min: -12, max: 0, step: 0.25, default: 0 },
+        };
+
+        var DUAL_GRAD = [
+          {
+            minKey: "s0",
+            maxKey: "s1",
+            fill: "sFill",
+            minVal: "s0Val",
+            maxVal: "s1Val",
+            fmt: function (v) {
+              return Math.round(Number(v)) + "px";
+            },
+          },
+          {
+            minKey: "k0",
+            maxKey: "k1",
+            fill: "kFill",
+            minVal: "k0Val",
+            maxVal: "k1Val",
+            fmt: function (v) {
+              return Math.round(Number(v) * 1000) + "";
+            },
+          },
+          {
+            minKey: "o0",
+            maxKey: "o1",
+            fill: "oFill",
+            minVal: "o0Val",
+            maxVal: "o1Val",
+            fmt: function (v) {
+              return Math.round(Number(v) * 100) + "%";
+            },
+          },
+        ];
+
+        var DUAL_AXES = [
+          {
+            tag: "wght",
+            minKey: "wMin",
+            maxKey: "wMax",
+            fill: "wFill",
+            minVal: "wMinVal",
+            maxVal: "wMaxVal",
+          },
+          {
+            tag: "CNTR",
+            minKey: "cMin",
+            maxKey: "cMax",
+            fill: "cFill",
+            minVal: "cMinVal",
+            maxVal: "cMaxVal",
+          },
+          {
+            tag: "slnt",
+            minKey: "slMin",
+            maxKey: "slMax",
+            fill: "slFill",
+            minVal: "slMinVal",
+            maxVal: "slMaxVal",
+          },
+        ];
+
+        function clampAxis(tag, v) {
+          var a = AXES[tag];
+          return Math.max(a.min, Math.min(a.max, Number(v)));
+        }
+
+        function fmtAxis(tag, v) {
+          if (tag === "CNTR") return (Math.round(v * 10) / 10).toFixed(1);
+          if (tag === "wght") return Math.round(v).toString();
+          return String(v);
+        }
+
+        function lerpPair(a, b, tt) {
+          return a + (b - a) * tt;
+        }
+
         function layoutParams() {
           return {
-            wTop: parseFloat(els.wTop.value),
-            wBot: parseFloat(els.wBot.value),
-            kTop: parseFloat(els.kTop.value),
-            kBot: parseFloat(els.kBot.value),
-            sTop: parseFloat(els.sTop.value),
-            sBot: parseFloat(els.sBot.value),
+            s0: parseFloat(els.s0.value),
+            s1: parseFloat(els.s1.value),
+            k0: parseFloat(els.k0.value),
+            k1: parseFloat(els.k1.value),
+            o0: parseFloat(els.o0.value),
+            o1: parseFloat(els.o1.value),
+            wMin: parseFloat(els.wMin.value),
+            wMax: parseFloat(els.wMax.value),
+            cMin: parseFloat(els.cMin.value),
+            cMax: parseFloat(els.cMax.value),
+            slMin: parseFloat(els.slMin.value),
+            slMax: parseFloat(els.slMax.value),
             lh: parseFloat(els.lh.value),
-            oTop: parseFloat(els.oTop.value),
-            oBot: parseFloat(els.oBot.value),
             gamma: parseFloat(els.gm.value),
           };
+        }
+
+        function fvarSettings(p, tt) {
+          return (
+            '"wght" ' +
+            fmtAxis("wght", lerpPair(p.wMin, p.wMax, tt)) +
+            ', "wdth" ' +
+            AXES.wdth.default +
+            ', "slnt" ' +
+            fmtAxis("slnt", lerpPair(p.slMin, p.slMax, tt)) +
+            ', "CNTR" ' +
+            fmtAxis("CNTR", lerpPair(p.cMin, p.cMax, tt))
+          );
         }
 
         function applyTypography(node, t, p) {
           if (t < 0) t = 0;
           else if (t > 1) t = 1;
           var tt = Math.pow(t, p.gamma);
-          var w = Math.round(p.wTop + (p.wBot - p.wTop) * tt);
-          node.style.fontVariationSettings = '"wght" ' + w;
-          var k = p.kTop + (p.kBot - p.kTop) * tt;
+          node.style.fontVariationSettings = fvarSettings(p, tt);
+          var k = lerpPair(p.k0, p.k1, tt);
           node.style.letterSpacing = k.toFixed(4) + "em";
-          var s = p.sTop + (p.sBot - p.sTop) * tt;
+          var s = lerpPair(p.s0, p.s1, tt);
           node.style.fontSize = s + "px";
           node.style.lineHeight = p.lh.toFixed(4);
-          node.style.opacity = p.oTop + (p.oBot - p.oTop) * tt;
+          node.style.opacity = lerpPair(p.o0, p.o1, tt);
         }
 
         // Max height across the full top→bottom gradient so animated
@@ -424,7 +650,7 @@
           node.style.minHeight = "0";
           for (var step = 0; step <= 12; step++) {
             applyTypography(node, step / 12, p);
-            var s = p.sTop + (p.sBot - p.sTop) * (step / 12);
+            var s = lerpPair(p.s0, p.s1, step / 12);
             // Tight/negative leading shrinks the line box but not the glyphs.
             var ink = Math.max(
               node.offsetHeight,
@@ -501,23 +727,28 @@
           requestAnimationFrame(frame);
         }
 
-        var LS_KEY = "names-marquee:settings:v1";
+        var LS_KEY = "names-marquee:settings:v2";
+        var LS_KEY_V1 = "names-marquee:settings:v1";
         var root = document.documentElement;
 
         var DEFAULTS = {
           zm: 1,
           bg: "#ffffff",
           fg: "#f5d100",
-          sTop: 240,
-          sBot: 120,
+          s0: 240,
+          s1: 120,
           lh: 0.92,
-          kTop: -0.02,
-          kBot: 0.02,
-          wTop: 1000,
-          wBot: 500,
+          k0: -0.02,
+          k1: 0.02,
+          o0: 1,
+          o1: 0.2,
+          wMin: 1000,
+          wMax: 500,
+          cMin: 0,
+          cMax: 0,
+          slMin: 0,
+          slMax: 0,
           gm: 1,
-          oTop: 1,
-          oBot: 0.2,
           sp: 80,
           pv: 0,
           pl: 0,
@@ -526,20 +757,41 @@
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
 
+        var LAYOUT_KEYS = {
+          s0: 1,
+          s1: 1,
+          k0: 1,
+          k1: 1,
+          o0: 1,
+          o1: 1,
+          wMin: 1,
+          wMax: 1,
+          cMin: 1,
+          cMax: 1,
+          slMin: 1,
+          slMax: 1,
+          lh: 1,
+          gm: 1,
+        };
+
         var els = {
           zm: document.getElementById("zm"),
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
-          sTop: document.getElementById("sTop"),
-          sBot: document.getElementById("sBot"),
+          s0: document.getElementById("s0"),
+          s1: document.getElementById("s1"),
+          k0: document.getElementById("k0"),
+          k1: document.getElementById("k1"),
+          o0: document.getElementById("o0"),
+          o1: document.getElementById("o1"),
+          wMin: document.getElementById("wMin"),
+          wMax: document.getElementById("wMax"),
+          cMin: document.getElementById("cMin"),
+          cMax: document.getElementById("cMax"),
+          slMin: document.getElementById("slMin"),
+          slMax: document.getElementById("slMax"),
           lh: document.getElementById("lh"),
-          kTop: document.getElementById("kTop"),
-          kBot: document.getElementById("kBot"),
-          wTop: document.getElementById("wTop"),
-          wBot: document.getElementById("wBot"),
           gm: document.getElementById("gm"),
-          oTop: document.getElementById("oTop"),
-          oBot: document.getElementById("oBot"),
           sp: document.getElementById("sp"),
           pv: document.getElementById("pv"),
           pl: document.getElementById("pl"),
@@ -548,34 +800,101 @@
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          sTop: document.getElementById("sTopVal"),
-          sBot: document.getElementById("sBotVal"),
           lh: document.getElementById("lhVal"),
-          kTop: document.getElementById("kTopVal"),
-          kBot: document.getElementById("kBotVal"),
-          wTop: document.getElementById("wTopVal"),
-          wBot: document.getElementById("wBotVal"),
           gm: document.getElementById("gmVal"),
-          oTop: document.getElementById("oTopVal"),
-          oBot: document.getElementById("oBotVal"),
           sp: document.getElementById("spVal"),
           pv: document.getElementById("pvVal"),
           pl: document.getElementById("plVal"),
           pr: document.getElementById("prVal"),
         };
 
+        function dualGradSpecForKey(key) {
+          for (var i = 0; i < DUAL_GRAD.length; i++) {
+            if (DUAL_GRAD[i].minKey === key || DUAL_GRAD[i].maxKey === key)
+              return DUAL_GRAD[i];
+          }
+          return null;
+        }
+
+        function dualAxisSpecForKey(key) {
+          for (var i = 0; i < DUAL_AXES.length; i++) {
+            if (DUAL_AXES[i].minKey === key || DUAL_AXES[i].maxKey === key)
+              return DUAL_AXES[i];
+          }
+          return null;
+        }
+
+        function thumbPct(el) {
+          var min = parseFloat(el.min);
+          var max = parseFloat(el.max);
+          return ((parseFloat(el.value) - min) / (max - min)) * 100;
+        }
+
+        function updateDualGradUI(spec) {
+          var minEl = els[spec.minKey];
+          var maxEl = els[spec.maxKey];
+          var fill = document.getElementById(spec.fill);
+          var minValEl = document.getElementById(spec.minVal);
+          var maxValEl = document.getElementById(spec.maxVal);
+          var a = parseFloat(minEl.value);
+          var b = parseFloat(maxEl.value);
+          var min = parseFloat(minEl.min);
+          var max = parseFloat(maxEl.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          fill.style.left = loPct + "%";
+          fill.style.width = Math.max(0, hiPct - loPct) + "%";
+          minValEl.textContent = spec.fmt(a);
+          maxValEl.textContent = spec.fmt(b);
+          minValEl.style.left = thumbPct(minEl) + "%";
+          maxValEl.style.left = thumbPct(maxEl) + "%";
+        }
+
+        function updateDualAxisUI(spec) {
+          var minEl = els[spec.minKey];
+          var maxEl = els[spec.maxKey];
+          var fill = document.getElementById(spec.fill);
+          var minValEl = document.getElementById(spec.minVal);
+          var maxValEl = document.getElementById(spec.maxVal);
+          var a = parseFloat(minEl.value);
+          var b = parseFloat(maxEl.value);
+          var min = parseFloat(minEl.min);
+          var max = parseFloat(maxEl.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          fill.style.left = loPct + "%";
+          fill.style.width = Math.max(0, hiPct - loPct) + "%";
+          minValEl.textContent = fmtAxis(spec.tag, a);
+          maxValEl.textContent = fmtAxis(spec.tag, b);
+          minValEl.style.left = thumbPct(minEl) + "%";
+          maxValEl.style.left = thumbPct(maxEl) + "%";
+        }
+
+        function updateAllDualUI() {
+          DUAL_GRAD.forEach(updateDualGradUI);
+          DUAL_AXES.forEach(updateDualAxisUI);
+        }
+
+        function applyAxisLimits() {
+          DUAL_AXES.forEach(function (spec) {
+            var a = AXES[spec.tag];
+            [els[spec.minKey], els[spec.maxKey]].forEach(function (el) {
+              el.min = a.min;
+              el.max = a.max;
+              el.step = a.step;
+            });
+          });
+        }
+
         function fmt(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
-          if (key === "zm" || key === "oTop" || key === "oBot")
-            return Math.round(Number(v) * 100) + "%";
-          if (key === "sTop" || key === "sBot")
-            return Math.round(Number(v)) + "px";
-          if (key === "lh" || key === "gm")
-            return Number(v).toFixed(2);
-          if (key === "kTop" || key === "kBot")
-            return Math.round(Number(v) * 1000) + "";
-          if (key === "wTop" || key === "wBot" || key === "sp")
-            return Math.round(Number(v)) + "";
+          if (key === "zm") return Math.round(Number(v) * 100) + "%";
+          if (key === "lh" || key === "gm") return Number(v).toFixed(2);
+          if (key === "sp") return Math.round(Number(v)) + "";
           return Math.round(Number(v)) + "px";
         }
 
@@ -597,10 +916,13 @@
           if (key === "zm") {
             v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
           }
+          var gradSpec = dualGradSpecForKey(key);
+          var axisSpec = dualAxisSpecForKey(key);
+          if (axisSpec) v = clampAxis(axisSpec.tag, v);
           els[key].value = v;
-          if (vals[key]) {
-            vals[key].textContent = fmt(key, v);
-          }
+          if (gradSpec) updateDualGradUI(gradSpec);
+          else if (axisSpec) updateDualAxisUI(axisSpec);
+          else if (vals[key]) vals[key].textContent = fmt(key, v);
           applyVar(key, v);
           if (persist !== false) save();
         }
@@ -616,6 +938,26 @@
           } catch (e) {}
         }
 
+        function migrateV1(parsed) {
+          if (parsed.sTop != null && parsed.s0 == null) {
+            parsed.s0 = parsed.sTop;
+            parsed.s1 = parsed.sBot != null ? parsed.sBot : parsed.sTop;
+          }
+          if (parsed.kTop != null && parsed.k0 == null) {
+            parsed.k0 = parsed.kTop;
+            parsed.k1 = parsed.kBot != null ? parsed.kBot : parsed.kTop;
+          }
+          if (parsed.oTop != null && parsed.o0 == null) {
+            parsed.o0 = parsed.oTop;
+            parsed.o1 = parsed.oBot != null ? parsed.oBot : parsed.oTop;
+          }
+          if (parsed.wTop != null && parsed.wMin == null) {
+            parsed.wMin = parsed.wTop;
+            parsed.wMax = parsed.wBot != null ? parsed.wBot : parsed.wTop;
+          }
+          return parsed;
+        }
+
         function load() {
           var raw;
           try {
@@ -623,10 +965,18 @@
           } catch (e) {
             raw = null;
           }
+          if (!raw) {
+            try {
+              raw = localStorage.getItem(LS_KEY_V1);
+            } catch (e2) {
+              raw = null;
+            }
+          }
           var data = DEFAULTS;
           if (raw) {
             try {
               var parsed = JSON.parse(raw);
+              parsed = migrateV1(parsed);
               if (parsed.ph != null && parsed.pl == null && parsed.pr == null) {
                 parsed.pl = parsed.ph;
                 parsed.pr = parsed.ph;
@@ -657,18 +1007,7 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-            if (
-              k === "sTop" ||
-              k === "sBot" ||
-              k === "lh" ||
-              k === "gm" ||
-              k === "wTop" ||
-              k === "wBot" ||
-              k === "kTop" ||
-              k === "kBot"
-            ) {
-              requestAnimationFrame(computeLayout);
-            }
+            if (LAYOUT_KEYS[k]) requestAnimationFrame(computeLayout);
           });
         });
 
@@ -676,6 +1015,7 @@
           Object.keys(DEFAULTS).forEach(function (k) {
             setValue(k, DEFAULTS[k]);
           });
+          updateAllDualUI();
           requestAnimationFrame(computeLayout);
         });
 
@@ -683,7 +1023,9 @@
           requestAnimationFrame(computeLayout);
         });
 
+        applyAxisLimits();
         load();
+        updateAllDualUI();
 
         function start() {
           computeLayout();
