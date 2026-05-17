@@ -473,34 +473,56 @@
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
   }
 
-  function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
-    var el = target.el;
-    var text =
-      target.text != null
-        ? target.text
-        : target.char != null
-          ? target.char
-          : el.textContent || "";
-    var fontSize = fontSizePx(el);
-    var variation =
-      target.variation != null ? target.variation : parseVariationFromElement(el);
+  function unionBBox(boxes) {
+    var x1 = Infinity;
+    var y1 = Infinity;
+    var x2 = -Infinity;
+    var y2 = -Infinity;
+    var n = 0;
+    boxes.forEach(function (bb) {
+      if (!bb || !isFinite(bb.x1) || !isFinite(bb.y1)) return;
+      x1 = Math.min(x1, bb.x1);
+      y1 = Math.min(y1, bb.y1);
+      x2 = Math.max(x2, bb.x2);
+      y2 = Math.max(y2, bb.y2);
+      n++;
+    });
+    if (!n) return null;
+    return { x1: x1, y1: y1, x2: x2, y2: y2 };
+  }
 
-    var path = font.getPath(text, 0, 0, fontSize, { variation: variation });
-    var bb = path.getBoundingBox();
-    if (!isFinite(bb.x1) || !isFinite(bb.y1)) return;
-
-    var commands = path.commands;
-    if (!commands || !commands.length) return;
-
-    var place = placement(stageEl, root, bb, opts);
-    var map = place.map;
-    var scale =
-      opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
-    if (isFinite(scale) && scale > 0 && scale !== 1) {
-      map = wrapScreenScale(map, scale, place.stageCx, place.stageCy);
+  function advanceForGlyph(font, ch, nextCh, fontSize) {
+    var glyph = font.charToGlyph(ch);
+    var advance = (glyph.advanceWidth / font.unitsPerEm) * fontSize;
+    if (nextCh != null && font.getKerningValue) {
+      var g2 = font.charToGlyph(nextCh);
+      advance += (font.getKerningValue(glyph, g2) / font.unitsPerEm) * fontSize;
     }
+    return advance;
+  }
+
+  /** One path + geometry per glyph so contours never union across letters. */
+  function glyphRunsForText(font, text, fontSize, variation) {
+    var chars = Array.from(text);
+    if (!chars.length) return [];
+    var runs = [];
+    var x = 0;
+    var pathOpts = variation != null ? { variation: variation } : {};
+
+    for (var i = 0; i < chars.length; i++) {
+      var ch = chars[i];
+      var path = font.getPath(ch, x, 0, fontSize, pathOpts);
+      var commands = path.commands;
+      if (commands && commands.length) {
+        runs.push({ commands: commands, bb: path.getBoundingBox() });
+      }
+      x += advanceForGlyph(font, ch, chars[i + 1], fontSize);
+    }
+    return runs;
+  }
+
+  function buildOutline(commands, map, tol) {
     var subpaths = splitSubpaths(commands);
-    var tol = Math.max(0.2, fontSize * 0.0004);
     var merged =
       subpaths.length > 1 ? pathfindContours(subpaths, map, tol) : null;
     var d = merged ? merged.d : pathDFromCommands(commands, map);
@@ -512,23 +534,15 @@
           screenSpace: true,
         }
       : collectGeometry(commands);
-    if (!d || d.indexOf("NaN") !== -1) return;
+    if (!d || d.indexOf("NaN") !== -1) return null;
+    return { d: d, geom: geom };
+  }
 
-    var colors = resolveColors(opts);
-    var singleColor = resolveSingleColor(opts);
-    var strokeW = opts && opts.strokeWidth != null ? opts.strokeWidth : 1.25;
-    var nodeStrokeW = opts && opts.nodeStrokeWidth != null ? opts.nodeStrokeWidth : 1;
-    var strokeAttr = singleColor ? "currentColor" : null;
-
-    var g = ns("g");
-    g.setAttribute("class", "glyph-outline-group");
-    if (target.kind) g.setAttribute("data-kind", target.kind);
-    if (opacity < 1) g.setAttribute("opacity", String(opacity));
-    if (singleColor) g.style.color = singleColor;
-
+  function appendOutlineToGroup(g, outline, map, colors, strokeW, nodeStrokeW, strokeAttr) {
+    var geom = outline.geom;
     var pathEl = ns("path");
     pathEl.setAttribute("class", "glyph-outline-path");
-    pathEl.setAttribute("d", d);
+    pathEl.setAttribute("d", outline.d);
     pathEl.setAttribute("fill", "none");
     pathEl.setAttribute("stroke", strokeAttr || colors.path);
     pathEl.setAttribute("stroke-width", String(strokeW));
@@ -597,6 +611,53 @@
         r.setAttribute("stroke-width", String(nodeStrokeW));
         g.appendChild(r);
       }
+    });
+  }
+
+  function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
+    var el = target.el;
+    var text =
+      target.text != null
+        ? target.text
+        : target.char != null
+          ? target.char
+          : el.textContent || "";
+    var fontSize = fontSizePx(el);
+    var variation =
+      target.variation != null ? target.variation : parseVariationFromElement(el);
+
+    var runs = glyphRunsForText(font, text, fontSize, variation);
+    if (!runs.length) return;
+
+    var bb = unionBBox(runs.map(function (r) {
+      return r.bb;
+    }));
+    if (!bb) return;
+
+    var place = placement(stageEl, root, bb, opts);
+    var map = place.map;
+    var scale =
+      opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
+    if (isFinite(scale) && scale > 0 && scale !== 1) {
+      map = wrapScreenScale(map, scale, place.stageCx, place.stageCy);
+    }
+    var tol = Math.max(0.2, fontSize * 0.0004);
+
+    var colors = resolveColors(opts);
+    var singleColor = resolveSingleColor(opts);
+    var strokeW = opts && opts.strokeWidth != null ? opts.strokeWidth : 1.25;
+    var nodeStrokeW = opts && opts.nodeStrokeWidth != null ? opts.nodeStrokeWidth : 1;
+    var strokeAttr = singleColor ? "currentColor" : null;
+
+    var g = ns("g");
+    g.setAttribute("class", "glyph-outline-group");
+    if (target.kind) g.setAttribute("data-kind", target.kind);
+    if (opacity < 1) g.setAttribute("opacity", String(opacity));
+    if (singleColor) g.style.color = singleColor;
+
+    runs.forEach(function (run) {
+      var outline = buildOutline(run.commands, map, tol);
+      if (outline) appendOutlineToGroup(g, outline, map, colors, strokeW, nodeStrokeW, strokeAttr);
     });
 
     svg.appendChild(g);
