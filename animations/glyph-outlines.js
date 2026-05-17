@@ -14,6 +14,18 @@
     onCurveSmooth: "rgba(0, 180, 80, 0.95)",
   };
 
+  function resolveColors(opts) {
+    var c = (opts && (opts.color || opts.strokeColor)) || null;
+    if (!c) return COLORS;
+    return {
+      path: c,
+      handleLine: c,
+      offCurve: c,
+      onCurve: c,
+      onCurveSmooth: c,
+    };
+  }
+
   function loadFont(url) {
     if (fontUrl !== url) {
       fontUrl = url;
@@ -459,6 +471,10 @@
       : collectGeometry(commands);
     if (!d || d.indexOf("NaN") !== -1) return;
 
+    var colors = resolveColors(opts);
+    var strokeW = opts && opts.strokeWidth != null ? opts.strokeWidth : 1.25;
+    var nodeStrokeW = opts && opts.nodeStrokeWidth != null ? opts.nodeStrokeWidth : 1;
+
     var g = ns("g");
     g.setAttribute("class", "glyph-outline-group");
     if (target.kind) g.setAttribute("data-kind", target.kind);
@@ -468,8 +484,8 @@
     pathEl.setAttribute("class", "glyph-outline-path");
     pathEl.setAttribute("d", d);
     pathEl.setAttribute("fill", "none");
-    pathEl.setAttribute("stroke", COLORS.path);
-    pathEl.setAttribute("stroke-width", "1.25");
+    pathEl.setAttribute("stroke", colors.path);
+    pathEl.setAttribute("stroke-width", String(strokeW));
     pathEl.setAttribute("vector-effect", "non-scaling-stroke");
     g.appendChild(pathEl);
 
@@ -490,8 +506,8 @@
       line.setAttribute("y1", a.y);
       line.setAttribute("x2", b.x);
       line.setAttribute("y2", b.y);
-      line.setAttribute("stroke", COLORS.handleLine);
-      line.setAttribute("stroke-width", "1");
+      line.setAttribute("stroke", colors.handleLine);
+      line.setAttribute("stroke-width", String(nodeStrokeW));
       line.setAttribute("vector-effect", "non-scaling-stroke");
       g.appendChild(line);
     });
@@ -503,24 +519,24 @@
       c.setAttribute("cx", p.x);
       c.setAttribute("cy", p.y);
       c.setAttribute("r", "4");
-      c.setAttribute("fill", COLORS.offCurve);
-      c.setAttribute("stroke", "#fff");
-      c.setAttribute("stroke-width", "1");
+      c.setAttribute("fill", "none");
+      c.setAttribute("stroke", colors.offCurve);
+      c.setAttribute("stroke-width", String(nodeStrokeW));
       g.appendChild(c);
     });
 
     geom.nodes.forEach(function (n) {
       var p = toScreen(n);
-      var fill = n.smooth ? COLORS.onCurveSmooth : COLORS.onCurve;
+      var stroke = n.smooth ? colors.onCurveSmooth : colors.onCurve;
       if (n.smooth) {
         var c = ns("circle");
         c.setAttribute("class", "glyph-outline-node glyph-outline-node-smooth");
         c.setAttribute("cx", p.x);
         c.setAttribute("cy", p.y);
         c.setAttribute("r", "4.5");
-        c.setAttribute("fill", fill);
-        c.setAttribute("stroke", "#fff");
-        c.setAttribute("stroke-width", "1");
+        c.setAttribute("fill", "none");
+        c.setAttribute("stroke", stroke);
+        c.setAttribute("stroke-width", String(nodeStrokeW));
         g.appendChild(c);
       } else {
         var size = 9;
@@ -530,9 +546,9 @@
         r.setAttribute("y", p.y - size / 2);
         r.setAttribute("width", size);
         r.setAttribute("height", size);
-        r.setAttribute("fill", fill);
-        r.setAttribute("stroke", "#fff");
-        r.setAttribute("stroke-width", "1");
+        r.setAttribute("fill", "none");
+        r.setAttribute("stroke", stroke);
+        r.setAttribute("stroke-width", String(nodeStrokeW));
         g.appendChild(r);
       }
     });

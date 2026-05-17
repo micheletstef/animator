@@ -4,43 +4,49 @@
       "id": "ghost",
       "label": "ghost",
       "url": "animations/ghost.html",
-      "mtime": 1778855903
+      "mtime": 1779007785
     },
     {
       "id": "ghost-plus-variable",
       "label": "ghost · plus variable",
       "url": "animations/ghost-plus-variable.html",
-      "mtime": 1778855749
+      "mtime": 1779007823
     },
     {
       "id": "ghost-slant",
       "label": "ghost · slant",
       "url": "animations/ghost-slant.html",
-      "mtime": 1778855995
+      "mtime": 1779007842
     },
     {
       "id": "matrix",
       "label": "matrix",
       "url": "animations/matrix.html",
-      "mtime": 1778855129
+      "mtime": 1778857488
     },
     {
       "id": "matrix-v2",
       "label": "matrix v2",
       "url": "animations/matrix-v2.html",
-      "mtime": 1778855128
+      "mtime": 1778857492
     },
     {
       "id": "marquee",
       "label": "names marquee",
       "url": "animations/marquee.html",
-      "mtime": 1778855146
+      "mtime": 1778967739
     },
     {
       "id": "spf",
       "label": "SPF 50+ → 8",
       "url": "animations/spf.html",
       "mtime": 1778855150
+    },
+    {
+      "id": "technical-outline",
+      "label": "technical outline",
+      "url": "animations/technical-outline.html",
+      "mtime": 1779007834
     },
     {
       "id": "wave",
