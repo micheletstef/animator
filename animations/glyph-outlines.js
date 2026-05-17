@@ -6,6 +6,7 @@
 (function (global) {
   var fontPromise = null;
   var fontUrl = null;
+  var loadedFont = null;
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
     handleLine: "rgba(0, 120, 255, 0.45)",
@@ -38,6 +39,7 @@
     if (fontUrl !== url) {
       fontUrl = url;
       fontPromise = null;
+      loadedFont = null;
     }
     if (!fontPromise) {
       fontPromise = fetch(url)
@@ -46,7 +48,8 @@
           return r.arrayBuffer();
         })
         .then(function (buf) {
-          return opentype.parse(buf);
+          loadedFont = opentype.parse(buf);
+          return loadedFont;
         });
     }
     return fontPromise;
@@ -77,9 +80,10 @@
   }
 
   /**
-   * getPath(…, fontSize): 1:1 px. Center path bbox on artboard (stage) center.
+   * getPath(…, fontSize): 1:1 px. Center on artboard using a stable path-space anchor
+   * (defaults to bbox center; use lockAnchor to freeze anchor while animating axes).
    */
-  function placement(stageEl, root, pathBb) {
+  function placement(stageEl, root, pathBb, pathAnchor) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
@@ -87,8 +91,8 @@
     var stageCx = stageW / 2;
     var stageCy = stageH / 2;
 
-    var pathCx = (pathBb.x1 + pathBb.x2) / 2;
-    var pathCy = (pathBb.y1 + pathBb.y2) / 2;
+    var pathCx = pathAnchor ? pathAnchor.x : (pathBb.x1 + pathBb.x2) / 2;
+    var pathCy = pathAnchor ? pathAnchor.y : (pathBb.y1 + pathBb.y2) / 2;
 
     var map = function (ox, oy) {
       return {
@@ -98,6 +102,23 @@
     };
 
     return { map: map, stageW: stageW, stageH: stageH, stageCx: stageCx, stageCy: stageCy };
+  }
+
+  function resolvePathAnchor(svg, opts, pathBb) {
+    if (opts && opts.pathAnchor) return opts.pathAnchor;
+    if (opts && opts.lockAnchor && svg) {
+      if (!svg._goPathAnchor) {
+        svg._goPathAnchor = {
+          x: (pathBb.x1 + pathBb.x2) / 2,
+          y: (pathBb.y1 + pathBb.y2) / 2,
+        };
+      }
+      return svg._goPathAnchor;
+    }
+    return {
+      x: (pathBb.x1 + pathBb.x2) / 2,
+      y: (pathBb.y1 + pathBb.y2) / 2,
+    };
   }
 
   function wrapScreenScale(map, scale, cx, cy) {
@@ -390,20 +411,27 @@
     return { nodes: nodes, handles: handles, handleLines: handleLines };
   }
 
-  function pathDFromCommands(commands, map) {
+  function pathDFromCommands(commands, map, prec) {
     var parts = [];
     commands.forEach(function (cmd) {
       if (cmd.type === "M") {
         var m = map(cmd.x, cmd.y);
-        parts.push("M" + fmt(m.x) + " " + fmt(m.y));
+        parts.push("M" + fmt(m.x, prec) + " " + fmt(m.y, prec));
       } else if (cmd.type === "L") {
         var l = map(cmd.x, cmd.y);
-        parts.push("L" + fmt(l.x) + " " + fmt(l.y));
+        parts.push("L" + fmt(l.x, prec) + " " + fmt(l.y, prec));
       } else if (cmd.type === "Q") {
         var q1 = map(cmd.x1, cmd.y1);
         var q = map(cmd.x, cmd.y);
         parts.push(
-          "Q" + fmt(q1.x) + " " + fmt(q1.y) + " " + fmt(q.x) + " " + fmt(q.y)
+          "Q" +
+            fmt(q1.x, prec) +
+            " " +
+            fmt(q1.y, prec) +
+            " " +
+            fmt(q.x, prec) +
+            " " +
+            fmt(q.y, prec)
         );
       } else if (cmd.type === "C") {
         var c1 = map(cmd.x1, cmd.y1);
@@ -411,17 +439,17 @@
         var c = map(cmd.x, cmd.y);
         parts.push(
           "C" +
-            fmt(c1.x) +
+            fmt(c1.x, prec) +
             " " +
-            fmt(c1.y) +
+            fmt(c1.y, prec) +
             " " +
-            fmt(c2.x) +
+            fmt(c2.x, prec) +
             " " +
-            fmt(c2.y) +
+            fmt(c2.y, prec) +
             " " +
-            fmt(c.x) +
+            fmt(c.x, prec) +
             " " +
-            fmt(c.y)
+            fmt(c.y, prec)
         );
       } else if (cmd.type === "Z") {
         parts.push("Z");
@@ -430,9 +458,11 @@
     return parts.join(" ");
   }
 
-  function fmt(n) {
+  function fmt(n, prec) {
     if (!isFinite(n)) return "0";
-    return (Math.round(n * 100) / 100).toFixed(2);
+    var p = prec == null ? 2 : prec;
+    var m = Math.pow(10, p);
+    return (Math.round(n * m) / m).toFixed(p);
   }
 
   function clearSvg(svg) {
@@ -443,32 +473,42 @@
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
   }
 
-  function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
+  function computeOutline(font, target, stageEl, root, opts) {
     var el = target.el;
     var char = target.char;
     var fontSize = fontSizePx(el);
     var variation =
       target.variation != null ? target.variation : parseVariationFromElement(el);
+    var coordPrec = opts && opts.coordPrecision != null ? opts.coordPrecision : 2;
 
     var path = font.getPath(char, 0, 0, fontSize, { variation: variation });
     var bb = path.getBoundingBox();
-    if (!isFinite(bb.x1) || !isFinite(bb.y1)) return;
+    if (!isFinite(bb.x1) || !isFinite(bb.y1)) return null;
 
     var commands = path.commands;
-    if (!commands || !commands.length) return;
+    if (!commands || !commands.length) return null;
 
-    var place = placement(stageEl, root, bb);
+    var pathAnchor = resolvePathAnchor(
+      opts && opts.svg ? opts.svg : null,
+      opts,
+      bb
+    );
+    var place = placement(stageEl, root, bb, pathAnchor);
     var map = place.map;
     var scale =
       opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
     if (isFinite(scale) && scale > 0 && scale !== 1) {
       map = wrapScreenScale(map, scale, place.stageCx, place.stageCy);
     }
+
+    var usePathfind = opts && opts.pathfind === true;
     var subpaths = splitSubpaths(commands);
     var tol = Math.max(0.2, fontSize * 0.0004);
     var merged =
-      subpaths.length > 1 ? pathfindContours(subpaths, map, tol) : null;
-    var d = merged ? merged.d : pathDFromCommands(commands, map);
+      usePathfind && subpaths.length > 1
+        ? pathfindContours(subpaths, map, tol)
+        : null;
+    var d = merged ? merged.d : pathDFromCommands(commands, map, coordPrec);
     var geom = merged
       ? {
           nodes: merged.nodes,
@@ -477,7 +517,77 @@
           screenSpace: true,
         }
       : collectGeometry(commands);
-    if (!d || d.indexOf("NaN") !== -1) return;
+
+    if (!d || d.indexOf("NaN") !== -1) return null;
+
+    return {
+      d: d,
+      geom: geom,
+      map: map,
+      coordPrec: coordPrec,
+    };
+  }
+
+  function updateOutlineGroup(g, data, colors, strokeAttr, strokeW, nodeStrokeW) {
+    var geom = data.geom;
+    var map = data.map;
+    var prec = data.coordPrec;
+
+    var pathEl = g.querySelector(".glyph-outline-path");
+    if (!pathEl) return false;
+    pathEl.setAttribute("d", data.d);
+
+    var toScreen = geom.screenSpace
+      ? function (pt) {
+          return { x: pt.x, y: pt.y };
+        }
+      : function (pt) {
+          return map(pt.x, pt.y);
+        };
+
+    var lines = g.querySelectorAll(".glyph-outline-handle-line");
+    if (lines.length !== geom.handleLines.length) return false;
+    for (var i = 0; i < lines.length; i++) {
+      var a = toScreen(geom.handleLines[i][0]);
+      var b = toScreen(geom.handleLines[i][1]);
+      lines[i].setAttribute("x1", fmt(a.x, prec));
+      lines[i].setAttribute("y1", fmt(a.y, prec));
+      lines[i].setAttribute("x2", fmt(b.x, prec));
+      lines[i].setAttribute("y2", fmt(b.y, prec));
+    }
+
+    var handleEls = g.querySelectorAll(".glyph-outline-handle");
+    if (handleEls.length !== geom.handles.length) return false;
+    for (var h = 0; h < handleEls.length; h++) {
+      var hp = toScreen(geom.handles[h]);
+      handleEls[h].setAttribute("cx", fmt(hp.x, prec));
+      handleEls[h].setAttribute("cy", fmt(hp.y, prec));
+    }
+
+    var nodeEls = g.querySelectorAll(".glyph-outline-node");
+    if (nodeEls.length !== geom.nodes.length) return false;
+    for (var n = 0; n < nodeEls.length; n++) {
+      var node = geom.nodes[n];
+      var p = toScreen(node);
+      var el = nodeEls[n];
+      if (node.smooth) {
+        el.setAttribute("cx", fmt(p.x, prec));
+        el.setAttribute("cy", fmt(p.y, prec));
+      } else {
+        var size = 9;
+        el.setAttribute("x", fmt(p.x - size / 2, prec));
+        el.setAttribute("y", fmt(p.y - size / 2, prec));
+      }
+    }
+
+    return true;
+  }
+
+  function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
+    opts = opts || {};
+    opts.svg = svg;
+    var data = computeOutline(font, target, stageEl, root, opts);
+    if (!data) return false;
 
     var colors = resolveColors(opts);
     var singleColor = resolveSingleColor(opts);
@@ -485,11 +595,34 @@
     var nodeStrokeW = opts && opts.nodeStrokeWidth != null ? opts.nodeStrokeWidth : 1;
     var strokeAttr = singleColor ? "currentColor" : null;
 
+    var existing =
+      opts.inPlace !== false ? svg.querySelector(".glyph-outline-group") : null;
+    if (
+      existing &&
+      updateOutlineGroup(
+        existing,
+        data,
+        colors,
+        strokeAttr,
+        strokeW,
+        nodeStrokeW
+      )
+    ) {
+      return true;
+    }
+
+    if (existing) existing.remove();
+
     var g = ns("g");
     g.setAttribute("class", "glyph-outline-group");
     if (target.kind) g.setAttribute("data-kind", target.kind);
     if (opacity < 1) g.setAttribute("opacity", String(opacity));
     if (singleColor) g.style.color = singleColor;
+
+    var d = data.d;
+    var geom = data.geom;
+    var map = data.map;
+    var prec = data.coordPrec;
 
     var pathEl = ns("path");
     pathEl.setAttribute("class", "glyph-outline-path");
@@ -513,10 +646,10 @@
       var b = toScreen(seg[1]);
       var line = ns("line");
       line.setAttribute("class", "glyph-outline-handle-line");
-      line.setAttribute("x1", a.x);
-      line.setAttribute("y1", a.y);
-      line.setAttribute("x2", b.x);
-      line.setAttribute("y2", b.y);
+      line.setAttribute("x1", fmt(a.x, prec));
+      line.setAttribute("y1", fmt(a.y, prec));
+      line.setAttribute("x2", fmt(b.x, prec));
+      line.setAttribute("y2", fmt(b.y, prec));
       line.setAttribute("stroke", strokeAttr || colors.handleLine);
       line.setAttribute("stroke-width", String(nodeStrokeW));
       line.setAttribute("vector-effect", "non-scaling-stroke");
@@ -527,8 +660,8 @@
       var p = toScreen(h);
       var c = ns("circle");
       c.setAttribute("class", "glyph-outline-handle");
-      c.setAttribute("cx", p.x);
-      c.setAttribute("cy", p.y);
+      c.setAttribute("cx", fmt(p.x, prec));
+      c.setAttribute("cy", fmt(p.y, prec));
       c.setAttribute("r", "4");
       c.setAttribute("fill", "none");
       c.setAttribute("stroke", strokeAttr || colors.offCurve);
@@ -542,8 +675,8 @@
       if (n.smooth) {
         var c = ns("circle");
         c.setAttribute("class", "glyph-outline-node glyph-outline-node-smooth");
-        c.setAttribute("cx", p.x);
-        c.setAttribute("cy", p.y);
+        c.setAttribute("cx", fmt(p.x, prec));
+        c.setAttribute("cy", fmt(p.y, prec));
         c.setAttribute("r", "4.5");
         c.setAttribute("fill", "none");
         c.setAttribute("stroke", stroke);
@@ -553,8 +686,8 @@
         var size = 9;
         var r = ns("rect");
         r.setAttribute("class", "glyph-outline-node glyph-outline-node-corner");
-        r.setAttribute("x", p.x - size / 2);
-        r.setAttribute("y", p.y - size / 2);
+        r.setAttribute("x", fmt(p.x - size / 2, prec));
+        r.setAttribute("y", fmt(p.y - size / 2, prec));
         r.setAttribute("width", size);
         r.setAttribute("height", size);
         r.setAttribute("fill", "none");
@@ -565,6 +698,11 @@
     });
 
     svg.appendChild(g);
+    return true;
+  }
+
+  function resetAnchor(svg) {
+    if (svg) svg._goPathAnchor = null;
   }
 
   global.GlyphOutlines = {
@@ -581,6 +719,33 @@
       var root = opts.root || document.documentElement;
       var singleColor = resolveSingleColor(opts);
       if (singleColor) svg.style.color = singleColor;
+      var syncId = (svg._goSync = (svg._goSync || 0) + 1);
+
+      function paint(font) {
+        if (svg._goSync !== syncId) return;
+        var zoom = readZoom(root);
+        var sr = stageEl.getBoundingClientRect();
+        var w = sr.width / zoom;
+        var h = sr.height / zoom;
+        if (w > 0 && h > 0) {
+          svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+          svg.setAttribute("width", w);
+          svg.setAttribute("height", h);
+        }
+        var inPlace = opts.inPlace !== false && targets.length === 1;
+        var hasGroup = !!svg.querySelector(".glyph-outline-group");
+        if (!inPlace || !hasGroup) clearSvg(svg);
+        targets.forEach(function (t) {
+          var opacity = t.kind === "ghost" ? 0.35 : 1;
+          renderTarget(svg, font, t, stageEl, root, opacity, opts);
+        });
+      }
+
+      if (loadedFont && fontUrl === opts.fontUrl) {
+        paint(loadedFont);
+        return Promise.resolve();
+      }
+
       var fontsReady =
         document.fonts && document.fonts.ready
           ? document.fonts.ready
@@ -591,24 +756,13 @@
           return loadFont(opts.fontUrl);
         })
         .then(function (font) {
-          clearSvg(svg);
-          var zoom = readZoom(root);
-          var sr = stageEl.getBoundingClientRect();
-          var w = sr.width / zoom;
-          var h = sr.height / zoom;
-          if (w > 0 && h > 0) {
-            svg.setAttribute("viewBox", "0 0 " + w + " " + h);
-            svg.setAttribute("width", w);
-            svg.setAttribute("height", h);
-          }
-          targets.forEach(function (t) {
-            var opacity = t.kind === "ghost" ? 0.35 : 1;
-            renderTarget(svg, font, t, stageEl, root, opacity, opts);
-          });
+          paint(font);
         })
         .catch(function (err) {
           console.warn("GlyphOutlines:", err);
         });
     },
+
+    resetAnchor: resetAnchor,
   };
 })(typeof window !== "undefined" ? window : this);

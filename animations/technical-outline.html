@@ -536,6 +536,9 @@
 
         function applyChar() {
           probe.textContent = getChar();
+          if (window.GlyphOutlines && GlyphOutlines.resetAnchor) {
+            GlyphOutlines.resetAnchor(outlineSvg);
+          }
         }
 
         function outlineScale() {
@@ -562,6 +565,10 @@
               root: root,
               color: color,
               outlineScale: outlineScale(),
+              pathfind: false,
+              lockAnchor: true,
+              inPlace: true,
+              coordPrecision: 3,
             }
           );
         }
