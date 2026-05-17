@@ -381,10 +381,15 @@
           <input id="os" type="range" min="25" max="200" step="1" value="100" />
           <span class="val" id="osVal">1.00×</span>
         </div>
-        <div class="row">
-          <label for="kn">kerning</label>
-          <input id="kn" type="range" min="-100" max="100" step="1" value="0" />
-          <span class="val" id="knVal">0%</span>
+        <div class="axis-row">
+          <label for="kn0">kern</label>
+          <div class="dual-range" id="knDual">
+            <span class="dual-val" id="kn0Val">0%</span>
+            <span class="dual-val" id="kn1Val">0%</span>
+            <div class="dual-track"><div class="dual-fill" id="knFill"></div></div>
+            <input id="kn0" class="is-start" type="range" min="-100" max="100" step="1" value="0" aria-label="kerning start" />
+            <input id="kn1" class="is-end" type="range" min="-100" max="100" step="1" value="0" aria-label="kerning end" />
+          </div>
         </div>
       </div>
 
@@ -547,8 +552,48 @@
           return parseFloat(els.os.value) / 100;
         }
 
-        function kerningPx() {
-          return (parseFloat(els.kn.value) / 100) * parseFloat(els.fs.value);
+        var KERN_DUAL = {
+          minKey: "kn0",
+          maxKey: "kn1",
+          fill: "knFill",
+          minVal: "kn0Val",
+          maxVal: "kn1Val",
+        };
+
+        function fmtKernPct(v) {
+          var n = Math.round(Number(v));
+          return (n > 0 ? "+" : "") + n + "%";
+        }
+
+        function kerningPxAt(eased) {
+          var start = parseFloat(els.kn0.value);
+          var end = parseFloat(els.kn1.value);
+          var pct = start + (end - start) * eased;
+          return (pct / 100) * parseFloat(els.fs.value);
+        }
+
+        function kernDualForKey(key) {
+          return key === KERN_DUAL.minKey || key === KERN_DUAL.maxKey ? KERN_DUAL : null;
+        }
+
+        function updateKernDualUI() {
+          var minEl = els.kn0;
+          var maxEl = els.kn1;
+          var fill = document.getElementById(KERN_DUAL.fill);
+          var a = parseFloat(minEl.value);
+          var b = parseFloat(maxEl.value);
+          var min = parseFloat(minEl.min);
+          var max = parseFloat(minEl.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          fill.style.left = loPct + "%";
+          fill.style.width = Math.max(0, hiPct - loPct) + "%";
+          document.getElementById(KERN_DUAL.minVal).textContent = fmtKernPct(a);
+          document.getElementById(KERN_DUAL.maxVal).textContent = fmtKernPct(b);
+          document.getElementById(KERN_DUAL.minVal).style.left = thumbPct(els.kn0) + "%";
+          document.getElementById(KERN_DUAL.maxVal).style.left = thumbPct(els.kn1) + "%";
         }
 
         function outlineColor() {
@@ -557,9 +602,10 @@
             : getComputedStyle(root).getPropertyValue("--line").trim() || "#0078ff";
         }
 
-        function syncOutlines(v, extra) {
+        function syncOutlines(v, extra, eased) {
           if (!window.GlyphOutlines) return;
-          var variation = v || variationAt(0);
+          var t = eased != null && isFinite(eased) ? eased : 0;
+          var variation = v || variationAt(t);
           var color = outlineColor();
           outlineSvg.style.color = color;
           var opts = {
@@ -569,7 +615,7 @@
             outlineScale: outlineScale(),
             smoothPlacement: true,
             placementAlpha: 0.22,
-            kerning: kerningPx(),
+            kerning: kerningPxAt(t),
           };
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(
@@ -644,7 +690,7 @@
           var eased = easeInOutCubic(p);
           var v = variationAt(eased);
           applyVariation(v);
-          syncOutlines(v);
+          syncOutlines(v, null, eased);
 
           requestAnimationFrame(function (n2) {
             frame(n2, t0);
@@ -659,7 +705,8 @@
           ch: "A",
           fs: 900,
           os: 100,
-          kn: 0,
+          kn0: 0,
+          kn1: 0,
           wMin: 200,
           wMax: 1000,
           cMin: 0,
@@ -681,7 +728,8 @@
           ch: document.getElementById("ch"),
           fs: document.getElementById("fs"),
           os: document.getElementById("os"),
-          kn: document.getElementById("kn"),
+          kn0: document.getElementById("kn0"),
+          kn1: document.getElementById("kn1"),
           wMin: document.getElementById("wMin"),
           wMax: document.getElementById("wMax"),
           cMin: document.getElementById("cMin"),
@@ -699,7 +747,6 @@
           ln: document.getElementById("lnVal"),
           fs: document.getElementById("fsVal"),
           os: document.getElementById("osVal"),
-          kn: document.getElementById("knVal"),
           cy: document.getElementById("cyVal"),
           hd: document.getElementById("hdVal"),
         };
@@ -716,10 +763,6 @@
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
-          if (key === "kn") {
-            var n = Math.round(Number(v));
-            return (n > 0 ? "+" : "") + n + "%";
-          }
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
           if (key === "hd") return Math.round(Number(v)) + "ms";
           return String(v);
@@ -737,9 +780,11 @@
         function setValue(key, v, persist) {
           if (key === "zm") v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
           var spec = dualSpecForKey(key);
+          var kernSpec = kernDualForKey(key);
           if (spec) v = clampAxis(spec.tag, v);
           els[key].value = v;
           if (spec) updateDualUI(spec);
+          else if (kernSpec) updateKernDualUI();
           else if (vals[key]) vals[key].textContent = fmt(key, v);
           if (key === "ch") applyChar();
           applyVar(key, v);
@@ -749,11 +794,14 @@
             key === "fs" ||
             key === "os" ||
             key === "ch" ||
-            key === "kn"
+            key === "kn0" ||
+            key === "kn1"
           ) {
+            var previewEased = key === "kn1" ? 1 : 0;
             syncOutlines(
-              null,
-              key === "ch" || key === "fs" || key === "os" ? { resetPlacement: true } : null
+              variationAt(previewEased),
+              key === "ch" || key === "fs" || key === "os" ? { resetPlacement: true } : null,
+              key === "kn0" || key === "kn1" ? previewEased : 0
             );
           }
           if (persist !== false) save();
@@ -779,8 +827,14 @@
           if (raw) {
             try {
               data = Object.assign({}, DEFAULTS, JSON.parse(raw));
-              if (data.kn == null && (data.ks != null || data.ke != null)) {
-                data.kn = data.ks != null ? data.ks : data.ke;
+              if (data.kn0 == null && data.kn1 == null) {
+                if (data.kn != null) {
+                  data.kn0 = data.kn;
+                  data.kn1 = data.kn;
+                } else if (data.ks != null || data.ke != null) {
+                  data.kn0 = data.ks != null ? data.ks : 0;
+                  data.kn1 = data.ke != null ? data.ke : data.kn0;
+                }
               }
             } catch (e) {}
           }
@@ -826,19 +880,20 @@
         load();
         applyChar();
         updateAllDualUI();
+        updateKernDualUI();
 
         function start() {
           var v0 = variationAt(0);
           applyVariation(v0);
           if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(function () {
-              syncOutlines(v0);
+              syncOutlines(v0, null, 0);
               requestAnimationFrame(function (n) {
                 frame(n, n);
               });
             });
           } else {
-            syncOutlines(v0);
+            syncOutlines(v0, null, 0);
             requestAnimationFrame(function (n) {
               frame(n, n);
             });
