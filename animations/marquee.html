@@ -105,6 +105,7 @@
         right: 0;
         box-sizing: border-box;
         font-size: 220px;
+        line-height: 0.92;
         white-space: nowrap;
         text-align: left;
         font-variation-settings: "wght" 1000;
@@ -381,16 +382,6 @@
             <input id="k1" class="is-end" type="range" min="-0.5" max="0.5" step="0.001" value="0.02" aria-label="kern end" />
           </div>
         </div>
-        <div class="axis-row">
-          <label for="lh0">leading</label>
-          <div class="dual-range" id="lhDual">
-            <span class="dual-val" id="lh0Val">0.25</span>
-            <span class="dual-val" id="lh1Val">0.92</span>
-            <div class="dual-track"><div class="dual-fill" id="lhFill"></div></div>
-            <input id="lh0" class="is-start" type="range" min="-0.3" max="1.6" step="0.01" value="0.25" aria-label="leading bottom" />
-            <input id="lh1" class="is-end" type="range" min="-0.3" max="1.6" step="0.01" value="0.92" aria-label="leading top" />
-          </div>
-        </div>
       </div>
 
       <div class="group">
@@ -544,17 +535,7 @@
             fmt: function (v) {
               return Math.round(Number(v) * 1000) + "";
             },
-          },
-          {
-            minKey: "lh0",
-            maxKey: "lh1",
-            fill: "lhFill",
-            minVal: "lh0Val",
-            maxVal: "lh1Val",
-            fmt: function (v) {
-              return Number(v).toFixed(2);
-            },
-          },
+          }
         ];
 
         var DUAL_AXES = [
@@ -628,10 +609,7 @@
           return a + (b - a) * tt;
         }
 
-        // lh0 = start knob = bottom of artboard; lh1 = end knob = top.
-        function leadingAt(p, tt) {
-          return lerpPair(p.lh1, p.lh0, tt);
-        }
+        var LINE_HEIGHT = 0.92;
 
         function layoutParams() {
           return {
@@ -647,8 +625,6 @@
             dMax: parseFloat(els.dMax.value),
             slMin: parseFloat(els.slMin.value),
             slMax: parseFloat(els.slMax.value),
-            lh0: parseFloat(els.lh0.value),
-            lh1: parseFloat(els.lh1.value),
             gamma: parseFloat(els.gm.value),
           };
         }
@@ -673,7 +649,7 @@
           node.style.letterSpacing = k.toFixed(4) + "em";
           var s = lerpPair(p.s0, p.s1, tt);
           node.style.fontSize = s.toFixed(2) + "px";
-          node.style.lineHeight = leadingAt(p, tt).toFixed(4);
+          node.style.lineHeight = String(LINE_HEIGHT);
           node.style.opacity = "1";
         }
 
@@ -681,19 +657,27 @@
           applyTypography(node, t, p);
           var tt = gradientT(t, p.gamma);
           var s = lerpPair(p.s0, p.s1, tt);
-          var lh = leadingAt(p, tt);
           return Math.ceil(
             Math.max(
               node.offsetHeight,
               node.scrollHeight,
-              s * Math.max(lh, 0.2)
+              s * LINE_HEIGHT
             )
           );
         }
 
-        // Stack lines by live size × leading; duplicate mirrors first cycle for seamless wrap.
-        function layoutStack(p, scrollOffset) {
+        function measureMaxLineHeight(node, p) {
+          var maxH = 0;
+          for (var step = 0; step <= 24; step++) {
+            maxH = Math.max(maxH, lineBoxHeight(node, p, step / 24));
+          }
+          return maxH;
+        }
+
+        function computeLayout() {
+          var p = layoutParams();
           var marqueeH = marquee.clientHeight || 1;
+          var prevLoop = loopHeight;
           var y = 0;
 
           slotTops = [];
@@ -701,23 +685,22 @@
 
           for (var i = 0; i < NAMES.length; i++) {
             var node = lineEls[i];
+            var h = measureMaxLineHeight(node, p);
             var t = 0;
-            var h = 48;
-            for (var iter = 0; iter < 6; iter++) {
-              var yMid = y - scrollOffset + h * 0.5;
+            for (var iter = 0; iter < 8; iter++) {
+              applyTypography(node, t, p);
               t =
                 marqueeH > 0
-                  ? Math.min(1, Math.max(0, yMid / marqueeH))
+                  ? Math.min(1, Math.max(0, (y + h * 0.5) / marqueeH))
                   : 0;
-              h = lineBoxHeight(node, p, t);
+              h = Math.max(h, lineBoxHeight(node, p, t));
             }
             applyTypography(node, t, p);
-            h = lineBoxHeight(node, p, t);
+            slotHeights[i] = h;
+            slotTops[i] = y;
             node.style.top = y + "px";
             node.style.height = h + "px";
-            node.style.minHeight = "0";
-            slotTops[i] = y;
-            slotHeights[i] = h;
+            node.style.minHeight = h + "px";
             y += h;
           }
 
@@ -729,21 +712,11 @@
             slotHeights[dup] = slotHeights[j];
             lineEls[dup].style.top = slotTops[dup] + "px";
             lineEls[dup].style.height = slotHeights[dup] + "px";
-            lineEls[dup].style.minHeight = "0";
-            var yMid = slotTops[dup] - scrollOffset + slotHeights[dup] * 0.5;
-            var tDup =
-              marqueeH > 0
-                ? Math.min(1, Math.max(0, yMid / marqueeH))
-                : 0;
-            applyTypography(lineEls[dup], tDup, p);
+            lineEls[dup].style.minHeight = slotHeights[dup] + "px";
           }
 
           track.style.height = loopHeight * 2 + "px";
-        }
 
-        function computeLayout() {
-          var prevLoop = loopHeight;
-          layoutStack(layoutParams(), offset);
           if (loopHeight > 0) {
             if (prevLoop > 0) {
               offset = (offset / prevLoop) * loopHeight;
@@ -752,9 +725,9 @@
           }
         }
 
-        // Typography + live line-height box; tops stay fixed from computeLayout.
-        function updateLeadingLayout(p) {
+        function updateWeights() {
           var marqueeH = marquee.clientHeight || 1;
+          var p = layoutParams();
           for (var j = 0; j < lineEls.length; j++) {
             var yMid = slotTops[j] - offset + slotHeights[j] * 0.5;
             var t =
@@ -762,8 +735,6 @@
                 ? Math.min(1, Math.max(0, yMid / marqueeH))
                 : 0;
             applyTypography(lineEls[j], t, p);
-            var h = lineBoxHeight(lineEls[j], p, t);
-            lineEls[j].style.height = h + "px";
           }
         }
 
@@ -783,7 +754,7 @@
           }
           track.style.transform = "translate3d(0," + -offset + "px,0)";
 
-          updateLeadingLayout(layoutParams());
+          updateWeights();
 
           requestAnimationFrame(frame);
         }
@@ -798,8 +769,6 @@
           fg: "#f5d100",
           s0: 240,
           s1: 120,
-          lh0: 0.25,
-          lh1: 0.92,
           k0: -0.02,
           k1: 0.02,
           wMin: 1000,
@@ -832,8 +801,6 @@
           dMax: 1,
           slMin: 1,
           slMax: 1,
-          lh0: 1,
-          lh1: 1,
           gm: 1,
         };
 
@@ -853,8 +820,6 @@
           dMax: document.getElementById("dMax"),
           slMin: document.getElementById("slMin"),
           slMax: document.getElementById("slMax"),
-          lh0: document.getElementById("lh0"),
-          lh1: document.getElementById("lh1"),
           gm: document.getElementById("gm"),
           sp: document.getElementById("sp"),
           pv: document.getElementById("pv"),
@@ -1014,15 +979,6 @@
             parsed.wMin = parsed.wTop;
             parsed.wMax = parsed.wBot != null ? parsed.wBot : parsed.wTop;
           }
-          if (parsed.lh != null && parsed.lh0 == null) {
-            parsed.lh0 = parsed.lh;
-            parsed.lh1 = parsed.lh;
-          }
-          if (parsed.lhTop != null && parsed.lh0 == null) {
-            parsed.lh0 = parsed.lhTop;
-            parsed.lh1 =
-              parsed.lhBot != null ? parsed.lhBot : parsed.lhTop;
-          }
           return parsed;
         }
 
@@ -1051,12 +1007,6 @@
               }
               data = Object.assign({}, DEFAULTS, parsed);
             } catch (e) {}
-          }
-          if (els.lh0 && els.lh1) {
-            var lhMin = parseFloat(els.lh0.min);
-            var lhMax = parseFloat(els.lh0.max);
-            data.lh0 = Math.max(lhMin, Math.min(lhMax, data.lh0));
-            data.lh1 = Math.max(lhMin, Math.min(lhMax, data.lh1));
           }
           data.zm = ArtboardZoom.resolve(data.zm);
           Object.keys(els).forEach(function (k) {
