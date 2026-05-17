@@ -100,7 +100,9 @@
       }
 
       .line {
-        display: block;
+        position: absolute;
+        left: 0;
+        right: 0;
         box-sizing: border-box;
         font-size: 220px;
         white-space: nowrap;
@@ -382,11 +384,11 @@
         <div class="axis-row">
           <label for="lh0">leading</label>
           <div class="dual-range" id="lhDual">
-            <span class="dual-val" id="lh0Val">0.92</span>
-            <span class="dual-val" id="lh1Val">0.25</span>
+            <span class="dual-val" id="lh0Val">0.25</span>
+            <span class="dual-val" id="lh1Val">0.92</span>
             <div class="dual-track"><div class="dual-fill" id="lhFill"></div></div>
-            <input id="lh0" class="is-start" type="range" min="-0.3" max="1.6" step="0.01" value="0.92" aria-label="leading top" />
-            <input id="lh1" class="is-end" type="range" min="-0.3" max="1.6" step="0.01" value="0.25" aria-label="leading bottom" />
+            <input id="lh0" class="is-start" type="range" min="-0.3" max="1.6" step="0.01" value="0.25" aria-label="leading bottom" />
+            <input id="lh1" class="is-end" type="range" min="-0.3" max="1.6" step="0.01" value="0.92" aria-label="leading top" />
           </div>
         </div>
       </div>
@@ -626,6 +628,11 @@
           return a + (b - a) * tt;
         }
 
+        // lh0 = start knob = bottom of artboard; lh1 = end knob = top.
+        function leadingAt(p, tt) {
+          return lerpPair(p.lh1, p.lh0, tt);
+        }
+
         function layoutParams() {
           return {
             s0: parseFloat(els.s0.value),
@@ -666,7 +673,7 @@
           node.style.letterSpacing = k.toFixed(4) + "em";
           var s = lerpPair(p.s0, p.s1, tt);
           node.style.fontSize = s.toFixed(2) + "px";
-          node.style.lineHeight = lerpPair(p.lh0, p.lh1, tt).toFixed(4);
+          node.style.lineHeight = leadingAt(p, tt).toFixed(4);
           node.style.opacity = "1";
         }
 
@@ -674,7 +681,7 @@
           applyTypography(node, t, p);
           var tt = gradientT(t, p.gamma);
           var s = lerpPair(p.s0, p.s1, tt);
-          var lh = lerpPair(p.lh0, p.lh1, tt);
+          var lh = leadingAt(p, tt);
           return Math.ceil(
             Math.max(
               node.offsetHeight,
@@ -684,20 +691,9 @@
           );
         }
 
-        // Worst-case height so glyphs never clip while lh/size animate in the slot.
-        function measureMaxLineHeight(node, p) {
-          var maxH = 0;
-          for (var step = 0; step <= 24; step++) {
-            maxH = Math.max(maxH, lineBoxHeight(node, p, step / 24));
-          }
-          return maxH;
-        }
-
-        // Fixed stack (settings / resize only). Second copy mirrors the first for seamless wrap.
-        function computeLayout() {
-          var p = layoutParams();
+        // Stack lines by live size × leading; duplicate mirrors first cycle for seamless wrap.
+        function layoutStack(p, scrollOffset) {
           var marqueeH = marquee.clientHeight || 1;
-          var prevLoop = loopHeight;
           var y = 0;
 
           slotTops = [];
@@ -705,21 +701,23 @@
 
           for (var i = 0; i < NAMES.length; i++) {
             var node = lineEls[i];
-            var h = measureMaxLineHeight(node, p);
             var t = 0;
-            for (var iter = 0; iter < 8; iter++) {
-              applyTypography(node, t, p);
+            var h = 48;
+            for (var iter = 0; iter < 6; iter++) {
+              var yMid = y - scrollOffset + h * 0.5;
               t =
                 marqueeH > 0
-                  ? Math.min(1, Math.max(0, (y + h * 0.5) / marqueeH))
+                  ? Math.min(1, Math.max(0, yMid / marqueeH))
                   : 0;
-              h = Math.max(h, lineBoxHeight(node, p, t));
+              h = lineBoxHeight(node, p, t);
             }
             applyTypography(node, t, p);
-            slotHeights[i] = h;
-            slotTops[i] = y;
+            h = lineBoxHeight(node, p, t);
+            node.style.top = y + "px";
             node.style.height = h + "px";
-            node.style.minHeight = h + "px";
+            node.style.minHeight = "0";
+            slotTops[i] = y;
+            slotHeights[i] = h;
             y += h;
           }
 
@@ -729,21 +727,34 @@
             var dup = j + NAMES.length;
             slotTops[dup] = slotTops[j] + loopHeight;
             slotHeights[dup] = slotHeights[j];
-            lineEls[dup].style.height = slotHeights[j] + "px";
-            lineEls[dup].style.minHeight = slotHeights[j] + "px";
+            lineEls[dup].style.top = slotTops[dup] + "px";
+            lineEls[dup].style.height = slotHeights[dup] + "px";
+            lineEls[dup].style.minHeight = "0";
+            var yMid = slotTops[dup] - scrollOffset + slotHeights[dup] * 0.5;
+            var tDup =
+              marqueeH > 0
+                ? Math.min(1, Math.max(0, yMid / marqueeH))
+                : 0;
+            applyTypography(lineEls[dup], tDup, p);
           }
 
+          track.style.height = loopHeight * 2 + "px";
+        }
+
+        function computeLayout() {
+          var prevLoop = loopHeight;
+          layoutStack(layoutParams(), offset);
           if (loopHeight > 0) {
             if (prevLoop > 0) {
               offset = (offset / prevLoop) * loopHeight;
             }
-            offset = ((offset % loopHeight) + loopHeight) % loopHeight;
+            while (offset >= loopHeight) offset -= loopHeight;
           }
         }
 
-        function updateWeights() {
+        // Typography + live line-height box; tops stay fixed from computeLayout.
+        function updateLeadingLayout(p) {
           var marqueeH = marquee.clientHeight || 1;
-          var p = layoutParams();
           for (var j = 0; j < lineEls.length; j++) {
             var yMid = slotTops[j] - offset + slotHeights[j] * 0.5;
             var t =
@@ -751,6 +762,8 @@
                 ? Math.min(1, Math.max(0, yMid / marqueeH))
                 : 0;
             applyTypography(lineEls[j], t, p);
+            var h = lineBoxHeight(lineEls[j], p, t);
+            lineEls[j].style.height = h + "px";
           }
         }
 
@@ -770,7 +783,7 @@
           }
           track.style.transform = "translate3d(0," + -offset + "px,0)";
 
-          updateWeights();
+          updateLeadingLayout(layoutParams());
 
           requestAnimationFrame(frame);
         }
@@ -785,8 +798,8 @@
           fg: "#f5d100",
           s0: 240,
           s1: 120,
-          lh0: 0.92,
-          lh1: 0.25,
+          lh0: 0.25,
+          lh1: 0.92,
           k0: -0.02,
           k1: 0.02,
           wMin: 1000,
