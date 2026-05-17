@@ -6,6 +6,9 @@
 (function (global) {
   var fontPromise = null;
   var fontUrl = null;
+  var syncGen = 0;
+  var fontsPrimed = false;
+  var placementAnchor = { cx: null, cy: null };
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
     handleLine: "rgba(0, 120, 255, 0.45)",
@@ -76,10 +79,16 @@
     return parseFloat(getComputedStyle(el).fontSize) || 72;
   }
 
+  function resetPlacementAnchor() {
+    placementAnchor.cx = null;
+    placementAnchor.cy = null;
+  }
+
   /**
    * getPath(…, fontSize): 1:1 px. Center path bbox on artboard (stage) center.
+   * opts.smoothPlacement eases the anchor so morphing axes do not jitter the whole outline.
    */
-  function placement(stageEl, root, pathBb) {
+  function placement(stageEl, root, pathBb, opts) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
@@ -89,6 +98,27 @@
 
     var pathCx = (pathBb.x1 + pathBb.x2) / 2;
     var pathCy = (pathBb.y1 + pathBb.y2) / 2;
+
+    if (opts && opts.resetPlacement) resetPlacementAnchor();
+
+    if (opts && opts.smoothPlacement) {
+      var alpha =
+        opts.placementAlpha != null && isFinite(opts.placementAlpha)
+          ? opts.placementAlpha
+          : 0.14;
+      if (placementAnchor.cx == null) {
+        placementAnchor.cx = pathCx;
+        placementAnchor.cy = pathCy;
+      } else {
+        placementAnchor.cx += (pathCx - placementAnchor.cx) * alpha;
+        placementAnchor.cy += (pathCy - placementAnchor.cy) * alpha;
+      }
+      pathCx = placementAnchor.cx;
+      pathCy = placementAnchor.cy;
+    } else {
+      placementAnchor.cx = pathCx;
+      placementAnchor.cy = pathCy;
+    }
 
     var map = function (ox, oy) {
       return {
@@ -432,7 +462,7 @@
 
   function fmt(n) {
     if (!isFinite(n)) return "0";
-    return (Math.round(n * 100) / 100).toFixed(2);
+    return String(Math.round(n * 1000) / 1000);
   }
 
   function clearSvg(svg) {
@@ -457,7 +487,7 @@
     var commands = path.commands;
     if (!commands || !commands.length) return;
 
-    var place = placement(stageEl, root, bb);
+    var place = placement(stageEl, root, bb, opts);
     var map = place.map;
     var scale =
       opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
@@ -567,10 +597,28 @@
     svg.appendChild(g);
   }
 
+  function renderAll(svg, stageEl, targets, font, root, opts) {
+    clearSvg(svg);
+    var zoom = readZoom(root);
+    var sr = stageEl.getBoundingClientRect();
+    var w = sr.width / zoom;
+    var h = sr.height / zoom;
+    if (w > 0 && h > 0) {
+      svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+      svg.setAttribute("width", w);
+      svg.setAttribute("height", h);
+    }
+    targets.forEach(function (t) {
+      var opacity = t.kind === "ghost" ? 0.35 : 1;
+      renderTarget(svg, font, t, stageEl, root, opacity, opts);
+    });
+  }
+
   global.GlyphOutlines = {
     loadFont: loadFont,
     parseVariation: parseVariationSettings,
     parseVariationFromElement: parseVariationFromElement,
+    resetPlacement: resetPlacementAnchor,
 
     sync: function (svg, stageEl, targets, opts) {
       if (!svg || !stageEl || !targets || !targets.length) {
@@ -578,36 +626,34 @@
         return Promise.resolve();
       }
       opts = opts || {};
+      var gen = ++syncGen;
       var root = opts.root || document.documentElement;
       var singleColor = resolveSingleColor(opts);
       if (singleColor) svg.style.color = singleColor;
-      var fontsReady =
-        document.fonts && document.fonts.ready
-          ? document.fonts.ready
-          : Promise.resolve();
 
-      return fontsReady
-        .then(function () {
+      function draw(font) {
+        if (gen !== syncGen) return;
+        renderAll(svg, stageEl, targets, font, root, opts);
+      }
+
+      var fontChain;
+      if (fontsPrimed) {
+        fontChain = loadFont(opts.fontUrl);
+      } else {
+        var fontsReady =
+          document.fonts && document.fonts.ready
+            ? document.fonts.ready
+            : Promise.resolve();
+        fontChain = fontsReady.then(function () {
+          fontsPrimed = true;
           return loadFont(opts.fontUrl);
-        })
-        .then(function (font) {
-          clearSvg(svg);
-          var zoom = readZoom(root);
-          var sr = stageEl.getBoundingClientRect();
-          var w = sr.width / zoom;
-          var h = sr.height / zoom;
-          if (w > 0 && h > 0) {
-            svg.setAttribute("viewBox", "0 0 " + w + " " + h);
-            svg.setAttribute("width", w);
-            svg.setAttribute("height", h);
-          }
-          targets.forEach(function (t) {
-            var opacity = t.kind === "ghost" ? 0.35 : 1;
-            renderTarget(svg, font, t, stageEl, root, opacity, opts);
-          });
-        })
+        });
+      }
+
+      return fontChain
+        .then(draw)
         .catch(function (err) {
-          console.warn("GlyphOutlines:", err);
+          if (gen === syncGen) console.warn("GlyphOutlines:", err);
         });
     },
   };

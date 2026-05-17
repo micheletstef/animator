@@ -548,21 +548,25 @@
             : getComputedStyle(root).getPropertyValue("--line").trim() || "#0078ff";
         }
 
-        function syncOutlines(v) {
+        function syncOutlines(v, extra) {
           if (!window.GlyphOutlines) return;
           var variation = v || variationAt(0);
           var color = outlineColor();
           outlineSvg.style.color = color;
+          var opts = {
+            fontUrl: FONT_URL,
+            root: root,
+            color: color,
+            outlineScale: outlineScale(),
+            smoothPlacement: true,
+            placementAlpha: 0.14,
+          };
+          if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(
             outlineSvg,
             stage,
             [{ el: probe, char: getChar(), variation: variation }],
-            {
-              fontUrl: FONT_URL,
-              root: root,
-              color: color,
-              outlineScale: outlineScale(),
-            }
+            opts
           );
         }
 
@@ -723,7 +727,7 @@
           if (key === "ch") applyChar();
           applyVar(key, v);
           if (key === "ln" || key === "bg" || key === "fs" || key === "os" || key === "ch") {
-            syncOutlines();
+            syncOutlines(null, key === "ch" || key === "fs" || key === "os" ? { resetPlacement: true } : null);
           }
           if (persist !== false) save();
         }
