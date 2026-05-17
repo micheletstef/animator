@@ -86,11 +86,109 @@
     placementAnchor.cy = null;
   }
 
+  function bboxFromCommands(commands) {
+    var x1 = Infinity;
+    var y1 = Infinity;
+    var x2 = -Infinity;
+    var y2 = -Infinity;
+    var n = 0;
+    function grow(x, y) {
+      if (!isFinite(x) || !isFinite(y)) return;
+      x1 = Math.min(x1, x);
+      y1 = Math.min(y1, y);
+      x2 = Math.max(x2, x);
+      y2 = Math.max(y2, y);
+      n++;
+    }
+    commands.forEach(function (cmd) {
+      if (cmd.type === "M" || cmd.type === "L") grow(cmd.x, cmd.y);
+      else if (cmd.type === "Q") {
+        grow(cmd.x1, cmd.y1);
+        grow(cmd.x, cmd.y);
+      } else if (cmd.type === "C") {
+        grow(cmd.x1, cmd.y1);
+        grow(cmd.x2, cmd.y2);
+        grow(cmd.x, cmd.y);
+      }
+    });
+    if (!n) return null;
+    return { x1: x1, y1: y1, x2: x2, y2: y2 };
+  }
+
+  function contourSignedArea(commands) {
+    var pts = [];
+    var cur = { x: 0, y: 0 };
+    commands.forEach(function (cmd) {
+      if (cmd.type === "M") {
+        cur = { x: cmd.x, y: cmd.y };
+        pts.push(cur);
+      } else if (cmd.type === "L") {
+        cur = { x: cmd.x, y: cmd.y };
+        pts.push(cur);
+      } else if (cmd.type === "C") {
+        pts.push({ x: cmd.x1, y: cmd.y1 });
+        pts.push({ x: cmd.x2, y: cmd.y2 });
+        cur = { x: cmd.x, y: cmd.y };
+        pts.push(cur);
+      } else if (cmd.type === "Q") {
+        pts.push({ x: cmd.x1, y: cmd.y1 });
+        cur = { x: cmd.x, y: cmd.y };
+        pts.push(cur);
+      }
+    });
+    if (pts.length < 3) return 0;
+    var a = 0;
+    for (var i = 0; i < pts.length; i++) {
+      var j = (i + 1) % pts.length;
+      a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+    }
+    return a / 2;
+  }
+
+  /** Outer shell only — inner counters (B, O, P…) must not shift the stage anchor. */
+  function outerContourBBox(commands) {
+    var subs = splitSubpaths(commands);
+    if (subs.length <= 1) return bboxFromCommands(commands);
+
+    var best = null;
+    var bestArea = 0;
+    subs.forEach(function (sub) {
+      var bb = bboxFromCommands(sub);
+      if (!bb) return;
+      var area = Math.abs(contourSignedArea(sub));
+      if (area > bestArea) {
+        bestArea = area;
+        best = bb;
+      }
+    });
+    return best || bboxFromCommands(commands);
+  }
+
+  function placementAnchorForRuns(runs, kernEnd) {
+    if (!runs.length) return null;
+    var outerBoxes = runs.map(function (r) {
+      return outerContourBBox(r.commands);
+    });
+    var bb = unionBBox(outerBoxes);
+    if (!bb) return null;
+
+    var cy = (bb.y1 + bb.y2) / 2;
+    var cx;
+    if (runs.length === 1) {
+      cx = runs[0].x + runs[0].advance / 2;
+    } else {
+      var first = runs[0];
+      var last = runs[runs.length - 1];
+      cx = (first.x + last.x + last.advance + kernEnd) / 2;
+    }
+    return { cx: cx, cy: cy };
+  }
+
   /**
-   * getPath(…, fontSize): 1:1 px. Center path bbox on artboard (stage) center.
-   * opts.smoothPlacement eases the anchor so morphing axes do not jitter the whole outline.
+   * Center glyph on artboard. Anchor uses advance width + outer contour vertical
+   * center so animated counters do not pull the outline sideways (e.g. capital B).
    */
-  function placement(stageEl, root, pathBb, opts) {
+  function placement(stageEl, root, anchor, opts) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
@@ -98,8 +196,8 @@
     var stageCx = stageW / 2;
     var stageCy = stageH / 2;
 
-    var pathCx = (pathBb.x1 + pathBb.x2) / 2;
-    var pathCy = (pathBb.y1 + pathBb.y2) / 2;
+    var pathCx = anchor.cx;
+    var pathCy = anchor.cy;
 
     if (opts && opts.resetPlacement) resetPlacementAnchor();
 
@@ -336,19 +434,11 @@
       var ch = chars[i];
       var path = font.getPath(ch, x, 0, fontSize, pathOpts);
       var commands = path.commands;
+      var advance = advanceForGlyph(font, ch, chars[i + 1], fontSize);
       if (commands && commands.length) {
-        runs.push({ commands: commands, bb: path.getBoundingBox() });
+        runs.push({ commands: commands, x: x, advance: advance });
       }
-      x += advanceForGlyph(font, ch, chars[i + 1], fontSize);
-    }
-    if (runs.length && kern.end) {
-      var last = runs[runs.length - 1];
-      last.bb = {
-        x1: last.bb.x1,
-        y1: last.bb.y1,
-        x2: last.bb.x2 + kern.end,
-        y2: last.bb.y2,
-      };
+      x += advance;
     }
     return runs;
   }
@@ -454,12 +544,11 @@
     var runs = glyphRunsForText(font, text, fontSize, variation, opts);
     if (!runs.length) return;
 
-    var bb = unionBBox(runs.map(function (r) {
-      return r.bb;
-    }));
-    if (!bb) return;
+    var kern = layoutKernPx(opts, fontSize);
+    var anchor = placementAnchorForRuns(runs, kern.end);
+    if (!anchor) return;
 
-    var place = placement(stageEl, root, bb, opts);
+    var place = placement(stageEl, root, anchor, opts);
     var map = place.map;
     var scale =
       opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
