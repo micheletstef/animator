@@ -164,7 +164,7 @@
     return best || bboxFromCommands(commands);
   }
 
-  function placementAnchorForRuns(runs, kernEnd) {
+  function placementAnchorForRuns(runs, gapPx) {
     if (!runs.length) return null;
     var outerBoxes = runs.map(function (r) {
       return outerContourBBox(r.commands);
@@ -178,8 +178,12 @@
       cx = runs[0].x + runs[0].advance / 2;
     } else {
       var first = runs[0];
-      var last = runs[runs.length - 1];
-      cx = (first.x + last.x + last.advance + kernEnd) / 2;
+      var totalW = 0;
+      for (var i = 0; i < runs.length; i++) {
+        totalW += runs[i].advance;
+        if (i < runs.length - 1) totalW += gapPx;
+      }
+      cx = first.x + totalW / 2;
     }
     return { cx: cx, cy: cy };
   }
@@ -413,12 +417,9 @@
     return advance;
   }
 
-  function layoutKernPx(opts, fontSize) {
-    if (!opts) return { start: 0, end: 0 };
-    var start =
-      opts.kernStart != null && isFinite(opts.kernStart) ? Number(opts.kernStart) : 0;
-    var end = opts.kernEnd != null && isFinite(opts.kernEnd) ? Number(opts.kernEnd) : 0;
-    return { start: start, end: end };
+  function kerningGapPx(opts) {
+    if (!opts || opts.kerning == null || !isFinite(opts.kerning)) return 0;
+    return Number(opts.kerning);
   }
 
   /** One path + geometry per glyph so contours never union across letters. */
@@ -426,8 +427,8 @@
     var chars = Array.from(text);
     if (!chars.length) return [];
     var runs = [];
-    var kern = layoutKernPx(opts, fontSize);
-    var x = kern.start;
+    var gap = kerningGapPx(opts);
+    var x = 0;
     var pathOpts = variation != null ? { variation: variation } : {};
 
     for (var i = 0; i < chars.length; i++) {
@@ -439,6 +440,7 @@
         runs.push({ commands: commands, x: x, advance: advance });
       }
       x += advance;
+      if (i < chars.length - 1) x += gap;
     }
     return runs;
   }
@@ -544,8 +546,8 @@
     var runs = glyphRunsForText(font, text, fontSize, variation, opts);
     if (!runs.length) return;
 
-    var kern = layoutKernPx(opts, fontSize);
-    var anchor = placementAnchorForRuns(runs, kern.end);
+    var gap = kerningGapPx(opts);
+    var anchor = placementAnchorForRuns(runs, gap);
     if (!anchor) return;
 
     var place = placement(stageEl, root, anchor, opts);

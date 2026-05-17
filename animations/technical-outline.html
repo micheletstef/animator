@@ -382,14 +382,9 @@
           <span class="val" id="osVal">1.00×</span>
         </div>
         <div class="row">
-          <label for="ks">kern start</label>
-          <input id="ks" type="range" min="-100" max="100" step="1" value="0" />
-          <span class="val" id="ksVal">0%</span>
-        </div>
-        <div class="row">
-          <label for="ke">kern end</label>
-          <input id="ke" type="range" min="-100" max="100" step="1" value="0" />
-          <span class="val" id="keVal">0%</span>
+          <label for="kn">kerning</label>
+          <input id="kn" type="range" min="-100" max="100" step="1" value="0" />
+          <span class="val" id="knVal">0%</span>
         </div>
       </div>
 
@@ -552,8 +547,8 @@
           return parseFloat(els.os.value) / 100;
         }
 
-        function kernPx(key) {
-          return (parseFloat(els[key].value) / 100) * parseFloat(els.fs.value);
+        function kerningPx() {
+          return (parseFloat(els.kn.value) / 100) * parseFloat(els.fs.value);
         }
 
         function outlineColor() {
@@ -574,8 +569,7 @@
             outlineScale: outlineScale(),
             smoothPlacement: true,
             placementAlpha: 0.22,
-            kernStart: kernPx("ks"),
-            kernEnd: kernPx("ke"),
+            kerning: kerningPx(),
           };
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(
@@ -665,8 +659,7 @@
           ch: "A",
           fs: 900,
           os: 100,
-          ks: 0,
-          ke: 0,
+          kn: 0,
           wMin: 200,
           wMax: 1000,
           cMin: 0,
@@ -688,8 +681,7 @@
           ch: document.getElementById("ch"),
           fs: document.getElementById("fs"),
           os: document.getElementById("os"),
-          ks: document.getElementById("ks"),
-          ke: document.getElementById("ke"),
+          kn: document.getElementById("kn"),
           wMin: document.getElementById("wMin"),
           wMax: document.getElementById("wMax"),
           cMin: document.getElementById("cMin"),
@@ -707,8 +699,7 @@
           ln: document.getElementById("lnVal"),
           fs: document.getElementById("fsVal"),
           os: document.getElementById("osVal"),
-          ks: document.getElementById("ksVal"),
-          ke: document.getElementById("keVal"),
+          kn: document.getElementById("knVal"),
           cy: document.getElementById("cyVal"),
           hd: document.getElementById("hdVal"),
         };
@@ -725,7 +716,7 @@
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
-          if (key === "ks" || key === "ke") {
+          if (key === "kn") {
             var n = Math.round(Number(v));
             return (n > 0 ? "+" : "") + n + "%";
           }
@@ -758,8 +749,7 @@
             key === "fs" ||
             key === "os" ||
             key === "ch" ||
-            key === "ks" ||
-            key === "ke"
+            key === "kn"
           ) {
             syncOutlines(
               null,
@@ -789,6 +779,9 @@
           if (raw) {
             try {
               data = Object.assign({}, DEFAULTS, JSON.parse(raw));
+              if (data.kn == null && (data.ks != null || data.ke != null)) {
+                data.kn = data.ks != null ? data.ks : data.ke;
+              }
             } catch (e) {}
           }
           if (!raw) {
