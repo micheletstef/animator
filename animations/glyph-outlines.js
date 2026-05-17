@@ -368,14 +368,10 @@
     return { x1: x1, y1: y1, x2: x2, y2: y2 };
   }
 
-  function advanceForGlyph(font, ch, nextCh, fontSize) {
-    var glyph = font.charToGlyph(ch);
-    var advance = (glyph.advanceWidth / font.unitsPerEm) * fontSize;
-    if (nextCh != null && font.getKerningValue) {
-      var g2 = font.charToGlyph(nextCh);
-      advance += (font.getKerningValue(glyph, g2) / font.unitsPerEm) * fontSize;
-    }
-    return advance;
+  function pathOptions(font, variation) {
+    var pathOpts = Object.assign({}, font.defaultRenderOptions || { kerning: true });
+    if (variation != null) pathOpts.variation = variation;
+    return pathOpts;
   }
 
   function kerningGapPx(opts) {
@@ -383,26 +379,76 @@
     return Number(opts.kerning);
   }
 
-  /** One path + geometry per glyph so contours never union across letters. */
-  function glyphRunsForText(font, text, fontSize, variation, opts) {
-    var chars = Array.from(text);
-    if (!chars.length) return [];
-    var runs = [];
-    var gap = kerningGapPx(opts);
-    var x = 0;
-    var pathOpts = variation != null ? { variation: variation } : {};
+  function lineHeightPx(font, fontSize) {
+    var asc = font.ascender;
+    var desc = font.descender;
+    if (isFinite(asc) && isFinite(desc)) {
+      return ((asc - desc) / font.unitsPerEm) * fontSize;
+    }
+    return fontSize;
+  }
 
-    for (var i = 0; i < chars.length; i++) {
-      var ch = chars[i];
-      var path = font.getPath(ch, x, 0, fontSize, pathOpts);
-      var commands = path.commands;
-      var advance = advanceForGlyph(font, ch, chars[i + 1], fontSize);
+  function splitLines(text) {
+    return String(text).split(/\r\n|\r|\n/);
+  }
+
+  function layoutLineGlyphs(font, line, x0, y0, fontSize, pathOpts, opts, runs) {
+    var glyphs = font.stringToGlyphs(line, pathOpts);
+    if (!glyphs.length) return;
+
+    var gap = kerningGapPx(opts);
+    var fontScale = (1 / font.unitsPerEm) * fontSize;
+    var kerningLookups = null;
+    if (pathOpts.kerning && font.position && font.position.getKerningTables) {
+      var script =
+        pathOpts.script ||
+        (font.position.getDefaultScriptName && font.position.getDefaultScriptName());
+      kerningLookups = font.position.getKerningTables(script, pathOpts.language);
+    }
+
+    var x = x0;
+
+    for (var i = 0; i < glyphs.length; i++) {
+      var glyph = glyphs[i];
+      var glyphPath = glyph.getPath(x, y0, fontSize, pathOpts, font);
+      var commands = glyphPath.commands;
+      var advance = glyph.advanceWidth ? glyph.advanceWidth * fontScale : 0;
+
       if (commands && commands.length) {
         runs.push({ commands: commands, x: x, advance: advance });
       }
+
       x += advance;
-      if (i < chars.length - 1) x += gap;
+      if (kerningLookups && i < glyphs.length - 1) {
+        x +=
+          font.position.getKerningValue(
+            kerningLookups,
+            glyph.index,
+            glyphs[i + 1].index
+          ) * fontScale;
+      } else if (pathOpts.kerning && i < glyphs.length - 1 && font.getKerningValue) {
+        x += font.getKerningValue(glyph, glyphs[i + 1]) * fontScale;
+      }
+      if (i < glyphs.length - 1) x += gap;
     }
+  }
+
+  /**
+   * Lay out glyphs with opentype.js (stringToGlyphs + GPOS kerning), same as getPath(text).
+   * Supports line breaks; opts.kerning adds animated gap between letters on each line.
+   */
+  function glyphRunsForText(font, text, fontSize, variation, opts) {
+    if (!text) return [];
+    var pathOpts = pathOptions(font, variation);
+    var lines = splitLines(text);
+    var lineHeight = lineHeightPx(font, fontSize);
+    var runs = [];
+
+    for (var li = 0; li < lines.length; li++) {
+      var y = -li * lineHeight;
+      layoutLineGlyphs(font, lines[li], 0, y, fontSize, pathOpts, opts, runs);
+    }
+
     return runs;
   }
 

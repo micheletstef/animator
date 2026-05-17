@@ -114,7 +114,7 @@
         font-family: "IkarusPlusVariable", system-ui, sans-serif;
         font-size: calc(var(--fs) * 1px);
         line-height: 1;
-        white-space: nowrap;
+        white-space: pre-wrap;
       }
 
       .panel {
@@ -184,7 +184,8 @@
         cursor: pointer;
       }
 
-      .row input[type="text"] {
+      .row input[type="text"],
+      .row textarea {
         grid-column: 2 / 4;
         width: 100%;
         padding: 4px 6px;
@@ -193,6 +194,12 @@
         background: #111;
         color: #e9e9e9;
         font: inherit;
+      }
+
+      .row textarea {
+        min-height: 72px;
+        resize: vertical;
+        line-height: 1.2;
       }
 
       .row .val {
@@ -369,7 +376,7 @@
         <p class="group-title">type</p>
         <div class="row">
           <label for="ch">text</label>
-          <input id="ch" type="text" value="A" spellcheck="false" autocomplete="off" />
+          <textarea id="ch" rows="4" spellcheck="false" autocomplete="off">A</textarea>
         </div>
         <div class="row">
           <label for="fs">size</label>
