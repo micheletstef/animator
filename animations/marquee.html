@@ -380,13 +380,13 @@
           </div>
         </div>
         <div class="axis-row">
-          <label for="o0">opacity</label>
-          <div class="dual-range" id="oDual">
-            <span class="dual-val" id="o0Val">100%</span>
-            <span class="dual-val" id="o1Val">20%</span>
-            <div class="dual-track"><div class="dual-fill" id="oFill"></div></div>
-            <input id="o0" class="is-start" type="range" min="0" max="1" step="0.01" value="1" aria-label="opacity start" />
-            <input id="o1" class="is-end" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="opacity end" />
+          <label for="lh0">leading</label>
+          <div class="dual-range" id="lhDual">
+            <span class="dual-val" id="lh0Val">0.92</span>
+            <span class="dual-val" id="lh1Val">0.92</span>
+            <div class="dual-track"><div class="dual-fill" id="lhFill"></div></div>
+            <input id="lh0" class="is-start" type="range" min="-0.3" max="1.6" step="0.01" value="0.92" aria-label="leading start" />
+            <input id="lh1" class="is-end" type="range" min="-0.3" max="1.6" step="0.01" value="0.92" aria-label="leading end" />
           </div>
         </div>
       </div>
@@ -414,6 +414,16 @@
           </div>
         </div>
         <div class="axis-row">
+          <label for="dMin">wdth</label>
+          <div class="dual-range" id="dDual">
+            <span class="dual-val" id="dMinVal">100</span>
+            <span class="dual-val" id="dMaxVal">100</span>
+            <div class="dual-track"><div class="dual-fill" id="dFill"></div></div>
+            <input id="dMin" class="is-start" type="range" min="65" max="130" step="1" value="100" aria-label="wdth start" />
+            <input id="dMax" class="is-end" type="range" min="65" max="130" step="1" value="100" aria-label="wdth end" />
+          </div>
+        </div>
+        <div class="axis-row">
           <label for="slMin">slnt</label>
           <div class="dual-range" id="slDual">
             <span class="dual-val" id="slMinVal">0</span>
@@ -422,15 +432,6 @@
             <input id="slMin" class="is-start" type="range" min="-12" max="0" step="0.25" value="0" aria-label="slnt start" />
             <input id="slMax" class="is-end" type="range" min="-12" max="0" step="0.25" value="0" aria-label="slnt end" />
           </div>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">spacing</p>
-        <div class="row">
-          <label for="lh">leading</label>
-          <input id="lh" type="range" min="-0.3" max="1.6" step="0.01" value="0.92" />
-          <span class="val" id="lhVal">0.92</span>
         </div>
       </div>
 
@@ -544,13 +545,13 @@
             },
           },
           {
-            minKey: "o0",
-            maxKey: "o1",
-            fill: "oFill",
-            minVal: "o0Val",
-            maxVal: "o1Val",
+            minKey: "lh0",
+            maxKey: "lh1",
+            fill: "lhFill",
+            minVal: "lh0Val",
+            maxVal: "lh1Val",
             fmt: function (v) {
-              return Math.round(Number(v) * 100) + "%";
+              return Number(v).toFixed(2);
             },
           },
         ];
@@ -573,6 +574,14 @@
             maxVal: "cMaxVal",
           },
           {
+            tag: "wdth",
+            minKey: "dMin",
+            maxKey: "dMax",
+            fill: "dFill",
+            minVal: "dMinVal",
+            maxVal: "dMaxVal",
+          },
+          {
             tag: "slnt",
             minKey: "slMin",
             maxKey: "slMax",
@@ -589,7 +598,7 @@
 
         function fmtAxis(tag, v) {
           if (tag === "CNTR") return (Math.round(v * 10) / 10).toFixed(1);
-          if (tag === "wght") return Math.round(v).toString();
+          if (tag === "wght" || tag === "wdth") return Math.round(v).toString();
           return String(v);
         }
 
@@ -603,15 +612,16 @@
             s1: parseFloat(els.s1.value),
             k0: parseFloat(els.k0.value),
             k1: parseFloat(els.k1.value),
-            o0: parseFloat(els.o0.value),
-            o1: parseFloat(els.o1.value),
             wMin: parseFloat(els.wMin.value),
             wMax: parseFloat(els.wMax.value),
             cMin: parseFloat(els.cMin.value),
             cMax: parseFloat(els.cMax.value),
+            dMin: parseFloat(els.dMin.value),
+            dMax: parseFloat(els.dMax.value),
             slMin: parseFloat(els.slMin.value),
             slMax: parseFloat(els.slMax.value),
-            lh: parseFloat(els.lh.value),
+            lh0: parseFloat(els.lh0.value),
+            lh1: parseFloat(els.lh1.value),
             gamma: parseFloat(els.gm.value),
           };
         }
@@ -621,7 +631,7 @@
             '"wght" ' +
             fmtAxis("wght", lerpPair(p.wMin, p.wMax, tt)) +
             ', "wdth" ' +
-            AXES.wdth.default +
+            fmtAxis("wdth", lerpPair(p.dMin, p.dMax, tt)) +
             ', "slnt" ' +
             fmtAxis("slnt", lerpPair(p.slMin, p.slMax, tt)) +
             ', "CNTR" ' +
@@ -638,8 +648,8 @@
           node.style.letterSpacing = k.toFixed(4) + "em";
           var s = lerpPair(p.s0, p.s1, tt);
           node.style.fontSize = s + "px";
-          node.style.lineHeight = p.lh.toFixed(4);
-          node.style.opacity = lerpPair(p.o0, p.o1, tt);
+          node.style.lineHeight = lerpPair(p.lh0, p.lh1, tt).toFixed(4);
+          node.style.opacity = "1";
         }
 
         // Max height across the full top→bottom gradient so animated
@@ -650,12 +660,14 @@
           node.style.minHeight = "0";
           for (var step = 0; step <= 12; step++) {
             applyTypography(node, step / 12, p);
-            var s = lerpPair(p.s0, p.s1, step / 12);
+            var stepT = step / 12;
+            var s = lerpPair(p.s0, p.s1, stepT);
+            var lh = lerpPair(p.lh0, p.lh1, stepT);
             // Tight/negative leading shrinks the line box but not the glyphs.
             var ink = Math.max(
               node.offsetHeight,
               node.scrollHeight,
-              s * Math.max(p.lh, 0.55)
+              s * Math.max(lh, 0.55)
             );
             maxH = Math.max(maxH, ink);
           }
@@ -737,15 +749,16 @@
           fg: "#f5d100",
           s0: 240,
           s1: 120,
-          lh: 0.92,
+          lh0: 0.92,
+          lh1: 0.92,
           k0: -0.02,
           k1: 0.02,
-          o0: 1,
-          o1: 0.2,
           wMin: 1000,
           wMax: 500,
           cMin: 0,
           cMax: 0,
+          dMin: 100,
+          dMax: 100,
           slMin: 0,
           slMax: 0,
           gm: 1,
@@ -762,15 +775,16 @@
           s1: 1,
           k0: 1,
           k1: 1,
-          o0: 1,
-          o1: 1,
           wMin: 1,
           wMax: 1,
           cMin: 1,
           cMax: 1,
+          dMin: 1,
+          dMax: 1,
           slMin: 1,
           slMax: 1,
-          lh: 1,
+          lh0: 1,
+          lh1: 1,
           gm: 1,
         };
 
@@ -782,15 +796,16 @@
           s1: document.getElementById("s1"),
           k0: document.getElementById("k0"),
           k1: document.getElementById("k1"),
-          o0: document.getElementById("o0"),
-          o1: document.getElementById("o1"),
           wMin: document.getElementById("wMin"),
           wMax: document.getElementById("wMax"),
           cMin: document.getElementById("cMin"),
           cMax: document.getElementById("cMax"),
+          dMin: document.getElementById("dMin"),
+          dMax: document.getElementById("dMax"),
           slMin: document.getElementById("slMin"),
           slMax: document.getElementById("slMax"),
-          lh: document.getElementById("lh"),
+          lh0: document.getElementById("lh0"),
+          lh1: document.getElementById("lh1"),
           gm: document.getElementById("gm"),
           sp: document.getElementById("sp"),
           pv: document.getElementById("pv"),
@@ -800,7 +815,6 @@
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          lh: document.getElementById("lhVal"),
           gm: document.getElementById("gmVal"),
           sp: document.getElementById("spVal"),
           pv: document.getElementById("pvVal"),
@@ -893,7 +907,7 @@
         function fmt(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
-          if (key === "lh" || key === "gm") return Number(v).toFixed(2);
+          if (key === "gm") return Number(v).toFixed(2);
           if (key === "sp") return Math.round(Number(v)) + "";
           return Math.round(Number(v)) + "px";
         }
@@ -947,13 +961,18 @@
             parsed.k0 = parsed.kTop;
             parsed.k1 = parsed.kBot != null ? parsed.kBot : parsed.kTop;
           }
-          if (parsed.oTop != null && parsed.o0 == null) {
-            parsed.o0 = parsed.oTop;
-            parsed.o1 = parsed.oBot != null ? parsed.oBot : parsed.oTop;
-          }
           if (parsed.wTop != null && parsed.wMin == null) {
             parsed.wMin = parsed.wTop;
             parsed.wMax = parsed.wBot != null ? parsed.wBot : parsed.wTop;
+          }
+          if (parsed.lh != null && parsed.lh0 == null) {
+            parsed.lh0 = parsed.lh;
+            parsed.lh1 = parsed.lh;
+          }
+          if (parsed.lhTop != null && parsed.lh0 == null) {
+            parsed.lh0 = parsed.lhTop;
+            parsed.lh1 =
+              parsed.lhBot != null ? parsed.lhBot : parsed.lhTop;
           }
           return parsed;
         }
@@ -981,16 +1000,14 @@
                 parsed.pl = parsed.ph;
                 parsed.pr = parsed.ph;
               }
-              if (parsed.lh == null && parsed.lhTop != null) {
-                parsed.lh = parsed.lhTop;
-              }
               data = Object.assign({}, DEFAULTS, parsed);
             } catch (e) {}
           }
-          if (els.lh) {
-            var lhMin = parseFloat(els.lh.min);
-            var lhMax = parseFloat(els.lh.max);
-            data.lh = Math.max(lhMin, Math.min(lhMax, data.lh));
+          if (els.lh0 && els.lh1) {
+            var lhMin = parseFloat(els.lh0.min);
+            var lhMax = parseFloat(els.lh0.max);
+            data.lh0 = Math.max(lhMin, Math.min(lhMax, data.lh0));
+            data.lh1 = Math.max(lhMin, Math.min(lhMax, data.lh1));
           }
           data.zm = ArtboardZoom.resolve(data.zm);
           Object.keys(els).forEach(function (k) {
