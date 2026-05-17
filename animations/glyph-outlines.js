@@ -8,6 +8,9 @@
   var syncGen = 0;
   var fontsPrimed = false;
   var cachedFont = null;
+  var cachedFontBuf = null;
+  var cachedHbState = null;
+  var hbModulePromise = null;
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
     handleLine: "rgba(0, 120, 255, 0.45)",
@@ -36,22 +39,65 @@
     return COLORS;
   }
 
+  function harfbuzzModuleUrl() {
+    var scripts = document.getElementsByTagName("script");
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      var src = scripts[i].src;
+      if (src && src.indexOf("glyph-outlines") !== -1) {
+        return new URL("vendor/harfbuzzjs/index.mjs", src).href;
+      }
+    }
+    return "vendor/harfbuzzjs/index.mjs";
+  }
+
+  function loadHbModule() {
+    if (!hbModulePromise) {
+      hbModulePromise = import(harfbuzzModuleUrl());
+    }
+    return hbModulePromise;
+  }
+
+  function createHbState(buffer, hb) {
+    var blob = new hb.Blob(buffer);
+    var face = new hb.Face(blob, 0);
+    var font = new hb.Font(face);
+    return {
+      Buffer: hb.Buffer,
+      Feature: hb.Feature,
+      Variation: hb.Variation,
+      shape: hb.shape,
+      font: font,
+      face: face,
+      blob: blob,
+      upem: face.upem,
+    };
+  }
+
   function loadFont(url) {
     if (fontUrl !== url) {
       fontUrl = url;
       fontPromise = null;
       cachedFont = null;
+      cachedFontBuf = null;
+      cachedHbState = null;
     }
     if (!fontPromise) {
-      fontPromise = fetch(url)
-        .then(function (r) {
+      fontPromise = Promise.all([
+        fetch(url).then(function (r) {
           if (!r.ok) throw new Error("font fetch failed");
           return r.arrayBuffer();
-        })
-        .then(function (buf) {
-          cachedFont = opentype.parse(buf);
-          return cachedFont;
-        });
+        }),
+        loadHbModule().catch(function (err) {
+          console.warn("GlyphOutlines: HarfBuzz unavailable, using opentype layout", err);
+          return null;
+        }),
+      ]).then(function (parts) {
+        var buf = parts[0];
+        cachedFontBuf = buf;
+        cachedFont = opentype.parse(buf);
+        cachedHbState = parts[1] ? createHbState(buf, parts[1]) : null;
+        return cachedFont;
+      });
     }
     return fontPromise;
   }
@@ -368,16 +414,6 @@
     return { x1: x1, y1: y1, x2: x2, y2: y2 };
   }
 
-  function pathOptions(font, variation, opts, fontSize) {
-    var pathOpts = Object.assign({}, font.defaultRenderOptions || { kerning: true });
-    pathOpts.kerning = true;
-    pathOpts.features = { liga: true, rlig: true };
-    if (variation != null) pathOpts.variation = variation;
-    var track = trackingPx(opts);
-    if (track && fontSize) pathOpts.letterSpacing = track / fontSize;
-    return pathOpts;
-  }
-
   /** Extra letter-spacing in px (InDesign tracking); separate from font pair kerning. */
   function trackingPx(opts) {
     if (!opts) return 0;
@@ -386,10 +422,79 @@
     return Number(v);
   }
 
-  function applyVariationCoords(font, pathOpts) {
-    if (font.variation && pathOpts && pathOpts.variation) {
-      font.variation.set(pathOpts.variation);
+  function mergedVariation(otFont, variation) {
+    var v = Object.assign({}, (otFont.defaultRenderOptions || {}).variation || {}, variation || {});
+    var fvar = otFont.tables && otFont.tables.fvar;
+    if (fvar && fvar.axes) {
+      fvar.axes.forEach(function (axis) {
+        if (v[axis.tag] == null) v[axis.tag] = axis.defaultValue;
+      });
     }
+    return v;
+  }
+
+  function pathOptsForGlyph(variation) {
+    return { variation: variation };
+  }
+
+  function setHbVariations(hbState, otFont, variation) {
+    var v = mergedVariation(otFont, variation);
+    var vars = [];
+    var fvar = otFont.tables && otFont.tables.fvar;
+    if (fvar && fvar.axes) {
+      fvar.axes.forEach(function (axis) {
+        vars.push(new hbState.Variation(axis.tag, v[axis.tag]));
+      });
+    }
+    hbState.font.setVariations(vars);
+    hbState.font.setScale(hbState.upem, hbState.upem);
+    if (otFont.variation) otFont.variation.set(v);
+    return v;
+  }
+
+  /**
+   * Shape with HarfBuzz (full GPOS kern, like InDesign / Core Text).
+   * Returns { runs, width } for one line at baseline y0, origin x0.
+   */
+  function shapeLine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal) {
+    if (!line) return { runs: [], width: 0 };
+    var v = setHbVariations(hbState, otFont, variation);
+    var pathOpts = pathOptsForGlyph(v);
+    var scale = fontSize / hbState.upem;
+    var trackExtra = trackingPxVal ? trackingPxVal / fontSize : 0;
+
+    var buffer = new hbState.Buffer();
+    buffer.addText(line);
+    buffer.guessSegmentProperties();
+    hbState.shape(hbState.font, buffer, [
+      new hbState.Feature("kern", 1),
+      new hbState.Feature("liga", 1),
+      new hbState.Feature("rlig", 1),
+    ]);
+
+    var glyphs = buffer.getGlyphInfosAndPositions();
+    var runs = [];
+    var x = x0;
+
+    for (var i = 0; i < glyphs.length; i++) {
+      var g = glyphs[i];
+      var gX = x + (g.xOffset || 0) * scale;
+      var gY = y0 + (g.yOffset || 0) * scale;
+      var glyph = otFont.glyphs.get(g.codepoint);
+      if (!glyph) continue;
+      var glyphPath = glyph.getPath(gX, gY, fontSize, pathOpts, otFont);
+      if (glyphPath.commands && glyphPath.commands.length) {
+        runs.push({
+          commands: glyphPath.commands,
+          x: gX,
+          advance: g.xAdvance * scale,
+        });
+      }
+      x += g.xAdvance * scale;
+      if (trackExtra && i < glyphs.length - 1) x += trackExtra * fontSize;
+    }
+
+    return { runs: runs, width: x - x0 };
   }
 
   function lineHeightPx(font, fontSize) {
@@ -405,40 +510,46 @@
     return String(text).split(/\r\n|\r|\n/);
   }
 
-  function measureLineWidth(font, line, fontSize, pathOpts) {
-    if (!line) return 0;
-    applyVariationCoords(font, pathOpts);
-    return font.forEachGlyph(line, 0, 0, fontSize, pathOpts, function () {});
-  }
-
-  function layoutLineGlyphs(font, line, x0, y0, fontSize, pathOpts, runs) {
-    if (!line) return;
-    applyVariationCoords(font, pathOpts);
-    var fontScale = (1 / font.unitsPerEm) * fontSize;
-    font.forEachGlyph(line, x0, y0, fontSize, pathOpts, function (glyph, gX, gY) {
-      var glyphPath = glyph.getPath(gX, gY, fontSize, pathOpts, font);
-      var commands = glyphPath.commands;
-      if (commands && commands.length) {
+  /** Fallback when HarfBuzz is unavailable (no GPOS kern). */
+  function shapeLineOpentype(otFont, line, x0, y0, fontSize, variation, trackingPxVal) {
+    if (!line) return { runs: [], width: 0 };
+    var pathOpts = Object.assign({}, otFont.defaultRenderOptions || { kerning: true });
+    pathOpts.kerning = true;
+    pathOpts.features = { liga: true, rlig: true };
+    pathOpts.variation = mergedVariation(otFont, variation);
+    if (otFont.variation) otFont.variation.set(pathOpts.variation);
+    var trackEm = trackingPxVal ? trackingPxVal / fontSize : 0;
+    if (trackEm) pathOpts.letterSpacing = trackEm;
+    var runs = [];
+    var endX = otFont.forEachGlyph(line, x0, y0, fontSize, pathOpts, function (glyph, gX, gY) {
+      var glyphPath = glyph.getPath(gX, gY, fontSize, pathOpts, otFont);
+      if (glyphPath.commands && glyphPath.commands.length) {
         runs.push({
-          commands: commands,
+          commands: glyphPath.commands,
           x: gX,
-          advance: glyph.advanceWidth ? glyph.advanceWidth * fontScale : 0,
+          advance: glyph.advanceWidth ? (glyph.advanceWidth / otFont.unitsPerEm) * fontSize : 0,
         });
       }
     });
+    return { runs: runs, width: endX - x0 };
+  }
+
+  function shapeLineWithEngine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal) {
+    if (hbState) return shapeLine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal);
+    return shapeLineOpentype(otFont, line, x0, y0, fontSize, variation, trackingPxVal);
   }
 
   /**
-   * Lay out glyphs via font.forEachGlyph — same path as Font.getPath (metrics + GPOS kerning).
-   * Supports line breaks; lines are center-aligned; opts.tracking adds InDesign-style tracking.
+   * Lay out glyphs via HarfBuzz (GPOS kern) + opentype paths.
+   * Supports line breaks; lines are center-aligned; opts.tracking adds letter-spacing.
    */
   function glyphRunsForText(font, text, fontSize, variation, opts) {
     if (!text) return [];
-    var pathOpts = pathOptions(font, variation, opts, fontSize);
     var lines = splitLines(text);
     var lineHeight = lineHeightPx(font, fontSize);
+    var track = trackingPx(opts);
     var lineWidths = lines.map(function (line) {
-      return measureLineWidth(font, line, fontSize, pathOpts);
+      return shapeLineWithEngine(cachedHbState, font, line, 0, 0, fontSize, variation, track).width;
     });
     var maxLineWidth = 0;
     lineWidths.forEach(function (w) {
@@ -450,7 +561,17 @@
     for (var li = 0; li < lines.length; li++) {
       var y = li * lineHeight;
       var x0 = (maxLineWidth - lineWidths[li]) / 2;
-      layoutLineGlyphs(font, lines[li], x0, y, fontSize, pathOpts, runs);
+      var shaped = shapeLineWithEngine(
+        cachedHbState,
+        font,
+        lines[li],
+        x0,
+        y,
+        fontSize,
+        variation,
+        track
+      );
+      runs.push.apply(runs, shaped.runs);
     }
 
     return runs;
@@ -626,7 +747,7 @@
         renderAll(svg, stageEl, targets, font, root, opts);
       }
 
-      if (cachedFont && fontUrl === opts.fontUrl) {
+      if (cachedFont && cachedFontBuf && fontUrl === opts.fontUrl) {
         draw(cachedFont);
         return Promise.resolve();
       }
