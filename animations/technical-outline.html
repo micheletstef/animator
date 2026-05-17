@@ -12,108 +12,310 @@
         font-style: normal;
         font-display: block;
       }
+
       :root {
         color-scheme: dark;
         --bg: #ffffff;
         --line: #0078ff;
         --fs: 900;
-        --wght: 500;
         --zoom: 1;
         --base: min(calc(100vh - 48px), calc(100vw - 280px - 72px));
       }
-      * { box-sizing: border-box; }
-      html, body {
-        margin: 0; height: 100%; background: #111; overflow: hidden;
-        font-family: "Courier New", Courier, monospace; color: #e9e9e9;
+
+      * {
+        box-sizing: border-box;
       }
+
+      html,
       body {
-        display: grid; grid-template-columns: 1fr 280px;
-        align-items: center; gap: 24px; padding: 24px;
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #e9e9e9;
       }
+
+      body {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        align-items: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
       .stage-wrap {
-        display: flex; align-items: safe center; justify-content: safe center;
-        height: 100%; min-width: 0; overflow: auto; overscroll-behavior: contain;
+        display: flex;
+        align-items: safe center;
+        justify-content: safe center;
+        height: 100%;
+        min-width: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
       }
+
       .stage-outer {
         width: calc(var(--base) * var(--zoom));
         height: calc(var(--base) * var(--zoom));
-        position: relative; flex: 0 0 auto;
+        position: relative;
+        flex: 0 0 auto;
       }
+
       .stage {
-        position: absolute; top: 0; left: 0;
-        width: var(--base); height: var(--base);
-        background: var(--bg); overflow: hidden;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--base);
+        height: var(--base);
+        background: var(--bg);
+        overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        transform: scale(var(--zoom)); transform-origin: top left;
+        transform: scale(var(--zoom));
+        transform-origin: top left;
       }
+
       .outline-layer {
-        position: absolute; inset: 0; z-index: 1;
-        width: 100%; height: 100%; pointer-events: none; overflow: visible;
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
       }
+
+      .var-readout {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        z-index: 2;
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--line);
+        opacity: 0.85;
+        pointer-events: none;
+        font-variant-numeric: tabular-nums;
+      }
+
       .probe {
-        position: absolute; left: -9999px; visibility: hidden;
+        position: absolute;
+        left: -9999px;
+        visibility: hidden;
         font-family: "IkarusPlusVariable", system-ui, sans-serif;
-        font-size: calc(var(--fs) * 1px); line-height: 1;
-        font-variation-settings: "wght" var(--wght), "wdth" 100, "slnt" 0, "CNTR" 0;
+        font-size: calc(var(--fs) * 1px);
+        line-height: 1;
       }
+
       .panel {
-        align-self: stretch; max-height: 100%; overflow: auto;
-        padding: 16px 18px; background: #1a1a1a;
-        border: 1px solid #2a2a2a; border-radius: 8px;
-        font-size: 12px; line-height: 1.4;
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
       }
+
       .panel h2 {
-        margin: 0 0 4px 0; font-size: 12px; font-weight: 400;
-        text-transform: lowercase; letter-spacing: 0.04em; color: #9a9a9a;
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
       }
-      .panel .hint { margin: 0 0 14px 0; color: #6a6a6a; font-size: 11px; }
-      .panel .group { margin-bottom: 18px; }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
       .panel .group-title {
-        text-transform: lowercase; color: #6a6a6a;
-        margin: 0 0 8px 0; font-size: 11px; letter-spacing: 0.06em;
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
       }
+
       .row {
-        display: grid; grid-template-columns: 64px 1fr 52px;
-        align-items: center; gap: 8px; margin-bottom: 6px;
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
       }
-      .row label { text-transform: lowercase; color: #cfcfcf; }
-      .row input[type="range"] { width: 100%; accent-color: #fff; }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
       .row input[type="color"] {
-        width: 100%; height: 22px; padding: 0;
-        border: 1px solid #333; border-radius: 4px;
-        background: transparent; cursor: pointer;
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
       }
+
       .row input[type="text"] {
-        grid-column: 2 / 4; width: 100%; padding: 4px 6px;
-        border: 1px solid #333; border-radius: 4px;
-        background: #111; color: #e9e9e9; font: inherit;
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
       }
+
       .row .val {
-        text-align: right; color: #9a9a9a; font-variant-numeric: tabular-nums;
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
       }
-      .panel .actions { display: flex; gap: 8px; margin-top: 4px; }
+
+      .row.row-wide-val {
+        grid-template-columns: 64px 1fr 100px;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 22px;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 50%;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track,
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb,
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
       .panel button {
-        flex: 1; background: transparent; color: #cfcfcf;
-        border: 1px solid #333; padding: 6px 8px; font: inherit;
-        text-transform: lowercase; cursor: pointer; border-radius: 4px;
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
       }
-      .panel button:hover { border-color: #555; color: #fff; }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
     </style>
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-
         <div class="stage" id="stage" aria-label="technical outline">
           <svg class="outline-layer" id="outlines" aria-hidden="true"></svg>
+          <p class="var-readout" id="varReadout" aria-hidden="true"></p>
           <span class="probe" id="probe">A</span>
         </div>
       </div>
     </div>
     <input type="hidden" id="zm" value="1" />
+
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom · ABCIkarusPlusVariable</p>
+      <p class="hint">shift + scroll to zoom · variable axes animate between range thumbs</p>
+
       <div class="group">
         <p class="group-title">color</p>
         <div class="row">
@@ -127,12 +329,12 @@
           <span class="val" id="lnVal">#0078ff</span>
         </div>
       </div>
+
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
           <label for="ch">char</label>
           <input id="ch" type="text" value="A" maxlength="8" spellcheck="false" autocomplete="off" />
-          <span class="val"></span>
         </div>
         <div class="row">
           <label for="fs">size</label>
@@ -140,20 +342,71 @@
           <span class="val" id="fsVal">900px</span>
         </div>
         <div class="row">
-          <label for="wght">wght</label>
-          <input id="wght" type="range" min="100" max="1000" step="1" value="500" />
-          <span class="val" id="wghtVal">500</span>
-        </div>
-        <div class="row">
           <label for="os">scale</label>
           <input id="os" type="range" min="25" max="200" step="1" value="100" />
           <span class="val" id="osVal">1.00×</span>
         </div>
       </div>
+
+      <div class="group">
+        <p class="group-title">variables</p>
+        <div class="row row-wide-val">
+          <label for="wMin">wght</label>
+          <div class="dual-range" id="wDual">
+            <div class="dual-track"><div class="dual-fill" id="wFill"></div></div>
+            <input id="wMin" class="is-start" type="range" min="200" max="1000" step="1" value="200" aria-label="wght start" />
+            <input id="wMax" class="is-end" type="range" min="200" max="1000" step="1" value="1000" aria-label="wght end" />
+          </div>
+          <span class="val" id="wVal">200 / 1000</span>
+        </div>
+        <div class="row row-wide-val">
+          <label for="cMin">CNTR</label>
+          <div class="dual-range" id="cDual">
+            <div class="dual-track"><div class="dual-fill" id="cFill"></div></div>
+            <input id="cMin" class="is-start" type="range" min="0" max="100" step="0.1" value="0" aria-label="CNTR start" />
+            <input id="cMax" class="is-end" type="range" min="0" max="100" step="0.1" value="100" aria-label="CNTR end" />
+          </div>
+          <span class="val" id="cVal">0.0 / 100.0</span>
+        </div>
+        <div class="row row-wide-val">
+          <label for="dMin">wdth</label>
+          <div class="dual-range" id="dDual">
+            <div class="dual-track"><div class="dual-fill" id="dFill"></div></div>
+            <input id="dMin" class="is-start" type="range" min="65" max="130" step="1" value="65" aria-label="wdth start" />
+            <input id="dMax" class="is-end" type="range" min="65" max="130" step="1" value="130" aria-label="wdth end" />
+          </div>
+          <span class="val" id="dVal">65 / 130</span>
+        </div>
+        <div class="row row-wide-val">
+          <label for="sMin">slnt</label>
+          <div class="dual-range" id="sDual">
+            <div class="dual-track"><div class="dual-fill" id="sFill"></div></div>
+            <input id="sMin" class="is-start" type="range" min="-12" max="0" step="0.25" value="-12" aria-label="slnt start" />
+            <input id="sMax" class="is-end" type="range" min="-12" max="0" step="0.25" value="0" aria-label="slnt end" />
+          </div>
+          <span class="val" id="sVal">-12 / 0</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion</p>
+        <div class="row">
+          <label for="cy">cycle</label>
+          <input id="cy" type="range" min="1500" max="12000" step="100" value="5200" />
+          <span class="val" id="cyVal">5.2s</span>
+        </div>
+        <div class="row">
+          <label for="hd">hold</label>
+          <input id="hd" type="range" min="0" max="2000" step="50" value="450" />
+          <span class="val" id="hdVal">450ms</span>
+        </div>
+      </div>
+
       <div class="actions">
         <button type="button" id="resetBtn">reset</button>
       </div>
     </aside>
+
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/martinez-polygon-clipping@0.7.3/dist/martinez.min.js"></script>
     <script src="glyph-outlines.js"></script>
@@ -163,27 +416,194 @@
         var outlineSvg = document.getElementById("outlines");
         var stage = document.getElementById("stage");
         var probe = document.getElementById("probe");
+        var varReadout = document.getElementById("varReadout");
         var FONT_URL = "../fonts/ABCIkarusPlusVariable.ttf";
         var root = document.documentElement;
+
+        var AXES = {
+          CNTR: { min: 0, max: 100, step: 0.1, default: 0 },
+          wght: { min: 200, max: 1000, step: 1, default: 500 },
+          wdth: { min: 65, max: 130, step: 1, default: 100 },
+          slnt: { min: -12, max: 0, step: 0.25, default: 0 },
+        };
+
+        var DUAL_AXES = [
+          { tag: "wght", minKey: "wMin", maxKey: "wMax", fill: "wFill", val: "wVal" },
+          { tag: "CNTR", minKey: "cMin", maxKey: "cMax", fill: "cFill", val: "cVal" },
+          { tag: "wdth", minKey: "dMin", maxKey: "dMax", fill: "dFill", val: "dVal" },
+          { tag: "slnt", minKey: "sMin", maxKey: "sMax", fill: "sFill", val: "sVal" },
+        ];
+
+        function clampAxis(tag, v) {
+          var a = AXES[tag];
+          return Math.max(a.min, Math.min(a.max, Number(v)));
+        }
+
+        function fmtAxis(tag, v) {
+          if (tag === "CNTR") return (Math.round(v * 10) / 10).toFixed(1);
+          if (tag === "wght" || tag === "wdth") return Math.round(v).toString();
+          return String(v);
+        }
+
+        function fvarSettings(v) {
+          return (
+            '"wght" ' +
+            fmtAxis("wght", v.wght) +
+            ', "wdth" ' +
+            fmtAxis("wdth", v.wdth) +
+            ', "slnt" ' +
+            fmtAxis("slnt", v.slnt) +
+            ', "CNTR" ' +
+            fmtAxis("CNTR", v.CNTR)
+          );
+        }
+
+        function easeInOutCubic(t) {
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function lerpFromRange(minEl, maxEl, eased) {
+          var start = parseFloat(minEl.value);
+          var end = parseFloat(maxEl.value);
+          return start + (end - start) * eased;
+        }
+
+        function variationAt(eased) {
+          return {
+            wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, eased)),
+            CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, eased)),
+            wdth: clampAxis("wdth", lerpFromRange(els.dMin, els.dMax, eased)),
+            slnt: clampAxis("slnt", lerpFromRange(els.sMin, els.sMax, eased)),
+          };
+        }
+
+        function applyVariation(v) {
+          probe.style.fontVariationSettings = fvarSettings(v);
+          varReadout.textContent =
+            "wght " +
+            fmtAxis("wght", v.wght) +
+            " · CNTR " +
+            fmtAxis("CNTR", v.CNTR) +
+            "\nwdth " +
+            fmtAxis("wdth", v.wdth) +
+            " · slnt " +
+            fmtAxis("slnt", v.slnt);
+        }
+
         function getChar() {
           var v = els.ch ? els.ch.value : "";
           if (!v) return DEFAULTS.ch;
           return Array.from(v)[0];
         }
-        function applyChar() { probe.textContent = getChar(); }
-        function outlineScale() { return parseFloat(els.os.value) / 100; }
-        function syncOutlines() {
+
+        function applyChar() {
+          probe.textContent = getChar();
+        }
+
+        function outlineScale() {
+          return parseFloat(els.os.value) / 100;
+        }
+
+        function syncOutlines(v) {
           if (!window.GlyphOutlines) return;
-          GlyphOutlines.sync(outlineSvg, stage, [{
-            el: probe, char: getChar(),
-            variation: { wght: parseFloat(els.wght.value) }
-          }], {
-            fontUrl: FONT_URL, root: root,
-            color: els.ln.value, outlineScale: outlineScale()
+          var variation = v || variationAt(0);
+          GlyphOutlines.sync(
+            outlineSvg,
+            stage,
+            [{ el: probe, char: getChar(), variation: variation }],
+            {
+              fontUrl: FONT_URL,
+              root: root,
+              color: els.ln.value,
+              outlineScale: outlineScale(),
+            }
+          );
+        }
+
+        function applyAxisLimits() {
+          DUAL_AXES.forEach(function (spec) {
+            var a = AXES[spec.tag];
+            [els[spec.minKey], els[spec.maxKey]].forEach(function (el) {
+              el.min = a.min;
+              el.max = a.max;
+              el.step = a.step;
+            });
           });
         }
-        var LS_KEY = "technical-outline:v1";
-        var DEFAULTS = { zm: 1, bg: "#ffffff", ln: "#0078ff", ch: "A", fs: 900, wght: 500, os: 100 };
+
+        function updateDualUI(spec) {
+          var minEl = els[spec.minKey];
+          var maxEl = els[spec.maxKey];
+          var fill = document.getElementById(spec.fill);
+          var valEl = document.getElementById(spec.val);
+          var a = parseFloat(minEl.value);
+          var b = parseFloat(maxEl.value);
+          var min = parseFloat(minEl.min);
+          var max = parseFloat(minEl.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          fill.style.left = loPct + "%";
+          fill.style.width = Math.max(0, hiPct - loPct) + "%";
+          valEl.textContent =
+            fmtAxis(spec.tag, parseFloat(minEl.value)) +
+            " → " +
+            fmtAxis(spec.tag, parseFloat(maxEl.value));
+        }
+
+        function updateAllDualUI() {
+          DUAL_AXES.forEach(updateDualUI);
+        }
+
+        function frame(now, t0) {
+          var cycle = Math.max(200, parseFloat(els.cy.value));
+          var hold = Math.max(0, parseFloat(els.hd.value));
+          var halfCycle = cycle / 2;
+          var total = cycle + 2 * hold;
+          var elapsed = (now - t0) % total;
+          var p;
+
+          if (elapsed < halfCycle) {
+            p = elapsed / halfCycle;
+          } else if (elapsed < halfCycle + hold) {
+            p = 1;
+          } else if (elapsed < halfCycle + hold + halfCycle) {
+            p = 1 - (elapsed - halfCycle - hold) / halfCycle;
+          } else {
+            p = 0;
+          }
+
+          var eased = easeInOutCubic(p);
+          var v = variationAt(eased);
+          applyVariation(v);
+          syncOutlines(v);
+
+          requestAnimationFrame(function (n2) {
+            frame(n2, t0);
+          });
+        }
+
+        var LS_KEY = "technical-outline:v2";
+        var DEFAULTS = {
+          zm: 1,
+          bg: "#ffffff",
+          ln: "#0078ff",
+          ch: "A",
+          fs: 900,
+          os: 100,
+          wMin: 200,
+          wMax: 1000,
+          cMin: 0,
+          cMax: 100,
+          dMin: 65,
+          dMax: 130,
+          sMin: -12,
+          sMax: 0,
+          cy: 5200,
+          hd: 450,
+        };
+
         var COLOR_KEYS = { bg: 1, ln: 1 };
         var STRING_KEYS = { ch: 1 };
         var els = {
@@ -192,57 +612,109 @@
           ln: document.getElementById("ln"),
           ch: document.getElementById("ch"),
           fs: document.getElementById("fs"),
-          wght: document.getElementById("wght"),
-          os: document.getElementById("os")
+          os: document.getElementById("os"),
+          wMin: document.getElementById("wMin"),
+          wMax: document.getElementById("wMax"),
+          cMin: document.getElementById("cMin"),
+          cMax: document.getElementById("cMax"),
+          dMin: document.getElementById("dMin"),
+          dMax: document.getElementById("dMax"),
+          sMin: document.getElementById("sMin"),
+          sMax: document.getElementById("sMax"),
+          cy: document.getElementById("cy"),
+          hd: document.getElementById("hd"),
         };
+
         var vals = {
           bg: document.getElementById("bgVal"),
           ln: document.getElementById("lnVal"),
           fs: document.getElementById("fsVal"),
-          wght: document.getElementById("wghtVal"),
-          os: document.getElementById("osVal")
+          os: document.getElementById("osVal"),
+          cy: document.getElementById("cyVal"),
+          hd: document.getElementById("hdVal"),
         };
+
+        function dualSpecForKey(key) {
+          for (var i = 0; i < DUAL_AXES.length; i++) {
+            if (DUAL_AXES[i].minKey === key || DUAL_AXES[i].maxKey === key) return DUAL_AXES[i];
+          }
+          return null;
+        }
+
         function fmt(key, v) {
           if (key === "bg" || key === "ln") return String(v).toLowerCase();
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs") return Math.round(Number(v)) + "px";
-          if (key === "wght") return Math.round(Number(v)) + "";
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
+          if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
+          if (key === "hd") return Math.round(Number(v)) + "ms";
           return String(v);
         }
+
         function applyVar(key, v) {
           if (key === "zm") root.style.setProperty("--zoom", v);
           else if (key === "bg") root.style.setProperty("--bg", v);
           else if (key === "ln") root.style.setProperty("--line", v);
           else if (key === "fs") root.style.setProperty("--fs", v);
-          else if (key === "wght") root.style.setProperty("--wght", v);
         }
+
         function setValue(key, v, persist) {
           if (key === "zm") v = persist !== false ? ArtboardZoom.write(v) : ArtboardZoom.clamp(v);
+          var spec = dualSpecForKey(key);
+          if (spec) v = clampAxis(spec.tag, v);
           els[key].value = v;
-          if (vals[key]) vals[key].textContent = fmt(key, v);
+          if (spec) updateDualUI(spec);
+          else if (vals[key]) vals[key].textContent = fmt(key, v);
           if (key === "ch") applyChar();
           applyVar(key, v);
-          if (key !== "zm") syncOutlines();
           if (persist !== false) save();
         }
+
         function save() {
           var out = {};
           Object.keys(els).forEach(function (k) {
             if (k === "zm") return;
             out[k] = COLOR_KEYS[k] || STRING_KEYS[k] ? els[k].value : parseFloat(els[k].value);
           });
-          try { localStorage.setItem(LS_KEY, JSON.stringify(out)); } catch (e) {}
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(out));
+          } catch (e) {}
         }
+
         function load() {
           var raw = null;
-          try { raw = localStorage.getItem(LS_KEY); } catch (e) {}
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
           var data = DEFAULTS;
-          if (raw) { try { data = Object.assign({}, DEFAULTS, JSON.parse(raw)); } catch (e) {} }
+          if (raw) {
+            try {
+              data = Object.assign({}, DEFAULTS, JSON.parse(raw));
+            } catch (e) {}
+          }
+          if (!raw) {
+            try {
+              var legacy = localStorage.getItem("technical-outline:v1");
+              if (legacy) {
+                var old = JSON.parse(legacy);
+                data = Object.assign({}, DEFAULTS, old);
+                if (old.wght != null) {
+                  data.wMin = AXES.wght.min;
+                  data.wMax = clampAxis("wght", old.wght);
+                }
+              }
+            } catch (e2) {}
+          }
           data.zm = ArtboardZoom.resolve(data.zm);
-          Object.keys(els).forEach(function (k) { setValue(k, data[k], false); });
+          Object.keys(els).forEach(function (k) {
+            setValue(k, data[k], false);
+          });
         }
-        ArtboardZoom.onChange(function (z) { setValue("zm", z, false); syncOutlines(); });
+
+        ArtboardZoom.onChange(function (z) {
+          setValue("zm", z, false);
+        });
+
         Object.keys(els).forEach(function (k) {
           if (k === "zm") return;
           els[k].addEventListener("input", function () {
@@ -250,12 +722,37 @@
             setValue(k, v);
           });
         });
+
         document.getElementById("resetBtn").addEventListener("click", function () {
-          Object.keys(DEFAULTS).forEach(function (k) { setValue(k, DEFAULTS[k]); });
+          Object.keys(DEFAULTS).forEach(function (k) {
+            setValue(k, DEFAULTS[k]);
+          });
         });
-        load(); applyChar();
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncOutlines);
-        else syncOutlines();
+
+        applyAxisLimits();
+        load();
+        applyChar();
+        updateAllDualUI();
+
+        function start() {
+          var v0 = variationAt(0);
+          applyVariation(v0);
+          if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function () {
+              syncOutlines(v0);
+              requestAnimationFrame(function (n) {
+                frame(n, n);
+              });
+            });
+          } else {
+            syncOutlines(v0);
+            requestAnimationFrame(function (n) {
+              frame(n, n);
+            });
+          }
+        }
+
+        start();
       })();
     </script>
   </body>
