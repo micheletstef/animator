@@ -8,7 +8,6 @@
   var syncGen = 0;
   var fontsPrimed = false;
   var cachedFont = null;
-  var placementAnchor = { cx: null, cy: null };
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
     handleLine: "rgba(0, 120, 255, 0.45)",
@@ -79,11 +78,6 @@
 
   function fontSizePx(el) {
     return parseFloat(getComputedStyle(el).fontSize) || 72;
-  }
-
-  function resetPlacementAnchor() {
-    placementAnchor.cx = null;
-    placementAnchor.cy = null;
   }
 
   function bboxFromCommands(commands) {
@@ -164,35 +158,30 @@
     return best || bboxFromCommands(commands);
   }
 
-  function placementAnchorForRuns(runs, gapPx) {
+  /** Visual ink bounds — recentres every frame so text stays on the artboard center. */
+  function placementAnchorForRuns(runs) {
     if (!runs.length) return null;
-    var outerBoxes = runs.map(function (r) {
-      return outerContourBBox(r.commands);
+    var inkBoxes = runs.map(function (r) {
+      return bboxFromCommands(r.commands);
     });
-    var bb = unionBBox(outerBoxes);
+    var bb = unionBBox(inkBoxes);
     if (!bb) return null;
 
+    var cx = (bb.x1 + bb.x2) / 2;
     var cy = (bb.y1 + bb.y2) / 2;
-    var cx;
+
     if (runs.length === 1) {
-      cx = runs[0].x + runs[0].advance / 2;
-    } else {
-      var first = runs[0];
-      var totalW = 0;
-      for (var i = 0; i < runs.length; i++) {
-        totalW += runs[i].advance;
-        if (i < runs.length - 1) totalW += gapPx;
+      var subs = splitSubpaths(runs[0].commands);
+      if (subs.length > 1) {
+        var outer = outerContourBBox(runs[0].commands);
+        if (outer) cy = (outer.y1 + outer.y2) / 2;
       }
-      cx = first.x + totalW / 2;
     }
     return { cx: cx, cy: cy };
   }
 
-  /**
-   * Center glyph on artboard. Anchor uses advance width + outer contour vertical
-   * center so animated counters do not pull the outline sideways (e.g. capital B).
-   */
-  function placement(stageEl, root, anchor, opts) {
+  /** Map path coordinates so the anchor sits at the artboard center. */
+  function placement(stageEl, root, anchor) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
@@ -202,34 +191,6 @@
 
     var pathCx = anchor.cx;
     var pathCy = anchor.cy;
-
-    if (opts && opts.resetPlacement) resetPlacementAnchor();
-
-    if (opts && opts.smoothPlacement) {
-      var alpha =
-        opts.placementAlpha != null && isFinite(opts.placementAlpha)
-          ? opts.placementAlpha
-          : 0.22;
-      if (placementAnchor.cx == null) {
-        placementAnchor.cx = pathCx;
-        placementAnchor.cy = pathCy;
-      } else {
-        var dx = pathCx - placementAnchor.cx;
-        var dy = pathCy - placementAnchor.cy;
-        if (Math.hypot(dx, dy) > 120) {
-          placementAnchor.cx = pathCx;
-          placementAnchor.cy = pathCy;
-        } else {
-          placementAnchor.cx += dx * alpha;
-          placementAnchor.cy += dy * alpha;
-        }
-      }
-      pathCx = placementAnchor.cx;
-      pathCy = placementAnchor.cy;
-    } else {
-      placementAnchor.cx = pathCx;
-      placementAnchor.cy = pathCy;
-    }
 
     var map = function (ox, oy) {
       return {
@@ -546,11 +507,10 @@
     var runs = glyphRunsForText(font, text, fontSize, variation, opts);
     if (!runs.length) return;
 
-    var gap = kerningGapPx(opts);
-    var anchor = placementAnchorForRuns(runs, gap);
+    var anchor = placementAnchorForRuns(runs);
     if (!anchor) return;
 
-    var place = placement(stageEl, root, anchor, opts);
+    var place = placement(stageEl, root, anchor);
     var map = place.map;
     var scale =
       opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
@@ -599,7 +559,6 @@
     loadFont: loadFont,
     parseVariation: parseVariationSettings,
     parseVariationFromElement: parseVariationFromElement,
-    resetPlacement: resetPlacementAnchor,
 
     sync: function (svg, stageEl, targets, opts) {
       if (!svg || !stageEl || !targets || !targets.length) {
