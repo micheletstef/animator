@@ -368,15 +368,28 @@
     return { x1: x1, y1: y1, x2: x2, y2: y2 };
   }
 
-  function pathOptions(font, variation) {
+  function pathOptions(font, variation, opts, fontSize) {
     var pathOpts = Object.assign({}, font.defaultRenderOptions || { kerning: true });
+    pathOpts.kerning = true;
+    pathOpts.features = { liga: true, rlig: true };
     if (variation != null) pathOpts.variation = variation;
+    var track = trackingPx(opts);
+    if (track && fontSize) pathOpts.letterSpacing = track / fontSize;
     return pathOpts;
   }
 
-  function kerningGapPx(opts) {
-    if (!opts || opts.kerning == null || !isFinite(opts.kerning)) return 0;
-    return Number(opts.kerning);
+  /** Extra letter-spacing in px (InDesign tracking); separate from font pair kerning. */
+  function trackingPx(opts) {
+    if (!opts) return 0;
+    var v = opts.tracking != null ? opts.tracking : opts.kerning;
+    if (v == null || !isFinite(v)) return 0;
+    return Number(v);
+  }
+
+  function applyVariationCoords(font, pathOpts) {
+    if (font.variation && pathOpts && pathOpts.variation) {
+      font.variation.set(pathOpts.variation);
+    }
   }
 
   function lineHeightPx(font, fontSize) {
@@ -392,105 +405,40 @@
     return String(text).split(/\r\n|\r|\n/);
   }
 
-  function kerningLookupsFor(font, pathOpts) {
-    if (!pathOpts.kerning || !font.position || !font.position.getKerningTables) return null;
-    var script =
-      pathOpts.script ||
-      (font.position.getDefaultScriptName && font.position.getDefaultScriptName());
-    return font.position.getKerningTables(script, pathOpts.language);
-  }
-
-  function measureLineWidth(font, line, fontSize, pathOpts, gap) {
+  function measureLineWidth(font, line, fontSize, pathOpts) {
     if (!line) return 0;
-    var w = font.getAdvanceWidth(line, fontSize, pathOpts);
-    if (!gap) return w;
-
-    var glyphs = font.stringToGlyphs(line, pathOpts);
-    if (glyphs.length < 2) return w;
-
-    var fontScale = (1 / font.unitsPerEm) * fontSize;
-    var kerningLookups = kerningLookupsFor(font, pathOpts);
-    var total = 0;
-
-    for (var i = 0; i < glyphs.length; i++) {
-      total += glyphs[i].advanceWidth * fontScale;
-      if (i < glyphs.length - 1) {
-        if (kerningLookups) {
-          total +=
-            font.position.getKerningValue(
-              kerningLookups,
-              glyphs[i].index,
-              glyphs[i + 1].index
-            ) * fontScale;
-        } else if (font.getKerningValue) {
-          total += font.getKerningValue(glyphs[i], glyphs[i + 1]) * fontScale;
-        }
-        total += gap;
-      }
-    }
-    return total;
+    applyVariationCoords(font, pathOpts);
+    return font.forEachGlyph(line, 0, 0, fontSize, pathOpts, function () {});
   }
 
-  function layoutLineGlyphs(font, line, x0, y0, fontSize, pathOpts, opts, runs) {
+  function layoutLineGlyphs(font, line, x0, y0, fontSize, pathOpts, runs) {
     if (!line) return;
-
-    var gap = kerningGapPx(opts);
-
-    if (!gap && font.getPaths) {
-      var paths = font.getPaths(line, x0, y0, fontSize, pathOpts);
-      for (var pi = 0; pi < paths.length; pi++) {
-        var commands = paths[pi].commands;
-        if (commands && commands.length) {
-          runs.push({ commands: commands, x: x0, advance: 0 });
-        }
-      }
-      return;
-    }
-
-    var glyphs = font.stringToGlyphs(line, pathOpts);
-    if (!glyphs.length) return;
-
+    applyVariationCoords(font, pathOpts);
     var fontScale = (1 / font.unitsPerEm) * fontSize;
-    var kerningLookups = kerningLookupsFor(font, pathOpts);
-    var x = x0;
-
-    for (var i = 0; i < glyphs.length; i++) {
-      var glyph = glyphs[i];
-      var glyphPath = glyph.getPath(x, y0, fontSize, pathOpts, font);
+    font.forEachGlyph(line, x0, y0, fontSize, pathOpts, function (glyph, gX, gY) {
+      var glyphPath = glyph.getPath(gX, gY, fontSize, pathOpts, font);
       var commands = glyphPath.commands;
-      var advance = glyph.advanceWidth ? glyph.advanceWidth * fontScale : 0;
-
       if (commands && commands.length) {
-        runs.push({ commands: commands, x: x, advance: advance });
+        runs.push({
+          commands: commands,
+          x: gX,
+          advance: glyph.advanceWidth ? glyph.advanceWidth * fontScale : 0,
+        });
       }
-
-      x += advance;
-      if (kerningLookups && i < glyphs.length - 1) {
-        x +=
-          font.position.getKerningValue(
-            kerningLookups,
-            glyph.index,
-            glyphs[i + 1].index
-          ) * fontScale;
-      } else if (pathOpts.kerning && i < glyphs.length - 1 && font.getKerningValue) {
-        x += font.getKerningValue(glyph, glyphs[i + 1]) * fontScale;
-      }
-      if (i < glyphs.length - 1) x += gap;
-    }
+    });
   }
 
   /**
-   * Lay out glyphs with opentype.js (stringToGlyphs + GPOS kerning), same as getPath(text).
-   * Supports line breaks; lines are center-aligned; opts.kerning adds extra letter gap.
+   * Lay out glyphs via font.forEachGlyph — same path as Font.getPath (metrics + GPOS kerning).
+   * Supports line breaks; lines are center-aligned; opts.tracking adds InDesign-style tracking.
    */
   function glyphRunsForText(font, text, fontSize, variation, opts) {
     if (!text) return [];
-    var pathOpts = pathOptions(font, variation);
+    var pathOpts = pathOptions(font, variation, opts, fontSize);
     var lines = splitLines(text);
     var lineHeight = lineHeightPx(font, fontSize);
-    var gap = kerningGapPx(opts);
     var lineWidths = lines.map(function (line) {
-      return measureLineWidth(font, line, fontSize, pathOpts, gap);
+      return measureLineWidth(font, line, fontSize, pathOpts);
     });
     var maxLineWidth = 0;
     lineWidths.forEach(function (w) {
@@ -502,7 +450,7 @@
     for (var li = 0; li < lines.length; li++) {
       var y = li * lineHeight;
       var x0 = (maxLineWidth - lineWidths[li]) / 2;
-      layoutLineGlyphs(font, lines[li], x0, y, fontSize, pathOpts, opts, runs);
+      layoutLineGlyphs(font, lines[li], x0, y, fontSize, pathOpts, runs);
     }
 
     return runs;

@@ -390,13 +390,13 @@
           <span class="val" id="osVal">1.00×</span>
         </div>
         <div class="axis-row">
-          <label for="kn0">kern</label>
+          <label for="kn0">track</label>
           <div class="dual-range" id="knDual">
             <span class="dual-val" id="kn0Val">0%</span>
             <span class="dual-val" id="kn1Val">0%</span>
             <div class="dual-track"><div class="dual-fill" id="knFill"></div></div>
-            <input id="kn0" class="is-start" type="range" min="-100" max="100" step="1" value="0" aria-label="kerning start" />
-            <input id="kn1" class="is-end" type="range" min="-100" max="100" step="1" value="0" aria-label="kerning end" />
+            <input id="kn0" class="is-start" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking start" />
+            <input id="kn1" class="is-end" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking end" />
           </div>
         </div>
       </div>
@@ -621,7 +621,7 @@
             root: root,
             color: color,
             outlineScale: outlineScale(),
-            kerning: kerningPxAt(t),
+            tracking: kerningPxAt(t),
           };
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(
