@@ -93,20 +93,6 @@
         fill: none;
       }
 
-      .var-readout {
-        position: absolute;
-        left: 12px;
-        bottom: 12px;
-        z-index: 2;
-        margin: 0;
-        font-size: 11px;
-        line-height: 1.45;
-        color: var(--line);
-        opacity: 0.85;
-        pointer-events: none;
-        font-variant-numeric: tabular-nums;
-      }
-
       .probe {
         position: absolute;
         left: -9999px;
@@ -348,7 +334,6 @@
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="technical outline">
           <svg class="outline-layer" id="outlines" aria-hidden="true"></svg>
-          <p class="var-readout" id="varReadout" aria-hidden="true"></p>
           <span class="probe" id="probe">A</span>
         </div>
       </div>
@@ -477,7 +462,6 @@
         var outlineSvg = document.getElementById("outlines");
         var stage = document.getElementById("stage");
         var probe = document.getElementById("probe");
-        var varReadout = document.getElementById("varReadout");
         var FONT_URL = "../fonts/ABCIkarusPlusVariable.ttf";
         var root = document.documentElement;
 
@@ -542,15 +526,6 @@
 
         function applyVariation(v) {
           probe.style.fontVariationSettings = fvarSettings(v);
-          varReadout.textContent =
-            "wght " +
-            fmtAxis("wght", v.wght) +
-            " · CNTR " +
-            fmtAxis("CNTR", v.CNTR) +
-            "\nwdth " +
-            fmtAxis("wdth", v.wdth) +
-            " · slnt " +
-            fmtAxis("slnt", v.slnt);
         }
 
         function getText() {
