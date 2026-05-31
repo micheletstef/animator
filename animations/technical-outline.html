@@ -110,13 +110,11 @@
         right: 0;
         bottom: 0;
         z-index: 2;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         align-items: center;
-        gap: 6px 28px;
-        min-height: 52px;
-        padding: 14px 20px 16px;
+        min-height: 56px;
+        padding: 12px 28px 32px;
         font-size: 17px;
         line-height: 1;
         color: var(--line);
@@ -125,8 +123,9 @@
       }
 
       .var-readout-item {
-        display: inline-flex;
+        display: flex;
         align-items: baseline;
+        justify-content: center;
         gap: 8px;
         white-space: nowrap;
       }
