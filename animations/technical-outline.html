@@ -104,6 +104,41 @@
         text-align: center;
       }
 
+      .var-readout {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 8px 28px;
+        padding: 14px 20px 16px;
+        font-size: 13px;
+        line-height: 1;
+        color: var(--line);
+        pointer-events: none;
+      }
+
+      .var-readout-item {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 10px;
+        white-space: nowrap;
+      }
+
+      .var-readout-label {
+        opacity: 0.55;
+        letter-spacing: 0.02em;
+      }
+
+      .var-readout-value {
+        min-width: 3.5ch;
+        font-variant-numeric: tabular-nums;
+      }
+
       .panel {
         align-self: stretch;
         max-height: 100%;
@@ -335,6 +370,24 @@
         <div class="stage" id="stage" aria-label="technical outline">
           <svg class="outline-layer" id="outlines" aria-hidden="true"></svg>
           <span class="probe" id="probe">A</span>
+          <div class="var-readout" id="varReadout" aria-live="polite">
+            <span class="var-readout-item">
+              <span class="var-readout-label">Weight</span>
+              <span class="var-readout-value" id="readoutWght">500</span>
+            </span>
+            <span class="var-readout-item">
+              <span class="var-readout-label">Contour</span>
+              <span class="var-readout-value" id="readoutCntr">0.0</span>
+            </span>
+            <span class="var-readout-item">
+              <span class="var-readout-label">Width</span>
+              <span class="var-readout-value" id="readoutWdth">100</span>
+            </span>
+            <span class="var-readout-item">
+              <span class="var-readout-label">Slant</span>
+              <span class="var-readout-value" id="readoutSlnt">0</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -526,6 +579,20 @@
 
         function applyVariation(v) {
           probe.style.fontVariationSettings = fvarSettings(v);
+        }
+
+        var readoutEls = {
+          wght: document.getElementById("readoutWght"),
+          CNTR: document.getElementById("readoutCntr"),
+          wdth: document.getElementById("readoutWdth"),
+          slnt: document.getElementById("readoutSlnt"),
+        };
+
+        function updateVarReadout(v) {
+          readoutEls.wght.textContent = fmtAxis("wght", v.wght);
+          readoutEls.CNTR.textContent = fmtAxis("CNTR", v.CNTR);
+          readoutEls.wdth.textContent = fmtAxis("wdth", v.wdth);
+          readoutEls.slnt.textContent = fmtAxis("slnt", v.slnt);
         }
 
         function getText() {
@@ -730,6 +797,7 @@
           var v = variationAt(eased);
           applyFontSize(eased);
           applyVariation(v);
+          updateVarReadout(v);
           syncOutlines(v, null, eased);
 
           requestAnimationFrame(function (n2) {
@@ -932,6 +1000,7 @@
           var v0 = variationAt(0);
           applyFontSize(0);
           applyVariation(v0);
+          updateVarReadout(v0);
           if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(function () {
               syncOutlines(v0, null, 0);
