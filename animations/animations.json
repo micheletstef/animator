@@ -34,19 +34,19 @@
       "id": "marquee",
       "label": "names marquee",
       "url": "animations/marquee.html",
-      "mtime": 1778967739
+      "mtime": 1779028298
     },
     {
-      "id": "spf",
+      "id": "psi",
       "label": "PSI 5 → 60",
-      "url": "animations/spf.html",
-      "mtime": 1778855150
+      "url": "animations/psi.html",
+      "mtime": 1780260703
     },
     {
       "id": "technical-outline",
       "label": "technical outline",
       "url": "animations/technical-outline.html",
-      "mtime": 1779007834
+      "mtime": 1779020867
     },
     {
       "id": "wave",
