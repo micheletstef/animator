@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SPF 50+ → 8</title>
+    <title>PSI 5 → 60</title>
     <style>
       @font-face {
         font-family: "IkarusVariable";
@@ -314,10 +314,10 @@
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="SPF animation">
+        <div class="stage" id="stage" aria-label="PSI animation">
           <div class="lockup" id="lockup">
-            <span class="line">SPF</span>
-            <span class="num" id="num"><span class="digits" id="digits">50</span><span class="plus" id="plus">+</span></span>
+            <span class="line">PSI</span>
+            <span class="num no-plus" id="num"><span class="digits" id="digits">5</span><span class="plus" id="plus">+</span></span>
           </div>
         </div>
       </div>
@@ -410,8 +410,8 @@
         var num = document.getElementById("num");
         var digits = document.getElementById("digits");
 
-        var START = 50;
-        var END = 8;
+        var START = 5;
+        var END = 60;
         var W_MAX = 1000;
         var W_MIN = 200;
 
@@ -461,12 +461,6 @@
             digits.textContent = String(value);
           }
 
-          if (p > 0.001) {
-            num.classList.add("no-plus");
-          } else {
-            num.classList.remove("no-plus");
-          }
-
           lockup.style.fontVariationSettings = '"wght" ' + weight;
           root.style.setProperty("--tracking", tracking);
 
@@ -475,7 +469,7 @@
           });
         }
 
-        var LS_KEY = "spf-anim:settings:v1";
+        var LS_KEY = "psi-anim:settings:v1";
         var root = document.documentElement;
 
         var DEFAULTS = {
