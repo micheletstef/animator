@@ -114,15 +114,13 @@
         flex-wrap: wrap;
         justify-content: center;
         align-items: center;
-        gap: 6px 24px;
-        min-height: 48px;
-        padding: 12px 20px 14px;
-        font-size: 14px;
+        gap: 6px 28px;
+        min-height: 52px;
+        padding: 14px 20px 16px;
+        font-size: 17px;
         line-height: 1;
         color: var(--line);
         background: var(--bg);
-        border-top: 1px solid color-mix(in srgb, var(--line) 28%, transparent);
-        box-shadow: 0 -10px 24px color-mix(in srgb, var(--bg) 88%, transparent);
         pointer-events: none;
       }
 
@@ -381,7 +379,7 @@
             </span>
             <span class="var-readout-item">
               <span class="var-readout-label">Contour</span>
-              <span class="var-readout-value" id="readoutCntr">0.0</span>
+              <span class="var-readout-value" id="readoutCntr">0</span>
             </span>
             <span class="var-readout-item">
               <span class="var-readout-label">Width</span>
@@ -549,6 +547,10 @@
           return String(v);
         }
 
+        function fmtReadout(tag, v) {
+          return String(Math.ceil(Number(v)));
+        }
+
         function fvarSettings(v) {
           return (
             '"wght" ' +
@@ -593,10 +595,10 @@
         };
 
         function updateVarReadout(v) {
-          readoutEls.wght.textContent = fmtAxis("wght", v.wght);
-          readoutEls.CNTR.textContent = fmtAxis("CNTR", v.CNTR);
-          readoutEls.wdth.textContent = fmtAxis("wdth", v.wdth);
-          readoutEls.slnt.textContent = fmtAxis("slnt", v.slnt);
+          readoutEls.wght.textContent = fmtReadout("wght", v.wght);
+          readoutEls.CNTR.textContent = fmtReadout("CNTR", v.CNTR);
+          readoutEls.wdth.textContent = fmtReadout("wdth", v.wdth);
+          readoutEls.slnt.textContent = fmtReadout("slnt", v.slnt);
         }
 
         function getText() {
