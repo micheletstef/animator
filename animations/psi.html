@@ -192,21 +192,44 @@
         font-variant-numeric: tabular-nums;
       }
 
-      .row.row-wide-val {
-        grid-template-columns: 64px 1fr 100px;
+      .axis-row {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .axis-row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
       }
 
       .dual-range {
         position: relative;
         width: 100%;
-        height: 22px;
+        height: 40px;
+        min-width: 0;
+      }
+
+      .dual-val {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        font-size: 10px;
+        line-height: 1.2;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+        z-index: 2;
+        white-space: nowrap;
       }
 
       .dual-track {
         position: absolute;
         left: 7px;
         right: 7px;
-        top: 50%;
+        top: 24px;
         height: 3px;
         transform: translateY(-50%);
         background: #2a2a2a;
@@ -224,9 +247,11 @@
 
       .dual-range input[type="range"] {
         position: absolute;
-        inset: 0;
+        left: 0;
+        right: 0;
+        top: 14px;
         width: 100%;
-        height: 100%;
+        height: 22px;
         margin: 0;
         background: transparent;
         pointer-events: none;
@@ -354,9 +379,11 @@
           <input id="lh" type="range" min="0.6" max="1.6" step="0.01" value="0.86" />
           <span class="val" id="lhVal">0.86</span>
         </div>
-        <div class="row row-wide-val">
+        <div class="axis-row">
           <label for="trMax">kerning</label>
           <div class="dual-range" id="kernDual">
+            <span class="dual-val" id="trMaxVal">-35</span>
+            <span class="dual-val" id="trMinVal">-120</span>
             <div class="dual-track"><div class="dual-fill" id="kernFill"></div></div>
             <input
               id="trMax"
@@ -379,7 +406,6 @@
               aria-label="Kerning end"
             />
           </div>
-          <span class="val" id="kernVal">-35 / -120</span>
         </div>
       </div>
 
@@ -506,7 +532,8 @@
           ph: document.getElementById("phVal"),
         };
 
-        var kernVal = document.getElementById("kernVal");
+        var trMaxVal = document.getElementById("trMaxVal");
+        var trMinVal = document.getElementById("trMinVal");
         var kernFill = document.getElementById("kernFill");
 
         function fmt(key, v) {
@@ -515,6 +542,12 @@
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "lh") return Number(v).toFixed(2);
           return Math.round(Number(v)) + "px";
+        }
+
+        function thumbPct(el) {
+          var min = parseFloat(el.min);
+          var max = parseFloat(el.max);
+          return ((parseFloat(el.value) - min) / (max - min)) * 100;
         }
 
         function updateKernUI() {
@@ -528,8 +561,10 @@
           var hiPct = ((hi - min) / (max - min)) * 100;
           kernFill.style.left = loPct + "%";
           kernFill.style.width = Math.max(0, hiPct - loPct) + "%";
-          kernVal.textContent =
-            Math.round(a * 1000) + " / " + Math.round(b * 1000);
+          trMaxVal.textContent = String(Math.round(a * 1000));
+          trMinVal.textContent = String(Math.round(b * 1000));
+          trMaxVal.style.left = thumbPct(els.trMax) + "%";
+          trMinVal.style.left = thumbPct(els.trMin) + "%";
         }
 
         function applyVar(key, v) {
