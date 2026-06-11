@@ -818,13 +818,21 @@
           return {
             stepDur: stepDur,
             pause: pause,
-            total: 5 * stepDur + 4 * pause,
+            total: 5 * stepDur + 5 * pause,
           };
+        }
+
+        function cycleElapsed(elapsed) {
+          var timing = stepTiming();
+          if (!timing.total) return 0;
+          var t = elapsed % timing.total;
+          if (t < 0) t += timing.total;
+          return t;
         }
 
         function sequentialAxisFromElapsed(elapsed) {
           var timing = stepTiming();
-          var t = ((elapsed % timing.total) + timing.total) % timing.total;
+          var t = cycleElapsed(elapsed);
           var wght = 0;
           var wdth = 0;
           var cntr = 0;
@@ -887,6 +895,9 @@
             function () {
               return runAnim(1, 0, 0, 0, 1, 0, timing.stepDur);
             },
+            function () {
+              return runPause(timing.pause, 0, 0, 0);
+            },
           ];
 
           for (var i = 0; i < segments.length; i++) {
@@ -897,12 +908,24 @@
         }
 
         function motionPhaseFromElapsed(elapsed) {
-          var seq = sequentialAxisFromElapsed(elapsed);
+          var seq = sequentialAxisCached(elapsed);
           return Math.max(seq.wght, seq.wdth, seq.cntr);
         }
 
+        var seqCacheElapsed = -1;
+        var seqCacheResult = null;
+
+        function sequentialAxisCached(elapsed) {
+          var t = cycleElapsed(elapsed);
+          if (t !== seqCacheElapsed) {
+            seqCacheElapsed = t;
+            seqCacheResult = sequentialAxisFromElapsed(elapsed);
+          }
+          return seqCacheResult;
+        }
+
         function variationFromElapsed(elapsed) {
-          var seq = sequentialAxisFromElapsed(elapsed);
+          var seq = sequentialAxisCached(elapsed);
           return {
             wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, seq.wght)),
             CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, seq.cntr)),
@@ -1128,6 +1151,7 @@
         }
 
         function frame(now, t0) {
+          seqCacheElapsed = -1;
           var elapsed = now - t0;
           var v = variationFromElapsed(elapsed);
           applyVariation(v);
