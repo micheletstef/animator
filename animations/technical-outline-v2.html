@@ -74,10 +74,23 @@
         transform-origin: top left;
       }
 
+      .drag-surface {
+        position: absolute;
+        inset: 0;
+        bottom: 64px;
+        z-index: 1;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .drag-surface.is-dragging {
+        cursor: grabbing;
+      }
+
       .outline-layer {
         position: absolute;
         inset: 0;
-        z-index: 1;
+        z-index: 2;
         width: 100%;
         height: 100%;
         pointer-events: none;
@@ -369,6 +382,7 @@
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="technical outline">
+          <div class="drag-surface" id="dragSurface" aria-hidden="true"></div>
           <svg class="outline-layer" id="outlines" aria-hidden="true"></svg>
           <span class="probe" id="probe">A</span>
           <div class="var-readout" id="varReadout" aria-live="polite">
@@ -389,10 +403,12 @@
       </div>
     </div>
     <input type="hidden" id="zm" value="1" />
+    <input type="hidden" id="tx" value="0" />
+    <input type="hidden" id="ty" value="0" />
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom · weight and width animate first, then contour</p>
+      <p class="hint">shift + scroll to zoom · drag text on canvas · weight → width → contour</p>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -488,14 +504,14 @@
       <div class="group">
         <p class="group-title">motion</p>
         <div class="row">
-          <label for="cy">cycle</label>
-          <input id="cy" type="range" min="1500" max="12000" step="100" value="5200" />
-          <span class="val" id="cyVal">5.2s</span>
+          <label for="cy">step</label>
+          <input id="cy" type="range" min="400" max="4000" step="50" value="1200" />
+          <span class="val" id="cyVal">1.2s</span>
         </div>
         <div class="row">
-          <label for="hd">hold</label>
-          <input id="hd" type="range" min="0" max="2000" step="50" value="450" />
-          <span class="val" id="hdVal">450ms</span>
+          <label for="sp">pause</label>
+          <input id="sp" type="range" min="0" max="2000" step="50" value="450" />
+          <span class="val" id="spVal">450ms</span>
         </div>
       </div>
 
@@ -511,9 +527,13 @@
       (function () {
         var outlineSvg = document.getElementById("outlines");
         var stage = document.getElementById("stage");
+        var dragSurface = document.getElementById("dragSurface");
         var probe = document.getElementById("probe");
         var FONT_URL = "../fonts/ABCIkarusPlusVariable.ttf";
         var root = document.documentElement;
+        var textOffset = { x: 0, y: 0 };
+        var textDrag = null;
+        var animT0 = 0;
 
         var FS = { min: 200, max: 1600, step: 1, default: 900 };
 
@@ -569,26 +589,113 @@
           return start + (end - start) * eased;
         }
 
-        function sequentialAxisEase(p) {
-          var wghtWdth, cntr;
-          if (p <= 0.5) {
-            wghtWdth = easeInOutCubic(p * 2);
-            cntr = 0;
-          } else {
-            wghtWdth = 1;
-            cntr = easeInOutCubic((p - 0.5) * 2);
+        function stepTiming() {
+          var stepDur = Math.max(200, parseFloat(els.cy.value));
+          var pause = Math.max(0, parseFloat(els.sp.value));
+          return {
+            stepDur: stepDur,
+            pause: pause,
+            total: 6 * stepDur + 5 * pause,
+          };
+        }
+
+        function sequentialAxisFromElapsed(elapsed) {
+          var timing = stepTiming();
+          var t = elapsed % timing.total;
+          var wght = 0;
+          var wdth = 0;
+          var cntr = 0;
+
+          function runAnim(w0, w1, d0, d1, c0, c1, dur) {
+            if (t >= dur) {
+              t -= dur;
+              wght = w1;
+              wdth = d1;
+              cntr = c1;
+              return true;
+            }
+            var e = easeInOutCubic(t / dur);
+            wght = w0 + (w1 - w0) * e;
+            wdth = d0 + (d1 - d0) * e;
+            cntr = c0 + (c1 - c0) * e;
+            return false;
           }
-          return { wghtWdth: wghtWdth, cntr: cntr };
+
+          function runPause(dur, hw, hd, hc) {
+            if (t >= dur) {
+              t -= dur;
+              wght = hw;
+              wdth = hd;
+              cntr = hc;
+              return true;
+            }
+            wght = hw;
+            wdth = hd;
+            cntr = hc;
+            return false;
+          }
+
+          var segments = [
+            function () {
+              return runAnim(0, 1, 0, 0, 0, 0, timing.stepDur);
+            },
+            function () {
+              return runPause(timing.pause, 1, 0, 0);
+            },
+            function () {
+              return runAnim(1, 1, 0, 1, 0, 0, timing.stepDur);
+            },
+            function () {
+              return runPause(timing.pause, 1, 1, 0);
+            },
+            function () {
+              return runAnim(1, 1, 1, 1, 0, 1, timing.stepDur);
+            },
+            function () {
+              return runPause(timing.pause, 1, 1, 1);
+            },
+            function () {
+              return runAnim(1, 1, 0, 0, 1, 0, timing.stepDur);
+            },
+            function () {
+              return runPause(timing.pause, 1, 1, 0);
+            },
+            function () {
+              return runAnim(1, 1, 1, 0, 0, 0, timing.stepDur);
+            },
+            function () {
+              return runPause(timing.pause, 1, 0, 0);
+            },
+            function () {
+              return runAnim(1, 0, 0, 0, 0, 0, timing.stepDur);
+            },
+          ];
+
+          for (var i = 0; i < segments.length; i++) {
+            if (!segments[i]()) break;
+          }
+
+          return { wght: wght, wdth: wdth, cntr: cntr };
+        }
+
+        function motionPhaseFromElapsed(elapsed) {
+          var timing = stepTiming();
+          if (!timing.total) return 0;
+          return (elapsed % timing.total) / timing.total;
+        }
+
+        function variationFromElapsed(elapsed) {
+          var seq = sequentialAxisFromElapsed(elapsed);
+          return {
+            wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, seq.wght)),
+            CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, seq.cntr)),
+            wdth: clampAxis("wdth", lerpFromRange(els.dMin, els.dMax, seq.wdth)),
+            slnt: clampAxis("slnt", parseFloat(els.sMin.value)),
+          };
         }
 
         function variationAt(eased) {
-          var seq = sequentialAxisEase(eased);
-          return {
-            wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, seq.wghtWdth)),
-            CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, seq.cntr)),
-            wdth: clampAxis("wdth", lerpFromRange(els.dMin, els.dMax, seq.wghtWdth)),
-            slnt: clampAxis("slnt", lerpFromRange(els.sMin, els.sMax, seq.wghtWdth)),
-          };
+          return variationFromElapsed(eased * stepTiming().total);
         }
 
         function applyVariation(v) {
@@ -721,11 +828,24 @@
             : getComputedStyle(root).getPropertyValue("--line").trim() || "#0078ff";
         }
 
-        function syncOutlines(v, extra, eased) {
+        function readZoom() {
+          return parseFloat(getComputedStyle(root).getPropertyValue("--zoom")) || 1;
+        }
+
+        function syncOutlines(v, extra, eased, elapsed) {
           if (!window.GlyphOutlines) return;
-          var t = eased != null && isFinite(eased) ? eased : 0;
-          applyFontSize(t);
-          var variation = v || variationAt(t);
+          var motionT =
+            elapsed != null && isFinite(elapsed)
+              ? motionPhaseFromElapsed(elapsed)
+              : eased != null && isFinite(eased)
+                ? eased
+                : 0;
+          applyFontSize(motionT);
+          var variation =
+            v ||
+            (elapsed != null && isFinite(elapsed)
+              ? variationFromElapsed(elapsed)
+              : variationAt(motionT));
           var color = outlineColor();
           outlineSvg.style.color = color;
           var opts = {
@@ -733,7 +853,9 @@
             root: root,
             color: color,
             outlineScale: outlineScale(),
-            tracking: kerningPxAt(t),
+            tracking: kerningPxAt(motionT),
+            offsetX: textOffset.x,
+            offsetY: textOffset.y,
           };
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(
@@ -788,36 +910,18 @@
         }
 
         function frame(now, t0) {
-          var cycle = Math.max(200, parseFloat(els.cy.value));
-          var hold = Math.max(0, parseFloat(els.hd.value));
-          var halfCycle = cycle / 2;
-          var total = cycle + 2 * hold;
-          var elapsed = (now - t0) % total;
-          var p;
-
-          if (elapsed < halfCycle) {
-            p = elapsed / halfCycle;
-          } else if (elapsed < halfCycle + hold) {
-            p = 1;
-          } else if (elapsed < halfCycle + hold + halfCycle) {
-            p = 1 - (elapsed - halfCycle - hold) / halfCycle;
-          } else {
-            p = 0;
-          }
-
-          var eased = easeInOutCubic(p);
-          var v = variationAt(eased);
-          applyFontSize(eased);
+          var elapsed = now - t0;
+          var v = variationFromElapsed(elapsed);
           applyVariation(v);
           updateVarReadout(v);
-          syncOutlines(v, null, eased);
+          syncOutlines(v, null, null, elapsed);
 
           requestAnimationFrame(function (n2) {
             frame(n2, t0);
           });
         }
 
-        var LS_KEY = "technical-outline-v2:v1";
+        var LS_KEY = "technical-outline-v2:v2";
         var DEFAULTS = {
           zm: 1,
           bg: "#ffffff",
@@ -828,6 +932,8 @@
           os: 100,
           kn0: 0,
           kn1: 0,
+          tx: 0,
+          ty: 0,
           wMin: 200,
           wMax: 1000,
           cMin: 0,
@@ -836,14 +942,16 @@
           dMax: 130,
           sMin: 0,
           sMax: -12,
-          cy: 5200,
-          hd: 450,
+          cy: 1200,
+          sp: 450,
         };
 
         var COLOR_KEYS = { bg: 1, ln: 1 };
         var STRING_KEYS = { ch: 1 };
         var els = {
           zm: document.getElementById("zm"),
+          tx: document.getElementById("tx"),
+          ty: document.getElementById("ty"),
           bg: document.getElementById("bg"),
           ln: document.getElementById("ln"),
           ch: document.getElementById("ch"),
@@ -861,7 +969,7 @@
           sMin: document.getElementById("sMin"),
           sMax: document.getElementById("sMax"),
           cy: document.getElementById("cy"),
-          hd: document.getElementById("hd"),
+          sp: document.getElementById("sp"),
         };
 
         var vals = {
@@ -869,7 +977,7 @@
           ln: document.getElementById("lnVal"),
           os: document.getElementById("osVal"),
           cy: document.getElementById("cyVal"),
-          hd: document.getElementById("hdVal"),
+          sp: document.getElementById("spVal"),
         };
 
         function dualSpecForKey(key) {
@@ -884,7 +992,7 @@
           if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
-          if (key === "hd") return Math.round(Number(v)) + "ms";
+          if (key === "sp") return Math.round(Number(v)) + "ms";
           return String(v);
         }
 
@@ -919,7 +1027,9 @@
             key === "kn0" ||
             key === "kn1" ||
             key === "fs0" ||
-            key === "fs1"
+            key === "fs1" ||
+            key === "tx" ||
+            key === "ty"
           ) {
             var previewEased =
               key === "kn1" || key === "fs1" ? 1 : key === "kn0" || key === "fs0" ? 0 : 0;
@@ -961,6 +1071,7 @@
                 data.fs0 = data.fs;
                 data.fs1 = data.fs;
               }
+              if (data.sp == null && data.hd != null) data.sp = data.hd;
             } catch (e) {}
           }
           if (!raw) {
@@ -977,9 +1088,61 @@
             } catch (e2) {}
           }
           data.zm = ArtboardZoom.resolve(data.zm);
+          textOffset.x = data.tx != null ? data.tx : DEFAULTS.tx;
+          textOffset.y = data.ty != null ? data.ty : DEFAULTS.ty;
           Object.keys(els).forEach(function (k) {
             setValue(k, data[k], false);
           });
+        }
+
+        function applyTextOffset() {
+          textOffset.x = els.tx != null ? parseFloat(els.tx.value) : DEFAULTS.tx;
+          textOffset.y = els.ty != null ? parseFloat(els.ty.value) : DEFAULTS.ty;
+        }
+
+        function persistTextOffset() {
+          els.tx.value = textOffset.x;
+          els.ty.value = textOffset.y;
+          save();
+        }
+
+        function bindTextDrag() {
+          if (!dragSurface) return;
+
+          dragSurface.addEventListener("pointerdown", function (e) {
+            if (e.button !== 0) return;
+            textDrag = {
+              x: e.clientX,
+              y: e.clientY,
+              ox: textOffset.x,
+              oy: textOffset.y,
+            };
+            dragSurface.classList.add("is-dragging");
+            try {
+              dragSurface.setPointerCapture(e.pointerId);
+            } catch (err) {}
+          });
+
+          dragSurface.addEventListener("pointermove", function (e) {
+            if (!textDrag) return;
+            var z = readZoom();
+            textOffset.x = textDrag.ox + (e.clientX - textDrag.x) / z;
+            textOffset.y = textDrag.oy + (e.clientY - textDrag.y) / z;
+            syncOutlines(variationFromElapsed(performance.now() - animT0), null, null, performance.now() - animT0);
+          });
+
+          function endDrag(e) {
+            if (!textDrag) return;
+            textDrag = null;
+            dragSurface.classList.remove("is-dragging");
+            try {
+              dragSurface.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+            persistTextOffset();
+          }
+
+          dragSurface.addEventListener("pointerup", endDrag);
+          dragSurface.addEventListener("pointercancel", endDrag);
         }
 
         ArtboardZoom.onChange(function (z) {
@@ -999,31 +1162,35 @@
           Object.keys(DEFAULTS).forEach(function (k) {
             setValue(k, DEFAULTS[k]);
           });
+          applyTextOffset();
         });
 
         applyAxisLimits();
         load();
         applyChar();
+        applyTextOffset();
+        bindTextDrag();
         updateAllDualUI();
         updateKernDualUI();
         updateFsDualUI();
 
         function start() {
-          var v0 = variationAt(0);
+          animT0 = performance.now();
+          var v0 = variationFromElapsed(0);
           applyFontSize(0);
           applyVariation(v0);
           updateVarReadout(v0);
           if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(function () {
-              syncOutlines(v0, null, 0);
+              syncOutlines(v0, null, null, 0);
               requestAnimationFrame(function (n) {
-                frame(n, n);
+                frame(n, animT0);
               });
             });
           } else {
-            syncOutlines(v0, null, 0);
+            syncOutlines(v0, null, null, 0);
             requestAnimationFrame(function (n) {
-              frame(n, n);
+              frame(n, animT0);
             });
           }
         }

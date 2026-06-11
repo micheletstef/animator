@@ -227,21 +227,25 @@
   }
 
   /** Map path coordinates so the anchor sits at the artboard center. */
-  function placement(stageEl, root, anchor) {
+  function placement(stageEl, root, anchor, opts) {
     var zoom = readZoom(root);
     var stageRect = stageEl.getBoundingClientRect();
     var stageW = stageRect.width / zoom;
     var stageH = stageRect.height / zoom;
     var stageCx = stageW / 2;
     var stageCy = stageH / 2;
+    var offsetX = opts && opts.offsetX != null ? Number(opts.offsetX) : 0;
+    var offsetY = opts && opts.offsetY != null ? Number(opts.offsetY) : 0;
+    if (!isFinite(offsetX)) offsetX = 0;
+    if (!isFinite(offsetY)) offsetY = 0;
 
     var pathCx = anchor.cx;
     var pathCy = anchor.cy;
 
     var map = function (ox, oy) {
       return {
-        x: stageCx + (ox - pathCx),
-        y: stageCy + (oy - pathCy),
+        x: stageCx + (ox - pathCx) + offsetX,
+        y: stageCy + (oy - pathCy) + offsetY,
       };
     };
 
@@ -681,7 +685,7 @@
     var anchor = placementAnchorForRuns(runs);
     if (!anchor) return;
 
-    var place = placement(stageEl, root, anchor);
+    var place = placement(stageEl, root, anchor, opts);
     var map = place.map;
     var scale =
       opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
