@@ -99,6 +99,7 @@
         pointer-events: none !important;
         overflow: visible;
         color: var(--line);
+        shape-rendering: geometricPrecision;
       }
 
       .outline-layer * {
@@ -858,6 +859,7 @@
             tracking: kerningPxAt(motionT),
             offsetX: textOffset.x,
             offsetY: textOffset.y,
+            stableAnchor: true,
           };
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(

@@ -83,6 +83,7 @@
         pointer-events: none;
         overflow: visible;
         color: var(--line);
+        shape-rendering: geometricPrecision;
       }
 
       .outline-layer .glyph-outline-path,
@@ -721,6 +722,7 @@
             color: color,
             outlineScale: outlineScale(),
             tracking: kerningPxAt(t),
+            stableAnchor: true,
           };
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(

@@ -226,6 +226,38 @@
     return { cx: cx, cy: cy };
   }
 
+  /** Layout anchor from advances + font metrics — stable while ink bounds shift during animation. */
+  function layoutPlacementAnchor(font, fontSize, text, runs) {
+    if (!runs.length) return null;
+    var lines = splitLines(text);
+    var lineHeight = lineHeightPx(font, fontSize);
+    var asc = (font.ascender / font.unitsPerEm) * fontSize;
+    var desc = (font.descender / font.unitsPerEm) * fontSize;
+    var emMid = (asc + desc) / 2;
+    var minX = Infinity;
+    var maxX = -Infinity;
+
+    runs.forEach(function (r) {
+      if (!isFinite(r.x)) return;
+      minX = Math.min(minX, r.x);
+      maxX = Math.max(maxX, r.x + (r.advance || 0));
+    });
+
+    if (!isFinite(minX) || !isFinite(maxX)) return null;
+
+    return {
+      cx: (minX + maxX) / 2,
+      cy: emMid + ((lines.length - 1) * lineHeight) / 2,
+    };
+  }
+
+  function resolvePlacementAnchor(font, fontSize, text, runs, opts) {
+    if (opts && opts.stableAnchor) {
+      return layoutPlacementAnchor(font, fontSize, text, runs) || placementAnchorForRuns(runs);
+    }
+    return placementAnchorForRuns(runs);
+  }
+
   /** Map path coordinates so the anchor sits at the artboard center. */
   function placement(stageEl, root, anchor) {
     var zoom = readZoom(root);
@@ -394,7 +426,7 @@
 
   function fmt(n) {
     if (!isFinite(n)) return "0";
-    return String(Math.round(n * 1000) / 1000);
+    return String(Math.round(n * 100) / 100);
   }
 
   function clearSvg(svg) {
@@ -687,7 +719,7 @@
     var runs = glyphRunsForText(font, text, fontSize, variation, opts);
     if (!runs.length) return;
 
-    var anchor = placementAnchorForRuns(runs);
+    var anchor = resolvePlacementAnchor(font, fontSize, text, runs, opts);
     if (!anchor) return;
 
     var place = placement(stageEl, root, anchor);
