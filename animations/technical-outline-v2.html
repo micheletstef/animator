@@ -588,7 +588,9 @@
         }
 
         function easeInOut(t) {
-          return 0.5 - 0.5 * Math.cos(Math.PI * t);
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         }
 
         function lerpFromRange(minEl, maxEl, eased) {
@@ -682,9 +684,8 @@
         }
 
         function motionPhaseFromElapsed(elapsed) {
-          var timing = stepTiming();
-          if (!timing.total) return 0;
-          return (elapsed % timing.total) / timing.total;
+          var seq = sequentialAxisFromElapsed(elapsed);
+          return Math.max(seq.wght, seq.wdth, seq.cntr);
         }
 
         function variationFromElapsed(elapsed) {
