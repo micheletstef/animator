@@ -586,8 +586,8 @@
           );
         }
 
-        function easeInOutCubic(t) {
-          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        function easeInOut(t) {
+          return 0.5 - 0.5 * Math.cos(Math.PI * t);
         }
 
         function lerpFromRange(minEl, maxEl, eased) {
@@ -608,7 +608,7 @@
 
         function sequentialAxisFromElapsed(elapsed) {
           var timing = stepTiming();
-          var t = elapsed % timing.total;
+          var t = ((elapsed % timing.total) + timing.total) % timing.total;
           var wght = 0;
           var wdth = 0;
           var cntr = 0;
@@ -621,7 +621,7 @@
               cntr = c1;
               return true;
             }
-            var e = easeInOutCubic(t / dur);
+            var e = easeInOut(t / dur);
             wght = w0 + (w1 - w0) * e;
             wdth = d0 + (d1 - d0) * e;
             cntr = c0 + (c1 - c0) * e;
@@ -642,6 +642,7 @@
             return false;
           }
 
+          // 1 → 2 → 3 → 2 → 1 — contour resets with step 1 on the return
           var segments = [
             function () {
               return runAnim(0, 1, 0, 0, 0, 0, timing.stepDur);
@@ -662,13 +663,13 @@
               return runPause(timing.pause, 1, 1, 1);
             },
             function () {
-              return runAnim(1, 1, 1, 0, 1, 0, timing.stepDur);
+              return runAnim(1, 1, 1, 0, 1, 1, timing.stepDur);
             },
             function () {
-              return runPause(timing.pause, 1, 0, 0);
+              return runPause(timing.pause, 1, 0, 1);
             },
             function () {
-              return runAnim(1, 0, 0, 0, 0, 0, timing.stepDur);
+              return runAnim(1, 0, 0, 0, 1, 0, timing.stepDur);
             },
           ];
 
