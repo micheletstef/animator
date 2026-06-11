@@ -812,13 +812,20 @@
           return start + (end - start) * eased;
         }
 
+        function clamp01(v) {
+          return Math.max(0, Math.min(1, Number(v)));
+        }
+
         function stepTiming() {
           var stepDur = Math.max(200, parseFloat(els.cy.value));
           var pause = Math.max(0, parseFloat(els.sp.value));
+          var overlap = Math.min(pause * 0.5, stepDur * 0.35, 280);
+          if (pause > 0) overlap = Math.min(overlap, pause * 0.85);
           return {
             stepDur: stepDur,
             pause: pause,
-            total: 5 * stepDur + 5 * pause,
+            overlap: overlap,
+            total: 5 * stepDur + 5 * pause - 4 * overlap,
           };
         }
 
@@ -830,81 +837,107 @@
           return t;
         }
 
-        function sequentialAxisFromElapsed(elapsed) {
+        var keyframeCacheKey = "";
+        var keyframeCache = null;
+
+        function buildKeyframes(timing) {
+          var s = timing.stepDur;
+          var p = timing.pause;
+          var o = timing.overlap;
+          var kf = [];
+
+          function add(time, w, d, c) {
+            kf.push({ t: time, w: w, d: d, c: c });
+          }
+
+          // 1 → 2 → 3 → 2 → 1 with soft crossfades into each pause
+          add(0, 0, 0, 0);
+          add(s, 1, 0, 0);
+          add(s + Math.max(0, p - o), 1, 0, 0);
+          add(2 * s + p - o, 1, 1, 0);
+          add(2 * s + 2 * p - 2 * o, 1, 1, 0);
+          add(3 * s + 2 * p - 2 * o, 1, 1, 1);
+          add(3 * s + 3 * p - 3 * o, 1, 1, 1);
+          add(4 * s + 3 * p - 3 * o, 1, 0, 1);
+          add(4 * s + 4 * p - 4 * o, 1, 0, 1);
+          add(5 * s + 4 * p - 4 * o, 0, 0, 0);
+          add(5 * s + 5 * p - 4 * o, 0, 0, 0);
+
+          return kf;
+        }
+
+        function getKeyframes() {
           var timing = stepTiming();
-          var t = cycleElapsed(elapsed);
-          var wght = 0;
-          var wdth = 0;
-          var cntr = 0;
+          var key = timing.stepDur + "|" + timing.pause + "|" + timing.overlap;
+          if (key !== keyframeCacheKey) {
+            keyframeCacheKey = key;
+            keyframeCache = buildKeyframes(timing);
+          }
+          return keyframeCache;
+        }
 
-          function runAnim(w0, w1, d0, d1, c0, c1, dur) {
-            if (t >= dur) {
-              t -= dur;
-              wght = w1;
-              wdth = d1;
-              cntr = c1;
-              return true;
+        function catmullRom1D(p0, p1, p2, p3, u) {
+          var u2 = u * u;
+          var u3 = u2 * u;
+          return (
+            0.5 *
+            (2 * p1 +
+              (-p0 + p2) * u +
+              (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 +
+              (-p0 + 3 * p1 - 3 * p2 + p3) * u3)
+          );
+        }
+
+        function segmentAnimates(a, b) {
+          return a.w !== b.w || a.d !== b.d || a.c !== b.c;
+        }
+
+        function sampleKeyframes(time) {
+          var kf = getKeyframes();
+          if (!kf.length) return { wght: 0, wdth: 0, cntr: 0 };
+
+          if (time <= kf[0].t) {
+            return { wght: kf[0].w, wdth: kf[0].d, cntr: kf[0].c };
+          }
+
+          var last = kf[kf.length - 1];
+          if (time >= last.t) {
+            return { wght: last.w, wdth: last.d, cntr: last.c };
+          }
+
+          for (var i = 0; i < kf.length - 1; i++) {
+            var k1 = kf[i];
+            var k2 = kf[i + 1];
+            if (time < k1.t || time > k2.t) continue;
+
+            var span = k2.t - k1.t;
+            if (span <= 0) {
+              return { wght: k2.w, wdth: k2.d, cntr: k2.c };
             }
-            var e = easeInOut(t / dur);
-            wght = w0 + (w1 - w0) * e;
-            wdth = d0 + (d1 - d0) * e;
-            cntr = c0 + (c1 - c0) * e;
-            return false;
+
+            var u = (time - k1.t) / span;
+            if (segmentAnimates(k1, k2)) u = easeInOut(u);
+
+            var k0 = kf[Math.max(0, i - 1)];
+            var k3 = kf[Math.min(kf.length - 1, i + 2)];
+
+            return {
+              wght: clamp01(catmullRom1D(k0.w, k1.w, k2.w, k3.w, u)),
+              wdth: clamp01(catmullRom1D(k0.d, k1.d, k2.d, k3.d, u)),
+              cntr: clamp01(catmullRom1D(k0.c, k1.c, k2.c, k3.c, u)),
+            };
           }
 
-          function runPause(dur, hw, hd, hc) {
-            if (t >= dur) {
-              t -= dur;
-              wght = hw;
-              wdth = hd;
-              cntr = hc;
-              return true;
-            }
-            wght = hw;
-            wdth = hd;
-            cntr = hc;
-            return false;
-          }
+          return { wght: last.w, wdth: last.d, cntr: last.c };
+        }
 
-          // 1 → 2 → 3 → 2 → 1 — contour resets with step 1 on the return
-          var segments = [
-            function () {
-              return runAnim(0, 1, 0, 0, 0, 0, timing.stepDur);
-            },
-            function () {
-              return runPause(timing.pause, 1, 0, 0);
-            },
-            function () {
-              return runAnim(1, 1, 0, 1, 0, 0, timing.stepDur);
-            },
-            function () {
-              return runPause(timing.pause, 1, 1, 0);
-            },
-            function () {
-              return runAnim(1, 1, 1, 1, 0, 1, timing.stepDur);
-            },
-            function () {
-              return runPause(timing.pause, 1, 1, 1);
-            },
-            function () {
-              return runAnim(1, 1, 1, 0, 1, 1, timing.stepDur);
-            },
-            function () {
-              return runPause(timing.pause, 1, 0, 1);
-            },
-            function () {
-              return runAnim(1, 0, 0, 0, 1, 0, timing.stepDur);
-            },
-            function () {
-              return runPause(timing.pause, 0, 0, 0);
-            },
-          ];
-
-          for (var i = 0; i < segments.length; i++) {
-            if (!segments[i]()) break;
-          }
-
-          return { wght: wght, wdth: wdth, cntr: cntr };
+        function sequentialAxisFromElapsed(elapsed) {
+          var sampled = sampleKeyframes(cycleElapsed(elapsed));
+          return {
+            wght: sampled.wght,
+            wdth: sampled.wdth,
+            cntr: sampled.cntr,
+          };
         }
 
         function motionPhaseFromElapsed(elapsed) {
