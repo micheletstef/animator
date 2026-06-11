@@ -449,7 +449,7 @@
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom · drag text on canvas · weight → width → contour → width → weight</p>
+      <p class="hint">shift + scroll to zoom · drag text on canvas · scroll settings for easing</p>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -543,19 +543,9 @@
       </div>
 
       <div class="group">
-        <p class="group-title">motion</p>
+        <p class="group-title">easing</p>
         <div class="row">
-          <label for="cy">step</label>
-          <input id="cy" type="range" min="400" max="4000" step="50" value="1200" />
-          <span class="val" id="cyVal">1.2s</span>
-        </div>
-        <div class="row">
-          <label for="sp">pause</label>
-          <input id="sp" type="range" min="0" max="2000" step="50" value="450" />
-          <span class="val" id="spVal">450ms</span>
-        </div>
-        <div class="row">
-          <label for="ep">ease</label>
+          <label for="ep">preset</label>
           <select id="ep" aria-label="easing preset">
             <option value="ease-in-out">ease-in-out</option>
             <option value="ease">ease</option>
@@ -594,6 +584,20 @@
         <div class="row">
           <label>css</label>
           <span class="val" id="bezierCss" style="grid-column: 2 / 4; text-align: left">cubic-bezier(0.42, 0, 0.58, 1)</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion</p>
+        <div class="row">
+          <label for="cy">step</label>
+          <input id="cy" type="range" min="400" max="4000" step="50" value="1200" />
+          <span class="val" id="cyVal">1.2s</span>
+        </div>
+        <div class="row">
+          <label for="sp">pause</label>
+          <input id="sp" type="range" min="0" max="2000" step="50" value="450" />
+          <span class="val" id="spVal">450ms</span>
         </div>
       </div>
 
