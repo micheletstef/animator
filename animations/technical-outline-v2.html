@@ -229,7 +229,8 @@
       }
 
       .row input[type="text"],
-      .row textarea {
+      .row textarea,
+      .row select {
         grid-column: 2 / 4;
         width: 100%;
         padding: 4px 6px;
@@ -238,6 +239,38 @@
         background: #111;
         color: #e9e9e9;
         font: inherit;
+      }
+
+      .row select {
+        cursor: pointer;
+      }
+
+      .bezier-preview {
+        width: 100%;
+        height: 72px;
+        margin: 4px 0 10px 0;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        background: #111;
+      }
+
+      .bezier-preview path {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .bezier-preview line {
+        stroke: #444;
+        stroke-width: 1;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .bezier-preview circle {
+        fill: #fff;
+        stroke: #1a1a1a;
+        stroke-width: 1;
       }
 
       .row textarea {
@@ -521,6 +554,47 @@
           <input id="sp" type="range" min="0" max="2000" step="50" value="450" />
           <span class="val" id="spVal">450ms</span>
         </div>
+        <div class="row">
+          <label for="ep">ease</label>
+          <select id="ep" aria-label="easing preset">
+            <option value="ease-in-out">ease-in-out</option>
+            <option value="ease">ease</option>
+            <option value="ease-in">ease-in</option>
+            <option value="ease-out">ease-out</option>
+            <option value="linear">linear</option>
+            <option value="custom">custom</option>
+          </select>
+        </div>
+        <svg class="bezier-preview" id="bezierPreview" viewBox="0 0 100 100" aria-hidden="true">
+          <line x1="0" y1="100" x2="100" y2="0" />
+          <path id="bezierPath" d="M0,100 C0,100 100,0 100,0" />
+          <circle id="bezierP1" r="3" cx="0" cy="100" />
+          <circle id="bezierP2" r="3" cx="100" cy="0" />
+        </svg>
+        <div class="row">
+          <label for="e1">p1x</label>
+          <input id="e1" type="range" min="0" max="1000" step="1" value="420" />
+          <span class="val" id="e1Val">0.42</span>
+        </div>
+        <div class="row">
+          <label for="e2">p1y</label>
+          <input id="e2" type="range" min="-500" max="1500" step="1" value="0" />
+          <span class="val" id="e2Val">0.00</span>
+        </div>
+        <div class="row">
+          <label for="e3">p2x</label>
+          <input id="e3" type="range" min="0" max="1000" step="1" value="580" />
+          <span class="val" id="e3Val">0.58</span>
+        </div>
+        <div class="row">
+          <label for="e4">p2y</label>
+          <input id="e4" type="range" min="-500" max="1500" step="1" value="1000" />
+          <span class="val" id="e4Val">1.00</span>
+        </div>
+        <div class="row">
+          <label>css</label>
+          <span class="val" id="bezierCss" style="grid-column: 2 / 4; text-align: left">cubic-bezier(0.42, 0, 0.58, 1)</span>
+        </div>
       </div>
 
       <div class="actions">
@@ -587,10 +661,145 @@
           );
         }
 
+        var EASING_PRESETS = {
+          linear: { e1: 0, e2: 0, e3: 1000, e4: 1000 },
+          ease: { e1: 250, e2: 100, e3: 250, e4: 1000 },
+          "ease-in": { e1: 420, e2: 0, e3: 1000, e4: 1000 },
+          "ease-out": { e1: 0, e2: 0, e3: 580, e4: 1000 },
+          "ease-in-out": { e1: 420, e2: 0, e3: 580, e4: 1000 },
+        };
+
+        var BEZIER_KEYS = { e1: 1, e2: 1, e3: 1, e4: 1 };
+        var easingFn = null;
+
+        function bezierUnit(key, v) {
+          if (key === "e2" || key === "e4") return Number(v) / 1000;
+          return Number(v) / 1000;
+        }
+
+        function readBezier() {
+          return {
+            x1: bezierUnit("e1", els.e1.value),
+            y1: bezierUnit("e2", els.e2.value),
+            x2: bezierUnit("e3", els.e3.value),
+            y2: bezierUnit("e4", els.e4.value),
+          };
+        }
+
+        function sampleBezier(t, a, b) {
+          var c = 3 * a;
+          var b2 = 3 * (b - a) - c;
+          var a2 = 1 - c - b2;
+          return ((a2 * t + b2) * t + c) * t;
+        }
+
+        function sampleBezierDeriv(t, a, b) {
+          var c = 3 * a;
+          var b2 = 3 * (b - a) - c;
+          var a2 = 1 - c - b2;
+          return (3 * a2 * t + 2 * b2) * t + c;
+        }
+
+        function buildEasingFn(x1, y1, x2, y2) {
+          if (x1 === 0 && y1 === 0 && x2 === 1 && y2 === 1) {
+            return function (t) {
+              return t <= 0 ? 0 : t >= 1 ? 1 : t;
+            };
+          }
+          return function (t) {
+            if (t <= 0) return 0;
+            if (t >= 1) return 1;
+            var s = t;
+            for (var i = 0; i < 12; i++) {
+              var x = sampleBezier(s, x1, x2) - t;
+              if (Math.abs(x) < 1e-7) break;
+              var dx = sampleBezierDeriv(s, x1, x2);
+              if (Math.abs(dx) < 1e-7) break;
+              s -= x / dx;
+              if (s < 0) s = 0;
+              else if (s > 1) s = 1;
+            }
+            return sampleBezier(s, y1, y2);
+          };
+        }
+
+        function rebuildEasingFn() {
+          var b = readBezier();
+          easingFn = buildEasingFn(b.x1, b.y1, b.x2, b.y2);
+        }
+
         function easeInOut(t) {
-          if (t <= 0) return 0;
-          if (t >= 1) return 1;
-          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+          if (!easingFn) rebuildEasingFn();
+          return easingFn(t);
+        }
+
+        function fmtBezierVal(key, v) {
+          return bezierUnit(key, v).toFixed(2);
+        }
+
+        function bezierCssText() {
+          var b = readBezier();
+          return (
+            "cubic-bezier(" +
+            b.x1.toFixed(2) +
+            ", " +
+            b.y1.toFixed(2) +
+            ", " +
+            b.x2.toFixed(2) +
+            ", " +
+            b.y2.toFixed(2) +
+            ")"
+          );
+        }
+
+        function updateBezierUI() {
+          var b = readBezier();
+          document.getElementById("e1Val").textContent = fmtBezierVal("e1", els.e1.value);
+          document.getElementById("e2Val").textContent = fmtBezierVal("e2", els.e2.value);
+          document.getElementById("e3Val").textContent = fmtBezierVal("e3", els.e3.value);
+          document.getElementById("e4Val").textContent = fmtBezierVal("e4", els.e4.value);
+          document.getElementById("bezierCss").textContent = bezierCssText();
+
+          var p1x = b.x1 * 100;
+          var p1y = (1 - b.y1) * 100;
+          var p2x = b.x2 * 100;
+          var p2y = (1 - b.y2) * 100;
+          document.getElementById("bezierPath").setAttribute(
+            "d",
+            "M0,100 C" + p1x + "," + p1y + " " + p2x + "," + p2y + " 100,0"
+          );
+          document.getElementById("bezierP1").setAttribute("cx", p1x);
+          document.getElementById("bezierP1").setAttribute("cy", p1y);
+          document.getElementById("bezierP2").setAttribute("cx", p2x);
+          document.getElementById("bezierP2").setAttribute("cy", p2y);
+          rebuildEasingFn();
+        }
+
+        function applyEasingPreset(name) {
+          var preset = EASING_PRESETS[name];
+          if (!preset) return;
+          els.e1.value = preset.e1;
+          els.e2.value = preset.e2;
+          els.e3.value = preset.e3;
+          els.e4.value = preset.e4;
+          updateBezierUI();
+        }
+
+        function syncEasingPresetLabel() {
+          var match = "custom";
+          Object.keys(EASING_PRESETS).forEach(function (name) {
+            var p = EASING_PRESETS[name];
+            if (
+              Number(els.e1.value) === p.e1 &&
+              Number(els.e2.value) === p.e2 &&
+              Number(els.e3.value) === p.e3 &&
+              Number(els.e4.value) === p.e4
+            ) {
+              match = name;
+            }
+          });
+          els.ep.value = match;
+          updateBezierUI();
         }
 
         function lerpFromRange(minEl, maxEl, eased) {
@@ -926,7 +1135,7 @@
           });
         }
 
-        var LS_KEY = "technical-outline-v2:v2";
+        var LS_KEY = "technical-outline-v2:v3";
         var DEFAULTS = {
           zm: 1,
           bg: "#ffffff",
@@ -949,10 +1158,15 @@
           sMax: -12,
           cy: 1200,
           sp: 450,
+          ep: "ease-in-out",
+          e1: 420,
+          e2: 0,
+          e3: 580,
+          e4: 1000,
         };
 
         var COLOR_KEYS = { bg: 1, ln: 1 };
-        var STRING_KEYS = { ch: 1 };
+        var STRING_KEYS = { ch: 1, ep: 1 };
         var els = {
           zm: document.getElementById("zm"),
           tx: document.getElementById("tx"),
@@ -975,6 +1189,11 @@
           sMax: document.getElementById("sMax"),
           cy: document.getElementById("cy"),
           sp: document.getElementById("sp"),
+          ep: document.getElementById("ep"),
+          e1: document.getElementById("e1"),
+          e2: document.getElementById("e2"),
+          e3: document.getElementById("e3"),
+          e4: document.getElementById("e4"),
         };
 
         var vals = {
@@ -1022,6 +1241,13 @@
           else if (kernSpec) updateKernDualUI();
           else if (fsSpec) updateFsDualUI();
           else if (vals[key]) vals[key].textContent = fmt(key, v);
+          if (key === "ep") {
+            if (v !== "custom") applyEasingPreset(v);
+            else updateBezierUI();
+          } else if (BEZIER_KEYS[key]) {
+            if (els.ep.value !== "custom") els.ep.value = "custom";
+            updateBezierUI();
+          }
           if (key === "ch") applyChar();
           applyVar(key, v);
           if (
@@ -1077,6 +1303,11 @@
                 data.fs1 = data.fs;
               }
               if (data.sp == null && data.hd != null) data.sp = data.hd;
+              if (data.ep == null) data.ep = DEFAULTS.ep;
+              if (data.e1 == null) data.e1 = DEFAULTS.e1;
+              if (data.e2 == null) data.e2 = DEFAULTS.e2;
+              if (data.e3 == null) data.e3 = DEFAULTS.e3;
+              if (data.e4 == null) data.e4 = DEFAULTS.e4;
             } catch (e) {}
           }
           if (!raw) {
@@ -1186,6 +1417,7 @@
         applyChar();
         applyTextOffset();
         bindTextDrag();
+        syncEasingPresetLabel();
         updateAllDualUI();
         updateKernDualUI();
         updateFsDualUI();
