@@ -40,13 +40,19 @@
       "id": "psi",
       "label": "PSI 5 → 60",
       "url": "animations/psi.html",
-      "mtime": 1780260703
+      "mtime": 1780261173
     },
     {
       "id": "technical-outline",
       "label": "technical outline",
       "url": "animations/technical-outline.html",
-      "mtime": 1780265300
+      "mtime": 1781203875
+    },
+    {
+      "id": "technical-outline-v2",
+      "label": "technical outline v2",
+      "url": "animations/technical-outline-v2.html",
+      "mtime": 1781203959
     },
     {
       "id": "wave",

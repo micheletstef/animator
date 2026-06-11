@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>technical outline</title>
+    <title>technical outline v2</title>
     <style>
       @font-face {
         font-family: "IkarusPlusVariable";
@@ -392,7 +392,7 @@
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom · variable axes animate between range thumbs</p>
+      <p class="hint">shift + scroll to zoom · weight and width animate first, then contour</p>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -569,12 +569,25 @@
           return start + (end - start) * eased;
         }
 
+        function sequentialAxisEase(p) {
+          var wghtWdth, cntr;
+          if (p <= 0.5) {
+            wghtWdth = easeInOutCubic(p * 2);
+            cntr = 0;
+          } else {
+            wghtWdth = 1;
+            cntr = easeInOutCubic((p - 0.5) * 2);
+          }
+          return { wghtWdth: wghtWdth, cntr: cntr };
+        }
+
         function variationAt(eased) {
+          var seq = sequentialAxisEase(eased);
           return {
-            wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, eased)),
-            CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, eased)),
-            wdth: clampAxis("wdth", lerpFromRange(els.dMin, els.dMax, eased)),
-            slnt: clampAxis("slnt", lerpFromRange(els.sMin, els.sMax, eased)),
+            wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, seq.wghtWdth)),
+            CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, seq.cntr)),
+            wdth: clampAxis("wdth", lerpFromRange(els.dMin, els.dMax, seq.wghtWdth)),
+            slnt: clampAxis("slnt", lerpFromRange(els.sMin, els.sMax, seq.wghtWdth)),
           };
         }
 
@@ -804,7 +817,7 @@
           });
         }
 
-        var LS_KEY = "technical-outline:v2";
+        var LS_KEY = "technical-outline-v2:v1";
         var DEFAULTS = {
           zm: 1,
           bg: "#ffffff",
