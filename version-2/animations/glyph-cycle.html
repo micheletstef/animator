@@ -392,6 +392,8 @@
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
         var LS_KEY = "animator:v2:glyph-cycle:" + encodeURIComponent(DEFAULT_CHAR);
+        var LAYOUT_KEY = "animator:v2:glyph-cycle:layout";
+        var SHARED_KEYS = { fs: 1, tr: 1, oy: 1 };
 
         var SEQUENCE = [0, 1, 2, 1];
 
@@ -527,33 +529,53 @@
           });
         }
 
-        function save() {
-          var data = {};
-          Object.keys(DEFAULTS).forEach(function (key) {
-            if (!els[key]) return;
-            data[key] = els[key].value;
-          });
+        function readJson(key) {
           try {
-            localStorage.setItem(LS_KEY, JSON.stringify(data));
+            var raw = localStorage.getItem(key);
+            if (!raw) return null;
+            var data = JSON.parse(raw);
+            return data && typeof data === "object" ? data : null;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function writeJson(key, data) {
+          try {
+            localStorage.setItem(key, JSON.stringify(data));
           } catch (e) {}
         }
 
-        function loadSaved() {
-          var raw = null;
-          try {
-            raw = localStorage.getItem(LS_KEY);
-          } catch (e) {}
-          if (!raw) return;
-          var data;
-          try {
-            data = JSON.parse(raw);
-          } catch (e) {
-            return;
-          }
-          Object.keys(DEFAULTS).forEach(function (key) {
+        function applyShared(data) {
+          if (!data) return;
+          Object.keys(SHARED_KEYS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
             els[key].value = data[key];
           });
+        }
+
+        function save() {
+          var local = {};
+          var shared = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            if (SHARED_KEYS[key]) shared[key] = els[key].value;
+            else local[key] = els[key].value;
+          });
+          writeJson(LS_KEY, local);
+          writeJson(LAYOUT_KEY, shared);
+        }
+
+        function loadSaved() {
+          var local = readJson(LS_KEY);
+          if (local) {
+            Object.keys(DEFAULTS).forEach(function (key) {
+              if (SHARED_KEYS[key]) return;
+              if (!els[key] || local[key] == null) return;
+              els[key].value = local[key];
+            });
+          }
+          applyShared(readJson(LAYOUT_KEY));
         }
 
         function reset() {
@@ -564,6 +586,11 @@
           try {
             localStorage.removeItem(LS_KEY);
           } catch (e) {}
+          writeJson(LAYOUT_KEY, {
+            fs: String(DEFAULTS.fs),
+            tr: String(DEFAULTS.tr),
+            oy: String(DEFAULTS.oy),
+          });
           applyVars();
           paintVals();
           restart();
@@ -583,6 +610,15 @@
 
         document.getElementById("resetBtn").addEventListener("click", reset);
         document.getElementById("replayBtn").addEventListener("click", restart);
+
+        window.addEventListener("storage", function (e) {
+          if (e.key !== LAYOUT_KEY || !e.newValue) return;
+          try {
+            applyShared(JSON.parse(e.newValue));
+            applyVars();
+            paintVals();
+          } catch (err) {}
+        });
 
         glyph.textContent = DEFAULT_CHAR;
         document.title = DEFAULT_CHAR;
