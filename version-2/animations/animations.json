@@ -1,10 +1,15 @@
 {
   "animations": [
     {
-      "id": "alternates",
-      "label": "alternates",
-      "url": "animations/alternates.html",
-      "mtime": 1786994195
+      "id": "alternates-1",
+      "label": "alternates 1",
+      "mtime": 1786995000
+    },
+    {
+      "id": "alternates-2",
+      "label": "alternates 2",
+      "url": "animations/alternates-2.html",
+      "mtime": 1786994884
     }
   ]
 }

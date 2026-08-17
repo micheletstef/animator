@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>alternates</title>
+    <title>alternates 2</title>
     <style>
       @font-face {
-        font-family: "IkarusCondensedBlack";
-        src: url("../../fonts/ABCIkarusCondensed-Black.otf") format("opentype");
-        font-weight: 900;
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
         font-style: normal;
         font-display: block;
       }
@@ -24,9 +24,13 @@
         --pad-r: 80;
         --pad-b: 120;
         --pad-l: 80;
-        --fs: 176;
+        --fs: 188;
         --lh: 0.92;
         --tracking: -0.02;
+        --wght: 745;
+        --wdth: 90;
+        --cntr: 86;
+        --slnt: 0;
       }
 
       * {
@@ -86,9 +90,13 @@
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-        font-family: "IkarusCondensedBlack", sans-serif;
-        font-weight: 900;
+        font-family: "IkarusPlusVariable", sans-serif;
         font-synthesis: none;
+        font-variation-settings:
+          "wght" var(--wght),
+          "wdth" var(--wdth),
+          "CNTR" var(--cntr),
+          "slnt" var(--slnt);
         pointer-events: none;
       }
 
@@ -261,7 +269,7 @@
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="alternates animation">
+        <div class="stage" id="stage" aria-label="alternates 2 animation">
           <div class="lockup" id="lockup"></div>
         </div>
       </div>
@@ -293,16 +301,15 @@
         <p class="group-title">type</p>
         <div class="row">
           <label for="tx">text</label>
-          <textarea id="tx" spellcheck="false" autocomplete="off">Metallic
-CUT 30%
-Mist &amp; gun
-fisheye,
-60 psi</textarea>
+          <textarea id="tx" spellcheck="false" autocomplete="off">Gradual
+Recoats
+15 min.
+Apart</textarea>
         </div>
         <div class="row">
           <label for="fs">size</label>
-          <input id="fs" type="range" min="48" max="320" step="1" value="176" />
-          <span class="val" id="fsVal">176px</span>
+          <input id="fs" type="range" min="48" max="320" step="1" value="188" />
+          <span class="val" id="fsVal">188px</span>
         </div>
         <div class="row">
           <label for="lh">leading</label>
@@ -313,6 +320,30 @@ fisheye,
           <label for="tr">track</label>
           <input id="tr" type="range" min="-0.12" max="0.08" step="0.005" value="-0.02" />
           <span class="val" id="trVal">-0.02</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">variables</p>
+        <div class="row">
+          <label for="slnt">slnt</label>
+          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slntVal">0</span>
+        </div>
+        <div class="row">
+          <label for="wdth">wdth</label>
+          <input id="wdth" type="range" min="65" max="130" step="1" value="90" />
+          <span class="val" id="wdthVal">90</span>
+        </div>
+        <div class="row">
+          <label for="wght">wght</label>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="745" />
+          <span class="val" id="wghtVal">745</span>
+        </div>
+        <div class="row">
+          <label for="cntr">CNTR</label>
+          <input id="cntr" type="range" min="0" max="100" step="1" value="86" />
+          <span class="val" id="cntrVal">86</span>
         </div>
       </div>
 
@@ -344,11 +375,10 @@ fisheye,
     <script src="artboard-view.js"></script>
     <script>
       (function () {
-        var DEFAULT_TEXT = "Metallic\nCUT 30%\nMist & gun\nfisheye,\n60 psi";
+        var DEFAULT_TEXT = "Gradual\nRecoats\n15 min.\nApart";
 
-        // Dedicated Ikarus stylistic sets. ss16 (white circled) is applied
-        // to 2+ digit runs that are not a percentage. ss19 spurless is skipped
-        // so letters like p in "psi" stay on the default forms.
+        // Same dedicated Ikarus sets as v1, plus spurless d and round period.
+        // ss19 is not applied to p so "Apart" keeps the default p.
         var CHAR_FEATURE = {
           a: "ss01",
           g: "ss02",
@@ -365,6 +395,8 @@ fisheye,
           U: "ss17",
           i: "ss18",
           j: "ss18",
+          ".": "ss18",
+          d: "ss19",
         };
 
         var DIGIT_FEATURE = {
@@ -372,7 +404,7 @@ fisheye,
           "3": "ss15",
         };
 
-        var LS_KEY = "animator:v2:alternates:settings";
+        var LS_KEY = "animator:v2:alternates-2:settings";
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
 
@@ -381,9 +413,13 @@ fisheye,
           fg: "#000000",
           hl: "#ee0000",
           tx: DEFAULT_TEXT,
-          fs: 176,
+          fs: 188,
           lh: 0.92,
           tr: -0.02,
+          slnt: 0,
+          wdth: 90,
+          wght: 745,
+          cntr: 86,
           step: 280,
           hold0: 500,
           hold1: 1200,
@@ -399,6 +435,10 @@ fisheye,
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
           tr: document.getElementById("tr"),
+          slnt: document.getElementById("slnt"),
+          wdth: document.getElementById("wdth"),
+          wght: document.getElementById("wght"),
+          cntr: document.getElementById("cntr"),
           step: document.getElementById("step"),
           hold0: document.getElementById("hold0"),
           hold1: document.getElementById("hold1"),
@@ -411,6 +451,10 @@ fisheye,
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
+          slnt: document.getElementById("slntVal"),
+          wdth: document.getElementById("wdthVal"),
+          wght: document.getElementById("wghtVal"),
+          cntr: document.getElementById("cntrVal"),
           step: document.getElementById("stepVal"),
           hold0: document.getElementById("hold0Val"),
           hold1: document.getElementById("hold1Val"),
@@ -430,23 +474,12 @@ fisheye,
           while (i < line.length) {
             var ch = line.charAt(i);
             if (isDigit(ch)) {
-              var j = i;
-              while (j < line.length && isDigit(line.charAt(j))) j += 1;
-              var run = line.slice(i, j);
-              var after = j < line.length ? line.charAt(j) : "";
-              if (run.length >= 2 && after !== "%") {
-                tokens.push({ text: run, feat: "ss16", circled: true });
-              } else {
-                for (var k = 0; k < run.length; k += 1) {
-                  var d = run.charAt(k);
-                  tokens.push({
-                    text: d,
-                    feat: DIGIT_FEATURE[d] || null,
-                    circled: false,
-                  });
-                }
-              }
-              i = j;
+              tokens.push({
+                text: ch,
+                feat: DIGIT_FEATURE[ch] || null,
+                circled: false,
+              });
+              i += 1;
               continue;
             }
             tokens.push({
@@ -541,6 +574,10 @@ fisheye,
           if (key === "tx") return String(v);
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "lh" || key === "tr") return Number(v).toFixed(2);
+          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
+          if (key === "wdth" || key === "wght" || key === "cntr") {
+            return String(Math.round(Number(v)));
+          }
           return Math.round(Number(v)) + "ms";
         }
 
@@ -551,6 +588,10 @@ fisheye,
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--slnt", String(els.slnt.value));
+          root.style.setProperty("--wdth", String(els.wdth.value));
+          root.style.setProperty("--wght", String(els.wght.value));
+          root.style.setProperty("--cntr", String(els.cntr.value));
         }
 
         function paintVals() {
