@@ -11,6 +11,24 @@
       "label": "alternates 2",
       "url": "animations/alternates-2.html",
       "mtime": 1786995287
+    },
+    {
+      "id": "nine",
+      "label": "9",
+      "url": "animations/glyph-cycle.html?ch=9",
+      "mtime": 1786995480
+    },
+    {
+      "id": "g",
+      "label": "G",
+      "url": "animations/glyph-cycle.html?ch=G",
+      "mtime": 1786995480
+    },
+    {
+      "id": "s",
+      "label": "S",
+      "url": "animations/glyph-cycle.html?ch=S",
+      "mtime": 1786995480
     }
   ]
 }

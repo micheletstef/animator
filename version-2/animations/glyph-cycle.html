@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>glyph cycle</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: dark;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --fg: #000000;
+        --pad-t: 80;
+        --pad-r: 80;
+        --pad-b: 80;
+        --pad-l: 80;
+        --fs: 860;
+        --tracking: 0;
+        --oy: 0;
+        --wght: 1000;
+        --wdth: 130;
+        --cntr: 0;
+        --slnt: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #e9e9e9;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-variation-settings:
+          "wght" var(--wght),
+          "wdth" var(--wdth),
+          "CNTR" var(--cntr),
+          "slnt" var(--slnt);
+        pointer-events: none;
+      }
+
+      .lockup {
+        position: absolute;
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(calc(var(--oy) * 1px));
+      }
+
+      .glyph {
+        font-size: calc(var(--fs) * 1px);
+        line-height: 1;
+        letter-spacing: calc(var(--tracking) * 1em);
+        white-space: nowrap;
+        font-variation-settings: inherit;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row input[type="text"] {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .kf-head,
+      .kf-row {
+        display: grid;
+        grid-template-columns: 44px 1fr 1fr 1fr;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .kf-head span {
+        text-align: center;
+        color: #6a6a6a;
+        font-size: 10px;
+        text-transform: lowercase;
+      }
+
+      .kf-head span:first-child {
+        text-align: left;
+      }
+
+      .kf-row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .kf-row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .now {
+        margin: 0 0 10px 0;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="glyph cycle">
+          <div class="lockup">
+            <span class="glyph" id="glyph">9</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">scroll to zoom · drag to pan · double-click to fit · 1080 × 1440</p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="ch">char</label>
+          <input id="ch" type="text" value="9" maxlength="4" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="80" max="1400" step="1" value="860" />
+          <span class="val" id="fsVal">860px</span>
+        </div>
+        <div class="row">
+          <label for="tr">track</label>
+          <input id="tr" type="range" min="-1" max="1" step="0.005" value="0" />
+          <span class="val" id="trVal">0.00</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">keyframes 1 → 2 → 3 → 2 → 1</p>
+        <p class="now" id="nowReadout">wght 1000 · wdth 130 · CNTR 0 · slnt 0</p>
+        <div class="kf-head">
+          <span></span><span>1</span><span>2</span><span>3</span>
+        </div>
+        <div class="kf-row">
+          <label for="slnt0">slnt</label>
+          <input id="slnt0" type="range" min="-12" max="0" step="0.25" value="0" />
+          <input id="slnt1" type="range" min="-12" max="0" step="0.25" value="0" />
+          <input id="slnt2" type="range" min="-12" max="0" step="0.25" value="0" />
+        </div>
+        <div class="kf-row">
+          <label for="wdth0">wdth</label>
+          <input id="wdth0" type="range" min="65" max="130" step="1" value="130" />
+          <input id="wdth1" type="range" min="65" max="130" step="1" value="130" />
+          <input id="wdth2" type="range" min="65" max="130" step="1" value="130" />
+        </div>
+        <div class="kf-row">
+          <label for="wght0">wght</label>
+          <input id="wght0" type="range" min="200" max="1000" step="1" value="1000" />
+          <input id="wght1" type="range" min="200" max="1000" step="1" value="1000" />
+          <input id="wght2" type="range" min="200" max="1000" step="1" value="200" />
+        </div>
+        <div class="kf-row">
+          <label for="cntr0">CNTR</label>
+          <input id="cntr0" type="range" min="0" max="100" step="1" value="0" />
+          <input id="cntr1" type="range" min="0" max="100" step="1" value="100" />
+          <input id="cntr2" type="range" min="0" max="100" step="1" value="100" />
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="4000" step="50" value="1400" />
+          <span class="val" id="moveVal">1400ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2000" step="50" value="350" />
+          <span class="val" id="holdVal">350ms</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+        <button type="button" id="replayBtn">replay</button>
+      </div>
+    </aside>
+
+    <script src="artboard-view.js"></script>
+    <script>
+      (function () {
+        function queryChar() {
+          try {
+            var q = new URLSearchParams(window.location.search).get("ch");
+            if (q && String(q).length) return String(q);
+          } catch (e) {}
+          return "9";
+        }
+
+        var DEFAULT_CHAR = queryChar();
+        var glyph = document.getElementById("glyph");
+        var nowReadout = document.getElementById("nowReadout");
+        var root = document.documentElement;
+        var LS_KEY = "animator:v2:glyph-cycle:" + encodeURIComponent(DEFAULT_CHAR);
+
+        var SEQUENCE = [0, 1, 2, 1];
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          ch: DEFAULT_CHAR,
+          fs: 860,
+          tr: 0,
+          oy: 0,
+          slnt0: 0,
+          slnt1: 0,
+          slnt2: 0,
+          wdth0: 130,
+          wdth1: 130,
+          wdth2: 130,
+          wght0: 1000,
+          wght1: 1000,
+          wght2: 200,
+          cntr0: 0,
+          cntr1: 100,
+          cntr2: 100,
+          move: 1400,
+          hold: 350,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+
+        var els = {};
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          fs: document.getElementById("fsVal"),
+          tr: document.getElementById("trVal"),
+          oy: document.getElementById("oyVal"),
+          move: document.getElementById("moveVal"),
+          hold: document.getElementById("holdVal"),
+        };
+
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+        });
+
+        var t0 = 0;
+
+        function easeInOutCubic(t) {
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function keyframe(i) {
+          return {
+            slnt: parseFloat(els["slnt" + i].value),
+            wdth: parseFloat(els["wdth" + i].value),
+            wght: parseFloat(els["wght" + i].value),
+            cntr: parseFloat(els["cntr" + i].value),
+          };
+        }
+
+        function mix(a, b, t) {
+          return {
+            slnt: lerp(a.slnt, b.slnt, t),
+            wdth: lerp(a.wdth, b.wdth, t),
+            wght: lerp(a.wght, b.wght, t),
+            cntr: lerp(a.cntr, b.cntr, t),
+          };
+        }
+
+        function applyState(s) {
+          root.style.setProperty("--slnt", String(s.slnt));
+          root.style.setProperty("--wdth", String(s.wdth));
+          root.style.setProperty("--wght", String(s.wght));
+          root.style.setProperty("--cntr", String(s.cntr));
+          nowReadout.textContent =
+            "wght " +
+            Math.round(s.wght) +
+            " · wdth " +
+            Math.round(s.wdth) +
+            " · CNTR " +
+            Math.round(s.cntr) +
+            " · slnt " +
+            Number(s.slnt).toFixed(2).replace(/\.00$/, "");
+        }
+
+        function sample(elapsed) {
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          var move = Math.max(40, Number(els.move.value) || 1400);
+          var seg = hold + move;
+          var total = SEQUENCE.length * seg;
+          var t = elapsed % total;
+          var i = Math.floor(t / seg);
+          var local = t - i * seg;
+          var from = keyframe(SEQUENCE[i]);
+          var to = keyframe(SEQUENCE[(i + 1) % SEQUENCE.length]);
+          if (local < hold) return from;
+          return mix(from, to, easeInOutCubic((local - hold) / move));
+        }
+
+        function frame(now) {
+          applyState(sample(now - t0));
+          requestAnimationFrame(frame);
+        }
+
+        function restart() {
+          t0 = performance.now();
+        }
+
+        function fmt(key, v) {
+          if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (key === "ch") return String(v);
+          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "tr") return Number(v).toFixed(2);
+          return Math.round(Number(v)) + "ms";
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--fs", String(els.fs.value));
+          root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--oy", String(els.oy.value));
+          glyph.textContent = els.ch.value || DEFAULT_CHAR;
+          document.title = glyph.textContent;
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = fmt(key, els[key].value);
+          });
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            data[key] = els[key].value;
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw = null;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
+          if (!raw) return;
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            els[key].value = data[key];
+          });
+        }
+
+        function reset() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].value = DEFAULTS[key];
+          });
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (e) {}
+          applyVars();
+          paintVals();
+          restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          els[key].addEventListener("input", function () {
+            applyVars();
+            paintVals();
+            save();
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("replayBtn").addEventListener("click", restart);
+
+        glyph.textContent = DEFAULT_CHAR;
+        document.title = DEFAULT_CHAR;
+        loadSaved();
+        applyVars();
+        paintVals();
+        restart();
+        requestAnimationFrame(frame);
+      })();
+    </script>
+  </body>
+</html>
