@@ -393,7 +393,7 @@
         var root = document.documentElement;
         var LS_KEY = "animator:v2:glyph-cycle:" + encodeURIComponent(DEFAULT_CHAR);
         var LAYOUT_KEY = "animator:v2:glyph-cycle:layout";
-        var SHARED_KEYS = { fs: 1, tr: 1, oy: 1 };
+        var SHARED_KEYS = { fs: 1, tr: 1, oy: 1, bg: 1, fg: 1 };
 
         var SEQUENCE = [0, 1, 2, 1];
 
@@ -590,6 +590,8 @@
             fs: String(DEFAULTS.fs),
             tr: String(DEFAULTS.tr),
             oy: String(DEFAULTS.oy),
+            bg: DEFAULTS.bg,
+            fg: DEFAULTS.fg,
           });
           applyVars();
           paintVals();
