@@ -350,6 +350,12 @@
           });
         }
 
+        function animationUrl(a) {
+          if (a && a.url) return a.url;
+          var id = a && (a.id || slugify(a.label || ""));
+          return id ? ANIMATIONS_DIR + id + ".html" : "";
+        }
+
         function loadFromManifest() {
           return fetch(MANIFEST_URL, { cache: "no-store" })
             .then(function (r) {
@@ -364,7 +370,7 @@
                   id: a.id || slugify(a.url || a.label || ""),
                   label: label,
                   defaultLabel: label,
-                  url: a.url,
+                  url: animationUrl(a),
                   mtime: a.mtime != null ? a.mtime : null,
                   meta: a.meta || null,
                 };
@@ -708,7 +714,8 @@
         }
 
         function iframeSrc(anim) {
-          var u = anim.url;
+          var u = anim && anim.url ? String(anim.url) : "";
+          if (!u) return "about:blank";
           if (anim.mtime == null) return u;
           return u + (u.indexOf("?") >= 0 ? "&" : "?") + "v=" + anim.mtime;
         }
@@ -765,8 +772,7 @@
           })
           .catch(function (err) {
             console.error("could not load animations", err);
-            ANIMATIONS = [];
-            render(null);
+            if (!ANIMATIONS.length) render(null);
           });
       })();
     </script>
