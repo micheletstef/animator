@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>animator v1</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0e0e0e;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #e9e9e9;
+      }
+
+      body {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .sidebar {
+        flex: 0 0 200px;
+        height: 100%;
+        padding: 16px 14px;
+        border-right: 1px solid #1f1f1f;
+        background: #131313;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: auto;
+      }
+
+      .sidebar h1 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.06em;
+        color: #9a9a9a;
+      }
+
+      .nav-section {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .nav-title {
+        margin: 0 0 4px 2px;
+        text-transform: lowercase;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        color: #6a6a6a;
+      }
+
+      .nav-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .nav-list li {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        border-radius: 4px;
+      }
+
+      .nav-list li.is-dragging {
+        opacity: 0.45;
+      }
+
+      .nav-list li.drag-over {
+        outline: 1px dashed #4a4a4a;
+        outline-offset: -1px;
+      }
+
+      .nav-drag-handle {
+        flex: 0 0 auto;
+        align-self: stretch;
+        width: 18px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 4px 0 0 4px;
+        background: transparent;
+        color: #4a4a4a;
+        font: inherit;
+        font-size: 10px;
+        line-height: 1;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .nav-drag-handle:hover,
+      .nav-drag-handle:focus {
+        color: #9a9a9a;
+        background: #1a1a1a;
+        outline: none;
+      }
+
+      .nav-drag-handle:active {
+        cursor: grabbing;
+      }
+
+      .nav-list .nav-item {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: block;
+        padding: 6px 8px;
+        border-radius: 4px;
+        color: #cfcfcf;
+        text-decoration: none;
+        text-transform: lowercase;
+        border: 1px solid transparent;
+      }
+
+      .nav-list li:not([data-id]) .nav-item {
+        padding-left: 8px;
+      }
+
+      .nav-list .nav-item:hover,
+      .nav-list .nav-item:focus {
+        background: #1d1d1d;
+        color: #fff;
+        outline: none;
+      }
+
+      .nav-list .nav-item.is-active {
+        background: #fff;
+        color: #0e0e0e;
+        border-color: #fff;
+      }
+
+      .nav-list .nav-label {
+        display: block;
+        cursor: text;
+      }
+
+      .nav-rename-input {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-transform: inherit;
+        outline: none;
+      }
+
+      .nav-list .nav-item .nav-meta {
+        display: block;
+        color: #6a6a6a;
+        font-size: 10px;
+        margin-top: 1px;
+      }
+
+      .nav-list .nav-item.is-active .nav-meta {
+        color: #555;
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        color: #5a5a5a;
+        font-size: 10px;
+        line-height: 1.5;
+      }
+
+      .sidebar-footer a {
+        color: #9a9a9a;
+        text-decoration: none;
+      }
+
+      .sidebar-footer a:hover {
+        color: #fff;
+      }
+
+      .viewer {
+        flex: 1 1 auto;
+        position: relative;
+        background: #0e0e0e;
+        overflow: hidden;
+      }
+
+      .viewer iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        background: #111;
+      }
+
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar" aria-label="Animations">
+      <h1>animator v1</h1>
+
+      <div class="nav-section">
+        <p class="nav-title">versions</p>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-item is-active" href="overview.html" aria-current="page">version 1</a>
+          </li>
+          <li>
+            <a class="nav-item" href="../version-2/overview.html">version 2</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <p class="nav-title">animations</p>
+        <ul class="nav-list" id="navList"></ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <a href="../index.html">open editor →</a>
+      </div>
+    </aside>
+
+    <main class="viewer" id="viewer">
+      <iframe
+        id="frame"
+        title="Animation"
+        src="about:blank"
+        allow="autoplay; clipboard-write"
+      ></iframe>
+    </main>
+
+    <script>
+      (function () {
+        var ANIMATIONS_DIR = "../animations/";
+        var MANIFEST_URL = ANIMATIONS_DIR + "animations.json";
+        var ORDER_KEY = "animator:overview:order";
+        var LABELS_KEY = "animator:overview:labels";
+        var LAST_KEY = "animator:overview:last";
+
+        var ANIMATIONS = [];
+        var navList = document.getElementById("navList");
+        var frame = document.getElementById("frame");
+        var pointerDrag = null;
+        var reorderReady = false;
+        var renameReady = false;
+
+        function resolveUrl(url) {
+          var u = String(url || "");
+          if (!u) return u;
+          if (/^[a-z]+:|^\/\//i.test(u) || u.charAt(0) === "/" || u.charAt(0) === ".") {
+            return u;
+          }
+          return "../" + u;
+        }
+
+        function slugify(stem) {
+          return (
+            String(stem)
+              .replace(/[^a-zA-Z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "")
+              .toLowerCase() || "animation"
+          );
+        }
+
+        function humanise(stem) {
+          return String(stem).replace(/[-_]+/g, " ").trim();
+        }
+
+        function entryFromFilename(filename) {
+          var stem = filename.replace(/\.html?$/i, "");
+          var label = humanise(stem);
+          return {
+            id: slugify(stem),
+            label: label,
+            defaultLabel: label,
+            url: ANIMATIONS_DIR + filename,
+          };
+        }
+
+        // Try parsing a server-generated directory listing (Apache, Nginx,
+        // Python http.server, Caddy all return HTML with <a href="..."> links).
+        function fetchDirectoryListing() {
+          return fetch(ANIMATIONS_DIR, {
+            headers: { Accept: "text/html" },
+          })
+            .then(function (r) {
+              if (!r.ok) throw new Error("listing " + r.status);
+              var ct = r.headers.get("content-type") || "";
+              if (!/text\/html/i.test(ct)) throw new Error("not html");
+              return r.text();
+            })
+            .then(function (html) {
+              var doc = new DOMParser().parseFromString(html, "text/html");
+              var anchors = Array.prototype.slice.call(
+                doc.querySelectorAll("a[href]")
+              );
+              var seen = {};
+              var files = [];
+              anchors.forEach(function (a) {
+                var href = a.getAttribute("href") || "";
+                if (!/\.html?$/i.test(href)) return;
+                if (/^[a-z]+:|^\/\//i.test(href)) return; // absolute / protocol
+                if (href.indexOf("?") === 0 || href.indexOf("#") === 0) return;
+                if (href.indexOf("/") !== -1) return; // skip nested paths
+                var name;
+                try {
+                  name = decodeURIComponent(href);
+                } catch (e) {
+                  name = href;
+                }
+                if (seen[name]) return;
+                seen[name] = true;
+                files.push(name);
+              });
+              if (!files.length) throw new Error("no html in listing");
+              return files;
+            });
+        }
+
+        // Best-effort: read the <title> tag from each file so labels look nice.
+        function enrichWithTitle(entry) {
+          return fetch(entry.url)
+            .then(function (r) {
+              if (!r.ok) return entry;
+              return r.text().then(function (text) {
+                var m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
+                if (m && m[1].trim()) {
+                  entry.label = m[1].trim();
+                  entry.defaultLabel = entry.label;
+                }
+                return entry;
+              });
+            })
+            .catch(function () {
+              return entry;
+            });
+        }
+
+        function loadFromDirectory() {
+          return fetchDirectoryListing().then(function (filenames) {
+            var entries = filenames.map(entryFromFilename);
+            return Promise.all(entries.map(enrichWithTitle));
+          });
+        }
+
+        function loadFromManifest() {
+          return fetch(MANIFEST_URL, { cache: "no-store" })
+            .then(function (r) {
+              if (!r.ok) throw new Error("manifest " + r.status);
+              return r.json();
+            })
+            .then(function (data) {
+              var list = (data && data.animations) || [];
+              return list.map(function (a) {
+                var label = a.label || humanise(a.id || "");
+                return {
+                  id: a.id || slugify(a.url || a.label || ""),
+                  label: label,
+                  defaultLabel: label,
+                  url: resolveUrl(a.url),
+                  mtime: a.mtime != null ? a.mtime : null,
+                  meta: a.meta || null,
+                };
+              });
+            });
+        }
+
+        function discover() {
+          // Prefer animations.json — it is version-controlled and lists every
+          // page explicitly. Directory listings are fragile (host differences,
+          // caching, deployment gaps) and often omit new files.
+          return loadFromManifest().catch(function () {
+            return loadFromDirectory();
+          });
+        }
+
+        function readOrder() {
+          try {
+            var raw = localStorage.getItem(ORDER_KEY);
+            if (!raw) return null;
+            var arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr : null;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function writeOrder(ids) {
+          try {
+            localStorage.setItem(ORDER_KEY, JSON.stringify(ids));
+          } catch (e) {}
+        }
+
+        function defaultSort(list) {
+          return list.slice().sort(function (a, b) {
+            return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
+          });
+        }
+
+        function applyOrder(list) {
+          var saved = readOrder();
+          if (!saved || !saved.length) return defaultSort(list);
+          var byId = {};
+          list.forEach(function (a) {
+            byId[a.id] = a;
+          });
+          var ordered = [];
+          var used = {};
+          saved.forEach(function (id) {
+            if (byId[id] && !used[id]) {
+              ordered.push(byId[id]);
+              used[id] = true;
+            }
+          });
+          var rest = list.filter(function (a) {
+            return !used[a.id];
+          });
+          return ordered.concat(defaultSort(rest));
+        }
+
+        function readLabels() {
+          try {
+            var raw = localStorage.getItem(LABELS_KEY);
+            if (!raw) return {};
+            var obj = JSON.parse(raw);
+            return obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+          } catch (e) {
+            return {};
+          }
+        }
+
+        function writeLabels(map) {
+          try {
+            localStorage.setItem(LABELS_KEY, JSON.stringify(map));
+          } catch (e) {}
+        }
+
+        function applyLabels(list) {
+          var saved = readLabels();
+          return list.map(function (a) {
+            var defaultLabel = a.defaultLabel != null ? a.defaultLabel : a.label;
+            var label = saved[a.id] || defaultLabel;
+            return {
+              id: a.id,
+              label: label,
+              defaultLabel: defaultLabel,
+              url: a.url,
+              mtime: a.mtime,
+              meta: a.meta,
+            };
+          });
+        }
+
+        function setLabel(id, text) {
+          var anim = findById(id);
+          if (!anim) return;
+          var trimmed = String(text || "").trim();
+          var labels = readLabels();
+          if (!trimmed || trimmed === anim.defaultLabel) {
+            delete labels[id];
+            anim.label = anim.defaultLabel;
+          } else {
+            labels[id] = trimmed;
+            anim.label = trimmed;
+          }
+          writeLabels(labels);
+        }
+
+        function persistOrder() {
+          writeOrder(
+            ANIMATIONS.map(function (a) {
+              return a.id;
+            })
+          );
+        }
+
+        function activeNavId() {
+          var el = navList.querySelector(".nav-item.is-active");
+          if (!el) return null;
+          var li = el.closest("li[data-id]");
+          return li ? li.getAttribute("data-id") : null;
+        }
+
+        function reorderAnimation(fromId, toId) {
+          var fromIdx = -1;
+          var toIdx = -1;
+          for (var i = 0; i < ANIMATIONS.length; i++) {
+            if (ANIMATIONS[i].id === fromId) fromIdx = i;
+            if (ANIMATIONS[i].id === toId) toIdx = i;
+          }
+          if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+          var item = ANIMATIONS.splice(fromIdx, 1)[0];
+          ANIMATIONS.splice(toIdx, 0, item);
+          persistOrder();
+          render(activeNavId());
+        }
+
+        function clearDragUi() {
+          navList.querySelectorAll("li.is-dragging, li.drag-over").forEach(function (n) {
+            n.classList.remove("is-dragging", "drag-over");
+          });
+        }
+
+        function dragTargetAt(x, y) {
+          var items = navList.querySelectorAll("li[data-id]");
+          for (var i = 0; i < items.length; i++) {
+            var rect = items[i].getBoundingClientRect();
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+              return items[i];
+            }
+          }
+          return null;
+        }
+
+        function setDragOver(li) {
+          navList.querySelectorAll("li.drag-over").forEach(function (n) {
+            n.classList.remove("drag-over");
+          });
+          if (li && li !== pointerDrag.li) li.classList.add("drag-over");
+        }
+
+        function finishPointerDrag(e) {
+          if (!pointerDrag) return;
+          var fromId = pointerDrag.id;
+          try {
+            pointerDrag.handle.releasePointerCapture(e.pointerId);
+          } catch (err) {}
+          pointerDrag = null;
+          var targetLi = dragTargetAt(e.clientX, e.clientY);
+          if (targetLi) {
+            var toId = targetLi.getAttribute("data-id");
+            if (toId !== fromId) {
+              reorderAnimation(fromId, toId);
+              return;
+            }
+          }
+          clearDragUi();
+        }
+
+        function liForId(id) {
+          var items = navList.querySelectorAll("li[data-id]");
+          for (var i = 0; i < items.length; i++) {
+            if (items[i].getAttribute("data-id") === id) return items[i];
+          }
+          return null;
+        }
+
+        function startRename(id) {
+          if (pointerDrag) return;
+          var li = liForId(id);
+          if (!li || li.querySelector(".nav-rename-input")) return;
+          var anim = findById(id);
+          if (!anim) return;
+
+          var link = li.querySelector(".nav-item");
+          var labelEl = li.querySelector(".nav-label");
+          if (!link || !labelEl) return;
+
+          var input = document.createElement("input");
+          input.type = "text";
+          input.className = "nav-rename-input";
+          input.value = anim.label;
+          input.setAttribute("aria-label", "rename " + anim.defaultLabel);
+          labelEl.replaceWith(input);
+          input.focus();
+          input.select();
+
+          var done = false;
+          function finish(save) {
+            if (done) return;
+            done = true;
+            if (save) setLabel(id, input.value);
+            var activeId = activeNavId() || id;
+            render(activeId);
+            if (activeId === id) {
+              var current = findById(id);
+              if (current) document.title = "animator v1 — " + current.label;
+            }
+          }
+
+          input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              finish(true);
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              finish(false);
+            }
+          });
+          input.addEventListener("blur", function () {
+            finish(true);
+          });
+          input.addEventListener("click", function (e) {
+            e.stopPropagation();
+          });
+          input.addEventListener("pointerdown", function (e) {
+            e.stopPropagation();
+          });
+        }
+
+        function setupRename() {
+          if (renameReady) return;
+          renameReady = true;
+
+          navList.addEventListener("dblclick", function (e) {
+            if (e.target.closest(".nav-drag-handle")) return;
+            var label = e.target.closest(".nav-label");
+            if (!label) return;
+            var li = label.closest("li[data-id]");
+            if (!li) return;
+            e.preventDefault();
+            startRename(li.getAttribute("data-id"));
+          });
+        }
+
+        function setupReorder() {
+          if (reorderReady) return;
+          reorderReady = true;
+
+          navList.addEventListener("pointerdown", function (e) {
+            var handle = e.target.closest(".nav-drag-handle");
+            if (!handle || e.button !== 0) return;
+            var li = handle.closest("li[data-id]");
+            if (!li) return;
+            e.preventDefault();
+            pointerDrag = {
+              id: li.getAttribute("data-id"),
+              li: li,
+              handle: handle,
+            };
+            li.classList.add("is-dragging");
+            handle.setPointerCapture(e.pointerId);
+          });
+
+          navList.addEventListener("pointermove", function (e) {
+            if (!pointerDrag) return;
+            setDragOver(dragTargetAt(e.clientX, e.clientY));
+          });
+
+          navList.addEventListener("pointerup", finishPointerDrag);
+          navList.addEventListener("pointercancel", finishPointerDrag);
+        }
+
+        function render(activeId) {
+          navList.innerHTML = "";
+          if (!ANIMATIONS.length) {
+            var li = document.createElement("li");
+            var note = document.createElement("span");
+            note.className = "nav-meta";
+            note.style.padding = "6px 8px";
+            note.textContent = "no animations found";
+            li.appendChild(note);
+            navList.appendChild(li);
+            return;
+          }
+          ANIMATIONS.forEach(function (a) {
+            var li = document.createElement("li");
+            li.setAttribute("data-id", a.id);
+
+            var handle = document.createElement("button");
+            handle.type = "button";
+            handle.className = "nav-drag-handle";
+            handle.setAttribute("aria-label", "drag to reorder " + a.label);
+            handle.setAttribute("aria-grabbed", "false");
+            handle.textContent = "⋮⋮";
+
+            var aEl = document.createElement("a");
+            aEl.href = "#" + a.id;
+            aEl.className = "nav-item";
+
+            var labelSpan = document.createElement("span");
+            labelSpan.className = "nav-label";
+            labelSpan.textContent = a.label;
+            labelSpan.title = "double-click to rename";
+            aEl.appendChild(labelSpan);
+
+            if (a.meta) {
+              var meta = document.createElement("span");
+              meta.className = "nav-meta";
+              meta.textContent = a.meta;
+              aEl.appendChild(meta);
+            }
+            if (a.id === activeId) {
+              aEl.classList.add("is-active");
+              aEl.setAttribute("aria-current", "page");
+            }
+            li.appendChild(handle);
+            li.appendChild(aEl);
+            navList.appendChild(li);
+          });
+          setupReorder();
+          setupRename();
+        }
+
+        function findById(id) {
+          for (var i = 0; i < ANIMATIONS.length; i++) {
+            if (ANIMATIONS[i].id === id) return ANIMATIONS[i];
+          }
+          return null;
+        }
+
+        function iframeSrc(anim) {
+          var u = anim.url;
+          if (anim.mtime == null) return u;
+          return u + (u.indexOf("?") >= 0 ? "&" : "?") + "v=" + anim.mtime;
+        }
+
+        function load(id) {
+          var anim = findById(id);
+          if (!anim) {
+            frame.src = "about:blank";
+            render(null);
+            document.title = "animator v1";
+            return;
+          }
+          var src = iframeSrc(anim);
+          if (frame.getAttribute("data-current") !== src) {
+            frame.src = src;
+            frame.setAttribute("data-current", src);
+          }
+          render(anim.id);
+          document.title = "animator v1 — " + anim.label;
+          try {
+            localStorage.setItem(LAST_KEY, anim.id);
+          } catch (e) {}
+        }
+
+        function readHash() {
+          var h = (window.location.hash || "").replace(/^#/, "").trim();
+          return h || null;
+        }
+
+        function initial() {
+          var fromHash = readHash();
+          if (fromHash && findById(fromHash)) return fromHash;
+          var saved = null;
+          try {
+            saved = localStorage.getItem(LAST_KEY);
+          } catch (e) {}
+          if (saved && findById(saved)) return saved;
+          return ANIMATIONS.length ? ANIMATIONS[0].id : null;
+        }
+
+        window.addEventListener("hashchange", function () {
+          var id = readHash();
+          if (id && findById(id)) load(id);
+        });
+
+        discover()
+          .then(function (list) {
+            ANIMATIONS = applyLabels(applyOrder(list || []));
+            var startId = initial();
+            if (startId && !readHash()) {
+              history.replaceState(null, "", "#" + startId);
+            }
+            load(startId);
+          })
+          .catch(function (err) {
+            console.error("could not load animations", err);
+            ANIMATIONS = [];
+            render(null);
+          });
+      })();
+    </script>
+  </body>
+</html>
