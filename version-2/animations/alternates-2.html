@@ -27,6 +27,7 @@
         --fs: 188;
         --lh: 0.92;
         --tracking: -0.02;
+        --oy: 0;
         --wght: 745;
         --wdth: 90;
         --cntr: 86;
@@ -113,6 +114,7 @@
         text-align: center;
         line-height: var(--lh);
         letter-spacing: calc(var(--tracking) * 1em);
+        transform: translateY(calc(var(--oy) * 1px));
       }
 
       .line {
@@ -318,8 +320,13 @@ Apart</textarea>
         </div>
         <div class="row">
           <label for="tr">track</label>
-          <input id="tr" type="range" min="-0.12" max="0.08" step="0.005" value="-0.02" />
+          <input id="tr" type="range" min="-1" max="1" step="0.005" value="-0.02" />
           <span class="val" id="trVal">-0.02</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
         </div>
       </div>
 
@@ -416,6 +423,7 @@ Apart</textarea>
           fs: 188,
           lh: 0.92,
           tr: -0.02,
+          oy: 0,
           slnt: 0,
           wdth: 90,
           wght: 745,
@@ -435,6 +443,7 @@ Apart</textarea>
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
           tr: document.getElementById("tr"),
+          oy: document.getElementById("oy"),
           slnt: document.getElementById("slnt"),
           wdth: document.getElementById("wdth"),
           wght: document.getElementById("wght"),
@@ -451,6 +460,7 @@ Apart</textarea>
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
+          oy: document.getElementById("oyVal"),
           slnt: document.getElementById("slntVal"),
           wdth: document.getElementById("wdthVal"),
           wght: document.getElementById("wghtVal"),
@@ -572,7 +582,7 @@ Apart</textarea>
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "tx") return String(v);
-          if (key === "fs") return Math.round(Number(v)) + "px";
+          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
           if (key === "lh" || key === "tr") return Number(v).toFixed(2);
           if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
           if (key === "wdth" || key === "wght" || key === "cntr") {
@@ -588,6 +598,7 @@ Apart</textarea>
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--oy", String(els.oy.value));
           root.style.setProperty("--slnt", String(els.slnt.value));
           root.style.setProperty("--wdth", String(els.wdth.value));
           root.style.setProperty("--wght", String(els.wght.value));
