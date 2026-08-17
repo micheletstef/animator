@@ -27,11 +27,6 @@
         --fs: 176;
         --lh: 0.92;
         --tracking: -0.02;
-        --zoom: 1;
-        --fit: min(
-          calc((100vw - 280px - 72px) / 1080),
-          calc((100vh - 48px) / 1440)
-        );
       }
 
       * {
@@ -50,33 +45,41 @@
 
       body {
         display: grid;
-        grid-template-columns: 1fr 280px;
-        align-items: center;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
         gap: 24px;
         padding: 24px;
       }
 
       .stage-wrap {
-        display: flex;
-        align-items: safe center;
-        justify-content: safe center;
+        position: relative;
         height: 100%;
         min-width: 0;
-        overflow: auto;
-        overscroll-behavior: contain;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
       }
 
       .stage-outer {
-        width: calc(1080px * var(--fit) * var(--zoom));
-        height: calc(1440px * var(--fit) * var(--zoom));
-        position: relative;
-        flex: 0 0 auto;
-      }
-
-      .stage {
         position: absolute;
         top: 0;
         left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
         width: 1080px;
         height: 1440px;
         background: var(--bg);
@@ -86,8 +89,7 @@
         font-family: "IkarusCondensedBlack", sans-serif;
         font-weight: 900;
         font-synthesis: none;
-        transform: scale(calc(var(--fit) * var(--zoom)));
-        transform-origin: top left;
+        pointer-events: none;
       }
 
       .lockup {
@@ -273,11 +275,9 @@
         </div>
       </div>
     </div>
-    <input type="hidden" id="zm" value="1" />
-
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
-      <p class="hint">shift + scroll to zoom · 1080 × 1440</p>
+      <p class="hint">scroll to zoom · drag to pan · double-click to fit · 1080 × 1440</p>
 
       <div class="group">
         <p class="group-title">color</p>
@@ -350,7 +350,7 @@ fisheye,
       </div>
     </aside>
 
-    <script src="../../animations/artboard-zoom.js"></script>
+    <script src="artboard-view.js"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = "Metallic\nCUT 30%\nMist & gun\nfisheye,\n60 psi";
@@ -386,7 +386,6 @@ fisheye,
         var lockup = document.getElementById("lockup");
 
         var DEFAULTS = {
-          zm: 1,
           bg: "#ffffff",
           fg: "#000000",
           hl: "#ee0000",
@@ -402,7 +401,6 @@ fisheye,
         var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
 
         var els = {
-          zm: document.getElementById("zm"),
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
           hl: document.getElementById("hl"),
@@ -550,7 +548,6 @@ fisheye,
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "tx") return String(v);
-          if (key === "zm") return Math.round(Number(v) * 100) + "%";
           if (key === "fs") return Math.round(Number(v)) + "px";
           if (key === "lh" || key === "tr") return Number(v).toFixed(2);
           return Math.round(Number(v)) + "ms";
@@ -613,10 +610,13 @@ fisheye,
           applyVars();
           paintVals();
           restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
         }
 
         Object.keys(els).forEach(function (key) {
-          if (!els[key] || key === "zm") return;
+          if (!els[key]) return;
           els[key].addEventListener("input", function () {
             if (key === "tx") buildLockup(els.tx.value);
             applyVars();
@@ -635,13 +635,6 @@ fisheye,
         paintVals();
         restart();
         raf = requestAnimationFrame(frame);
-
-        if (window.ArtboardZoom) {
-          window.ArtboardZoom.resolve(Number(els.zm.value));
-          window.ArtboardZoom.onChange(function (z) {
-            els.zm.value = String(z);
-          });
-        }
       })();
     </script>
   </body>
