@@ -27,10 +27,6 @@
         --lh: 1.06;
         --tracking: 0;
         --oy: 0;
-        --wght: 800;
-        --wdth: 90;
-        --cntr: 0;
-        --slnt: 0;
       }
 
       * {
@@ -93,11 +89,6 @@
         font-family: "IkarusPlusVariable", sans-serif;
         font-synthesis: none;
         font-feature-settings: "ss16" 1, "liga" 1, "kern" 1;
-        font-variation-settings:
-          "wght" var(--wght),
-          "wdth" var(--wdth),
-          "CNTR" var(--cntr),
-          "slnt" var(--slnt);
         pointer-events: none;
       }
 
@@ -120,10 +111,9 @@
         width: 100%;
         font-size: calc(var(--fs) * 1px);
         line-height: var(--lh);
-        letter-spacing: calc(var(--tracking) * 1em);
+        letter-spacing: 0;
         white-space: nowrap;
         font-kerning: none;
-        font-variation-settings: inherit;
         transition: none;
       }
 
@@ -229,6 +219,39 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .kf-head,
+      .kf-row {
+        display: grid;
+        grid-template-columns: 40px 1fr 1fr 1fr 1fr;
+        gap: 4px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .kf-head span {
+        text-align: center;
+        color: #6a6a6a;
+        font-size: 10px;
+        text-transform: lowercase;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .kf-head span:first-child {
+        text-align: left;
+      }
+
+      .kf-row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .kf-row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
       .now {
         margin: 0 0 10px 0;
         color: #9a9a9a;
@@ -307,11 +330,6 @@
           <span class="val" id="lhVal">1.06</span>
         </div>
         <div class="row">
-          <label for="tr">track</label>
-          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="0" />
-          <span class="val" id="trVal">0.00</span>
-        </div>
-        <div class="row">
           <label for="oy">y</label>
           <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
           <span class="val" id="oyVal">0px</span>
@@ -319,32 +337,43 @@
       </div>
 
       <div class="group">
-        <p class="group-title">start · then random snaps</p>
-        <p class="now" id="nowReadout">wght 800 · wdth 90 · CNTR 0 · slnt 0</p>
-        <div class="row">
-          <label for="slnt">slnt</label>
-          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="slntVal">0</span>
+        <p class="group-title">start · each line</p>
+        <p class="now" id="nowReadout">hold</p>
+        <div class="kf-head" id="kfHead">
+          <span></span><span>12</span><span>8</span><span>4</span><span>0</span>
         </div>
-        <div class="row">
-          <label for="wdth">wdth</label>
-          <input id="wdth" type="range" min="65" max="130" step="1" value="90" />
-          <span class="val" id="wdthVal">90</span>
+        <div class="kf-row">
+          <label for="slnt0">slnt</label>
+          <input id="slnt0" type="range" min="-12" max="0" step="0.25" value="0" />
+          <input id="slnt1" type="range" min="-12" max="0" step="0.25" value="0" />
+          <input id="slnt2" type="range" min="-12" max="0" step="0.25" value="0" />
+          <input id="slnt3" type="range" min="-12" max="0" step="0.25" value="0" />
         </div>
-        <div class="row">
-          <label for="wght">wght</label>
-          <input id="wght" type="range" min="200" max="1000" step="1" value="800" />
-          <span class="val" id="wghtVal">800</span>
+        <div class="kf-row">
+          <label for="wdth0">wdth</label>
+          <input id="wdth0" type="range" min="65" max="130" step="1" value="100" />
+          <input id="wdth1" type="range" min="65" max="130" step="1" value="118" />
+          <input id="wdth2" type="range" min="65" max="130" step="1" value="72" />
+          <input id="wdth3" type="range" min="65" max="130" step="1" value="80" />
         </div>
-        <div class="row">
-          <label for="cntr">CNTR</label>
-          <input id="cntr" type="range" min="0" max="100" step="1" value="0" />
-          <span class="val" id="cntrVal">0</span>
+        <div class="kf-row">
+          <label for="wght0">wght</label>
+          <input id="wght0" type="range" min="200" max="1000" step="1" value="1000" />
+          <input id="wght1" type="range" min="200" max="1000" step="1" value="320" />
+          <input id="wght2" type="range" min="200" max="1000" step="1" value="940" />
+          <input id="wght3" type="range" min="200" max="1000" step="1" value="260" />
+        </div>
+        <div class="kf-row">
+          <label for="cntr0">CNTR</label>
+          <input id="cntr0" type="range" min="0" max="100" step="1" value="0" />
+          <input id="cntr1" type="range" min="0" max="100" step="1" value="100" />
+          <input id="cntr2" type="range" min="0" max="100" step="1" value="8" />
+          <input id="cntr3" type="range" min="0" max="100" step="1" value="95" />
         </div>
       </div>
 
       <div class="group">
-        <p class="group-title">motion · one axis at a time</p>
+        <p class="group-title">motion · one line at a time</p>
         <div class="row">
           <label for="step">step</label>
           <input id="step" type="range" min="80" max="1600" step="10" value="420" />
@@ -372,17 +401,19 @@
     <script>
       (function () {
         var DEFAULT_TEXT = "12\n8\n4\n0";
-        var LS_KEY = "animator:v2:white-circled:settings:v1";
+        var LS_KEY = "animator:v2:white-circled:settings:v2";
+        var LINE_COUNT = 4;
         var AXES = [
-          { key: "slnt", tag: "slnt", min: -12, max: 0, step: 0.25 },
-          { key: "wdth", tag: "wdth", min: 65, max: 130, step: 1 },
-          { key: "wght", tag: "wght", min: 200, max: 1000, step: 1 },
-          { key: "cntr", tag: "CNTR", min: 0, max: 100, step: 1 },
+          { key: "slnt", min: -12, max: 0, step: 0.25 },
+          { key: "wdth", min: 65, max: 130, step: 1 },
+          { key: "wght", min: 200, max: 1000, step: 1 },
+          { key: "cntr", min: 0, max: 100, step: 1 },
         ];
 
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var nowReadout = document.getElementById("nowReadout");
+        var kfHead = document.getElementById("kfHead");
 
         var DEFAULTS = {
           bg: "#ffffff",
@@ -390,19 +421,47 @@
           tx: DEFAULT_TEXT,
           fs: 260,
           lh: 1.06,
-          tr: 0,
           oy: 0,
-          slnt: 0,
-          wdth: 90,
-          wght: 800,
-          cntr: 0,
+          slnt0: 0,
+          slnt1: 0,
+          slnt2: 0,
+          slnt3: 0,
+          wdth0: 100,
+          wdth1: 118,
+          wdth2: 72,
+          wdth3: 80,
+          wght0: 1000,
+          wght1: 320,
+          wght2: 940,
+          wght3: 260,
+          cntr0: 0,
+          cntr1: 100,
+          cntr2: 8,
+          cntr3: 95,
           step: 420,
           hold0: 600,
           hold1: 900,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
-        var AXIS_KEYS = { slnt: 1, wdth: 1, wght: 1, cntr: 1 };
+        var START_KEYS = {
+          slnt0: 1,
+          slnt1: 1,
+          slnt2: 1,
+          slnt3: 1,
+          wdth0: 1,
+          wdth1: 1,
+          wdth2: 1,
+          wdth3: 1,
+          wght0: 1,
+          wght1: 1,
+          wght2: 1,
+          wght3: 1,
+          cntr0: 1,
+          cntr1: 1,
+          cntr2: 1,
+          cntr3: 1,
+        };
 
         var els = {};
         var vals = {
@@ -410,12 +469,7 @@
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
-          tr: document.getElementById("trVal"),
           oy: document.getElementById("oyVal"),
-          slnt: document.getElementById("slntVal"),
-          wdth: document.getElementById("wdthVal"),
-          wght: document.getElementById("wghtVal"),
-          cntr: document.getElementById("cntrVal"),
           step: document.getElementById("stepVal"),
           hold0: document.getElementById("hold0Val"),
           hold1: document.getElementById("hold1Val"),
@@ -425,10 +479,18 @@
           els[key] = document.getElementById(key);
         });
 
+        var numEls = [];
         var t0 = 0;
         var cycleIndex = -1;
         var plan = null;
-        var lastAxis = "";
+
+        function parseLines(raw) {
+          var lines = String(raw || "")
+            .replace(/\r\n/g, "\n")
+            .split("\n");
+          if (lines.length === 1 && lines[0] === "") lines = [""];
+          return lines;
+        }
 
         function cloneState(s) {
           return {
@@ -439,13 +501,37 @@
           };
         }
 
-        function startState() {
+        function cloneStates(list) {
+          return list.map(cloneState);
+        }
+
+        function lineState(i) {
+          var idx = Math.min(LINE_COUNT - 1, Math.max(0, i));
           return {
-            slnt: Number(els.slnt.value),
-            wdth: Number(els.wdth.value),
-            wght: Number(els.wght.value),
-            cntr: Number(els.cntr.value),
+            slnt: Number(els["slnt" + idx].value),
+            wdth: Number(els["wdth" + idx].value),
+            wght: Number(els["wght" + idx].value),
+            cntr: Number(els["cntr" + idx].value),
           };
+        }
+
+        function startStates(n) {
+          var out = [];
+          for (var i = 0; i < n; i += 1) out.push(lineState(i));
+          return out;
+        }
+
+        function vfString(s) {
+          return (
+            '"wght" ' +
+            s.wght +
+            ', "wdth" ' +
+            s.wdth +
+            ', "CNTR" ' +
+            s.cntr +
+            ', "slnt" ' +
+            s.slnt
+          );
         }
 
         function shuffle(list) {
@@ -460,15 +546,18 @@
         }
 
         function snapValue(axis, current) {
-          var span = axis.max - axis.min;
-          var n = Math.round(span / axis.step);
+          var n = Math.round((axis.max - axis.min) / axis.step);
           if (n <= 0) return axis.min;
           var curIdx = Math.round((current - axis.min) / axis.step);
-          var minDelta = Math.max(1, Math.round(n * 0.28));
+          var minDelta = Math.max(1, Math.round(n * 0.32));
           var idx = curIdx;
           var tries = 0;
           while (Math.abs(idx - curIdx) < minDelta && tries < 24) {
-            idx = Math.floor(Math.random() * (n + 1));
+            if (Math.random() < 0.5) {
+              idx = Math.floor(Math.random() * Math.floor(n * 0.38 + 1));
+            } else {
+              idx = n - Math.floor(Math.random() * Math.floor(n * 0.38 + 1));
+            }
             tries += 1;
           }
           if (idx === curIdx) idx = curIdx < n / 2 ? n : 0;
@@ -480,33 +569,55 @@
           return v;
         }
 
-        function makePlan(from) {
-          var order = shuffle(AXES);
-          if (plan && plan.order.length && order[0].key === plan.order[plan.order.length - 1].key) {
-            order.push(order.shift());
+        function randomState(from) {
+          var next = cloneState(from);
+          for (var i = 0; i < AXES.length; i += 1) {
+            var axis = AXES[i];
+            next[axis.key] = snapValue(axis, from[axis.key]);
           }
-          var state = cloneState(from);
-          var steps = [];
-          for (var i = 0; i < order.length; i += 1) {
-            var axis = order[i];
-            state[axis.key] = snapValue(axis, state[axis.key]);
-            steps.push({
-              state: cloneState(state),
-              axis: axis.key,
-            });
-          }
-          return { from: cloneState(from), order: order, steps: steps };
+          return next;
         }
 
-        function applyState(s, changed) {
-          root.style.setProperty("--slnt", String(s.slnt));
-          root.style.setProperty("--wdth", String(s.wdth));
-          root.style.setProperty("--wght", String(s.wght));
-          root.style.setProperty("--cntr", String(s.cntr));
-          lastAxis = changed || "";
+        function makePlan(fromStates) {
+          var n = fromStates.length;
+          var order = [];
+          for (var i = 0; i < n; i += 1) order.push(i);
+          order = shuffle(order);
+          if (plan && plan.order.length && order[0] === plan.order[plan.order.length - 1] && n > 1) {
+            order.push(order.shift());
+          }
+          var states = cloneStates(fromStates);
+          var steps = [];
+          for (var s = 0; s < order.length; s += 1) {
+            var idx = order[s];
+            states[idx] = randomState(states[idx]);
+            steps.push({
+              states: cloneStates(states),
+              line: idx,
+            });
+          }
+          return {
+            from: cloneStates(fromStates),
+            order: order,
+            steps: steps,
+          };
+        }
+
+        function applyStates(states, changed) {
+          for (var i = 0; i < numEls.length; i += 1) {
+            if (!states[i]) continue;
+            numEls[i].style.fontVariationSettings = vfString(states[i]);
+          }
+          if (!nowReadout) return;
+          if (changed == null || changed < 0) {
+            nowReadout.textContent = "hold";
+            return;
+          }
+          var label = numEls[changed] ? numEls[changed].textContent : String(changed + 1);
+          var s = states[changed];
           nowReadout.textContent =
-            (lastAxis ? lastAxis + " · " : "") +
-            "wght " +
+            label +
+            " · wght " +
             Math.round(s.wght) +
             " · wdth " +
             Math.round(s.wdth) +
@@ -516,8 +627,7 @@
             Number(s.slnt).toFixed(2).replace(/\.00$/, "");
         }
 
-        function cycleMs() {
-          var n = AXES.length;
+        function cycleMs(n) {
           var step = Math.max(40, Number(els.step.value) || 420);
           var hold0 = Math.max(0, Number(els.hold0.value) || 0);
           var hold1 = Math.max(0, Number(els.hold1.value) || 0);
@@ -525,19 +635,22 @@
         }
 
         function frame(now) {
-          var n = AXES.length;
+          var n = numEls.length || 1;
           var step = Math.max(40, Number(els.step.value) || 420);
           var hold0 = Math.max(0, Number(els.hold0.value) || 0);
-          var total = cycleMs();
+          var total = cycleMs(n);
           if (total <= 0) total = 1;
           var elapsed = now - t0;
           if (elapsed < 0) elapsed = 0;
           var ci = Math.floor(elapsed / total);
           var local = elapsed - ci * total;
 
-          if (ci !== cycleIndex) {
-            var from = plan ? plan.steps[plan.steps.length - 1].state : startState();
-            if (ci === 0) from = startState();
+          if (ci !== cycleIndex || !plan || plan.from.length !== n) {
+            var from =
+              plan && plan.steps.length && plan.from.length === n
+                ? plan.steps[plan.steps.length - 1].states
+                : startStates(n);
+            if (ci === 0 || !plan || plan.from.length !== n) from = startStates(n);
             plan = makePlan(from);
             cycleIndex = ci;
           }
@@ -552,44 +665,48 @@
           }
 
           if (count <= 0) {
-            applyState(plan.from, "");
+            applyStates(plan.from, -1);
           } else {
             var stepInfo = plan.steps[count - 1];
-            applyState(stepInfo.state, stepInfo.axis);
+            applyStates(stepInfo.states, stepInfo.line);
           }
           requestAnimationFrame(frame);
         }
 
+        function updateHead() {
+          var lines = parseLines(els.tx.value);
+          var spans = kfHead.querySelectorAll("span");
+          for (var i = 0; i < LINE_COUNT; i += 1) {
+            if (!spans[i + 1]) continue;
+            spans[i + 1].textContent = lines[i] != null && lines[i] !== "" ? lines[i] : String(i + 1);
+          }
+        }
+
         function buildLockup(text) {
           lockup.innerHTML = "";
-          var lines = String(text || "")
-            .replace(/\r\n/g, "\n")
-            .split("\n");
-          if (lines.length === 1 && lines[0] === "") lines = [""];
-          lines.forEach(function (line) {
+          numEls = [];
+          parseLines(text).forEach(function (line) {
             var el = document.createElement("div");
             el.className = "num";
             el.textContent = line;
             lockup.appendChild(el);
+            numEls.push(el);
           });
+          updateHead();
         }
 
         function restart() {
           t0 = performance.now();
           cycleIndex = -1;
           plan = null;
-          applyState(startState(), "");
+          applyStates(startStates(numEls.length), -1);
         }
 
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "tx") return String(v);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
-          if (key === "lh" || key === "tr") return Number(v).toFixed(2);
-          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
-          if (key === "wdth" || key === "wght" || key === "cntr") {
-            return String(Math.round(Number(v)));
-          }
+          if (key === "lh") return Number(v).toFixed(2);
           return Math.round(Number(v)) + "ms";
         }
 
@@ -598,7 +715,6 @@
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
-          root.style.setProperty("--tracking", String(els.tr.value));
           root.style.setProperty("--oy", String(els.oy.value));
         }
 
@@ -662,7 +778,7 @@
             applyVars();
             paintVals();
             save();
-            if (key === "tx" || AXIS_KEYS[key]) restart();
+            if (key === "tx" || START_KEYS[key]) restart();
           });
         });
 

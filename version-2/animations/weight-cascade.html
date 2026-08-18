@@ -315,7 +315,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">motion · top to bottom, then rest</p>
+        <p class="group-title">motion · wave top to bottom</p>
         <div class="row">
           <label for="pk">peak</label>
           <input id="pk" type="range" min="700" max="1000" step="10" value="990" />
@@ -422,10 +422,9 @@
           return lerp(Number(els.tn.value) || 0, Number(els.tr.value) || 0, u);
         }
 
-        function easeUp(p) {
-          if (p <= 0) return 0;
-          if (p >= 1) return 1;
-          return 0.5 * (1 - Math.cos(Math.PI * p));
+        function bump(p) {
+          if (p <= 0 || p >= 1) return 0;
+          return 0.5 * (1 - Math.cos(2 * Math.PI * p));
         }
 
         function sample(elapsed) {
@@ -439,17 +438,10 @@
           var total = Math.max(1, travel + hold);
           var local = elapsed % total;
           var weights = new Array(n);
-          var returning = hold > 0 && local > travel;
-          var back = returning
-            ? easeUp((local - travel) / hold)
-            : 0;
 
           for (var i = 0; i < n; i++) {
-            if (returning) {
-              weights[i] = lerp(peak, WORDS[i].start, back);
-            } else {
-              weights[i] = lerp(WORDS[i].start, peak, easeUp((local - i * lag) / move));
-            }
+            var p = (local - i * lag) / move;
+            weights[i] = lerp(WORDS[i].start, peak, bump(p));
           }
           return weights;
         }

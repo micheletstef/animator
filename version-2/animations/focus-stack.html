@@ -121,8 +121,10 @@
       .item .measure {
         display: block;
         width: 100%;
+        text-align: center;
         line-height: inherit;
         letter-spacing: inherit;
+        transform-origin: 50% 50%;
       }
 
       .probe {
@@ -363,15 +365,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
       </div>
 
       <div class="group">
-        <p class="group-title">rest · farther items</p>
-        <div class="row">
-          <label for="rwd">wdth</label>
-          <input id="rwd" type="range" min="65" max="130" step="1" value="92" />
-          <span class="val" id="rwdVal">92</span>
-        </div>
-      </div>
-
-      <div class="group">
         <p class="group-title">motion · ping-pong highlight</p>
         <p class="now" id="nowReadout">focus ultra-fine</p>
         <div class="row">
@@ -397,8 +390,11 @@ HEAVY-BODIED / 1.0 mm+</textarea>
     <script src="artboard-view.js"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:focus-stack:settings:v1";
+        var LS_KEY = "animator:v2:focus-stack:settings:v2";
         var STAGE_W = 1080;
+        var WDTH_MIN = 65;
+        var WDTH_MAX = 130;
+        var WDTH_STEP = 5;
         var DEFAULT_TEXT =
           "ULTRA-FINE / 0.15 mm\nDUAL-ACTION / 0.3 mm\nHEAVY-BODIED / 1.0 mm+";
 
@@ -409,6 +405,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
         var itemEls = [];
         var items = [];
         var maxFs = [];
+        var sampleCache = {};
         var measureKey = "";
         var t0 = 0;
 
@@ -426,7 +423,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           wdth: 65,
           wght: 700,
           cntr: 50,
-          rwd: 92,
           move: 780,
           hold: 900,
         };
@@ -448,7 +444,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           wdth: document.getElementById("wdthVal"),
           wght: document.getElementById("wghtVal"),
           cntr: document.getElementById("cntrVal"),
-          rwd: document.getElementById("rwdVal"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
         };
@@ -510,6 +505,13 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           );
         }
 
+        function targetWidth() {
+          var padL = Number(getComputedStyle(root).getPropertyValue("--pad-l")) || 72;
+          var padR = Number(getComputedStyle(root).getPropertyValue("--pad-r")) || 72;
+          var target = STAGE_W - padL - padR;
+          return target < 40 ? 40 : target;
+        }
+
         function measureWidth(text, fs, vf) {
           probe.style.fontSize = fs + "px";
           probe.style.letterSpacing = (Number(els.tr.value) || 0) + "em";
@@ -518,11 +520,87 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           return probe.getBoundingClientRect().width;
         }
 
-        function fitName(text, vf) {
-          var padL = Number(getComputedStyle(root).getPropertyValue("--pad-l")) || 72;
-          var padR = Number(getComputedStyle(root).getPropertyValue("--pad-r")) || 72;
-          var target = STAGE_W - padL - padR;
-          if (target < 40) target = 40;
+        function sampleKey(text, wght, cntr, slnt) {
+          return (
+            text +
+            "|" +
+            wght +
+            "|" +
+            cntr +
+            "|" +
+            slnt +
+            "|" +
+            els.tr.value
+          );
+        }
+
+        function buildSamples(text, wght, cntr, slnt) {
+          var wdths = [];
+          var widths = [];
+          for (var w = WDTH_MIN; w <= WDTH_MAX; w += WDTH_STEP) {
+            wdths.push(w);
+            widths.push(
+              measureWidth(text, 100, vfString(wght, w, cntr, slnt))
+            );
+          }
+          return { wdths: wdths, widths: widths };
+        }
+
+        function getSamples(text, wght, cntr, slnt) {
+          var key = sampleKey(text, wght, cntr, slnt);
+          if (!sampleCache[key]) {
+            sampleCache[key] = buildSamples(text, wght, cntr, slnt);
+          }
+          return sampleCache[key];
+        }
+
+        function lookupWdth(samples, targetW100) {
+          var wdths = samples.wdths;
+          var widths = samples.widths;
+          var n = widths.length;
+          if (!n) return { wdth: WDTH_MIN, w100: 0 };
+          if (targetW100 <= widths[0]) {
+            return { wdth: wdths[0], w100: widths[0] };
+          }
+          if (targetW100 >= widths[n - 1]) {
+            return { wdth: wdths[n - 1], w100: widths[n - 1] };
+          }
+          for (var i = 0; i < n - 1; i++) {
+            if (targetW100 <= widths[i + 1]) {
+              var span = widths[i + 1] - widths[i];
+              var t = span <= 0 ? 0 : (targetW100 - widths[i]) / span;
+              return {
+                wdth: lerp(wdths[i], wdths[i + 1], t),
+                w100: targetW100,
+              };
+            }
+          }
+          return { wdth: wdths[n - 1], w100: widths[n - 1] };
+        }
+
+        function fitLine(el, text, fs, wght, cntr, slnt, target) {
+          if (!el) return;
+          if (!text) {
+            el.style.fontVariationSettings = vfString(wght, WDTH_MIN, cntr, slnt);
+            el.style.transform = "none";
+            return;
+          }
+          var samples = getSamples(text, wght, cntr, slnt);
+          var targetW100 = fs > 0 ? (target * 100) / fs : target;
+          var found = lookupWdth(samples, targetW100);
+          var actual = found.w100 * (fs / 100);
+          var sx = actual > 0.5 ? target / actual : 1;
+          el.style.fontVariationSettings = vfString(
+            wght,
+            found.wdth,
+            cntr,
+            slnt
+          );
+          el.style.transform =
+            Math.abs(sx - 1) > 0.003 ? "scaleX(" + sx + ")" : "none";
+        }
+
+        function fitNameSize(text, vf, target) {
           var w100 = measureWidth(text, 100, vf);
           if (w100 <= 0) return 120;
           return 100 * (target / w100);
@@ -551,8 +629,10 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             getComputedStyle(root).getPropertyValue("--pad-r");
           if (key === measureKey && maxFs.length === items.length) return;
           measureKey = key;
+          sampleCache = {};
+          var target = targetWidth();
           maxFs = items.map(function (item) {
-            return fitName(item.name, vf);
+            return fitNameSize(item.name, vf, target);
           });
         }
 
@@ -594,11 +674,10 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           var n = items.length;
           var minScale = Number(els.mn.value);
           if (!isFinite(minScale)) minScale = 0.38;
-          var hiWdth = Number(els.wdth.value) || 65;
-          var loWdth = Number(els.rwd.value) || 92;
           var wght = Number(els.wght.value) || 700;
           var cntr = Number(els.cntr.value) || 50;
           var slnt = Number(els.slnt.value) || 0;
+          var target = targetWidth();
           var nearest = 0;
           var nearestDist = Infinity;
 
@@ -607,10 +686,19 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             var mix = mixForDist(dist, n);
             var scale = lerp(minScale, 1, mix);
             var fs = (maxFs[i] || 120) * scale;
-            var wdth = lerp(loWdth, hiWdth, mix);
             var el = itemEls[i];
+            var item = items[i] || { name: "", measure: "" };
             el.style.fontSize = fs + "px";
-            el.style.fontVariationSettings = vfString(wght, wdth, cntr, slnt);
+            fitLine(el.querySelector(".name"), item.name, fs, wght, cntr, slnt, target);
+            fitLine(
+              el.querySelector(".measure"),
+              item.measure,
+              fs,
+              wght,
+              cntr,
+              slnt,
+              target
+            );
             if (dist < nearestDist) {
               nearestDist = dist;
               nearest = i;
@@ -640,12 +728,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             return Number(v).toFixed(2);
           }
           if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
-          if (
-            key === "wdth" ||
-            key === "wght" ||
-            key === "cntr" ||
-            key === "rwd"
-          ) {
+          if (key === "wdth" || key === "wght" || key === "cntr") {
             return String(Math.round(Number(v)));
           }
           return Math.round(Number(v)) + "ms";
