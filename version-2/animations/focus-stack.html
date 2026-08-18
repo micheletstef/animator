@@ -302,6 +302,7 @@
           <label for="tx">items</label>
           <textarea id="tx" spellcheck="false" autocomplete="off">ULTRA-FINE / 0.15 mm
 DUAL-ACTION / 0.3 mm
+MEDIUM / 0.5 mm
 HEAVY-BODIED / 1.0 mm+</textarea>
         </div>
       </div>
@@ -399,16 +400,15 @@ HEAVY-BODIED / 1.0 mm+</textarea>
     <script src="artboard-view.js"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:focus-stack:settings:v3";
+        var LS_KEY = "animator:v2:focus-stack:settings:v4";
         var STAGE_W = 1080;
         var WDTH_MIN = 65;
         var WDTH_MAX = 130;
         var WDTH_STEP = 5;
         var WGHT_MIN = 200;
         var WGHT_MAX = 1000;
-        var WGHT_SNAP = 100;
         var DEFAULT_TEXT =
-          "ULTRA-FINE / 0.15 mm\nDUAL-ACTION / 0.3 mm\nHEAVY-BODIED / 1.0 mm+";
+          "ULTRA-FINE / 0.15 mm\nDUAL-ACTION / 0.3 mm\nMEDIUM / 0.5 mm\nHEAVY-BODIED / 1.0 mm+";
 
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
@@ -417,7 +417,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
         var itemEls = [];
         var items = [];
         var maxFs = [];
-        var sampleCache = {};
+        var lineFits = [];
         var measureKey = "";
         var t0 = 0;
 
@@ -534,20 +534,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           return probe.getBoundingClientRect().width;
         }
 
-        function sampleKey(text, wght, cntr, slnt) {
-          return (
-            text +
-            "|" +
-            wght +
-            "|" +
-            cntr +
-            "|" +
-            slnt +
-            "|" +
-            els.tr.value
-          );
-        }
-
         function buildSamples(text, wght, cntr, slnt) {
           var wdths = [];
           var widths = [];
@@ -558,19 +544,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             );
           }
           return { wdths: wdths, widths: widths };
-        }
-
-        function snapWght(w) {
-          var n = Math.round(Number(w) / WGHT_SNAP) * WGHT_SNAP;
-          return clamp(n, WGHT_MIN, WGHT_MAX);
-        }
-
-        function getSamples(text, wght, cntr, slnt) {
-          var key = sampleKey(text, snapWght(wght), cntr, slnt);
-          if (!sampleCache[key]) {
-            sampleCache[key] = buildSamples(text, snapWght(wght), cntr, slnt);
-          }
-          return sampleCache[key];
         }
 
         function lookupWdth(samples, targetW100) {
@@ -597,26 +570,22 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           return { wdth: wdths[n - 1], w100: widths[n - 1] };
         }
 
-        function fitLine(el, text, fs, wght, cntr, slnt, target) {
-          if (!el) return;
-          if (!text) {
-            el.style.fontVariationSettings = vfString(wght, WDTH_MIN, cntr, slnt);
-            el.style.transform = "none";
-            return;
-          }
-          var samples = getSamples(text, wght, cntr, slnt);
+        function solveFit(text, fs, wght, cntr, slnt, target) {
+          if (!text) return { wdth: WDTH_MIN, sx: 1 };
+          var samples = buildSamples(text, wght, cntr, slnt);
           var targetW100 = fs > 0 ? (target * 100) / fs : target;
           var found = lookupWdth(samples, targetW100);
           var actual = found.w100 * (fs / 100);
           var sx = actual > 0.5 ? target / actual : 1;
-          el.style.fontVariationSettings = vfString(
-            wght,
-            found.wdth,
-            cntr,
-            slnt
-          );
-          el.style.transform =
-            Math.abs(sx - 1) > 0.003 ? "scaleX(" + sx + ")" : "none";
+          return { wdth: found.wdth, sx: sx };
+        }
+
+        function applyLine(el, fit, mix, wght, cntr, slnt) {
+          if (!el || !fit) return;
+          var wdth = lerp(fit.lo.wdth, fit.hi.wdth, mix);
+          var sx = lerp(fit.lo.sx, fit.hi.sx, mix);
+          el.style.fontVariationSettings = vfString(wght, wdth, cntr, slnt);
+          el.style.transform = "scaleX(" + sx + ")";
         }
 
         function fitNameSize(text, vf, target) {
@@ -636,8 +605,18 @@ HEAVY-BODIED / 1.0 mm+</textarea>
 
         function ensureMeasures() {
           var vf = variationNow();
+          var wghtHi = Number(els.wght.value);
+          var wghtLo = Number(els.rwg.value);
+          var minScale = Number(els.mn.value);
+          if (!isFinite(wghtHi)) wghtHi = WGHT_MAX;
+          if (!isFinite(wghtLo)) wghtLo = WGHT_MIN;
+          if (!isFinite(minScale)) minScale = 0.38;
           var key =
             vf +
+            "|" +
+            wghtLo +
+            "|" +
+            minScale +
             "|" +
             els.tx.value +
             "|" +
@@ -646,31 +625,29 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             getComputedStyle(root).getPropertyValue("--pad-l") +
             "|" +
             getComputedStyle(root).getPropertyValue("--pad-r");
-          if (key === measureKey && maxFs.length === items.length) return;
+          if (key === measureKey && lineFits.length === items.length) return;
           measureKey = key;
-          sampleCache = {};
           var target = targetWidth();
+          var cntr = Number(els.cntr.value) || 50;
+          var slnt = Number(els.slnt.value) || 0;
           maxFs = items.map(function (item) {
             return fitNameSize(item.name, vf, target);
           });
-          var cntr = Number(els.cntr.value) || 50;
-          var slnt = Number(els.slnt.value) || 0;
-          var wghtHi = Number(els.wght.value) || WGHT_MAX;
-          var wghtLo = Number(els.rwg.value) || WGHT_MIN;
-          var lo = snapWght(Math.min(wghtLo, wghtHi));
-          var hi = snapWght(Math.max(wghtLo, wghtHi));
-          var seen = {};
-          for (var i = 0; i < items.length; i++) {
-            var pair = [items[i].name, items[i].measure];
-            for (var p = 0; p < pair.length; p++) {
-              var text = pair[p];
-              if (!text || seen[text]) continue;
-              seen[text] = 1;
-              for (var w = lo; w <= hi; w += WGHT_SNAP) {
-                getSamples(text, w, cntr, slnt);
-              }
-            }
-          }
+          lineFits = items.map(function (item, i) {
+            var fsHi = maxFs[i] || 120;
+            var fsLo = fsHi * minScale;
+            var nameFit = {
+              hi: solveFit(item.name, fsHi, wghtHi, cntr, slnt, target),
+              lo: solveFit(item.name, fsLo, wghtLo, cntr, slnt, target),
+            };
+            var measureFit = item.measure
+              ? {
+                  hi: solveFit(item.measure, fsHi, wghtHi, cntr, slnt, target),
+                  lo: solveFit(item.measure, fsLo, wghtLo, cntr, slnt, target),
+                }
+              : null;
+            return { name: nameFit, measure: measureFit };
+          });
         }
 
         function pingPongStops(n) {
@@ -717,7 +694,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           if (!isFinite(loWght)) loWght = WGHT_MIN;
           var cntr = Number(els.cntr.value) || 50;
           var slnt = Number(els.slnt.value) || 0;
-          var target = targetWidth();
           var nearest = 0;
           var nearestDist = Infinity;
 
@@ -728,18 +704,19 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             var fs = (maxFs[i] || 120) * scale;
             var wght = lerp(loWght, hiWght, mix);
             var el = itemEls[i];
-            var item = items[i] || { name: "", measure: "" };
+            var fits = lineFits[i];
             el.style.fontSize = fs + "px";
-            fitLine(el.querySelector(".name"), item.name, fs, wght, cntr, slnt, target);
-            fitLine(
-              el.querySelector(".measure"),
-              item.measure,
-              fs,
-              wght,
-              cntr,
-              slnt,
-              target
-            );
+            if (fits) {
+              applyLine(el.querySelector(".name"), fits.name, mix, wght, cntr, slnt);
+              applyLine(
+                el.querySelector(".measure"),
+                fits.measure,
+                mix,
+                wght,
+                cntr,
+                slnt
+              );
+            }
             if (dist < nearestDist) {
               nearestDist = dist;
               nearest = i;
@@ -872,6 +849,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
               key === "wdth" ||
               key === "wght" ||
               key === "rwg" ||
+              key === "mn" ||
               key === "cntr" ||
               key === "slnt" ||
               key === "tr"
