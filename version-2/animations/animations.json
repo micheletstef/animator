@@ -29,6 +29,12 @@
       "label": "S",
       "url": "animations/glyph-cycle.html?ch=S",
       "mtime": 1786995900
+    },
+    {
+      "id": "weight-cascade",
+      "label": "weight cascade",
+      "url": "animations/weight-cascade.html",
+      "mtime": 1787048944
     }
   ]
 }
