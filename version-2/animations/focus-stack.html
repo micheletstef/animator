@@ -96,20 +96,22 @@
         position: absolute;
         top: calc(var(--pad-t) * 1px);
         right: calc(var(--pad-r) * 1px);
-        bottom: calc(var(--pad-b) * 1px);
         left: calc(var(--pad-l) * 1px);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
+        align-content: flex-start;
         text-align: center;
         gap: calc(var(--gap) * 1px);
         transform: translateY(calc(var(--oy) * 1px));
+        transform-origin: 50% 0;
       }
 
       .item {
         display: flex;
         flex-direction: column;
+        justify-content: flex-start;
         align-items: center;
         width: 100%;
         max-width: 100%;
@@ -119,18 +121,18 @@
         white-space: nowrap;
       }
 
+      .item .fit {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: 50% 0;
+      }
+
       .item .name,
       .item .measure {
         display: block;
-        width: 100%;
-        text-align: center;
         line-height: inherit;
         letter-spacing: inherit;
-      }
-
-      .item .fit {
-        display: inline-block;
-        transform-origin: 50% 50%;
       }
 
       .probe {
@@ -408,7 +410,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
       (function () {
         var LS_KEY = "animator:v2:focus-stack:settings:v4";
         var STAGE_W = 1080;
-        var STAGE_H = 1440;
         var stageEl = document.getElementById("stage");
         var WDTH_MIN = 65;
         var WDTH_MAX = 130;
@@ -534,13 +535,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           return target < 40 ? 40 : target;
         }
 
-        function targetHeight() {
-          var padT = Number(getComputedStyle(root).getPropertyValue("--pad-t")) || 96;
-          var padB = Number(getComputedStyle(root).getPropertyValue("--pad-b")) || 96;
-          var target = STAGE_H - padT - padB;
-          return target < 40 ? 40 : target;
-        }
-
         function artboardWidth(el) {
           if (!el) return 0;
           var prev = el.style.transform;
@@ -550,13 +544,6 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           el.style.transform = prev;
           if (stageW > 0) return (w * STAGE_W) / stageW;
           return el.offsetWidth || 0;
-        }
-
-        function fitInnerToWidth(inner, target) {
-          if (!inner) return;
-          var actual = artboardWidth(inner);
-          var sx = actual > 0.5 ? target / actual : 1;
-          inner.style.transform = "scaleX(" + sx + ")";
         }
 
         function measureWidth(text, fs, vf) {
@@ -613,13 +600,17 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           return { wdth: found.wdth, sx: sx };
         }
 
-        function applyLine(el, fit, mix, wght, cntr, slnt, target) {
+        function applyItem(el, fit, mix, wght, cntr, slnt, target) {
           if (!el) return;
           var inner = el.querySelector(".fit") || el;
+          var nameEl = el.querySelector(".name") || el;
           var wdth = fit ? lerp(fit.lo.wdth, fit.hi.wdth, mix) : WDTH_MIN;
           el.style.fontVariationSettings = vfString(wght, wdth, cntr, slnt);
           el.style.fontWeight = String(Math.round(wght));
-          fitInnerToWidth(inner, target);
+          inner.style.transform = "none";
+          var actual = artboardWidth(nameEl);
+          var sx = actual > 0.5 ? target / actual : 1;
+          inner.style.transform = "scaleX(" + sx + ")";
         }
 
         function fitNameSize(text, vf, target) {
@@ -670,17 +661,10 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           lineFits = items.map(function (item, i) {
             var fsHi = maxFs[i] || 120;
             var fsLo = fsHi * minScale;
-            var nameFit = {
+            return {
               hi: solveFit(item.name, fsHi, wghtHi, cntr, slnt, target),
               lo: solveFit(item.name, fsLo, wghtLo, cntr, slnt, target),
             };
-            var measureFit = item.measure
-              ? {
-                  hi: solveFit(item.measure, fsHi, wghtHi, cntr, slnt, target),
-                  lo: solveFit(item.measure, fsLo, wghtLo, cntr, slnt, target),
-                }
-              : null;
-            return { name: nameFit, measure: measureFit };
           });
         }
 
@@ -728,62 +712,34 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           if (!isFinite(loWght)) loWght = WGHT_MIN;
           var cntr = Number(els.cntr.value) || 50;
           var slnt = Number(els.slnt.value) || 0;
-          var lh = Number(els.lh.value);
-          if (!isFinite(lh) || lh <= 0) lh = 0.86;
-          var gap = Number(els.gap.value);
-          if (!isFinite(gap)) gap = 36;
           var target = targetWidth();
-          var availH = targetHeight();
           var nearest = 0;
           var nearestDist = Infinity;
           var states = [];
-          var usedH = 0;
           var i;
 
           for (i = 0; i < itemEls.length; i++) {
             var dist = Math.abs(i - focus);
             var mix = mixForDist(dist, n);
             var fs = (maxFs[i] || 120) * lerp(minScale, 1, mix);
-            var lines = items[i] && items[i].measure ? 2 : 1;
             states.push({
               dist: dist,
               mix: mix,
               fs: fs,
               wght: lerp(loWght, hiWght, mix),
-              lines: lines,
             });
-            usedH += fs * lh * lines;
             if (dist < nearestDist) {
               nearestDist = dist;
               nearest = i;
             }
           }
-          if (states.length > 1) usedH += gap * (states.length - 1);
-          var shrink = usedH > availH && usedH > 0 ? availH / usedH : 1;
 
           for (i = 0; i < itemEls.length; i++) {
             var state = states[i];
             var el = itemEls[i];
             var fits = lineFits[i];
-            el.style.fontSize = state.fs * shrink + "px";
-            applyLine(
-              el.querySelector(".name"),
-              fits && fits.name,
-              state.mix,
-              state.wght,
-              cntr,
-              slnt,
-              target
-            );
-            applyLine(
-              el.querySelector(".measure"),
-              fits && fits.measure,
-              state.mix,
-              state.wght,
-              cntr,
-              slnt,
-              target
-            );
+            el.style.fontSize = state.fs + "px";
+            applyItem(el, fits, state.mix, state.wght, cntr, slnt, target);
           }
 
           var label = items[nearest] && items[nearest].name
@@ -863,10 +819,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
         function makeLine(className, text) {
           var line = document.createElement("span");
           line.className = className;
-          var fit = document.createElement("span");
-          fit.className = "fit";
-          fit.textContent = text;
-          line.appendChild(fit);
+          line.textContent = text;
           return line;
         }
 
@@ -877,10 +830,13 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           items.forEach(function (item) {
             var wrap = document.createElement("div");
             wrap.className = "item";
-            wrap.appendChild(makeLine("name", item.name));
+            var fit = document.createElement("span");
+            fit.className = "fit";
+            fit.appendChild(makeLine("name", item.name));
             if (item.measure) {
-              wrap.appendChild(makeLine("measure", item.measure));
+              fit.appendChild(makeLine("measure", item.measure));
             }
+            wrap.appendChild(fit);
             lockup.appendChild(wrap);
             itemEls.push(wrap);
           });
