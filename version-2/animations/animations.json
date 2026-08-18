@@ -31,6 +31,12 @@
       "mtime": 1786995900
     },
     {
+      "id": "focus-stack",
+      "label": "focus stack",
+      "url": "animations/focus-stack.html",
+      "mtime": 1787059690
+    },
+    {
       "id": "weight-cascade",
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",

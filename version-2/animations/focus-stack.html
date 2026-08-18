@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>focus stack</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: dark;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --fg: #000000;
+        --pad-t: 96;
+        --pad-r: 72;
+        --pad-b: 96;
+        --pad-l: 72;
+        --lh: 0.86;
+        --gap: 36;
+        --oy: 0;
+        --tracking: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #e9e9e9;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 1, "kern" 1;
+        pointer-events: none;
+      }
+
+      .lockup {
+        position: absolute;
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: calc(var(--gap) * 1px);
+        transform: translateY(calc(var(--oy) * 1px));
+      }
+
+      .item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        letter-spacing: calc(var(--tracking) * 1em);
+        line-height: var(--lh);
+        white-space: nowrap;
+      }
+
+      .item .name,
+      .item .measure {
+        display: block;
+        width: 100%;
+        line-height: inherit;
+        letter-spacing: inherit;
+      }
+
+      .probe {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        visibility: hidden;
+        pointer-events: none;
+        white-space: nowrap;
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 1, "kern" 1;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row textarea {
+        grid-column: 2 / 4;
+        width: 100%;
+        min-height: 92px;
+        resize: vertical;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
+        line-height: 1.25;
+        white-space: pre;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 10px 0;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="focus stack">
+          <div class="lockup" id="lockup"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">
+        scroll to zoom · drag to pan · double-click to fit · 1080 × 1440
+      </p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">copy</p>
+        <div class="row">
+          <label for="tx">items</label>
+          <textarea id="tx" spellcheck="false" autocomplete="off">ULTRA-FINE / 0.15 mm
+DUAL-ACTION / 0.3 mm
+HEAVY-BODIED / 1.0 mm+</textarea>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.7" max="1.3" step="0.01" value="0.86" />
+          <span class="val" id="lhVal">0.86</span>
+        </div>
+        <div class="row">
+          <label for="tr">track</label>
+          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="0" />
+          <span class="val" id="trVal">0.00</span>
+        </div>
+        <div class="row">
+          <label for="gap">gap</label>
+          <input id="gap" type="range" min="0" max="120" step="1" value="36" />
+          <span class="val" id="gapVal">36px</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
+        </div>
+        <div class="row">
+          <label for="mn">min</label>
+          <input id="mn" type="range" min="0.2" max="0.8" step="0.01" value="0.38" />
+          <span class="val" id="mnVal">0.38</span>
+        </div>
+        <div class="row">
+          <label for="fall">fall</label>
+          <input id="fall" type="range" min="0.6" max="2.4" step="0.05" value="1.2" />
+          <span class="val" id="fallVal">1.20</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">highlight · screenshot settings</p>
+        <div class="row">
+          <label for="slnt">slnt</label>
+          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slntVal">0</span>
+        </div>
+        <div class="row">
+          <label for="wdth">wdth</label>
+          <input id="wdth" type="range" min="65" max="130" step="1" value="65" />
+          <span class="val" id="wdthVal">65</span>
+        </div>
+        <div class="row">
+          <label for="wght">wght</label>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="700" />
+          <span class="val" id="wghtVal">700</span>
+        </div>
+        <div class="row">
+          <label for="cntr">CNTR</label>
+          <input id="cntr" type="range" min="0" max="100" step="1" value="50" />
+          <span class="val" id="cntrVal">50</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">rest · farther items</p>
+        <div class="row">
+          <label for="rwd">wdth</label>
+          <input id="rwd" type="range" min="65" max="130" step="1" value="92" />
+          <span class="val" id="rwdVal">92</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion · ping-pong highlight</p>
+        <p class="now" id="nowReadout">focus ultra-fine</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="2400" step="20" value="780" />
+          <span class="val" id="moveVal">780ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2400" step="50" value="900" />
+          <span class="val" id="holdVal">900ms</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+        <button type="button" id="replayBtn">replay</button>
+      </div>
+    </aside>
+
+    <span class="probe" id="probe" aria-hidden="true"></span>
+
+    <script src="artboard-view.js"></script>
+    <script>
+      (function () {
+        var LS_KEY = "animator:v2:focus-stack:settings:v1";
+        var STAGE_W = 1080;
+        var DEFAULT_TEXT =
+          "ULTRA-FINE / 0.15 mm\nDUAL-ACTION / 0.3 mm\nHEAVY-BODIED / 1.0 mm+";
+
+        var root = document.documentElement;
+        var lockup = document.getElementById("lockup");
+        var probe = document.getElementById("probe");
+        var nowReadout = document.getElementById("nowReadout");
+        var itemEls = [];
+        var items = [];
+        var maxFs = [];
+        var measureKey = "";
+        var t0 = 0;
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          tx: DEFAULT_TEXT,
+          lh: 0.86,
+          tr: 0,
+          gap: 36,
+          oy: 0,
+          mn: 0.38,
+          fall: 1.2,
+          slnt: 0,
+          wdth: 65,
+          wght: 700,
+          cntr: 50,
+          rwd: 92,
+          move: 780,
+          hold: 900,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var TEXT_KEYS = { tx: 1 };
+
+        var els = {};
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          lh: document.getElementById("lhVal"),
+          tr: document.getElementById("trVal"),
+          gap: document.getElementById("gapVal"),
+          oy: document.getElementById("oyVal"),
+          mn: document.getElementById("mnVal"),
+          fall: document.getElementById("fallVal"),
+          slnt: document.getElementById("slntVal"),
+          wdth: document.getElementById("wdthVal"),
+          wght: document.getElementById("wghtVal"),
+          cntr: document.getElementById("cntrVal"),
+          rwd: document.getElementById("rwdVal"),
+          move: document.getElementById("moveVal"),
+          hold: document.getElementById("holdVal"),
+        };
+
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+        });
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function clamp(n, lo, hi) {
+          return Math.max(lo, Math.min(hi, n));
+        }
+
+        function easeInOut(t) {
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function parseItems(raw) {
+          var lines = String(raw || "")
+            .split(/\r?\n/)
+            .map(function (s) {
+              return s.trim();
+            })
+            .filter(function (s) {
+              return s.length > 0;
+            });
+          var out = [];
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            var cut = line.indexOf(" / ");
+            if (cut < 0) cut = line.indexOf("/");
+            if (cut >= 0) {
+              out.push({
+                name: line.slice(0, cut).trim(),
+                measure: line.slice(cut + 1).replace(/^\s*\/\s*/, "").trim(),
+              });
+            } else {
+              out.push({ name: line, measure: "" });
+            }
+          }
+          return out.length ? out : [{ name: "ULTRA-FINE", measure: "0.15 mm" }];
+        }
+
+        function vfString(wght, wdth, cntr, slnt) {
+          return (
+            '"wght" ' +
+            wght +
+            ', "wdth" ' +
+            wdth +
+            ', "CNTR" ' +
+            cntr +
+            ', "slnt" ' +
+            slnt
+          );
+        }
+
+        function measureWidth(text, fs, vf) {
+          probe.style.fontSize = fs + "px";
+          probe.style.letterSpacing = (Number(els.tr.value) || 0) + "em";
+          probe.style.fontVariationSettings = vf;
+          probe.textContent = text || "";
+          return probe.getBoundingClientRect().width;
+        }
+
+        function fitName(text, vf) {
+          var padL = Number(getComputedStyle(root).getPropertyValue("--pad-l")) || 72;
+          var padR = Number(getComputedStyle(root).getPropertyValue("--pad-r")) || 72;
+          var target = STAGE_W - padL - padR;
+          if (target < 40) target = 40;
+          var w100 = measureWidth(text, 100, vf);
+          if (w100 <= 0) return 120;
+          return 100 * (target / w100);
+        }
+
+        function variationNow() {
+          return vfString(
+            Number(els.wght.value) || 700,
+            Number(els.wdth.value) || 65,
+            Number(els.cntr.value) || 50,
+            Number(els.slnt.value) || 0
+          );
+        }
+
+        function ensureMeasures() {
+          var vf = variationNow();
+          var key =
+            vf +
+            "|" +
+            els.tx.value +
+            "|" +
+            els.tr.value +
+            "|" +
+            getComputedStyle(root).getPropertyValue("--pad-l") +
+            "|" +
+            getComputedStyle(root).getPropertyValue("--pad-r");
+          if (key === measureKey && maxFs.length === items.length) return;
+          measureKey = key;
+          maxFs = items.map(function (item) {
+            return fitName(item.name, vf);
+          });
+        }
+
+        function pingPongStops(n) {
+          var stops = [];
+          var i;
+          for (i = 0; i < n; i++) stops.push(i);
+          for (i = n - 2; i >= 1; i--) stops.push(i);
+          return stops.length ? stops : [0];
+        }
+
+        function sampleFocus(elapsed) {
+          var n = items.length;
+          if (n <= 1) return 0;
+          var move = Math.max(80, Number(els.move.value) || 780);
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          var step = move + hold;
+          var stops = pingPongStops(n);
+          var total = stops.length * step;
+          var t = elapsed % total;
+          var seg = Math.floor(t / step);
+          var local = t - seg * step;
+          var from = stops[seg];
+          var to = stops[(seg + 1) % stops.length];
+          if (local <= hold) return from;
+          var u = easeInOut((local - hold) / move);
+          return lerp(from, to, u);
+        }
+
+        function mixForDist(dist, n) {
+          var maxDist = Math.max(1, n - 1);
+          var fall = Number(els.fall.value);
+          if (!isFinite(fall) || fall <= 0) fall = 1;
+          var u = clamp(1 - dist / maxDist, 0, 1);
+          return Math.pow(u, fall);
+        }
+
+        function applyFocus(focus) {
+          var n = items.length;
+          var minScale = Number(els.mn.value);
+          if (!isFinite(minScale)) minScale = 0.38;
+          var hiWdth = Number(els.wdth.value) || 65;
+          var loWdth = Number(els.rwd.value) || 92;
+          var wght = Number(els.wght.value) || 700;
+          var cntr = Number(els.cntr.value) || 50;
+          var slnt = Number(els.slnt.value) || 0;
+          var nearest = 0;
+          var nearestDist = Infinity;
+
+          for (var i = 0; i < itemEls.length; i++) {
+            var dist = Math.abs(i - focus);
+            var mix = mixForDist(dist, n);
+            var scale = lerp(minScale, 1, mix);
+            var fs = (maxFs[i] || 120) * scale;
+            var wdth = lerp(loWdth, hiWdth, mix);
+            var el = itemEls[i];
+            el.style.fontSize = fs + "px";
+            el.style.fontVariationSettings = vfString(wght, wdth, cntr, slnt);
+            if (dist < nearestDist) {
+              nearestDist = dist;
+              nearest = i;
+            }
+          }
+
+          var label = items[nearest] && items[nearest].name
+            ? items[nearest].name.toLowerCase()
+            : "—";
+          nowReadout.textContent = "focus " + label;
+        }
+
+        function frame(now) {
+          ensureMeasures();
+          applyFocus(sampleFocus(now - t0));
+          requestAnimationFrame(frame);
+        }
+
+        function restart() {
+          t0 = performance.now();
+        }
+
+        function fmt(key, v) {
+          if (COLOR_KEYS[key] || TEXT_KEYS[key]) return String(v);
+          if (key === "oy" || key === "gap") return Math.round(Number(v)) + "px";
+          if (key === "lh" || key === "tr" || key === "mn" || key === "fall") {
+            return Number(v).toFixed(2);
+          }
+          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
+          if (
+            key === "wdth" ||
+            key === "wght" ||
+            key === "cntr" ||
+            key === "rwd"
+          ) {
+            return String(Math.round(Number(v)));
+          }
+          return Math.round(Number(v)) + "ms";
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--lh", String(els.lh.value));
+          root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--gap", String(els.gap.value));
+          root.style.setProperty("--oy", String(els.oy.value));
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = fmt(key, els[key].value);
+          });
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            data[key] = els[key].value;
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw = null;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
+          if (!raw) return;
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            els[key].value = data[key];
+          });
+        }
+
+        function buildLockup() {
+          items = parseItems(els.tx.value);
+          lockup.innerHTML = "";
+          itemEls = [];
+          items.forEach(function (item) {
+            var wrap = document.createElement("div");
+            wrap.className = "item";
+            var name = document.createElement("span");
+            name.className = "name";
+            name.textContent = item.name;
+            wrap.appendChild(name);
+            if (item.measure) {
+              var measure = document.createElement("span");
+              measure.className = "measure";
+              measure.textContent = item.measure;
+              wrap.appendChild(measure);
+            }
+            lockup.appendChild(wrap);
+            itemEls.push(wrap);
+          });
+          measureKey = "";
+        }
+
+        function reset() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].value = DEFAULTS[key];
+          });
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (e) {}
+          buildLockup();
+          applyVars();
+          paintVals();
+          restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          var ev = key === "tx" ? "input" : "input";
+          els[key].addEventListener(ev, function () {
+            if (key === "tx") buildLockup();
+            applyVars();
+            paintVals();
+            save();
+            if (
+              key === "wdth" ||
+              key === "wght" ||
+              key === "cntr" ||
+              key === "slnt" ||
+              key === "tr"
+            ) {
+              measureKey = "";
+            }
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("replayBtn").addEventListener("click", restart);
+
+        function start() {
+          buildLockup();
+          loadSaved();
+          buildLockup();
+          applyVars();
+          paintVals();
+          restart();
+          requestAnimationFrame(frame);
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start).catch(start);
+        } else {
+          start();
+        }
+      })();
+    </script>
+  </body>
+</html>
