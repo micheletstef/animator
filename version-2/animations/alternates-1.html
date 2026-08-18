@@ -389,7 +389,8 @@ fisheye,
         var DEFAULT_TEXT = "Metallic\nCUT 30%\nMist & gun\nfisheye,\n60 psi";
 
         // Dedicated Ikarus stylistic sets. ss16 (white circled) is applied
-        // to 2+ digit runs that are not a percentage.
+        // to 2+ digit runs that are not a percentage. Spurless p (ss19) stays
+        // on as typesetting; it still highlights in the alt cycle.
         var CHAR_FEATURE = {
           a: "ss01",
           g: "ss02",
@@ -407,6 +408,10 @@ fisheye,
           i: "ss18",
           j: "ss18",
           ".": "ss18",
+          p: "ss19",
+        };
+
+        var ALWAYS_FEATURE = {
           p: "ss19",
         };
 
@@ -533,11 +538,15 @@ fisheye,
         }
 
         function applyFeature(el, feat) {
-          if (!feat) {
-            el.style.fontFeatureSettings = '"liga" 1, "kern" 1';
-            return;
-          }
-          el.style.fontFeatureSettings = '"' + feat + '" 1, "liga" 1, "kern" 1';
+          var always = el.getAttribute("data-always");
+          var tags = [];
+          if (feat) tags.push(feat);
+          if (always && always !== feat) tags.push(always);
+          var parts = tags.map(function (tag) {
+            return '"' + tag + '" 1';
+          });
+          parts.push('"liga" 1', '"kern" 1');
+          el.style.fontFeatureSettings = parts.join(", ");
         }
 
         function buildLockup(text) {
@@ -554,6 +563,10 @@ fisheye,
               if (tok.circled) span.className += " ch-run";
               if (tok.liga) span.className += " ch-liga";
               span.textContent = tok.text;
+              if (ALWAYS_FEATURE[tok.text]) {
+                span.setAttribute("data-always", ALWAYS_FEATURE[tok.text]);
+                applyFeature(span, null);
+              }
               if (tok.feat) {
                 span.setAttribute("data-feat", tok.feat);
                 altNodes.push({ el: span, feat: tok.feat });
