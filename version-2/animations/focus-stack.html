@@ -354,13 +354,22 @@ HEAVY-BODIED / 1.0 mm+</textarea>
         </div>
         <div class="row">
           <label for="wght">wght</label>
-          <input id="wght" type="range" min="200" max="1000" step="1" value="700" />
-          <span class="val" id="wghtVal">700</span>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="1000" />
+          <span class="val" id="wghtVal">1000</span>
         </div>
         <div class="row">
           <label for="cntr">CNTR</label>
           <input id="cntr" type="range" min="0" max="100" step="1" value="50" />
           <span class="val" id="cntrVal">50</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">rest · inactive items</p>
+        <div class="row">
+          <label for="rwg">wght</label>
+          <input id="rwg" type="range" min="200" max="1000" step="1" value="200" />
+          <span class="val" id="rwgVal">200</span>
         </div>
       </div>
 
@@ -390,11 +399,14 @@ HEAVY-BODIED / 1.0 mm+</textarea>
     <script src="artboard-view.js"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:focus-stack:settings:v2";
+        var LS_KEY = "animator:v2:focus-stack:settings:v3";
         var STAGE_W = 1080;
         var WDTH_MIN = 65;
         var WDTH_MAX = 130;
         var WDTH_STEP = 5;
+        var WGHT_MIN = 200;
+        var WGHT_MAX = 1000;
+        var WGHT_SNAP = 100;
         var DEFAULT_TEXT =
           "ULTRA-FINE / 0.15 mm\nDUAL-ACTION / 0.3 mm\nHEAVY-BODIED / 1.0 mm+";
 
@@ -421,8 +433,9 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           fall: 1.2,
           slnt: 0,
           wdth: 65,
-          wght: 700,
+          wght: 1000,
           cntr: 50,
+          rwg: 200,
           move: 780,
           hold: 900,
         };
@@ -444,6 +457,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           wdth: document.getElementById("wdthVal"),
           wght: document.getElementById("wghtVal"),
           cntr: document.getElementById("cntrVal"),
+          rwg: document.getElementById("rwgVal"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
         };
@@ -546,10 +560,15 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           return { wdths: wdths, widths: widths };
         }
 
+        function snapWght(w) {
+          var n = Math.round(Number(w) / WGHT_SNAP) * WGHT_SNAP;
+          return clamp(n, WGHT_MIN, WGHT_MAX);
+        }
+
         function getSamples(text, wght, cntr, slnt) {
-          var key = sampleKey(text, wght, cntr, slnt);
+          var key = sampleKey(text, snapWght(wght), cntr, slnt);
           if (!sampleCache[key]) {
-            sampleCache[key] = buildSamples(text, wght, cntr, slnt);
+            sampleCache[key] = buildSamples(text, snapWght(wght), cntr, slnt);
           }
           return sampleCache[key];
         }
@@ -634,6 +653,24 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           maxFs = items.map(function (item) {
             return fitNameSize(item.name, vf, target);
           });
+          var cntr = Number(els.cntr.value) || 50;
+          var slnt = Number(els.slnt.value) || 0;
+          var wghtHi = Number(els.wght.value) || WGHT_MAX;
+          var wghtLo = Number(els.rwg.value) || WGHT_MIN;
+          var lo = snapWght(Math.min(wghtLo, wghtHi));
+          var hi = snapWght(Math.max(wghtLo, wghtHi));
+          var seen = {};
+          for (var i = 0; i < items.length; i++) {
+            var pair = [items[i].name, items[i].measure];
+            for (var p = 0; p < pair.length; p++) {
+              var text = pair[p];
+              if (!text || seen[text]) continue;
+              seen[text] = 1;
+              for (var w = lo; w <= hi; w += WGHT_SNAP) {
+                getSamples(text, w, cntr, slnt);
+              }
+            }
+          }
         }
 
         function pingPongStops(n) {
@@ -674,7 +711,10 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           var n = items.length;
           var minScale = Number(els.mn.value);
           if (!isFinite(minScale)) minScale = 0.38;
-          var wght = Number(els.wght.value) || 700;
+          var hiWght = Number(els.wght.value);
+          var loWght = Number(els.rwg.value);
+          if (!isFinite(hiWght)) hiWght = WGHT_MAX;
+          if (!isFinite(loWght)) loWght = WGHT_MIN;
           var cntr = Number(els.cntr.value) || 50;
           var slnt = Number(els.slnt.value) || 0;
           var target = targetWidth();
@@ -686,6 +726,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             var mix = mixForDist(dist, n);
             var scale = lerp(minScale, 1, mix);
             var fs = (maxFs[i] || 120) * scale;
+            var wght = lerp(loWght, hiWght, mix);
             var el = itemEls[i];
             var item = items[i] || { name: "", measure: "" };
             el.style.fontSize = fs + "px";
@@ -728,7 +769,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             return Number(v).toFixed(2);
           }
           if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
-          if (key === "wdth" || key === "wght" || key === "cntr") {
+          if (key === "wdth" || key === "wght" || key === "cntr" || key === "rwg") {
             return String(Math.round(Number(v)));
           }
           return Math.round(Number(v)) + "ms";
@@ -830,6 +871,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
             if (
               key === "wdth" ||
               key === "wght" ||
+              key === "rwg" ||
               key === "cntr" ||
               key === "slnt" ||
               key === "tr"
