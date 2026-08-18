@@ -125,7 +125,8 @@
 
       .ch {
         color: var(--fg);
-        font-feature-settings: "kern" 1;
+        font-feature-settings: "liga" 1, "kern" 1;
+        font-variant-ligatures: common-ligatures;
         font-kerning: none;
       }
 
@@ -133,8 +134,10 @@
         color: var(--hl);
       }
 
-      .ch-run {
+      .ch-run,
+      .ch-liga {
         letter-spacing: 0;
+        font-kerning: auto;
       }
 
       .lockup,
@@ -412,6 +415,8 @@ fisheye,
           "3": "ss15",
         };
 
+        var LIGATURES = ["ffi", "ffl", "ff", "fi", "fl"];
+
         var LS_KEY = "animator:v2:alternates-1:settings:v2";
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
@@ -504,6 +509,19 @@ fisheye,
               i = j;
               continue;
             }
+            var liga = null;
+            for (var li = 0; li < LIGATURES.length; li += 1) {
+              var seq = LIGATURES[li];
+              if (line.slice(i, i + seq.length) === seq) {
+                liga = seq;
+                break;
+              }
+            }
+            if (liga) {
+              tokens.push({ text: liga, feat: null, circled: false, liga: true });
+              i += liga.length;
+              continue;
+            }
             tokens.push({
               text: ch,
               feat: CHAR_FEATURE[ch] || null,
@@ -516,10 +534,10 @@ fisheye,
 
         function applyFeature(el, feat) {
           if (!feat) {
-            el.style.fontFeatureSettings = '"kern" 1';
+            el.style.fontFeatureSettings = '"liga" 1, "kern" 1';
             return;
           }
-          el.style.fontFeatureSettings = '"' + feat + '" 1, "kern" 1';
+          el.style.fontFeatureSettings = '"' + feat + '" 1, "liga" 1, "kern" 1';
         }
 
         function buildLockup(text) {
@@ -532,7 +550,9 @@ fisheye,
             lineEl.className = "line";
             tokenizeLine(line).forEach(function (tok) {
               var span = document.createElement("span");
-              span.className = tok.circled ? "ch ch-run" : "ch";
+              span.className = "ch";
+              if (tok.circled) span.className += " ch-run";
+              if (tok.liga) span.className += " ch-liga";
               span.textContent = tok.text;
               if (tok.feat) {
                 span.setAttribute("data-feat", tok.feat);
