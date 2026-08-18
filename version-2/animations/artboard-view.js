@@ -161,7 +161,13 @@
     var stage =
       global.document.getElementById("stage") ||
       global.document.querySelector(".stage");
-    if (!stage || stage.querySelector(".stage-caption")) return;
+    if (
+      !stage ||
+      stage.hasAttribute("data-no-caption") ||
+      stage.querySelector(".stage-caption")
+    ) {
+      return;
+    }
     var el = global.document.createElement("p");
     el.className = "stage-caption";
     el.textContent = "ABC Placeholder Caption";
