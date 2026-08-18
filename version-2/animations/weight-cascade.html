@@ -313,7 +313,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">motion · wave up to max, back to start</p>
+        <p class="group-title">motion · thin → max, thick → min</p>
         <div class="row">
           <label for="move">pulse</label>
           <input id="move" type="range" min="200" max="2400" step="20" value="1200" />
@@ -418,6 +418,10 @@
           return 0.5 * (1 - Math.cos(2 * Math.PI * p));
         }
 
+        function pulseTarget(start) {
+          return start < (W_MIN + W_MAX) / 2 ? W_MAX : W_MIN;
+        }
+
         function sample(elapsed) {
           var n = WORDS.length;
           var move = Math.max(80, Number(els.move.value) || 1200);
@@ -432,9 +436,10 @@
           var weights = new Array(n);
 
           for (var i = 0; i < n; i++) {
+            var start = WORDS[i].start;
             var order = reverse ? n - 1 - i : i;
             var p = (local - order * lag) / move;
-            weights[i] = lerp(WORDS[i].start, W_MAX, bump(p));
+            weights[i] = lerp(start, pulseTarget(start), bump(p));
           }
           return weights;
         }
