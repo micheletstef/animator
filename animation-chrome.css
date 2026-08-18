@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: #d3d3d3;
+  color: #1f1f1f;
+}
+
+.stage {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
+}
+
+.panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.panel h2 {
+  color: #1f1f1f;
+}
+
+.panel .hint,
+.panel .group-title {
+  color: #555;
+}
+
+.row label {
+  color: #1f1f1f;
+}
+
+.row input[type="range"] {
+  accent-color: #1f1f1f;
+}
+
+.row input[type="color"] {
+  border-color: rgba(31, 31, 31, 0.28);
+}
+
+.row input[type="text"],
+.row textarea,
+.row select {
+  background: #fff;
+  color: #1f1f1f;
+  border-color: rgba(31, 31, 31, 0.28);
+}
+
+.row .val {
+  color: #555;
+}
+
+.panel button {
+  color: #1f1f1f;
+  border-color: rgba(31, 31, 31, 0.28);
+}
+
+.panel button:hover {
+  border-color: #1f1f1f;
+  color: #000;
+}
+
+.bezier-preview {
+  background: #fff;
+  border-color: rgba(31, 31, 31, 0.28);
+}
+
+.dual-track {
+  background: rgba(31, 31, 31, 0.22);
+}
+
+.dual-fill {
+  background: #1f1f1f;
+}
+
+.dual-range input[type="range"]::-webkit-slider-thumb {
+  background: #1f1f1f;
+  border-color: #d3d3d3;
+  box-shadow: 0 0 0 1px #1f1f1f;
+}
+
+.dual-range input[type="range"]::-moz-range-thumb {
+  background: #1f1f1f;
+  border-color: #d3d3d3;
+  box-shadow: 0 0 0 1px #1f1f1f;
+}
+
+.dual-range input.is-end[type="range"]::-webkit-slider-thumb {
+  background: #d3d3d3;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 1px #1f1f1f;
+}
+
+.dual-range input.is-end[type="range"]::-moz-range-thumb {
+  background: #d3d3d3;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 1px #1f1f1f;
+}
