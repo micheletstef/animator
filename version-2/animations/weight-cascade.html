@@ -314,7 +314,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">motion · wave up to peak, back to start</p>
+        <p class="group-title">motion · cascade top to bottom</p>
         <div class="row">
           <label for="pk">peak</label>
           <input id="pk" type="range" min="700" max="1000" step="10" value="990" />
@@ -434,16 +434,12 @@
           var peak = Number(els.pk.value);
           if (!isFinite(peak)) peak = 990;
           var travel = (n - 1) * lag + move;
-          var pass = travel + hold;
-          var total = Math.max(1, pass * 2);
-          var t = elapsed % total;
-          var reverse = t >= pass;
-          var local = reverse ? t - pass : t;
+          var total = Math.max(1, travel + hold);
+          var local = elapsed % total;
           var weights = new Array(n);
 
           for (var i = 0; i < n; i++) {
-            var order = reverse ? n - 1 - i : i;
-            var p = (local - order * lag) / move;
+            var p = (local - i * lag) / move;
             weights[i] = lerp(WORDS[i].start, peak, bump(p));
           }
           return weights;
