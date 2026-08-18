@@ -17,15 +17,15 @@
         color-scheme: dark;
         --ar-w: 1080;
         --ar-h: 1440;
-        --bg: #ffffff;
-        --fg: #000000;
+        --bg: #000000;
+        --fg: #ffffff;
         --pad-t: 88;
         --pad-r: 64;
         --pad-b: 88;
         --pad-l: 64;
-        --fs: 146;
-        --lh: 1;
-        --oy: 0;
+        --fs: 167;
+        --lh: 0.88;
+        --oy: -30;
         --wdth: 95;
         --cntr: 0;
         --slnt: 0;
@@ -90,6 +90,7 @@
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
         font-family: "IkarusPlusVariable", sans-serif;
         font-synthesis: none;
+        font-feature-settings: "ss05" 1, "ss18" 1, "liga" 1, "kern" 1;
         pointer-events: none;
       }
 
@@ -253,13 +254,13 @@
         <p class="group-title">color</p>
         <div class="row">
           <label for="bg">bg</label>
-          <input id="bg" type="color" value="#ffffff" />
-          <span class="val" id="bgVal">#ffffff</span>
+          <input id="bg" type="color" value="#000000" />
+          <span class="val" id="bgVal">#000000</span>
         </div>
         <div class="row">
           <label for="fg">text</label>
-          <input id="fg" type="color" value="#000000" />
-          <span class="val" id="fgVal">#000000</span>
+          <input id="fg" type="color" value="#ffffff" />
+          <span class="val" id="fgVal">#ffffff</span>
         </div>
       </div>
 
@@ -267,13 +268,13 @@
         <p class="group-title">type</p>
         <div class="row">
           <label for="fs">size</label>
-          <input id="fs" type="range" min="48" max="240" step="1" value="146" />
-          <span class="val" id="fsVal">146px</span>
+          <input id="fs" type="range" min="48" max="240" step="1" value="167" />
+          <span class="val" id="fsVal">167px</span>
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="1" />
-          <span class="val" id="lhVal">1.00</span>
+          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.88" />
+          <span class="val" id="lhVal">0.88</span>
         </div>
         <div class="row">
           <label for="tn">thin</label>
@@ -287,8 +288,8 @@
         </div>
         <div class="row">
           <label for="oy">y</label>
-          <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
-          <span class="val" id="oyVal">0px</span>
+          <input id="oy" type="range" min="-360" max="360" step="1" value="-30" />
+          <span class="val" id="oyVal">-30px</span>
         </div>
       </div>
 
@@ -316,8 +317,8 @@
         <p class="group-title">motion · wave up to peak, back to start</p>
         <div class="row">
           <label for="pk">peak</label>
-          <input id="pk" type="range" min="700" max="1000" step="10" value="940" />
-          <span class="val" id="pkVal">940</span>
+          <input id="pk" type="range" min="700" max="1000" step="10" value="990" />
+          <span class="val" id="pkVal">990</span>
         </div>
         <div class="row">
           <label for="move">pulse</label>
@@ -348,34 +349,34 @@
         var W_MIN = 200;
         var W_MAX = 1000;
         var WORDS = [
-          { text: "Buildup", start: 200 },
+          { text: "Wave", start: 200 },
           { text: "Escalate", start: 280 },
           { text: "Modulate", start: 360 },
           { text: "Pressure", start: 450 },
-          { text: "Highlight", start: 540 },
+          { text: "Ascend", start: 540 },
           { text: "Shadow", start: 630 },
           { text: "Fade", start: 720 },
           { text: "Layering", start: 810 },
         ];
 
-        var LS_KEY = "animator:v2:weight-cascade:settings:v4";
+        var LS_KEY = "animator:v2:weight-cascade:settings:v5";
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var nowReadout = document.getElementById("nowReadout");
         var lines = [];
 
         var DEFAULTS = {
-          bg: "#ffffff",
-          fg: "#000000",
-          fs: 146,
-          lh: 1,
+          bg: "#000000",
+          fg: "#ffffff",
+          fs: 167,
+          lh: 0.88,
           tn: -0.06,
           tr: 0,
-          oy: 0,
+          oy: -30,
           slnt: 0,
           wdth: 95,
           cntr: 0,
-          pk: 940,
+          pk: 990,
           move: 1200,
           lag: 180,
           hold: 500,
@@ -431,7 +432,7 @@
           var lag = Math.max(10, Number(els.lag.value) || 180);
           var hold = Math.max(0, Number(els.hold.value) || 0);
           var peak = Number(els.pk.value);
-          if (!isFinite(peak)) peak = 940;
+          if (!isFinite(peak)) peak = 990;
           var travel = (n - 1) * lag + move;
           var pass = travel + hold;
           var total = Math.max(1, pass * 2);
