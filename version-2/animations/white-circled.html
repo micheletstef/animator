@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>alternates 2</title>
+    <title>white circled</title>
     <style>
       @font-face {
         font-family: "IkarusPlusVariable";
@@ -14,23 +14,22 @@
       }
 
       :root {
-        color-scheme: light;
+        color-scheme: dark;
         --ar-w: 1080;
         --ar-h: 1440;
         --bg: #ffffff;
         --fg: #000000;
-        --hl: #ee0000;
-        --pad-t: 120;
+        --pad-t: 96;
         --pad-r: 80;
-        --pad-b: 120;
+        --pad-b: 96;
         --pad-l: 80;
-        --fs: 188;
-        --lh: 0.92;
-        --tracking: -0.02;
+        --fs: 260;
+        --lh: 1.06;
+        --tracking: 0;
         --oy: 0;
-        --wght: 745;
+        --wght: 800;
         --wdth: 90;
-        --cntr: 86;
+        --cntr: 0;
         --slnt: 0;
       }
 
@@ -42,10 +41,10 @@
       body {
         margin: 0;
         height: 100%;
-        background: #d3d3d3;
+        background: #111;
         overflow: hidden;
         font-family: "Courier New", Courier, monospace;
-        color: #1f1f1f;
+        color: #e9e9e9;
       }
 
       body {
@@ -93,6 +92,7 @@
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
         font-family: "IkarusPlusVariable", sans-serif;
         font-synthesis: none;
+        font-feature-settings: "ss16" 1, "liga" 1, "kern" 1;
         font-variation-settings:
           "wght" var(--wght),
           "wdth" var(--wdth),
@@ -112,33 +112,23 @@
         justify-content: center;
         align-items: center;
         text-align: center;
-        line-height: var(--lh);
-        letter-spacing: calc(var(--tracking) * 1em);
         transform: translateY(calc(var(--oy) * 1px));
       }
 
-      .line {
+      .num {
         display: block;
-        white-space: nowrap;
+        width: 100%;
         font-size: calc(var(--fs) * 1px);
-      }
-
-      .ch {
-        color: var(--fg);
-        font-feature-settings: "kern" 1;
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
+        white-space: nowrap;
         font-kerning: none;
-      }
-
-      .ch.is-alt {
-        color: var(--hl);
-      }
-
-      .ch-run {
-        letter-spacing: 0;
+        font-variation-settings: inherit;
+        transition: none;
       }
 
       .lockup,
-      .line {
+      .num {
         overflow: visible;
       }
 
@@ -218,22 +208,17 @@
         border-radius: 2px;
       }
 
-      .row input[type="text"],
-      .row textarea,
-      .row select {
+      .row textarea {
         grid-column: 2 / 4;
         width: 100%;
+        min-height: 92px;
+        resize: vertical;
         padding: 4px 6px;
         border: 1px solid #333;
         border-radius: 4px;
         background: #111;
-        color: #1f1f1f;
+        color: #e9e9e9;
         font: inherit;
-      }
-
-      .row textarea {
-        min-height: 96px;
-        resize: vertical;
         line-height: 1.25;
         white-space: pre;
       }
@@ -242,6 +227,13 @@
         text-align: right;
         color: #9a9a9a;
         font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 10px 0;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
       }
 
       .panel .actions {
@@ -267,12 +259,12 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=2" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=1" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="alternates 2 animation">
+        <div class="stage" id="stage" aria-label="white circled">
           <div class="lockup" id="lockup"></div>
         </div>
       </div>
@@ -293,46 +285,42 @@
           <input id="fg" type="color" value="#000000" />
           <span class="val" id="fgVal">#000000</span>
         </div>
-        <div class="row">
-          <label for="hl">alt</label>
-          <input id="hl" type="color" value="#ee0000" />
-          <span class="val" id="hlVal">#ee0000</span>
-        </div>
       </div>
 
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
           <label for="tx">text</label>
-          <textarea id="tx" spellcheck="false" autocomplete="off">Gradual
-Recoats
-15 min.
-Apart</textarea>
+          <textarea id="tx" spellcheck="false" autocomplete="off">12
+8
+4
+0</textarea>
         </div>
         <div class="row">
           <label for="fs">size</label>
-          <input id="fs" type="range" min="48" max="320" step="1" value="188" />
-          <span class="val" id="fsVal">188px</span>
+          <input id="fs" type="range" min="80" max="420" step="1" value="260" />
+          <span class="val" id="fsVal">260px</span>
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.92" />
-          <span class="val" id="lhVal">0.92</span>
+          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="1.06" />
+          <span class="val" id="lhVal">1.06</span>
         </div>
         <div class="row">
           <label for="tr">track</label>
-          <input id="tr" type="range" min="-1" max="1" step="0.005" value="-0.02" />
-          <span class="val" id="trVal">-0.02</span>
+          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="0" />
+          <span class="val" id="trVal">0.00</span>
         </div>
         <div class="row">
           <label for="oy">y</label>
-          <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
+          <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
           <span class="val" id="oyVal">0px</span>
         </div>
       </div>
 
       <div class="group">
-        <p class="group-title">variables</p>
+        <p class="group-title">start · then random snaps</p>
+        <p class="now" id="nowReadout">wght 800 · wdth 90 · CNTR 0 · slnt 0</p>
         <div class="row">
           <label for="slnt">slnt</label>
           <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
@@ -345,32 +333,32 @@ Apart</textarea>
         </div>
         <div class="row">
           <label for="wght">wght</label>
-          <input id="wght" type="range" min="200" max="1000" step="1" value="745" />
-          <span class="val" id="wghtVal">745</span>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="800" />
+          <span class="val" id="wghtVal">800</span>
         </div>
         <div class="row">
           <label for="cntr">CNTR</label>
-          <input id="cntr" type="range" min="0" max="100" step="1" value="86" />
-          <span class="val" id="cntrVal">86</span>
+          <input id="cntr" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="cntrVal">0</span>
         </div>
       </div>
 
       <div class="group">
-        <p class="group-title">motion</p>
+        <p class="group-title">motion · one axis at a time</p>
         <div class="row">
           <label for="step">step</label>
-          <input id="step" type="range" min="80" max="1200" step="10" value="280" />
-          <span class="val" id="stepVal">280ms</span>
+          <input id="step" type="range" min="80" max="1600" step="10" value="420" />
+          <span class="val" id="stepVal">420ms</span>
         </div>
         <div class="row">
           <label for="hold0">hold in</label>
-          <input id="hold0" type="range" min="0" max="2000" step="50" value="500" />
-          <span class="val" id="hold0Val">500ms</span>
+          <input id="hold0" type="range" min="0" max="2000" step="50" value="600" />
+          <span class="val" id="hold0Val">600ms</span>
         </div>
         <div class="row">
           <label for="hold1">hold out</label>
-          <input id="hold1" type="range" min="0" max="3000" step="50" value="1200" />
-          <span class="val" id="hold1Val">1200ms</span>
+          <input id="hold1" type="range" min="0" max="3000" step="50" value="900" />
+          <span class="val" id="hold1Val">900ms</span>
         </div>
       </div>
 
@@ -383,81 +371,43 @@ Apart</textarea>
     <script src="artboard-view.js"></script>
     <script>
       (function () {
-        var DEFAULT_TEXT = "Gradual\nRecoats\n15 min.\nApart";
+        var DEFAULT_TEXT = "12\n8\n4\n0";
+        var LS_KEY = "animator:v2:white-circled:settings:v1";
+        var AXES = [
+          { key: "slnt", tag: "slnt", min: -12, max: 0, step: 0.25 },
+          { key: "wdth", tag: "wdth", min: 65, max: 130, step: 1 },
+          { key: "wght", tag: "wght", min: 200, max: 1000, step: 1 },
+          { key: "cntr", tag: "CNTR", min: 0, max: 100, step: 1 },
+        ];
 
-        // Same dedicated Ikarus sets as v1, plus spurless d and round period.
-        // ss19 is not applied to p so "Apart" keeps the default p.
-        var CHAR_FEATURE = {
-          a: "ss01",
-          g: "ss02",
-          l: "ss03",
-          t: "ss04",
-          y: "ss05",
-          G: "ss06",
-          M: "ss08",
-          Q: "ss09",
-          R: "ss10",
-          J: "ss11",
-          "&": "ss12",
-          ",": "ss13",
-          U: "ss17",
-          i: "ss18",
-          j: "ss18",
-          ".": "ss18",
-          d: "ss19",
-        };
-
-        var DIGIT_FEATURE = {
-          "1": "ss14",
-          "3": "ss15",
-        };
-
-        var LS_KEY = "animator:v2:alternates-2:settings";
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
+        var nowReadout = document.getElementById("nowReadout");
 
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
-          hl: "#ee0000",
           tx: DEFAULT_TEXT,
-          fs: 188,
-          lh: 0.92,
-          tr: -0.02,
+          fs: 260,
+          lh: 1.06,
+          tr: 0,
           oy: 0,
           slnt: 0,
           wdth: 90,
-          wght: 745,
-          cntr: 86,
-          step: 280,
-          hold0: 500,
-          hold1: 1200,
+          wght: 800,
+          cntr: 0,
+          step: 420,
+          hold0: 600,
+          hold1: 900,
         };
 
-        var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var AXIS_KEYS = { slnt: 1, wdth: 1, wght: 1, cntr: 1 };
 
-        var els = {
-          bg: document.getElementById("bg"),
-          fg: document.getElementById("fg"),
-          hl: document.getElementById("hl"),
-          tx: document.getElementById("tx"),
-          fs: document.getElementById("fs"),
-          lh: document.getElementById("lh"),
-          tr: document.getElementById("tr"),
-          oy: document.getElementById("oy"),
-          slnt: document.getElementById("slnt"),
-          wdth: document.getElementById("wdth"),
-          wght: document.getElementById("wght"),
-          cntr: document.getElementById("cntr"),
-          step: document.getElementById("step"),
-          hold0: document.getElementById("hold0"),
-          hold1: document.getElementById("hold1"),
-        };
-
+        var els = {};
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          hl: document.getElementById("hlVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
@@ -471,113 +421,164 @@ Apart</textarea>
           hold1: document.getElementById("hold1Val"),
         };
 
-        var altNodes = [];
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+        });
+
         var t0 = 0;
-        var raf = 0;
+        var cycleIndex = -1;
+        var plan = null;
+        var lastAxis = "";
 
-        function isDigit(ch) {
-          return ch >= "0" && ch <= "9";
+        function cloneState(s) {
+          return {
+            slnt: s.slnt,
+            wdth: s.wdth,
+            wght: s.wght,
+            cntr: s.cntr,
+          };
         }
 
-        function tokenizeLine(line) {
-          var tokens = [];
-          var i = 0;
-          while (i < line.length) {
-            var ch = line.charAt(i);
-            if (isDigit(ch)) {
-              tokens.push({
-                text: ch,
-                feat: DIGIT_FEATURE[ch] || null,
-                circled: false,
-              });
-              i += 1;
-              continue;
-            }
-            tokens.push({
-              text: ch,
-              feat: CHAR_FEATURE[ch] || null,
-              circled: false,
+        function startState() {
+          return {
+            slnt: Number(els.slnt.value),
+            wdth: Number(els.wdth.value),
+            wght: Number(els.wght.value),
+            cntr: Number(els.cntr.value),
+          };
+        }
+
+        function shuffle(list) {
+          var a = list.slice();
+          for (var i = a.length - 1; i > 0; i -= 1) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = a[i];
+            a[i] = a[j];
+            a[j] = t;
+          }
+          return a;
+        }
+
+        function snapValue(axis, current) {
+          var span = axis.max - axis.min;
+          var n = Math.round(span / axis.step);
+          if (n <= 0) return axis.min;
+          var curIdx = Math.round((current - axis.min) / axis.step);
+          var minDelta = Math.max(1, Math.round(n * 0.28));
+          var idx = curIdx;
+          var tries = 0;
+          while (Math.abs(idx - curIdx) < minDelta && tries < 24) {
+            idx = Math.floor(Math.random() * (n + 1));
+            tries += 1;
+          }
+          if (idx === curIdx) idx = curIdx < n / 2 ? n : 0;
+          var v = axis.min + idx * axis.step;
+          if (axis.step < 1) v = Math.round(v / axis.step) * axis.step;
+          else v = Math.round(v);
+          if (v < axis.min) v = axis.min;
+          if (v > axis.max) v = axis.max;
+          return v;
+        }
+
+        function makePlan(from) {
+          var order = shuffle(AXES);
+          if (plan && plan.order.length && order[0].key === plan.order[plan.order.length - 1].key) {
+            order.push(order.shift());
+          }
+          var state = cloneState(from);
+          var steps = [];
+          for (var i = 0; i < order.length; i += 1) {
+            var axis = order[i];
+            state[axis.key] = snapValue(axis, state[axis.key]);
+            steps.push({
+              state: cloneState(state),
+              axis: axis.key,
             });
-            i += 1;
           }
-          return tokens;
+          return { from: cloneState(from), order: order, steps: steps };
         }
 
-        function applyFeature(el, feat) {
-          if (!feat) {
-            el.style.fontFeatureSettings = '"kern" 1';
-            return;
-          }
-          el.style.fontFeatureSettings = '"' + feat + '" 1, "kern" 1';
-        }
-
-        function buildLockup(text) {
-          lockup.innerHTML = "";
-          altNodes = [];
-          var lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
-          if (lines.length === 1 && lines[0] === "") lines = [""];
-          lines.forEach(function (line) {
-            var lineEl = document.createElement("div");
-            lineEl.className = "line";
-            tokenizeLine(line).forEach(function (tok) {
-              var span = document.createElement("span");
-              span.className = tok.circled ? "ch ch-run" : "ch";
-              span.textContent = tok.text;
-              if (tok.feat) {
-                span.setAttribute("data-feat", tok.feat);
-                altNodes.push({ el: span, feat: tok.feat });
-              }
-              lineEl.appendChild(span);
-            });
-            lockup.appendChild(lineEl);
-          });
-        }
-
-        function clearAlts() {
-          altNodes.forEach(function (node) {
-            node.el.classList.remove("is-alt");
-            applyFeature(node.el, null);
-          });
-        }
-
-        function setAltCount(n) {
-          for (var i = 0; i < altNodes.length; i += 1) {
-            var on = i < n;
-            altNodes[i].el.classList.toggle("is-alt", on);
-            applyFeature(altNodes[i].el, on ? altNodes[i].feat : null);
-          }
+        function applyState(s, changed) {
+          root.style.setProperty("--slnt", String(s.slnt));
+          root.style.setProperty("--wdth", String(s.wdth));
+          root.style.setProperty("--wght", String(s.wght));
+          root.style.setProperty("--cntr", String(s.cntr));
+          lastAxis = changed || "";
+          nowReadout.textContent =
+            (lastAxis ? lastAxis + " · " : "") +
+            "wght " +
+            Math.round(s.wght) +
+            " · wdth " +
+            Math.round(s.wdth) +
+            " · CNTR " +
+            Math.round(s.cntr) +
+            " · slnt " +
+            Number(s.slnt).toFixed(2).replace(/\.00$/, "");
         }
 
         function cycleMs() {
-          var n = altNodes.length;
-          var step = Math.max(40, Number(els.step.value) || 280);
+          var n = AXES.length;
+          var step = Math.max(40, Number(els.step.value) || 420);
           var hold0 = Math.max(0, Number(els.hold0.value) || 0);
           var hold1 = Math.max(0, Number(els.hold1.value) || 0);
           return hold0 + n * step + hold1;
         }
 
         function frame(now) {
-          var n = altNodes.length;
-          var step = Math.max(40, Number(els.step.value) || 280);
+          var n = AXES.length;
+          var step = Math.max(40, Number(els.step.value) || 420);
           var hold0 = Math.max(0, Number(els.hold0.value) || 0);
           var total = cycleMs();
           if (total <= 0) total = 1;
-          var elapsed = (now - t0) % total;
+          var elapsed = now - t0;
+          if (elapsed < 0) elapsed = 0;
+          var ci = Math.floor(elapsed / total);
+          var local = elapsed - ci * total;
+
+          if (ci !== cycleIndex) {
+            var from = plan ? plan.steps[plan.steps.length - 1].state : startState();
+            if (ci === 0) from = startState();
+            plan = makePlan(from);
+            cycleIndex = ci;
+          }
+
           var count;
-          if (elapsed < hold0) {
+          if (local < hold0) {
             count = 0;
-          } else if (elapsed < hold0 + n * step) {
-            count = Math.min(n, 1 + Math.floor((elapsed - hold0) / step));
+          } else if (local < hold0 + n * step) {
+            count = Math.min(n, 1 + Math.floor((local - hold0) / step));
           } else {
             count = n;
           }
-          setAltCount(count);
-          raf = requestAnimationFrame(frame);
+
+          if (count <= 0) {
+            applyState(plan.from, "");
+          } else {
+            var stepInfo = plan.steps[count - 1];
+            applyState(stepInfo.state, stepInfo.axis);
+          }
+          requestAnimationFrame(frame);
+        }
+
+        function buildLockup(text) {
+          lockup.innerHTML = "";
+          var lines = String(text || "")
+            .replace(/\r\n/g, "\n")
+            .split("\n");
+          if (lines.length === 1 && lines[0] === "") lines = [""];
+          lines.forEach(function (line) {
+            var el = document.createElement("div");
+            el.className = "num";
+            el.textContent = line;
+            lockup.appendChild(el);
+          });
         }
 
         function restart() {
           t0 = performance.now();
-          clearAlts();
+          cycleIndex = -1;
+          plan = null;
+          applyState(startState(), "");
         }
 
         function fmt(key, v) {
@@ -595,15 +596,10 @@ Apart</textarea>
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--hl", els.hl.value);
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--tracking", String(els.tr.value));
           root.style.setProperty("--oy", String(els.oy.value));
-          root.style.setProperty("--slnt", String(els.slnt.value));
-          root.style.setProperty("--wdth", String(els.wdth.value));
-          root.style.setProperty("--wght", String(els.wght.value));
-          root.style.setProperty("--cntr", String(els.cntr.value));
         }
 
         function paintVals() {
@@ -666,7 +662,7 @@ Apart</textarea>
             applyVars();
             paintVals();
             save();
-            if (key === "tx") restart();
+            if (key === "tx" || AXIS_KEYS[key]) restart();
           });
         });
 
@@ -678,7 +674,7 @@ Apart</textarea>
         applyVars();
         paintVals();
         restart();
-        raf = requestAnimationFrame(frame);
+        requestAnimationFrame(frame);
       })();
     </script>
   </body>

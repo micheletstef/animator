@@ -3,8 +3,9 @@
 }
 
 html,
-body {
-  background: #d3d3d3;
+body,
+.stage-wrap {
+  background: #d3d3d3 !important;
   color: #1f1f1f;
 }
 
