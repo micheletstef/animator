@@ -10,7 +10,7 @@
       "id": "alternates-2",
       "label": "alternates 2",
       "url": "animations/alternates-2.html",
-      "mtime": 1786995287
+      "mtime": 1787064300
     },
     {
       "id": "nine",
@@ -34,7 +34,7 @@
       "id": "focus-stack",
       "label": "focus stack",
       "url": "animations/focus-stack.html",
-      "mtime": 1787061600
+      "mtime": 1787099900
     },
     {
       "id": "weight-cascade",
@@ -46,7 +46,7 @@
       "id": "white-circled",
       "label": "white circled",
       "url": "animations/white-circled.html",
-      "mtime": 1787061900
+      "mtime": 1787062100
     }
   ]
 }

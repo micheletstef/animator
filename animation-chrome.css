@@ -98,3 +98,29 @@ body,
   border-color: #1f1f1f;
   box-shadow: 0 0 0 1px #1f1f1f;
 }
+
+.stage .stage-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 56px;
+  z-index: 3;
+  margin: 0;
+  padding: 0 64px;
+  text-align: center;
+  color: var(--fg);
+  font-family: "IkarusPlusVariable", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  font-style: normal;
+  font-synthesis: none;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-transform: none;
+  transform: none;
+  font-variation-settings: "wght" 700, "wdth" 100, "CNTR" 0, "slnt" 0;
+  font-feature-settings: "kern" 1, "liga" 1;
+  font-kerning: normal;
+  pointer-events: none;
+}

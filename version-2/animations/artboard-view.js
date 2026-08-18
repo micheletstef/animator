@@ -153,7 +153,19 @@
     };
     wrap._artboardView = api;
     global.ArtboardView.current = api;
+    ensureCaption();
     return api;
+  }
+
+  function ensureCaption() {
+    var stage =
+      global.document.getElementById("stage") ||
+      global.document.querySelector(".stage");
+    if (!stage || stage.querySelector(".stage-caption")) return;
+    var el = global.document.createElement("p");
+    el.className = "stage-caption";
+    el.textContent = "ABC Placeholder Caption";
+    stage.appendChild(el);
   }
 
   function boot() {

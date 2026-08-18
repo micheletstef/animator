@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <title>alternates 2</title>
     <style>
       @font-face {
@@ -19,7 +20,6 @@
         --ar-h: 1440;
         --bg: #ffffff;
         --fg: #000000;
-        --hl: #ee0000;
         --pad-t: 120;
         --pad-r: 80;
         --pad-b: 120;
@@ -62,6 +62,7 @@
         min-width: 0;
         min-height: 0;
         overflow: hidden;
+        background: #d3d3d3;
         cursor: grab;
         touch-action: none;
         user-select: none;
@@ -124,13 +125,54 @@
       }
 
       .ch {
+        position: relative;
+        isolation: isolate;
+        display: inline-block;
         color: var(--fg);
         font-feature-settings: "kern" 1;
         font-kerning: none;
       }
 
       .ch.is-alt {
-        color: var(--hl);
+        background-image: linear-gradient(
+          180deg,
+          #f7f9fc 0%,
+          #c5ced8 12%,
+          #ffffff 28%,
+          #b4bec8 40%,
+          #5a636e 46%,
+          #161a20 49%,
+          #050608 51%,
+          #3a434e 55%,
+          #c5ced8 68%,
+          #eef2f6 78%,
+          #88929c 90%,
+          #d0d7e0 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .ch.is-alt::before {
+        content: attr(data-ch);
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: -1;
+        color: #6e7884;
+        -webkit-text-fill-color: #6e7884;
+        -webkit-text-stroke: 0.09em #1c222a;
+        paint-order: stroke fill;
+        text-shadow:
+          0 -0.02em 0 #f7f9fc,
+          0 -0.01em 0 #d5dde6,
+          0.012em 0 0 #4a525c,
+          -0.01em 0 0 #8a929c,
+          0 0.022em 0 #12161c,
+          0 0.04em 0.05em rgba(0, 0, 0, 0.28);
+        pointer-events: none;
       }
 
       .ch-run {
@@ -267,7 +309,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=2" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=3" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -292,11 +334,6 @@
           <label for="fg">text</label>
           <input id="fg" type="color" value="#000000" />
           <span class="val" id="fgVal">#000000</span>
-        </div>
-        <div class="row">
-          <label for="hl">alt</label>
-          <input id="hl" type="color" value="#ee0000" />
-          <span class="val" id="hlVal">#ee0000</span>
         </div>
       </div>
 
@@ -380,7 +417,7 @@ Apart</textarea>
       </div>
     </aside>
 
-    <script src="artboard-view.js"></script>
+    <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = "Gradual\nRecoats\n15 min.\nApart";
@@ -419,7 +456,6 @@ Apart</textarea>
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
-          hl: "#ee0000",
           tx: DEFAULT_TEXT,
           fs: 188,
           lh: 0.92,
@@ -434,12 +470,11 @@ Apart</textarea>
           hold1: 1200,
         };
 
-        var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
+        var COLOR_KEYS = { bg: 1, fg: 1 };
 
         var els = {
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
-          hl: document.getElementById("hl"),
           tx: document.getElementById("tx"),
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
@@ -457,7 +492,6 @@ Apart</textarea>
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          hl: document.getElementById("hlVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
@@ -523,6 +557,7 @@ Apart</textarea>
               var span = document.createElement("span");
               span.className = tok.circled ? "ch ch-run" : "ch";
               span.textContent = tok.text;
+              span.setAttribute("data-ch", tok.text);
               if (tok.feat) {
                 span.setAttribute("data-feat", tok.feat);
                 altNodes.push({ el: span, feat: tok.feat });
@@ -595,7 +630,6 @@ Apart</textarea>
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--hl", els.hl.value);
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--tracking", String(els.tr.value));

@@ -286,7 +286,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=1" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=3" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -385,8 +385,8 @@
         </div>
         <div class="row">
           <label for="amp">size</label>
-          <input id="amp" type="range" min="0" max="0.4" step="0.01" value="0.2" />
-          <span class="val" id="ampVal">0.20</span>
+          <input id="amp" type="range" min="0" max="0.7" step="0.01" value="0.55" />
+          <span class="val" id="ampVal">0.55</span>
         </div>
         <div class="row">
           <label for="hold0">hold in</label>
@@ -406,11 +406,11 @@
       </div>
     </aside>
 
-    <script src="artboard-view.js"></script>
+    <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = "12\n8\n4\n0";
-        var LS_KEY = "animator:v2:white-circled:settings:v4";
+        var LS_KEY = "animator:v2:white-circled:settings:v5";
         var LINE_COUNT = 4;
         var AXES = [
           { key: "wdth", min: 65, max: 130, step: 1 },
@@ -447,7 +447,7 @@
           cntr2: 8,
           cntr3: 95,
           move: 900,
-          amp: 0.2,
+          amp: 0.55,
           hold0: 600,
           hold1: 900,
         };
@@ -593,7 +593,7 @@
         function sizeAmp() {
           var a = Number(els.amp.value);
           if (!isFinite(a) || a < 0) return 0;
-          if (a > 0.45) return 0.45;
+          if (a > 0.75) return 0.75;
           return a;
         }
 
@@ -605,14 +605,14 @@
             for (var z = 0; z < n; z += 1) states[z].sz = 1;
             return;
           }
-          var min = Math.max(0.55, 1 - amp);
-          var max = 1 + amp;
+          var min = Math.max(0.28, 1 - amp);
           var maxAllowed = n - (n - 1) * min;
-          var minAllowed = n - (n - 1) * max;
-          if (max > maxAllowed) max = maxAllowed;
-          if (min < minAllowed) min = minAllowed;
-          if (max <= min) return;
-          var next = snapValue({ min: min, max: max, step: 0.01 }, states[idx].sz);
+          var minAllowed = min;
+          if (maxAllowed <= minAllowed) return;
+          var next = snapValue(
+            { min: minAllowed, max: maxAllowed, step: 0.01 },
+            states[idx].sz
+          );
           var others = 0;
           for (var i = 0; i < n; i += 1) {
             if (i !== idx) others += states[i].sz;
