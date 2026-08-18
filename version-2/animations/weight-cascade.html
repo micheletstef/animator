@@ -294,7 +294,7 @@
 
       <div class="group">
         <p class="group-title">variables</p>
-        <p class="now" id="nowReadout">wght 200 300 400 500 700 800 900 1000</p>
+        <p class="now" id="nowReadout">wght 200 280 360 450 540 630 720 810</p>
         <div class="row">
           <label for="slnt">slnt</label>
           <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
@@ -313,7 +313,12 @@
       </div>
 
       <div class="group">
-        <p class="group-title">motion · wave up to max, back to start</p>
+        <p class="group-title">motion · wave up to peak, back to start</p>
+        <div class="row">
+          <label for="pk">peak</label>
+          <input id="pk" type="range" min="700" max="1000" step="10" value="940" />
+          <span class="val" id="pkVal">940</span>
+        </div>
         <div class="row">
           <label for="move">pulse</label>
           <input id="move" type="range" min="200" max="2400" step="20" value="1200" />
@@ -344,16 +349,16 @@
         var W_MAX = 1000;
         var WORDS = [
           { text: "Icarus", start: 200 },
-          { text: "Daedalus", start: 300 },
-          { text: "Minos", start: 400 },
-          { text: "Minotaur", start: 500 },
-          { text: "Ariadne", start: 700 },
-          { text: "Perdix", start: 800 },
-          { text: "Pasiphaë", start: 900 },
-          { text: "Cocalus", start: 1000 },
+          { text: "Daedalus", start: 280 },
+          { text: "Minos", start: 360 },
+          { text: "Minotaur", start: 450 },
+          { text: "Ariadne", start: 540 },
+          { text: "Perdix", start: 630 },
+          { text: "Pasiphaë", start: 720 },
+          { text: "Cocalus", start: 810 },
         ];
 
-        var LS_KEY = "animator:v2:weight-cascade:settings:v3";
+        var LS_KEY = "animator:v2:weight-cascade:settings:v4";
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var nowReadout = document.getElementById("nowReadout");
@@ -370,6 +375,7 @@
           slnt: 0,
           wdth: 95,
           cntr: 0,
+          pk: 940,
           move: 1200,
           lag: 180,
           hold: 500,
@@ -389,6 +395,7 @@
           slnt: document.getElementById("slntVal"),
           wdth: document.getElementById("wdthVal"),
           cntr: document.getElementById("cntrVal"),
+          pk: document.getElementById("pkVal"),
           move: document.getElementById("moveVal"),
           lag: document.getElementById("lagVal"),
           hold: document.getElementById("holdVal"),
@@ -423,6 +430,8 @@
           var move = Math.max(80, Number(els.move.value) || 1200);
           var lag = Math.max(10, Number(els.lag.value) || 180);
           var hold = Math.max(0, Number(els.hold.value) || 0);
+          var peak = Number(els.pk.value);
+          if (!isFinite(peak)) peak = 940;
           var travel = (n - 1) * lag + move;
           var pass = travel + hold;
           var total = Math.max(1, pass * 2);
@@ -434,7 +443,7 @@
           for (var i = 0; i < n; i++) {
             var order = reverse ? n - 1 - i : i;
             var p = (local - order * lag) / move;
-            weights[i] = lerp(WORDS[i].start, W_MAX, bump(p));
+            weights[i] = lerp(WORDS[i].start, peak, bump(p));
           }
           return weights;
         }
@@ -481,7 +490,9 @@
             return Number(v).toFixed(2);
           }
           if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
-          if (key === "wdth" || key === "cntr") return String(Math.round(Number(v)));
+          if (key === "wdth" || key === "cntr" || key === "pk") {
+            return String(Math.round(Number(v)));
+          }
           return Math.round(Number(v)) + "ms";
         }
 
