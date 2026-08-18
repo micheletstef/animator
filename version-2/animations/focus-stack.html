@@ -124,6 +124,10 @@
         text-align: center;
         line-height: inherit;
         letter-spacing: inherit;
+      }
+
+      .item .fit {
+        display: inline-block;
         transform-origin: 50% 50%;
       }
 
@@ -563,7 +567,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
               var t = span <= 0 ? 0 : (targetW100 - widths[i]) / span;
               return {
                 wdth: lerp(wdths[i], wdths[i + 1], t),
-                w100: targetW100,
+                w100: lerp(widths[i], widths[i + 1], t),
               };
             }
           }
@@ -582,10 +586,11 @@ HEAVY-BODIED / 1.0 mm+</textarea>
 
         function applyLine(el, fit, mix, wght, cntr, slnt) {
           if (!el || !fit) return;
+          var inner = el.querySelector(".fit") || el;
           var wdth = lerp(fit.lo.wdth, fit.hi.wdth, mix);
           var sx = lerp(fit.lo.sx, fit.hi.sx, mix);
           el.style.fontVariationSettings = vfString(wght, wdth, cntr, slnt);
-          el.style.transform = "scaleX(" + sx + ")";
+          inner.style.transform = "scaleX(" + sx + ")";
         }
 
         function fitNameSize(text, vf, target) {
@@ -797,6 +802,16 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           });
         }
 
+        function makeLine(className, text) {
+          var line = document.createElement("span");
+          line.className = className;
+          var fit = document.createElement("span");
+          fit.className = "fit";
+          fit.textContent = text;
+          line.appendChild(fit);
+          return line;
+        }
+
         function buildLockup() {
           items = parseItems(els.tx.value);
           lockup.innerHTML = "";
@@ -804,15 +819,9 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           items.forEach(function (item) {
             var wrap = document.createElement("div");
             wrap.className = "item";
-            var name = document.createElement("span");
-            name.className = "name";
-            name.textContent = item.name;
-            wrap.appendChild(name);
+            wrap.appendChild(makeLine("name", item.name));
             if (item.measure) {
-              var measure = document.createElement("span");
-              measure.className = "measure";
-              measure.textContent = item.measure;
-              wrap.appendChild(measure);
+              wrap.appendChild(makeLine("measure", item.measure));
             }
             lockup.appendChild(wrap);
             itemEls.push(wrap);

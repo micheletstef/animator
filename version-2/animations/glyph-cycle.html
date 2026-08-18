@@ -17,7 +17,7 @@
         color-scheme: light;
         --ar-w: 1080;
         --ar-h: 1440;
-        --bg: #ffffff;
+        --bg: #d3d3d3;
         --fg: #000000;
         --pad-t: 80;
         --pad-r: 80;
@@ -292,8 +292,8 @@
         <p class="group-title">color</p>
         <div class="row">
           <label for="bg">bg</label>
-          <input id="bg" type="color" value="#ffffff" />
-          <span class="val" id="bgVal">#ffffff</span>
+          <input id="bg" type="color" value="#d3d3d3" />
+          <span class="val" id="bgVal">#d3d3d3</span>
         </div>
         <div class="row">
           <label for="fg">text</label>
@@ -393,13 +393,13 @@
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
         var LS_KEY = "animator:v2:glyph-cycle:" + encodeURIComponent(DEFAULT_CHAR);
-        var LAYOUT_KEY = "animator:v2:glyph-cycle:layout";
+        var LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
         var SHARED_KEYS = { fs: 1, tr: 1, oy: 1, bg: 1, fg: 1 };
 
         var SEQUENCE = [0, 1, 2, 1];
 
         var DEFAULTS = {
-          bg: "#ffffff",
+          bg: "#d3d3d3",
           fg: "#000000",
           ch: DEFAULT_CHAR,
           fs: 860,

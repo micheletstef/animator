@@ -16,25 +16,25 @@
       "id": "nine",
       "label": "9",
       "url": "animations/glyph-cycle.html?ch=9",
-      "mtime": 1786995900
+      "mtime": 1787062800
     },
     {
       "id": "g",
       "label": "G",
       "url": "animations/glyph-cycle.html?ch=G",
-      "mtime": 1786995900
+      "mtime": 1787062800
     },
     {
       "id": "s",
       "label": "S",
       "url": "animations/glyph-cycle.html?ch=S",
-      "mtime": 1786995900
+      "mtime": 1787062800
     },
     {
       "id": "focus-stack",
       "label": "focus stack",
       "url": "animations/focus-stack.html",
-      "mtime": 1787061400
+      "mtime": 1787061600
     },
     {
       "id": "weight-cascade",
@@ -46,7 +46,7 @@
       "id": "white-circled",
       "label": "white circled",
       "url": "animations/white-circled.html",
-      "mtime": 1787061600
+      "mtime": 1787061900
     }
   ]
 }

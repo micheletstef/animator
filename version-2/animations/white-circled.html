@@ -107,8 +107,12 @@
       }
 
       .num {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
         width: 100%;
+        height: calc(var(--fs) * var(--lh) * 1px);
         font-size: calc(var(--fs) * 1px);
         line-height: var(--lh);
         letter-spacing: 0;
@@ -380,6 +384,11 @@
           <span class="val" id="moveVal">900ms</span>
         </div>
         <div class="row">
+          <label for="amp">size</label>
+          <input id="amp" type="range" min="0" max="0.4" step="0.01" value="0.2" />
+          <span class="val" id="ampVal">0.20</span>
+        </div>
+        <div class="row">
           <label for="hold0">hold in</label>
           <input id="hold0" type="range" min="0" max="2000" step="50" value="600" />
           <span class="val" id="hold0Val">600ms</span>
@@ -401,10 +410,9 @@
     <script>
       (function () {
         var DEFAULT_TEXT = "12\n8\n4\n0";
-        var LS_KEY = "animator:v2:white-circled:settings:v3";
+        var LS_KEY = "animator:v2:white-circled:settings:v4";
         var LINE_COUNT = 4;
         var AXES = [
-          { key: "slnt", min: -12, max: 0, step: 0.25 },
           { key: "wdth", min: 65, max: 130, step: 1 },
           { key: "wght", min: 200, max: 1000, step: 1 },
           { key: "cntr", min: 0, max: 100, step: 1 },
@@ -439,6 +447,7 @@
           cntr2: 8,
           cntr3: 95,
           move: 900,
+          amp: 0.2,
           hold0: 600,
           hold1: 900,
         };
@@ -471,6 +480,7 @@
           lh: document.getElementById("lhVal"),
           oy: document.getElementById("oyVal"),
           move: document.getElementById("moveVal"),
+          amp: document.getElementById("ampVal"),
           hold0: document.getElementById("hold0Val"),
           hold1: document.getElementById("hold1Val"),
         };
@@ -498,6 +508,7 @@
             wdth: s.wdth,
             wght: s.wght,
             cntr: s.cntr,
+            sz: s.sz,
           };
         }
 
@@ -512,6 +523,7 @@
             wdth: Number(els["wdth" + idx].value),
             wght: Number(els["wght" + idx].value),
             cntr: Number(els["cntr" + idx].value),
+            sz: 1,
           };
         }
 
@@ -578,6 +590,41 @@
           return next;
         }
 
+        function sizeAmp() {
+          var a = Number(els.amp.value);
+          if (!isFinite(a) || a < 0) return 0;
+          if (a > 0.45) return 0.45;
+          return a;
+        }
+
+        function randomizeSizes(states, idx) {
+          var n = states.length;
+          if (n <= 1) return;
+          var amp = sizeAmp();
+          if (amp <= 0) {
+            for (var z = 0; z < n; z += 1) states[z].sz = 1;
+            return;
+          }
+          var min = Math.max(0.55, 1 - amp);
+          var max = 1 + amp;
+          var maxAllowed = n - (n - 1) * min;
+          var minAllowed = n - (n - 1) * max;
+          if (max > maxAllowed) max = maxAllowed;
+          if (min < minAllowed) min = minAllowed;
+          if (max <= min) return;
+          var next = snapValue({ min: min, max: max, step: 0.01 }, states[idx].sz);
+          var others = 0;
+          for (var i = 0; i < n; i += 1) {
+            if (i !== idx) others += states[i].sz;
+          }
+          var remain = n - next;
+          var factor = others > 0.0001 ? remain / others : 1;
+          states[idx].sz = next;
+          for (var j = 0; j < n; j += 1) {
+            if (j !== idx) states[j].sz = states[j].sz * factor;
+          }
+        }
+
         function lerp(a, b, t) {
           return a + (b - a) * t;
         }
@@ -594,7 +641,26 @@
             wdth: lerp(a.wdth, b.wdth, t),
             wght: lerp(a.wght, b.wght, t),
             cntr: lerp(a.cntr, b.cntr, t),
+            sz: lerp(a.sz, b.sz, t),
           };
+        }
+
+        function mixStep(fromStates, toStates, line, t) {
+          var out = [];
+          for (var i = 0; i < fromStates.length; i += 1) {
+            if (i === line) {
+              out.push(mixState(fromStates[i], toStates[i], t));
+            } else {
+              out.push({
+                slnt: fromStates[i].slnt,
+                wdth: fromStates[i].wdth,
+                wght: fromStates[i].wght,
+                cntr: fromStates[i].cntr,
+                sz: lerp(fromStates[i].sz, toStates[i].sz, t),
+              });
+            }
+          }
+          return out;
         }
 
         function makePlan(fromStates) {
@@ -610,6 +676,7 @@
           for (var s = 0; s < order.length; s += 1) {
             var idx = order[s];
             states[idx] = randomState(states[idx]);
+            randomizeSizes(states, idx);
             steps.push({
               states: cloneStates(states),
               line: idx,
@@ -623,9 +690,15 @@
         }
 
         function applyStates(states, changed) {
+          var fs = Number(els.fs.value) || 260;
+          var lh = Number(els.lh.value) || 1.06;
           for (var i = 0; i < numEls.length; i += 1) {
             if (!states[i]) continue;
-            numEls[i].style.fontVariationSettings = vfString(states[i]);
+            var s = states[i];
+            var sz = s.sz > 0 ? s.sz : 1;
+            numEls[i].style.fontVariationSettings = vfString(s);
+            numEls[i].style.fontSize = fs * sz + "px";
+            numEls[i].style.height = fs * sz * lh + "px";
           }
           if (!nowReadout) return;
           if (changed == null || changed < 0) {
@@ -633,17 +706,18 @@
             return;
           }
           var label = numEls[changed] ? numEls[changed].textContent : String(changed + 1);
-          var s = states[changed];
+          var cur = states[changed];
           nowReadout.textContent =
             label +
             " · wght " +
-            Math.round(s.wght) +
+            Math.round(cur.wght) +
             " · wdth " +
-            Math.round(s.wdth) +
+            Math.round(cur.wdth) +
             " · CNTR " +
-            Math.round(s.cntr) +
-            " · slnt " +
-            Number(s.slnt).toFixed(2).replace(/\.00$/, "");
+            Math.round(cur.cntr) +
+            " · " +
+            cur.sz.toFixed(2) +
+            "×";
         }
 
         function cycleMs(n) {
@@ -666,9 +740,8 @@
           var u = easeInOutCubic((t - i * move) / move);
           var fromStates = i === 0 ? plan.from : plan.steps[i - 1].states;
           var toStep = plan.steps[i];
-          var states = cloneStates(fromStates);
           var line = toStep.line;
-          states[line] = mixState(fromStates[line], toStep.states[line], u);
+          var states = mixStep(fromStates, toStep.states, line, u);
           return { states: states, changed: line };
         }
 
@@ -731,7 +804,7 @@
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "tx") return String(v);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
-          if (key === "lh") return Number(v).toFixed(2);
+          if (key === "lh" || key === "amp") return Number(v).toFixed(2);
           return Math.round(Number(v)) + "ms";
         }
 
