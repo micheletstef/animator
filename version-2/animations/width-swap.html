@@ -138,12 +138,11 @@
       }
 
       .line {
-        display: flex;
-        flex-direction: row;
-        align-items: baseline;
-        justify-content: space-between;
+        position: relative;
+        display: block;
         width: 100%;
         max-width: 100%;
+        height: calc(var(--lh) * 1em);
         font-size: calc(var(--fs) * 1px);
         line-height: var(--lh);
         letter-spacing: 0;
@@ -153,9 +152,10 @@
       }
 
       .unit {
+        position: absolute;
+        top: 0;
         display: block;
-        flex: 0 0 auto;
-        min-width: 0;
+        width: max-content;
         overflow: visible;
         line-height: inherit;
         letter-spacing: inherit;
@@ -163,15 +163,29 @@
         font-kerning: none;
       }
 
+      .unit.is-start {
+        left: 0;
+        right: auto;
+      }
+
+      .unit.is-end {
+        left: auto;
+        right: 0;
+      }
+
       .inner {
         display: block;
         width: max-content;
         line-height: inherit;
         letter-spacing: calc(var(--tracking) * 1em);
-        margin-right: calc(var(--tracking) * -1em);
         white-space: nowrap;
         transform: none;
         font-synthesis: none;
+      }
+
+      .unit.is-end .inner {
+        margin-left: auto;
+        margin-right: 0;
       }
 
       .probe {
@@ -741,12 +755,15 @@
 
         function applyUnit(unit, line, wdth, boxW) {
           var track = trackAtWdth(unit, wdth);
-          unit.el.style.flex = "0 0 " + boxW + "px";
-          unit.el.style.width = boxW + "px";
-          unit.el.style.maxWidth = boxW + "px";
-          unit.el.style.marginLeft = "0";
+          unit.el.style.width = "max-content";
+          unit.el.style.flex = "none";
+          unit.el.style.maxWidth = "none";
           unit.inner.style.letterSpacing = track + "em";
-          unit.inner.style.marginRight = -track + "em";
+          if (unit.align === "end") {
+            unit.inner.style.marginRight = "0";
+          } else {
+            unit.inner.style.marginRight = -track + "em";
+          }
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
             wdth,
@@ -908,7 +925,7 @@
             parts.forEach(function (text, i) {
               if (!text) return;
               var unitEl = document.createElement("span");
-              unitEl.className = "unit";
+              unitEl.className = "unit " + (i === 0 ? "is-start" : "is-end");
               var inner = document.createElement("span");
               inner.className = "inner";
               inner.textContent = text;
@@ -918,6 +935,7 @@
                 el: unitEl,
                 inner: inner,
                 text: text,
+                align: i === 0 ? "start" : "end",
                 from:
                   i === 0
                     ? row.firstFrom
