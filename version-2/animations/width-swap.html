@@ -624,11 +624,13 @@
 
         function measureWidth(text, fs, vf, track) {
           if (track == null) track = baseTrack();
+          probe.style.fontFamily = '"IkarusPlusVariable", sans-serif';
           probe.style.fontSize = fs + "px";
           probe.style.letterSpacing = track + "em";
           probe.style.marginRight = -track + "em";
           probe.style.fontVariationSettings = vf;
           probe.textContent = text || "";
+          probe.offsetWidth;
           return probe.getBoundingClientRect().width;
         }
 
@@ -1010,15 +1012,34 @@
         buildLockup();
         restart();
 
-        var start = function () {
+        var playing = false;
+        function remeasure() {
+          sampleCache = {};
           prepareUnits();
-          requestAnimationFrame(frame);
-        };
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(start);
-        } else {
-          start();
         }
+        function start() {
+          remeasure();
+          if (playing) return;
+          playing = true;
+          requestAnimationFrame(frame);
+        }
+        function afterFonts() {
+          requestAnimationFrame(function () {
+            requestAnimationFrame(start);
+          });
+        }
+        if (document.fonts && document.fonts.load) {
+          Promise.all([
+            document.fonts.load('700 720px "IkarusPlusVariable"'),
+            document.fonts.load('1000 720px "IkarusPlusVariable"'),
+            document.fonts.ready,
+          ]).then(afterFonts).catch(afterFonts);
+        } else if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(afterFonts);
+        } else {
+          afterFonts();
+        }
+        window.addEventListener("load", afterFonts);
       })();
     </script>
   </body>
