@@ -165,7 +165,7 @@
       }
 
       .unit + .unit {
-        margin-left: -0.08em;
+        margin-left: 0.14em;
       }
 
       .unit:not(:last-child) .inner {
@@ -378,71 +378,14 @@
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
-          <label for="fs">size</label>
-          <input id="fs" type="range" min="120" max="800" step="1" value="720" />
-          <span class="val" id="fsVal">720px</span>
-        </div>
-        <div class="row">
           <label for="lh">leading</label>
           <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.82" />
           <span class="val" id="lhVal">0.82</span>
         </div>
         <div class="row">
-          <label for="tr">track</label>
-          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="-0.04" />
-          <span class="val" id="trVal">-0.04</span>
-        </div>
-        <div class="row">
           <label for="oy">y</label>
           <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
           <span class="val" id="oyVal">0px</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">width · accordion range</p>
-        <div class="row">
-          <label for="cwd">min</label>
-          <input id="cwd" type="range" min="65" max="130" step="1" value="65" />
-          <span class="val" id="cwdVal">65</span>
-        </div>
-        <div class="row">
-          <label for="ewd">max</label>
-          <input id="ewd" type="range" min="65" max="130" step="1" value="130" />
-          <span class="val" id="ewdVal">130</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">line 1 · R41 held</p>
-        <div class="row">
-          <label for="l1w">wght</label>
-          <input id="l1w" type="range" min="200" max="1000" step="1" value="700" />
-          <span class="val" id="l1wVal">700</span>
-        </div>
-        <div class="row">
-          <label for="l1c">CNTR</label>
-          <input id="l1c" type="range" min="0" max="100" step="1" value="0" />
-          <span class="val" id="l1cVal">0</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">line 2 · X8 held</p>
-        <div class="row">
-          <label for="l2w">wght</label>
-          <input id="l2w" type="range" min="200" max="1000" step="1" value="1000" />
-          <span class="val" id="l2wVal">1000</span>
-        </div>
-        <div class="row">
-          <label for="l2c">CNTR</label>
-          <input id="l2c" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="l2cVal">100</span>
-        </div>
-        <div class="row">
-          <label for="slnt">slnt</label>
-          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="slntVal">0</span>
         </div>
       </div>
 
@@ -474,9 +417,17 @@
       (function () {
         var GRADIENT =
           "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 20%, #1f4166 25%, #144a76 30%, #085488 35%, #01609a 40%, #0178b0 45%, #0091c4 50%, #16a9d5 55%, #58bdd9 60%, #a1d2e1 65%, #dbe5e7 70%, #eaeceb 80%, #e7e8e3 100%)";
-        var LS_KEY = "animator:v2:width-swap:settings:v5";
+        var LS_KEY = "animator:v2:width-swap:settings:v6";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
+        var FS = 720;
+        var TRACK = -0.04;
+        var WDTH_LO = 65;
+        var WDTH_HI = 130;
+        var SLNT = 0;
+        var L1_SCALE = 0.84;
+        var LINE_WGHT = [700, 1000];
+        var LINE_CNTR = [0, 100];
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -492,17 +443,8 @@
           fg: "#000000",
           l1: "R41",
           l2: "X8",
-          fs: 720,
           lh: 0.82,
-          tr: -0.04,
           oy: 0,
-          cwd: 65,
-          ewd: 130,
-          l1w: 700,
-          l1c: 0,
-          l2w: 1000,
-          l2c: 100,
-          slnt: 0,
           move: 1800,
           hold: 700,
         };
@@ -516,17 +458,8 @@
           bg: document.getElementById("bgVal"),
           grad: document.getElementById("gradVal"),
           fg: document.getElementById("fgVal"),
-          fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
-          tr: document.getElementById("trVal"),
           oy: document.getElementById("oyVal"),
-          cwd: document.getElementById("cwdVal"),
-          ewd: document.getElementById("ewdVal"),
-          l1w: document.getElementById("l1wVal"),
-          l1c: document.getElementById("l1cVal"),
-          l2w: document.getElementById("l2wVal"),
-          l2c: document.getElementById("l2cVal"),
-          slnt: document.getElementById("slntVal"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
         };
@@ -565,16 +498,7 @@
         }
 
         function wdthRange() {
-          var lo = Number(els.cwd.value);
-          var hi = Number(els.ewd.value);
-          if (!isFinite(lo)) lo = 65;
-          if (!isFinite(hi)) hi = 118;
-          if (lo > hi) {
-            var tmp = lo;
-            lo = hi;
-            hi = tmp;
-          }
-          return { lo: lo, hi: hi };
+          return { lo: WDTH_LO, hi: WDTH_HI };
         }
 
         function targetWidth() {
@@ -586,22 +510,16 @@
         }
 
         function lineWeight(index) {
-          var key = index === 0 ? "l1w" : "l2w";
-          var n = Number(els[key].value);
-          if (!isFinite(n)) return index === 0 ? 700 : 1000;
-          return n;
+          return LINE_WGHT[index] || 700;
         }
 
         function lineContrast(index) {
-          var key = index === 0 ? "l1c" : "l2c";
-          var n = Number(els[key].value);
-          if (!isFinite(n)) return index === 0 ? 0 : 100;
-          return n;
+          return LINE_CNTR[index] || 0;
         }
 
         function measureWidth(text, fs, vf) {
           probe.style.fontSize = fs + "px";
-          probe.style.letterSpacing = (Number(els.tr.value) || 0) + "em";
+          probe.style.letterSpacing = TRACK + "em";
           probe.style.fontVariationSettings = vf;
           probe.textContent = text || "";
           return probe.getBoundingClientRect().width;
@@ -609,22 +527,7 @@
 
         function getSamples(text, wght, cntr, slnt, fs) {
           var range = wdthRange();
-          var key =
-            text +
-            "|" +
-            wght +
-            "|" +
-            cntr +
-            "|" +
-            slnt +
-            "|" +
-            fs +
-            "|" +
-            els.tr.value +
-            "|" +
-            range.lo +
-            "|" +
-            range.hi;
+          var key = text + "|" + wght + "|" + cntr + "|" + slnt + "|" + fs;
           if (sampleCache[key]) return sampleCache[key];
           var wdths = [];
           var widths = [];
@@ -690,12 +593,12 @@
         }
 
         function prepareUnits() {
-          var slnt = Number(els.slnt.value) || 0;
-          var fs = Number(els.fs.value) || 720;
-          var minWdth = wdthRange().lo;
+          var slnt = SLNT;
+          var fs = FS;
+          var minWdth = WDTH_LO;
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
-            var lineFs = i === 0 ? fs * 0.84 : fs;
+            var lineFs = i === 0 ? fs * L1_SCALE : fs;
             line.wght = lineWeight(i);
             line.cntr = lineContrast(i);
             for (var j = 0; j < line.units.length; j++) {
@@ -720,7 +623,7 @@
             line.wght,
             wdth,
             line.cntr,
-            Number(els.slnt.value) || 0
+            SLNT
           );
           unit.inner.style.transform = "scaleX(" + sx + ")";
           return { wdth: wdth, pct: pct };
@@ -741,6 +644,7 @@
 
           var a = units[0];
           var b = units[1];
+          var lineTarget = target * (line.index === 0 ? 0.94 : 0.97);
           if (line.index === 0) {
             var range = wdthRange();
             var wdthA =
@@ -754,7 +658,6 @@
             var natA = Math.max(widthAt(a.samples, wdthA), 1);
             var natB = Math.max(widthAt(b.samples, wdthB), 1);
             var total = natA + natB;
-            var lineTarget = target * 0.96;
             var sx = total > 0.5 ? lineTarget / total : 1;
             var pctA = (natA / total) * 100;
             return [
@@ -768,21 +671,21 @@
           var floor = 8;
           if (minA < floor) minA = floor;
           if (minB < floor) minB = floor;
-          if (minA + minB > target) {
-            var scale = target / (minA + minB);
+          if (minA + minB > lineTarget) {
+            var scale = lineTarget / (minA + minB);
             minA *= scale;
             minB *= scale;
           }
 
-          var span = target - minA - minB;
+          var span = lineTarget - minA - minB;
           var widthA =
             a.from === "condensed" ? minA + span * t : minA + span * (1 - t);
-          var pctA = (widthA / target) * 100;
+          var pctA = (widthA / lineTarget) * 100;
           var pctB = 100 - pctA;
 
           return [
-            applyUnit(a, line, pctA, target),
-            applyUnit(b, line, pctB, target),
+            applyUnit(a, line, pctA, lineTarget),
+            applyUnit(b, line, pctB, lineTarget),
           ];
         }
 
@@ -844,8 +747,7 @@
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (TEXT_KEYS[key]) return String(v);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
-          if (key === "lh" || key === "tr") return Number(v).toFixed(2);
-          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
+          if (key === "lh") return Number(v).toFixed(2);
           if (key === "move" || key === "hold") return Math.round(Number(v)) + "ms";
           return String(Math.round(Number(v)));
         }
@@ -854,11 +756,12 @@
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--bg-image", els.grad.checked ? GRADIENT : "none");
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--fs", String(els.fs.value));
+          root.style.setProperty("--fs", String(FS));
           root.style.setProperty("--lh", String(els.lh.value));
-          root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--tracking", String(TRACK));
           root.style.setProperty("--oy", String(els.oy.value));
-          root.style.setProperty("--slnt", String(els.slnt.value));
+          root.style.setProperty("--slnt", String(SLNT));
+          root.style.setProperty("--l1s", String(L1_SCALE));
         }
 
         function paintVals() {
@@ -969,20 +872,6 @@
             applyVars();
             paintVals();
             if (key === "l1" || key === "l2") buildLockup();
-            else if (
-              key === "cwd" ||
-              key === "ewd" ||
-              key === "l1w" ||
-              key === "l2w" ||
-              key === "l1c" ||
-              key === "l2c" ||
-              key === "slnt" ||
-              key === "tr" ||
-              key === "fs"
-            ) {
-              sampleCache = {};
-              prepareUnits();
-            }
             save();
           });
         });
