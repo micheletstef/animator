@@ -130,7 +130,7 @@
       .fit {
         display: flex;
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
         justify-content: center;
         width: 100%;
         max-width: 100%;
@@ -141,7 +141,7 @@
         display: flex;
         flex-direction: row;
         align-items: baseline;
-        width: 100%;
+        width: max-content;
         max-width: 100%;
         font-size: calc(var(--fs) * 1px);
         line-height: var(--lh);
@@ -169,7 +169,7 @@
         letter-spacing: calc(var(--tracking) * 1em);
         margin-right: calc(var(--tracking) * -1em);
         white-space: nowrap;
-        transform-origin: 0 50%;
+        transform: none;
         font-synthesis: none;
       }
 
@@ -469,7 +469,6 @@
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var PAIR_OVERLAP_EM = 0.05;
-        var REST_SQUEEZE = 0.62;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -477,6 +476,7 @@
         var nowReadout = document.getElementById("nowReadout");
         var lines = [];
         var sampleCache = {};
+        var fitK = 1;
         var t0 = 0;
 
         var DEFAULTS = {
@@ -635,30 +635,6 @@
           return sampleCache[key];
         }
 
-        function lookupWdth(samples, targetW) {
-          var wdths = samples.wdths;
-          var widths = samples.widths;
-          var n = widths.length;
-          if (!n) return { wdth: wdthRange().lo, width: 0 };
-          if (targetW <= widths[0]) {
-            return { wdth: wdths[0], width: widths[0] };
-          }
-          if (targetW >= widths[n - 1]) {
-            return { wdth: wdths[n - 1], width: widths[n - 1] };
-          }
-          for (var i = 0; i < n - 1; i++) {
-            if (targetW <= widths[i + 1]) {
-              var span = widths[i + 1] - widths[i];
-              var u = span <= 0 ? 0 : (targetW - widths[i]) / span;
-              return {
-                wdth: lerp(wdths[i], wdths[i + 1], u),
-                width: lerp(widths[i], widths[i + 1], u),
-              };
-            }
-          }
-          return { wdth: wdths[n - 1], width: widths[n - 1] };
-        }
-
         function widthAt(samples, wdth) {
           var wdths = samples.wdths;
           var widths = samples.widths;
@@ -675,19 +651,20 @@
           return widths[widths.length - 1];
         }
 
-        function solveFit(samples, target) {
-          if (!samples || target <= 0) {
-            return { wdth: wdthRange().lo, sx: 1 };
-          }
-          var found = lookupWdth(samples, target);
-          var sx = found.width > 0.5 ? target / found.width : 1;
-          return { wdth: found.wdth, sx: sx };
+        function mixWdth(from, t) {
+          var range = wdthRange();
+          return from === "condensed"
+            ? lerp(range.lo, range.hi, t)
+            : lerp(range.hi, range.lo, t);
         }
 
         function prepareUnits() {
           var slnt = Number(els.slnt.value) || 0;
           var fs = Number(els.fs.value) || 720;
-          var minWdth = wdthRange().lo;
+          var range = wdthRange();
+          var target = targetWidth();
+          var overlap = fs * PAIR_OVERLAP_EM;
+          var widest = 0;
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
             line.wght = lineWeight(i);
@@ -701,63 +678,73 @@
                 slnt,
                 fs
               );
-              unit.minW = widthAt(unit.samples, minWdth);
+              unit.minW = widthAt(unit.samples, range.lo);
+              unit.maxW = widthAt(unit.samples, range.hi);
               unit.inner.style.fontWeight = String(Math.round(line.wght));
+              unit.inner.style.transform = "none";
             }
+            if (line.units.length === 1) {
+              widest = Math.max(widest, line.units[0].maxW || 0);
+            } else if (line.units.length > 1) {
+              var a = line.units[0];
+              var b = line.units[1];
+              widest = Math.max(
+                widest,
+                (a.minW || 0) + (b.maxW || 0) - overlap,
+                (a.maxW || 0) + (b.minW || 0) - overlap
+              );
+            }
+          }
+          fitK = widest > 0 ? Math.min(1, target / widest) : 1;
+          for (var n = 0; n < lines.length; n++) {
+            lines[n].el.style.fontSize = fs * fitK + "px";
           }
         }
 
-        function applyUnit(unit, line, boxW, shift) {
-          var fit = solveFit(unit.samples, boxW);
+        function applyUnit(unit, line, wdth, boxW, shift) {
           unit.el.style.flex = "0 0 " + boxW + "px";
           unit.el.style.width = boxW + "px";
           unit.el.style.maxWidth = boxW + "px";
           unit.el.style.marginLeft = shift ? shift + "px" : "0";
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
-            fit.wdth,
+            wdth,
             line.cntr,
             Number(els.slnt.value) || 0
           );
-          unit.inner.style.transform = "scaleX(" + fit.sx + ")";
-          return { wdth: fit.wdth, box: boxW };
+          unit.inner.style.transform = "none";
+          return { wdth: wdth, box: boxW };
         }
 
-        function applyLine(line, t, target) {
+        function applyLine(line, t) {
           var units = line.units;
+          var k = fitK;
           if (!units.length) return [];
           if (units.length === 1) {
-            return [applyUnit(units[0], line, target, 0)];
+            var wdth = mixWdth(units[0].from, t);
+            return [
+              applyUnit(units[0], line, wdth, widthAt(units[0].samples, wdth) * k, 0),
+            ];
           }
 
           var a = units[0];
           var b = units[1];
-          var overlap = (Number(els.fs.value) || 720) * PAIR_OVERLAP_EM;
-          var innerW = target + overlap;
-          var minA = Math.max(8, a.minW || 8);
-          var minB = Math.max(8, (b.minW || 8) * REST_SQUEEZE);
-          if (minA + minB > innerW) {
-            var scale = innerW / (minA + minB);
-            minA *= scale;
-            minB *= scale;
-          }
-
-          var span = innerW - minA - minB;
-          var widthA =
-            a.from === "condensed" ? minA + span * t : minA + span * (1 - t);
-          var widthB = innerW - widthA;
+          var wdthA = mixWdth(a.from, t);
+          var wdthB = mixWdth(b.from, t);
+          var overlap = (Number(els.fs.value) || 720) * k * PAIR_OVERLAP_EM;
+          var widthA = widthAt(a.samples, wdthA) * k;
+          var widthB = widthAt(b.samples, wdthB) * k;
 
           return [
-            applyUnit(a, line, widthA, 0),
-            applyUnit(b, line, widthB, -overlap),
+            applyUnit(a, line, wdthA, widthA, 0),
+            applyUnit(b, line, wdthB, widthB, -overlap),
           ];
         }
 
         function applyMix(t) {
-          var target = targetWidth();
           var bits = [];
           for (var i = 0; i < lines.length; i++) {
-            var states = applyLine(lines[i], t, target);
+            var states = applyLine(lines[i], t);
             for (var j = 0; j < states.length; j++) {
               bits.push(
                 lines[i].units[j].label + " wdth " + Math.round(states[j].wdth)
