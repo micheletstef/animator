@@ -469,7 +469,6 @@
         var LS_KEY = "animator:v2:width-swap:settings:v4";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
-        var L2_SCALE = 1.38;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -698,9 +697,8 @@
           var extreme1 = (lines[0] && lines[0].extreme) || 1;
           var extreme2 = (lines[1] && lines[1].extreme) || extreme1;
           var k1 = target / extreme1;
-          var k2 = target / extreme2;
-          if (k2 < k1 * L2_SCALE) k2 = Math.min(k1 * L2_SCALE, target / extreme2);
-          if (k2 < k1 * L2_SCALE) k1 = k2 / L2_SCALE;
+          var k2 = Math.max(target / extreme2, k1 * 1.12);
+          if (k2 * extreme2 > target) k2 = target / extreme2;
           for (var n = 0; n < lines.length; n++) {
             lines[n].k = n === 1 ? k2 : k1;
             lines[n].el.style.fontSize = fs * lines[n].k + "px";
