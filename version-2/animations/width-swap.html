@@ -756,7 +756,7 @@
           var extreme1 = (lines[0] && lines[0].extreme) || 1;
           var extreme2 = (lines[1] && lines[1].extreme) || extreme1;
           var k1 = (target / extreme1) * 1.06;
-          var k2 = k1 * 1.18;
+          var k2 = k1 * 1.12;
           for (var n = 0; n < lines.length; n++) {
             lines[n].k = n === 1 ? k2 : k1;
             lines[n].el.style.fontSize = fs * lines[n].k + "px";
