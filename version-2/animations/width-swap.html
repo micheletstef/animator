@@ -484,7 +484,7 @@
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var TRACK_EXT_DELTA = -0.03;
-        var REST_WDTH_LO = 96;
+        var REST_WDTH_LO = 82;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -756,7 +756,7 @@
           var extreme1 = (lines[0] && lines[0].extreme) || 1;
           var extreme2 = (lines[1] && lines[1].extreme) || extreme1;
           var k1 = (target / extreme1) * 1.06;
-          var k2 = k1 * 1.08;
+          var k2 = k1 * 0.94;
           for (var n = 0; n < lines.length; n++) {
             lines[n].k = n === 1 ? k2 : k1;
             lines[n].el.style.fontSize = fs * lines[n].k + "px";
