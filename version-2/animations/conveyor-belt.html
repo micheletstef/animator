@@ -271,14 +271,14 @@
           <span class="val" id="colVal">1080px</span>
         </div>
         <div class="row">
-          <label for="pack">pack</label>
-          <input id="pack" type="range" min="0.55" max="1" step="0.01" value="0.68" />
-          <span class="val" id="packVal">0.68</span>
+          <label for="pack">fill</label>
+          <input id="pack" type="range" min="0.7" max="1" step="0.01" value="0.9" />
+          <span class="val" id="packVal">0.90</span>
         </div>
         <div class="row">
           <label for="gap">gap</label>
-          <input id="gap" type="range" min="0" max="40" step="1" value="8" />
-          <span class="val" id="gapVal">8px</span>
+          <input id="gap" type="range" min="4" max="48" step="1" value="20" />
+          <span class="val" id="gapVal">20px</span>
         </div>
         <div class="row">
           <label for="ox">x</label>
@@ -354,24 +354,23 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:conveyor-belt:settings:v4";
+        var LS_KEY = "animator:v2:conveyor-belt:settings:v5";
         var STAGE_W = 1080;
         var STAGE_H = 1440;
-        var SRC_W = 171;
-        var SRC_H = 470;
         var PROBE_FS = 200;
+        var NCOLS = 2;
 
         // Ink boxes from the source lockup, cropped to the glyph bounds (x=14).
         var ITEMS = [
-          { ch: "?", l: 10, t: 0, w: 81, h: 117 },
-          { ch: "!", l: 113, t: 61, w: 41, h: 114 },
-          { ch: ",", l: 17, t: 134, w: 34, h: 55, feat: "ss13" },
-          { ch: "(", l: 53, t: 146, w: 45, h: 131 },
-          { ch: "*", l: 97, t: 201, w: 73, h: 72 },
-          { ch: "\u300B", l: 7, t: 254, w: 64, h: 95 },
-          { ch: "\u2153", l: 82, t: 302, w: 89, h: 89 },
-          { ch: "\u2463", l: 0, t: 361, w: 80, h: 85 },
-          { ch: "\u00B6", l: 93, t: 416, w: 65, h: 84 },
+          { ch: "?", feat: null },
+          { ch: "!", feat: null },
+          { ch: ",", feat: "ss13" },
+          { ch: "(", feat: null },
+          { ch: "*", feat: null },
+          { ch: "\u300B", feat: null },
+          { ch: "\u2153", feat: null },
+          { ch: "\u2463", feat: null },
+          { ch: "\u00B6", feat: null },
         ];
 
         var root = document.documentElement;
@@ -383,8 +382,8 @@
           bg: "#ffffff",
           fg: "#000000",
           col: 1080,
-          pack: 0.68,
-          gap: 8,
+          pack: 0.9,
+          gap: 20,
           ox: 0,
           oy: 0,
           slnt: 0,
@@ -446,12 +445,12 @@
 
         function packValue() {
           var n = Number(els.pack.value);
-          return isFinite(n) && n > 0 ? n : 0.68;
+          return isFinite(n) && n > 0 ? n : 0.9;
         }
 
         function gapValue() {
           var n = Number(els.gap.value);
-          return isFinite(n) ? Math.max(0, n) : 8;
+          return isFinite(n) ? Math.max(0, n) : 20;
         }
 
         function stageScale() {
@@ -480,9 +479,8 @@
 
         function build() {
           var col = Number(els.col.value) || 1080;
-          var scale = col / SRC_W;
-          tileH = SRC_H * scale * packValue();
-          copyCount = Math.max(3, Math.ceil(STAGE_H / tileH) + 2);
+          tileH = STAGE_H;
+          copyCount = 4;
           belt.innerHTML = "";
           glyphEls = [];
           var c;
@@ -531,7 +529,6 @@
           var col = Number(els.col.value) || 1080;
           var pack = packValue();
           var gap = gapValue();
-          var scale = col / SRC_W;
           var sc = stageScale();
           var key =
             col +
@@ -559,33 +556,65 @@
             el.style.transform = "none";
           });
 
-          glyphEls.forEach(function (el) {
-            var item = el._item;
-            var tile = el._tile;
-            var box = {
-              l: item.l * scale,
-              t: item.t * scale * pack,
-              w: item.w * scale,
-              h: item.h * scale,
-            };
-            var pad = gap;
-            box.l += pad;
-            box.t += pad;
-            box.w = Math.max(8, box.w - pad * 2);
-            box.h = Math.max(8, box.h - pad * 2);
+          var n = ITEMS.length;
+          var inks = [];
+          var i;
+          for (i = 0; i < n; i++) {
+            var el = glyphEls[i];
             var r = inkRect(el);
-            var tileR = tile.getBoundingClientRect();
-            var inkW = r.width / sc;
-            var inkH = r.height / sc;
-            if (inkW < 0.5 || inkH < 0.5) return;
-            var k = Math.max(box.w / inkW, box.h / inkH);
-            var curL = (r.left - tileR.left) / sc;
-            var curT = (r.top - tileR.top) / sc;
-            var tx = box.l + (box.w - inkW * k) / 2 - curL * k;
-            var ty = box.t + (box.h - inkH * k) / 2 - curT * k;
-            el.style.transform =
-              "translate(" + tx + "px, " + ty + "px) scale(" + k + ")";
-          });
+            var tileR = el._tile.getBoundingClientRect();
+            var ink = {
+              l: (r.left - tileR.left) / sc,
+              t: (r.top - tileR.top) / sc,
+              w: r.width / sc,
+              h: r.height / sc,
+            };
+            inks.push(ink);
+          }
+          if (!inks.length || inks[0].w < 0.5) return;
+
+          var colW = (col - gap * (NCOLS + 1)) / NCOLS;
+          if (colW < 8) colW = 8;
+          var colX = [gap, gap + colW + gap];
+          var colH = [gap, gap];
+          var poses = [];
+          var capH = colW * 1.15;
+
+          for (i = 0; i < n; i++) {
+            var k = Math.min(
+              (colW * pack) / inks[i].w,
+              capH / inks[i].h
+            );
+            var w = inks[i].w * k;
+            var h = inks[i].h * k;
+            var c = colH[0] <= colH[1] ? 0 : 1;
+            var x = colX[c] + (colW - w) / 2;
+            var y = colH[c];
+            poses.push({
+              tx: x - inks[i].l * k,
+              ty: y - inks[i].t * k,
+              k: k,
+            });
+            colH[c] += h + gap;
+          }
+
+          tileH = Math.max(colH[0], colH[1]);
+          var tiles = belt.querySelectorAll(".tile");
+          for (i = 0; i < tiles.length; i++) {
+            tiles[i].style.height = tileH + "px";
+          }
+
+          for (i = 0; i < glyphEls.length; i++) {
+            var pose = poses[i % n];
+            glyphEls[i].style.transform =
+              "translate(" +
+              pose.tx +
+              "px, " +
+              pose.ty +
+              "px) scale(" +
+              pose.k +
+              ")";
+          }
         }
 
         function sampleCntr(elapsed) {

@@ -317,7 +317,65 @@
       </div>
 
       <div class="group">
-        <p class="group-title">at 0 · wide hairline</p>
+        <p class="group-title">psi · from 0</p>
+        <div class="row">
+          <label for="pw0">wdth</label>
+          <input id="pw0" type="range" min="65" max="130" step="1" value="130" />
+          <span class="val" id="pw0Val">130</span>
+        </div>
+        <div class="row">
+          <label for="pg0">wght</label>
+          <input id="pg0" type="range" min="200" max="1000" step="1" value="200" />
+          <span class="val" id="pg0Val">200</span>
+        </div>
+        <div class="row">
+          <label for="pc0">CNTR</label>
+          <input id="pc0" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="pc0Val">100</span>
+        </div>
+        <div class="row">
+          <label for="ps0">slnt</label>
+          <input id="ps0" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="ps0Val">0</span>
+        </div>
+        <div class="row">
+          <label for="pt0">track</label>
+          <input id="pt0" type="range" min="-0.16" max="0.08" step="0.005" value="-0.04" />
+          <span class="val" id="pt0Val">-0.04</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">psi · to 60</p>
+        <div class="row">
+          <label for="pw1">wdth</label>
+          <input id="pw1" type="range" min="65" max="130" step="1" value="65" />
+          <span class="val" id="pw1Val">65</span>
+        </div>
+        <div class="row">
+          <label for="pg1">wght</label>
+          <input id="pg1" type="range" min="200" max="1000" step="1" value="1000" />
+          <span class="val" id="pg1Val">1000</span>
+        </div>
+        <div class="row">
+          <label for="pc1">CNTR</label>
+          <input id="pc1" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="pc1Val">100</span>
+        </div>
+        <div class="row">
+          <label for="ps1">slnt</label>
+          <input id="ps1" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="ps1Val">0</span>
+        </div>
+        <div class="row">
+          <label for="pt1">track</label>
+          <input id="pt1" type="range" min="-0.16" max="0.08" step="0.005" value="0.01" />
+          <span class="val" id="pt1Val">0.01</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">num · from 0</p>
         <div class="row">
           <label for="w0">wdth</label>
           <input id="w0" type="range" min="65" max="130" step="1" value="130" />
@@ -346,7 +404,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">at 60 · condensed black</p>
+        <p class="group-title">num · to 60</p>
         <div class="row">
           <label for="w1">wdth</label>
           <input id="w1" type="range" min="65" max="130" step="1" value="65" />
@@ -398,7 +456,7 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:psi-count:settings:v4";
+        var LS_KEY = "animator:v2:psi-count:settings:v5";
         var START = 0;
         var END = 60;
         var GRADIENT = 'url("psi-count-bg.jpg")';
@@ -416,6 +474,16 @@
           numFs: 724,
           lh: 0.84,
           oy: 0,
+          pw0: 130,
+          pg0: 200,
+          pc0: 100,
+          ps0: 0,
+          pt0: -0.04,
+          pw1: 65,
+          pg1: 1000,
+          pc1: 100,
+          ps1: 0,
+          pt1: 0.01,
           w0: 130,
           g0: 200,
           c0: 100,
@@ -442,6 +510,16 @@
           numFs: document.getElementById("numFsVal"),
           lh: document.getElementById("lhVal"),
           oy: document.getElementById("oyVal"),
+          pw0: document.getElementById("pw0Val"),
+          pg0: document.getElementById("pg0Val"),
+          pc0: document.getElementById("pc0Val"),
+          ps0: document.getElementById("ps0Val"),
+          pt0: document.getElementById("pt0Val"),
+          pw1: document.getElementById("pw1Val"),
+          pg1: document.getElementById("pg1Val"),
+          pc1: document.getElementById("pc1Val"),
+          ps1: document.getElementById("ps1Val"),
+          pt1: document.getElementById("pt1Val"),
           w0: document.getElementById("w0Val"),
           g0: document.getElementById("g0Val"),
           c0: document.getElementById("c0Val"),
@@ -520,25 +598,20 @@
         }
 
         function paint(p) {
-          var w0 = numVal("w0", 130);
-          var w1 = numVal("w1", 65);
-          var g0 = numVal("g0", 200);
-          var g1 = numVal("g1", 1000);
-          var c0 = numVal("c0", 100);
-          var c1 = numVal("c1", 100);
-          var s0 = numVal("s0", 0);
-          var s1 = numVal("s1", 0);
-          var tStart = numVal("t0", -0.04);
-          var tEnd = numVal("t1", 0.01);
+          var psiWdth = lerp(numVal("pw0", 130), numVal("pw1", 65), p);
+          var psiWght = lerp(numVal("pg0", 200), numVal("pg1", 1000), p);
+          var psiCntr = lerp(numVal("pc0", 100), numVal("pc1", 100), p);
+          var psiSlnt = lerp(numVal("ps0", 0), numVal("ps1", 0), p);
+          var psiTrack = lerp(numVal("pt0", -0.04), numVal("pt1", 0.01), p);
 
-          var wdth = lerp(w0, w1, p);
-          var wght = lerp(g0, g1, p);
-          var cntr = lerp(c0, c1, p);
-          var slnt = lerp(s0, s1, p);
-          var tracking = lerp(tStart, tEnd, p);
+          var wdth = lerp(numVal("w0", 130), numVal("w1", 65), p);
+          var wght = lerp(numVal("g0", 200), numVal("g1", 1000), p);
+          var cntr = lerp(numVal("c0", 100), numVal("c1", 100), p);
+          var slnt = lerp(numVal("s0", 0), numVal("s1", 0), p);
+          var tracking = lerp(numVal("t0", -0.04), numVal("t1", 0.01), p);
           var value = Math.round(lerp(START, END, p));
 
-          applyType(psi, w0, g0, c0, s0, tStart);
+          applyType(psi, psiWdth, psiWght, psiCntr, psiSlnt, psiTrack);
           applyType(num, wdth, wght, cntr, slnt, tracking);
 
           if (value !== lastValue) {
@@ -550,11 +623,14 @@
           fitLine(num);
 
           nowReadout.textContent =
-            "PSI " +
             value +
-            " · wdth " +
+            " · psi " +
+            Math.round(psiWdth) +
+            "/" +
+            Math.round(psiWght) +
+            " · num " +
             Math.round(wdth) +
-            " · wght " +
+            "/" +
             Math.round(wght);
         }
 
@@ -572,10 +648,12 @@
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (key === "lh") return Number(v).toFixed(2);
-          if (key === "s0" || key === "s1") {
+          if (key === "s0" || key === "s1" || key === "ps0" || key === "ps1") {
             return Number(v).toFixed(2).replace(/\.00$/, "");
           }
-          if (key === "t0" || key === "t1") return Number(v).toFixed(2);
+          if (key === "t0" || key === "t1" || key === "pt0" || key === "pt1") {
+            return Number(v).toFixed(2);
+          }
           if (key === "move" || key === "hold") return Math.round(Number(v)) + "ms";
           if (
             key === "w0" ||
@@ -583,7 +661,13 @@
             key === "g0" ||
             key === "g1" ||
             key === "c0" ||
-            key === "c1"
+            key === "c1" ||
+            key === "pw0" ||
+            key === "pw1" ||
+            key === "pg0" ||
+            key === "pg1" ||
+            key === "pc0" ||
+            key === "pc1"
           ) {
             return String(Math.round(Number(v)));
           }
