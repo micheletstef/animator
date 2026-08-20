@@ -19,6 +19,7 @@
         --ar-w: 1080;
         --ar-h: 1440;
         --bg: #000000;
+        --bg-image: none;
         --fg: #ffd7d7;
         --pad-t: 80;
         --pad-r: 56;
@@ -84,6 +85,9 @@
         width: 1080px;
         height: 1440px;
         background-color: var(--bg);
+        background-image: var(--bg-image);
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
@@ -186,6 +190,14 @@
         accent-color: #fff;
       }
 
+      .row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        justify-self: start;
+        accent-color: #fff;
+        cursor: pointer;
+      }
+
       .row input[type="color"] {
         width: 100%;
         height: 22px;
@@ -262,6 +274,11 @@
 
       <div class="group">
         <p class="group-title">color</p>
+        <div class="row">
+          <label for="grad">gradient</label>
+          <input id="grad" type="checkbox" checked />
+          <span class="val" id="gradVal">on</span>
+        </div>
         <div class="row">
           <label for="bg">bg</label>
           <input id="bg" type="color" value="#000000" />
@@ -380,9 +397,13 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:psi-count:settings:v2";
+        var LS_KEY = "animator:v2:psi-count:settings:v3";
         var START = 0;
         var END = 60;
+        var GRADIENT =
+          "radial-gradient(ellipse 72% 58% at 50% 40%, rgba(255,255,230,0.9) 0%, rgba(255,224,99,0.45) 32%, transparent 68%)," +
+          "repeating-conic-gradient(from 12deg at 50% 42%, rgba(255,255,240,0.14) 0deg 5deg, transparent 5deg 17deg)," +
+          "radial-gradient(ellipse 120% 100% at 50% 45%, #fff6a8 0%, #ffe063 16%, #ffcc2a 42%, #f39a00 78%, #e88800 100%)";
 
         var root = document.documentElement;
         var psi = document.getElementById("psi");
@@ -390,6 +411,7 @@
         var nowReadout = document.getElementById("nowReadout");
 
         var DEFAULTS = {
+          grad: "1",
           bg: "#000000",
           fg: "#ffd7d7",
           psiFs: 420,
@@ -411,9 +433,11 @@
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
+        var CHECK_KEYS = { grad: 1 };
 
         var els = {};
         var vals = {
+          grad: document.getElementById("gradVal"),
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
           psiFs: document.getElementById("psiFsVal"),
@@ -548,6 +572,7 @@
 
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (key === "lh") return Number(v).toFixed(2);
           if (key === "s0" || key === "s1") {
             return Number(v).toFixed(2).replace(/\.00$/, "");
@@ -569,6 +594,7 @@
 
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--bg-image", els.grad.checked ? GRADIENT : "none");
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--psi-fs", String(els.psiFs.value));
           root.style.setProperty("--num-fs", String(els.numFs.value));
@@ -579,7 +605,8 @@
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = fmt(key, els[key].value);
+            var v = CHECK_KEYS[key] ? (els[key].checked ? "1" : "0") : els[key].value;
+            vals[key].textContent = fmt(key, v);
           });
         }
 
@@ -587,7 +614,11 @@
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            data[key] = els[key].value;
+            data[key] = CHECK_KEYS[key]
+              ? els[key].checked
+                ? "1"
+                : "0"
+              : els[key].value;
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -608,14 +639,22 @@
           }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
-            els[key].value = data[key];
+            if (CHECK_KEYS[key]) {
+              els[key].checked = data[key] === "1" || data[key] === true;
+            } else {
+              els[key].value = data[key];
+            }
           });
         }
 
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            if (CHECK_KEYS[key]) {
+              els[key].checked = DEFAULTS[key] === "1";
+            } else {
+              els[key].value = DEFAULTS[key];
+            }
           });
           try {
             localStorage.removeItem(LS_KEY);
