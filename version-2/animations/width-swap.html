@@ -38,12 +38,12 @@
         );
         --fg: #000000;
         --pad-t: 72;
-        --pad-r: 56;
+        --pad-r: 52;
         --pad-b: 72;
-        --pad-l: 56;
+        --pad-l: 52;
         --fs: 720;
         --lh: 0.82;
-        --tracking: 0;
+        --tracking: -0.04;
         --oy: 0;
         --slnt: 0;
       }
@@ -130,7 +130,7 @@
       .fit {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         justify-content: center;
         width: 100%;
         max-width: 100%;
@@ -141,7 +141,7 @@
         display: flex;
         flex-direction: row;
         align-items: baseline;
-        justify-content: center;
+        justify-content: space-between;
         width: 100%;
         max-width: 100%;
         font-size: calc(var(--fs) * 1px);
@@ -381,8 +381,8 @@
         </div>
         <div class="row">
           <label for="tr">track</label>
-          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="0" />
-          <span class="val" id="trVal">0.00</span>
+          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="-0.04" />
+          <span class="val" id="trVal">-0.04</span>
         </div>
         <div class="row">
           <label for="oy">y</label>
@@ -469,8 +469,7 @@
         var LS_KEY = "animator:v2:width-swap:settings:v4";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
-        var PAIR_OVERLAP_EM = 0.05;
-        var L2_SCALE = 1.24;
+        var L2_SCALE = 1.38;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -488,7 +487,7 @@
           l2: "X8",
           fs: 720,
           lh: 0.82,
-          tr: 0,
+          tr: -0.04,
           oy: 0,
           cwd: 65,
           ewd: 130,
@@ -573,8 +572,8 @@
 
         function targetWidth() {
           var cs = getComputedStyle(root);
-          var padL = Number(cs.getPropertyValue("--pad-l")) || 56;
-          var padR = Number(cs.getPropertyValue("--pad-r")) || 56;
+          var padL = Number(cs.getPropertyValue("--pad-l")) || 52;
+          var padR = Number(cs.getPropertyValue("--pad-r")) || 52;
           var target = STAGE_W - padL - padR;
           return target < 40 ? 40 : target;
         }
@@ -659,14 +658,14 @@
             : lerp(range.hi, range.lo, t);
         }
 
-        function lineExtreme(line, overlap) {
+        function lineExtreme(line) {
           if (!line.units.length) return 0;
           if (line.units.length === 1) return line.units[0].maxW || 0;
           var a = line.units[0];
           var b = line.units[1];
           return Math.max(
-            (a.minW || 0) + (b.maxW || 0) - overlap,
-            (a.maxW || 0) + (b.minW || 0) - overlap
+            (a.minW || 0) + (b.maxW || 0),
+            (a.maxW || 0) + (b.minW || 0)
           );
         }
 
@@ -675,7 +674,6 @@
           var fs = Number(els.fs.value) || 720;
           var range = wdthRange();
           var target = targetWidth();
-          var overlap = fs * PAIR_OVERLAP_EM;
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
             line.wght = lineWeight(i);
@@ -694,24 +692,26 @@
               unit.inner.style.fontWeight = String(Math.round(line.wght));
               unit.inner.style.transform = "none";
             }
-            line.extreme = lineExtreme(line, overlap);
+            line.extreme = lineExtreme(line);
           }
 
           var extreme1 = (lines[0] && lines[0].extreme) || 1;
           var extreme2 = (lines[1] && lines[1].extreme) || extreme1;
-          var k1 = Math.min(1, target / extreme1, target / (L2_SCALE * extreme2));
-          var k2 = Math.min(1, k1 * L2_SCALE, target / extreme2);
+          var k1 = target / extreme1;
+          var k2 = target / extreme2;
+          if (k2 < k1 * L2_SCALE) k2 = Math.min(k1 * L2_SCALE, target / extreme2);
+          if (k2 < k1 * L2_SCALE) k1 = k2 / L2_SCALE;
           for (var n = 0; n < lines.length; n++) {
             lines[n].k = n === 1 ? k2 : k1;
             lines[n].el.style.fontSize = fs * lines[n].k + "px";
           }
         }
 
-        function applyUnit(unit, line, wdth, boxW, shift) {
+        function applyUnit(unit, line, wdth, boxW) {
           unit.el.style.flex = "0 0 " + boxW + "px";
           unit.el.style.width = boxW + "px";
           unit.el.style.maxWidth = boxW + "px";
-          unit.el.style.marginLeft = shift ? shift + "px" : "0";
+          unit.el.style.marginLeft = "0";
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
             wdth,
@@ -729,7 +729,7 @@
           if (units.length === 1) {
             var wdth = mixWdth(units[0].from, t);
             return [
-              applyUnit(units[0], line, wdth, widthAt(units[0].samples, wdth) * k, 0),
+              applyUnit(units[0], line, wdth, widthAt(units[0].samples, wdth) * k),
             ];
           }
 
@@ -737,13 +737,12 @@
           var b = units[1];
           var wdthA = mixWdth(a.from, t);
           var wdthB = mixWdth(b.from, t);
-          var overlap = (Number(els.fs.value) || 720) * k * PAIR_OVERLAP_EM;
           var widthA = widthAt(a.samples, wdthA) * k;
           var widthB = widthAt(b.samples, wdthB) * k;
 
           return [
-            applyUnit(a, line, wdthA, widthA, 0),
-            applyUnit(b, line, wdthB, widthB, -overlap),
+            applyUnit(a, line, wdthA, widthA),
+            applyUnit(b, line, wdthB, widthB),
           ];
         }
 
