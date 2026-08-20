@@ -20,14 +20,14 @@
         --ar-h: 1440;
         --bg: #000000;
         --bg-image: none;
-        --fg: #ffd7d7;
+        --fg: #ffffff;
         --pad-t: 80;
         --pad-r: 56;
         --pad-b: 140;
         --pad-l: 56;
-        --psi-fs: 420;
+        --psi-fs: 584;
         --num-fs: 724;
-        --lh: 0.75;
+        --lh: 0.84;
         --oy: 0;
       }
 
@@ -87,7 +87,8 @@
         background-color: var(--bg);
         background-image: var(--bg-image);
         background-repeat: no-repeat;
-        background-size: 100% 100%;
+        background-position: center;
+        background-size: cover;
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
@@ -286,8 +287,8 @@
         </div>
         <div class="row">
           <label for="fg">text</label>
-          <input id="fg" type="color" value="#ffd7d7" />
-          <span class="val" id="fgVal">#ffd7d7</span>
+          <input id="fg" type="color" value="#ffffff" />
+          <span class="val" id="fgVal">#ffffff</span>
         </div>
       </div>
 
@@ -295,8 +296,8 @@
         <p class="group-title">type</p>
         <div class="row">
           <label for="psiFs">psi</label>
-          <input id="psiFs" type="range" min="80" max="900" step="1" value="420" />
-          <span class="val" id="psiFsVal">420px</span>
+          <input id="psiFs" type="range" min="80" max="900" step="1" value="584" />
+          <span class="val" id="psiFsVal">584px</span>
         </div>
         <div class="row">
           <label for="numFs">num</label>
@@ -305,8 +306,8 @@
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.55" max="1.2" step="0.01" value="0.75" />
-          <span class="val" id="lhVal">0.75</span>
+          <input id="lh" type="range" min="0.55" max="1.2" step="0.01" value="0.84" />
+          <span class="val" id="lhVal">0.84</span>
         </div>
         <div class="row">
           <label for="oy">y</label>
@@ -345,7 +346,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">at 60 · condensed hairline</p>
+        <p class="group-title">at 60 · condensed black</p>
         <div class="row">
           <label for="w1">wdth</label>
           <input id="w1" type="range" min="65" max="130" step="1" value="65" />
@@ -353,8 +354,8 @@
         </div>
         <div class="row">
           <label for="g1">wght</label>
-          <input id="g1" type="range" min="200" max="1000" step="1" value="200" />
-          <span class="val" id="g1Val">200</span>
+          <input id="g1" type="range" min="200" max="1000" step="1" value="1000" />
+          <span class="val" id="g1Val">1000</span>
         </div>
         <div class="row">
           <label for="c1">CNTR</label>
@@ -368,8 +369,8 @@
         </div>
         <div class="row">
           <label for="t1">track</label>
-          <input id="t1" type="range" min="-0.16" max="0.08" step="0.005" value="-0.10" />
-          <span class="val" id="t1Val">-0.10</span>
+          <input id="t1" type="range" min="-0.16" max="0.08" step="0.005" value="0.01" />
+          <span class="val" id="t1Val">0.01</span>
         </div>
       </div>
 
@@ -397,13 +398,10 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:psi-count:settings:v3";
+        var LS_KEY = "animator:v2:psi-count:settings:v4";
         var START = 0;
         var END = 60;
-        var GRADIENT =
-          "radial-gradient(ellipse 72% 58% at 50% 40%, rgba(255,255,230,0.9) 0%, rgba(255,224,99,0.45) 32%, transparent 68%)," +
-          "repeating-conic-gradient(from 12deg at 50% 42%, rgba(255,255,240,0.14) 0deg 5deg, transparent 5deg 17deg)," +
-          "radial-gradient(ellipse 120% 100% at 50% 45%, #fff6a8 0%, #ffe063 16%, #ffcc2a 42%, #f39a00 78%, #e88800 100%)";
+        var GRADIENT = 'url("psi-count-bg.jpg")';
 
         var root = document.documentElement;
         var psi = document.getElementById("psi");
@@ -413,10 +411,10 @@
         var DEFAULTS = {
           grad: "1",
           bg: "#000000",
-          fg: "#ffd7d7",
-          psiFs: 420,
+          fg: "#ffffff",
+          psiFs: 584,
           numFs: 724,
-          lh: 0.75,
+          lh: 0.84,
           oy: 0,
           w0: 130,
           g0: 200,
@@ -424,10 +422,10 @@
           s0: 0,
           t0: -0.04,
           w1: 65,
-          g1: 200,
+          g1: 1000,
           c1: 100,
           s1: 0,
-          t1: -0.1,
+          t1: 0.01,
           move: 3200,
           hold: 700,
         };
@@ -525,13 +523,13 @@
           var w0 = numVal("w0", 130);
           var w1 = numVal("w1", 65);
           var g0 = numVal("g0", 200);
-          var g1 = numVal("g1", 200);
+          var g1 = numVal("g1", 1000);
           var c0 = numVal("c0", 100);
           var c1 = numVal("c1", 100);
           var s0 = numVal("s0", 0);
           var s1 = numVal("s1", 0);
           var tStart = numVal("t0", -0.04);
-          var tEnd = numVal("t1", -0.1);
+          var tEnd = numVal("t1", 0.01);
 
           var wdth = lerp(w0, w1, p);
           var wght = lerp(g0, g1, p);
