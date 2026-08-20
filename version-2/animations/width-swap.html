@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>width swap</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --fg: #000000;
+        --pad-t: 72;
+        --pad-r: 56;
+        --pad-b: 72;
+        --pad-l: 56;
+        --fs: 720;
+        --lh: 0.82;
+        --tracking: 0;
+        --oy: 0;
+        --slnt: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 1, "kern" 1;
+        pointer-events: none;
+      }
+
+      .lockup {
+        position: absolute;
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(calc(var(--oy) * 1px));
+      }
+
+      .fit {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .line {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        width: max-content;
+        font-size: calc(var(--fs) * 1px);
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
+        white-space: nowrap;
+      }
+
+      .unit {
+        display: block;
+        flex: 0 0 auto;
+        line-height: inherit;
+        letter-spacing: inherit;
+        white-space: nowrap;
+        font-kerning: none;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row input[type="text"] {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 10px 0;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+    <link rel="stylesheet" href="../../animation-chrome.css?v=3" />
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="width swap">
+          <div class="lockup" id="lockup">
+            <div class="fit" id="fit"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">
+        scroll to zoom · drag to pan · double-click to fit · 1080 × 1440
+      </p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">copy · first glyph vs rest</p>
+        <div class="row">
+          <label for="l1">line 1</label>
+          <input id="l1" type="text" value="R41" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row">
+          <label for="l2">line 2</label>
+          <input id="l2" type="text" value="X8" spellcheck="false" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="120" max="800" step="1" value="720" />
+          <span class="val" id="fsVal">720px</span>
+        </div>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.82" />
+          <span class="val" id="lhVal">0.82</span>
+        </div>
+        <div class="row">
+          <label for="tr">track</label>
+          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="0" />
+          <span class="val" id="trVal">0.00</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">condensed · R start / 41 end</p>
+        <div class="row">
+          <label for="cwd">wdth</label>
+          <input id="cwd" type="range" min="65" max="130" step="1" value="65" />
+          <span class="val" id="cwdVal">65</span>
+        </div>
+        <div class="row">
+          <label for="cwg">wght</label>
+          <input id="cwg" type="range" min="200" max="1000" step="1" value="700" />
+          <span class="val" id="cwgVal">700</span>
+        </div>
+        <div class="row">
+          <label for="ccn">CNTR</label>
+          <input id="ccn" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="ccnVal">0</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">extended · X start / 41 start</p>
+        <div class="row">
+          <label for="ewd">wdth</label>
+          <input id="ewd" type="range" min="65" max="130" step="1" value="118" />
+          <span class="val" id="ewdVal">118</span>
+        </div>
+        <div class="row">
+          <label for="ewg">wght</label>
+          <input id="ewg" type="range" min="200" max="1000" step="1" value="1000" />
+          <span class="val" id="ewgVal">1000</span>
+        </div>
+        <div class="row">
+          <label for="ecn">CNTR</label>
+          <input id="ecn" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="ecnVal">100</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">shared</p>
+        <div class="row">
+          <label for="slnt">slnt</label>
+          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slntVal">0</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion · ping-pong width swap</p>
+        <p class="now" id="nowReadout">R condensed · 41 extended</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="4000" step="20" value="1800" />
+          <span class="val" id="moveVal">1800ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="3000" step="50" value="700" />
+          <span class="val" id="holdVal">700ms</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+        <button type="button" id="replayBtn">replay</button>
+      </div>
+    </aside>
+
+    <script src="artboard-view.js?v=2"></script>
+    <script>
+      (function () {
+        var LS_KEY = "animator:v2:width-swap:settings:v1";
+        var STAGE_W = 1080;
+        var STAGE_H = 1440;
+
+        var root = document.documentElement;
+        var stageEl = document.getElementById("stage");
+        var fitEl = document.getElementById("fit");
+        var nowReadout = document.getElementById("nowReadout");
+        var units = [];
+        var fitScale = 1;
+        var t0 = 0;
+        var lastMix = 0;
+        var needsFit = true;
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          l1: "R41",
+          l2: "X8",
+          fs: 720,
+          lh: 0.82,
+          tr: 0,
+          oy: 0,
+          cwd: 65,
+          cwg: 700,
+          ccn: 0,
+          ewd: 118,
+          ewg: 1000,
+          ecn: 100,
+          slnt: 0,
+          move: 1800,
+          hold: 700,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var TEXT_KEYS = { l1: 1, l2: 1 };
+
+        var els = {};
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          fs: document.getElementById("fsVal"),
+          lh: document.getElementById("lhVal"),
+          tr: document.getElementById("trVal"),
+          oy: document.getElementById("oyVal"),
+          cwd: document.getElementById("cwdVal"),
+          cwg: document.getElementById("cwgVal"),
+          ccn: document.getElementById("ccnVal"),
+          ewd: document.getElementById("ewdVal"),
+          ewg: document.getElementById("ewgVal"),
+          ecn: document.getElementById("ecnVal"),
+          slnt: document.getElementById("slntVal"),
+          move: document.getElementById("moveVal"),
+          hold: document.getElementById("holdVal"),
+        };
+
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+        });
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function clamp(n, lo, hi) {
+          return Math.max(lo, Math.min(hi, n));
+        }
+
+        function easeInOutCubic(t) {
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function axisState(prefix) {
+          return {
+            wdth: Number(els[prefix + "wd"].value),
+            wght: Number(els[prefix + "wg"].value),
+            cntr: Number(els[prefix + "cn"].value),
+            slnt: Number(els.slnt.value) || 0,
+          };
+        }
+
+        function mixState(a, b, t) {
+          return {
+            wdth: lerp(a.wdth, b.wdth, t),
+            wght: lerp(a.wght, b.wght, t),
+            cntr: lerp(a.cntr, b.cntr, t),
+            slnt: lerp(a.slnt, b.slnt, t),
+          };
+        }
+
+        function vfString(s) {
+          return (
+            '"wght" ' +
+            s.wght +
+            ', "wdth" ' +
+            s.wdth +
+            ', "CNTR" ' +
+            s.cntr +
+            ', "slnt" ' +
+            s.slnt
+          );
+        }
+
+        function splitLine(raw) {
+          var text = String(raw || "");
+          if (!text) return ["", ""];
+          return [text.charAt(0), text.slice(1)];
+        }
+
+        function applyUnit(unit, condensed, extended, t) {
+          var s =
+            unit.from === "condensed"
+              ? mixState(condensed, extended, t)
+              : mixState(extended, condensed, t);
+          unit.el.style.fontVariationSettings = vfString(s);
+          unit.el.style.fontWeight = String(Math.round(s.wght));
+          return s;
+        }
+
+        function applyMix(t, updateReadout) {
+          var condensed = axisState("c");
+          var extended = axisState("e");
+          var states = [];
+          for (var i = 0; i < units.length; i++) {
+            states.push(applyUnit(units[i], condensed, extended, t));
+          }
+          lastMix = t;
+          if (!updateReadout || !nowReadout) return;
+          if (!states.length) {
+            nowReadout.textContent = "—";
+            return;
+          }
+          nowReadout.textContent = units
+            .map(function (unit, i) {
+              return unit.label + " wdth " + Math.round(states[i].wdth);
+            })
+            .join(" · ");
+        }
+
+        function artboardSize(el) {
+          if (!el) return { w: 0, h: 0 };
+          var rect = el.getBoundingClientRect();
+          var stageW = stageEl ? stageEl.getBoundingClientRect().width : 0;
+          var k = stageW > 0 ? STAGE_W / stageW : 1;
+          return { w: rect.width * k, h: rect.height * k };
+        }
+
+        function padBox() {
+          var cs = getComputedStyle(root);
+          var padT = Number(cs.getPropertyValue("--pad-t")) || 0;
+          var padR = Number(cs.getPropertyValue("--pad-r")) || 0;
+          var padB = Number(cs.getPropertyValue("--pad-b")) || 0;
+          var padL = Number(cs.getPropertyValue("--pad-l")) || 0;
+          return {
+            w: Math.max(40, STAGE_W - padL - padR),
+            h: Math.max(40, STAGE_H - padT - padB),
+          };
+        }
+
+        function recomputeFit() {
+          if (!fitEl) return;
+          fitEl.style.transform = "none";
+          applyMix(0, false);
+          var a = artboardSize(fitEl);
+          applyMix(1, false);
+          var b = artboardSize(fitEl);
+          var box = padBox();
+          var w = Math.max(a.w, b.w, 1);
+          var h = Math.max(a.h, b.h, 1);
+          fitScale = Math.min(box.w / w, box.h / h, 1);
+          if (!isFinite(fitScale) || fitScale <= 0) fitScale = 1;
+          fitEl.style.transform = "scale(" + fitScale + ")";
+          applyMix(lastMix, true);
+          needsFit = false;
+        }
+
+        function sample(elapsed) {
+          var move = Math.max(80, Number(els.move.value) || 1800);
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          var half = hold + move;
+          var total = Math.max(1, half * 2);
+          var t = elapsed % total;
+          if (t < half) {
+            if (t < hold) return 0;
+            return easeInOutCubic((t - hold) / move);
+          }
+          var back = t - half;
+          if (back < hold) return 1;
+          return 1 - easeInOutCubic((back - hold) / move);
+        }
+
+        function frame(now) {
+          if (needsFit) recomputeFit();
+          applyMix(sample(now - t0), true);
+          requestAnimationFrame(frame);
+        }
+
+        function restart() {
+          t0 = performance.now();
+        }
+
+        function fmt(key, v) {
+          if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (TEXT_KEYS[key]) return String(v);
+          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "lh" || key === "tr") return Number(v).toFixed(2);
+          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
+          if (key === "move" || key === "hold") return Math.round(Number(v)) + "ms";
+          return String(Math.round(Number(v)));
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--fs", String(els.fs.value));
+          root.style.setProperty("--lh", String(els.lh.value));
+          root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--oy", String(els.oy.value));
+          root.style.setProperty("--slnt", String(els.slnt.value));
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = fmt(key, els[key].value);
+          });
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            data[key] = els[key].value;
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw = null;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
+          if (!raw) return;
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            els[key].value = data[key];
+          });
+        }
+
+        function buildLockup() {
+          fitEl.innerHTML = "";
+          units = [];
+          var rows = [
+            { text: els.l1.value, firstFrom: "condensed" },
+            { text: els.l2.value, firstFrom: "extended" },
+          ];
+          rows.forEach(function (row) {
+            var parts = splitLine(row.text);
+            var line = document.createElement("div");
+            line.className = "line";
+            parts.forEach(function (text, i) {
+              if (!text) return;
+              var unit = document.createElement("span");
+              unit.className = "unit";
+              unit.textContent = text;
+              var from = i === 0 ? row.firstFrom : row.firstFrom === "condensed" ? "extended" : "condensed";
+              line.appendChild(unit);
+              units.push({
+                el: unit,
+                from: from,
+                label: text,
+              });
+            });
+            if (line.childNodes.length) fitEl.appendChild(line);
+          });
+          needsFit = true;
+        }
+
+        function reset() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].value = DEFAULTS[key];
+          });
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (e) {}
+          applyVars();
+          paintVals();
+          buildLockup();
+          restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          els[key].addEventListener("input", function () {
+            applyVars();
+            paintVals();
+            if (key === "l1" || key === "l2") buildLockup();
+            else needsFit = true;
+            save();
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("replayBtn").addEventListener("click", restart);
+
+        loadSaved();
+        applyVars();
+        paintVals();
+        buildLockup();
+        restart();
+
+        var start = function () {
+          recomputeFit();
+          requestAnimationFrame(frame);
+        };
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start);
+        } else {
+          start();
+        }
+      })();
+    </script>
+  </body>
+</html>

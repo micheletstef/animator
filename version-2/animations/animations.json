@@ -37,6 +37,12 @@
       "mtime": 1787109999
     },
     {
+      "id": "width-swap",
+      "label": "width swap",
+      "url": "animations/width-swap.html",
+      "mtime": 1787254200
+    },
+    {
       "id": "weight-cascade",
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",
