@@ -488,6 +488,7 @@
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var TRACK_EXT_DELTA = -0.085;
+        var R_EXT_NUDGE_EM = -0.05;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -773,6 +774,14 @@
           } else {
             unit.inner.style.marginRight = -track + "em";
           }
+          if (line.index === 0 && unit.align === "start") {
+            var range = unitWdthRange(unit);
+            var span = range.hi - range.lo;
+            var u = span <= 0 ? 1 : (wdth - range.lo) / span;
+            if (u < 0) u = 0;
+            if (u > 1) u = 1;
+            unit.el.style.left = R_EXT_NUDGE_EM * u + "em";
+          }
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
             wdth,
@@ -962,6 +971,7 @@
             lines.push({
               el: lineEl,
               units: units,
+              index: rowIndex,
               wght: lineWeight(rowIndex),
               cntr: lineContrast(rowIndex),
             });
