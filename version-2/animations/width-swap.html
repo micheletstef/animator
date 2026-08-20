@@ -18,6 +18,24 @@
         --ar-w: 1080;
         --ar-h: 1440;
         --bg: #ffffff;
+        --bg-image: linear-gradient(
+          to bottom,
+          #2c2839 0%,
+          #2a2f45 8%,
+          #263957 20%,
+          #1f4166 25%,
+          #144a76 30%,
+          #085488 35%,
+          #01609a 40%,
+          #0178b0 45%,
+          #0091c4 50%,
+          #16a9d5 55%,
+          #58bdd9 60%,
+          #a1d2e1 65%,
+          #dbe5e7 70%,
+          #eaeceb 80%,
+          #e7e8e3 100%
+        );
         --fg: #000000;
         --pad-t: 72;
         --pad-r: 56;
@@ -83,7 +101,10 @@
         position: relative;
         width: 1080px;
         height: 1440px;
-        background: var(--bg);
+        background-color: var(--bg);
+        background-image: var(--bg-image);
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
         color: var(--fg);
         overflow: hidden;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
@@ -128,6 +149,7 @@
       .unit {
         display: block;
         flex: 0 0 auto;
+        min-width: 0;
         overflow: hidden;
         line-height: inherit;
         letter-spacing: inherit;
@@ -138,11 +160,14 @@
       .inner {
         display: block;
         width: max-content;
+        max-width: none;
         line-height: inherit;
         letter-spacing: inherit;
         white-space: nowrap;
         transform-origin: 0 50%;
-        will-change: transform, font-variation-settings;
+        text-rendering: geometricPrecision;
+        -webkit-font-smoothing: antialiased;
+        font-optical-sizing: none;
       }
 
       .probe {
@@ -213,6 +238,14 @@
       .row input[type="range"] {
         width: 100%;
         accent-color: #fff;
+      }
+
+      .row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        justify-self: start;
+        accent-color: #fff;
+        cursor: pointer;
       }
 
       .row input[type="color"] {
@@ -302,6 +335,11 @@
       <div class="group">
         <p class="group-title">color</p>
         <div class="row">
+          <label for="grad">gradient</label>
+          <input id="grad" type="checkbox" checked />
+          <span class="val" id="gradVal">on</span>
+        </div>
+        <div class="row">
           <label for="bg">bg</label>
           <input id="bg" type="color" value="#ffffff" />
           <span class="val" id="bgVal">#ffffff</span>
@@ -350,7 +388,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">condensed · squeezed state</p>
+        <p class="group-title">condensed · width min, weight held</p>
         <div class="row">
           <label for="cwd">wdth</label>
           <input id="cwd" type="range" min="65" max="130" step="1" value="65" />
@@ -364,7 +402,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">extended · stretched state</p>
+        <p class="group-title">extended · width max, weight held</p>
         <div class="row">
           <label for="ewd">wdth</label>
           <input id="ewd" type="range" min="65" max="130" step="1" value="118" />
@@ -422,11 +460,14 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:width-swap:settings:v2";
+        var GRADIENT =
+          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 20%, #1f4166 25%, #144a76 30%, #085488 35%, #01609a 40%, #0178b0 45%, #0091c4 50%, #16a9d5 55%, #58bdd9 60%, #a1d2e1 65%, #dbe5e7 70%, #eaeceb 80%, #e7e8e3 100%)";
+        var LS_KEY = "animator:v2:width-swap:settings:v3";
         var STAGE_W = 1080;
-        var WDTH_STEP = 5;
+        var WDTH_STEP = 1;
 
         var root = document.documentElement;
+        var stageEl = document.getElementById("stage");
         var fitEl = document.getElementById("fit");
         var probe = document.getElementById("probe");
         var nowReadout = document.getElementById("nowReadout");
@@ -436,6 +477,7 @@
 
         var DEFAULTS = {
           bg: "#ffffff",
+          grad: "1",
           fg: "#000000",
           l1: "R41",
           l2: "X8",
@@ -456,10 +498,12 @@
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
         var TEXT_KEYS = { l1: 1, l2: 1 };
+        var CHECK_KEYS = { grad: 1 };
 
         var els = {};
         var vals = {
           bg: document.getElementById("bgVal"),
+          grad: document.getElementById("gradVal"),
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
@@ -743,7 +787,23 @@
           t0 = performance.now();
         }
 
+        function readVal(key) {
+          if (!els[key]) return DEFAULTS[key];
+          if (CHECK_KEYS[key]) return els[key].checked ? "1" : "0";
+          return els[key].value;
+        }
+
+        function writeVal(key, value) {
+          if (!els[key]) return;
+          if (CHECK_KEYS[key]) {
+            els[key].checked = value === true || value === 1 || value === "1" || value === "on";
+            return;
+          }
+          els[key].value = value;
+        }
+
         function fmt(key, v) {
+          if (CHECK_KEYS[key]) return v === "1" || v === true || v === "on" ? "on" : "off";
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (TEXT_KEYS[key]) return String(v);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
@@ -755,6 +815,7 @@
 
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--bg-image", els.grad.checked ? GRADIENT : "none");
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
@@ -766,7 +827,7 @@
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = fmt(key, els[key].value);
+            vals[key].textContent = fmt(key, readVal(key));
           });
         }
 
@@ -774,7 +835,7 @@
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            data[key] = els[key].value;
+            data[key] = readVal(key);
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -795,7 +856,7 @@
           }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
-            els[key].value = data[key];
+            writeVal(key, data[key]);
           });
         }
 
@@ -861,7 +922,7 @@
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            writeVal(key, DEFAULTS[key]);
           });
           try {
             localStorage.removeItem(LS_KEY);
