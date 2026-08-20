@@ -437,19 +437,6 @@
           return 0.5 - 0.5 * Math.cos(Math.PI * t);
         }
 
-        function vfString(cntr) {
-          return (
-            '"wght" ' +
-            (Number(els.wght.value) || 1000) +
-            ', "wdth" ' +
-            (Number(els.wdth.value) || 100) +
-            ', "CNTR" ' +
-            cntr +
-            ', "slnt" ' +
-            (Number(els.slnt.value) || 0)
-          );
-        }
-
         function packValue() {
           var n = Number(els.pack.value);
           return isFinite(n) && n > 0 ? n : 0.68;
@@ -621,10 +608,13 @@
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
-          if (key === "fall") return Number(v).toFixed(2);
+          if (key === "pack") return Number(v).toFixed(2);
           if (key === "loop") return Number(v).toFixed(1).replace(/\.0$/, "") + "s";
           if (key === "wdth" || key === "wght" || key === "c0" || key === "c1") {
             return String(Math.round(Number(v)));
+          }
+          if (key === "move" || key === "hold") {
+            return Math.round(Number(v)) + "ms";
           }
           return Math.round(Number(v)) + "px";
         }
@@ -634,6 +624,9 @@
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--ox", String(els.ox.value));
           root.style.setProperty("--oy", String(els.oy.value));
+          root.style.setProperty("--wght", String(els.wght.value));
+          root.style.setProperty("--wdth", String(els.wdth.value));
+          root.style.setProperty("--slnt", String(els.slnt.value));
         }
 
         function paintVals() {
@@ -695,11 +688,11 @@
             applyVars();
             paintVals();
             save();
-            if (key === "col") {
+            if (key === "col" || key === "pack") {
               build();
             } else if (key === "ox" || key === "oy") {
               layoutBelt();
-            } else if (key === "wght" || key === "wdth" || key === "slnt" || key === "c0") {
+            } else if (key === "wght" || key === "wdth" || key === "slnt") {
               fitKey = "";
               glyphEls.forEach(function (el) {
                 el.style.fontWeight = String(

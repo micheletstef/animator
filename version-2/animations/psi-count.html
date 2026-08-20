@@ -20,7 +20,6 @@
         --ar-h: 1440;
         --bg: #000000;
         --fg: #ffd7d7;
-        --stripe: #310202;
         --pad-t: 80;
         --pad-r: 56;
         --pad-b: 140;
@@ -29,7 +28,6 @@
         --num-fs: 724;
         --lh: 0.75;
         --oy: 0;
-        --stripes: 1;
       }
 
       * {
@@ -95,23 +93,6 @@
         pointer-events: none;
       }
 
-      .stage[data-stripes="1"]::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background-image: linear-gradient(
-          to right,
-          var(--stripe) 0%,
-          var(--stripe) 33.333%,
-          transparent 33.333%,
-          transparent 66.666%,
-          var(--stripe) 66.666%,
-          var(--stripe) 100%
-        );
-        pointer-events: none;
-        z-index: 0;
-      }
-
       .lockup {
         position: absolute;
         top: calc(var(--pad-t) * 1px);
@@ -121,7 +102,7 @@
         z-index: 1;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: flex-start;
         align-items: center;
         text-align: center;
         transform: translateY(calc(var(--oy) * 1px));
@@ -145,7 +126,7 @@
 
       .num {
         font-size: calc(var(--num-fs) * 1px);
-        transform-origin: 50% 100%;
+        transform-origin: 50% 0;
       }
 
       .panel {
@@ -203,14 +184,6 @@
       .row input[type="range"] {
         width: 100%;
         accent-color: #fff;
-      }
-
-      .row input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        justify-self: start;
-        accent-color: #fff;
-        cursor: pointer;
       }
 
       .row input[type="color"] {
@@ -273,7 +246,7 @@
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="PSI 0 to 60" data-stripes="1">
+        <div class="stage" id="stage" aria-label="PSI 0 to 60">
           <div class="lockup" id="lockup">
             <span class="psi" id="psi">PSI</span>
             <span class="num" id="num">0</span>
@@ -293,16 +266,6 @@
           <label for="bg">bg</label>
           <input id="bg" type="color" value="#000000" />
           <span class="val" id="bgVal">#000000</span>
-        </div>
-        <div class="row">
-          <label for="stripe">stripe</label>
-          <input id="stripe" type="color" value="#310202" />
-          <span class="val" id="stripeVal">#310202</span>
-        </div>
-        <div class="row">
-          <label for="bands">bands</label>
-          <input id="bands" type="checkbox" checked />
-          <span class="val" id="bandsVal">on</span>
         </div>
         <div class="row">
           <label for="fg">text</label>
@@ -417,20 +380,17 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:psi-count:settings:v1";
+        var LS_KEY = "animator:v2:psi-count:settings:v2";
         var START = 0;
         var END = 60;
 
         var root = document.documentElement;
-        var stage = document.getElementById("stage");
         var psi = document.getElementById("psi");
         var num = document.getElementById("num");
         var nowReadout = document.getElementById("nowReadout");
 
         var DEFAULTS = {
           bg: "#000000",
-          stripe: "#310202",
-          bands: "1",
           fg: "#ffd7d7",
           psiFs: 420,
           numFs: 724,
@@ -450,14 +410,11 @@
           hold: 700,
         };
 
-        var COLOR_KEYS = { bg: 1, stripe: 1, fg: 1 };
-        var CHECK_KEYS = { bands: 1 };
+        var COLOR_KEYS = { bg: 1, fg: 1 };
 
         var els = {};
         var vals = {
           bg: document.getElementById("bgVal"),
-          stripe: document.getElementById("stripeVal"),
-          bands: document.getElementById("bandsVal"),
           fg: document.getElementById("fgVal"),
           psiFs: document.getElementById("psiFsVal"),
           numFs: document.getElementById("numFsVal"),
@@ -591,7 +548,6 @@
 
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
-          if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (key === "lh") return Number(v).toFixed(2);
           if (key === "s0" || key === "s1") {
             return Number(v).toFixed(2).replace(/\.00$/, "");
@@ -613,20 +569,17 @@
 
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
-          root.style.setProperty("--stripe", els.stripe.value);
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--psi-fs", String(els.psiFs.value));
           root.style.setProperty("--num-fs", String(els.numFs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--oy", String(els.oy.value));
-          stage.setAttribute("data-stripes", els.bands.checked ? "1" : "0");
         }
 
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            var v = CHECK_KEYS[key] ? (els[key].checked ? "1" : "0") : els[key].value;
-            vals[key].textContent = fmt(key, v);
+            vals[key].textContent = fmt(key, els[key].value);
           });
         }
 
@@ -634,7 +587,7 @@
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            data[key] = CHECK_KEYS[key] ? (els[key].checked ? "1" : "0") : els[key].value;
+            data[key] = els[key].value;
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -655,22 +608,14 @@
           }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
-            if (CHECK_KEYS[key]) {
-              els[key].checked = data[key] === "1" || data[key] === true;
-            } else {
-              els[key].value = data[key];
-            }
+            els[key].value = data[key];
           });
         }
 
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            if (CHECK_KEYS[key]) {
-              els[key].checked = DEFAULTS[key] === "1";
-            } else {
-              els[key].value = DEFAULTS[key];
-            }
+            els[key].value = DEFAULTS[key];
           });
           try {
             localStorage.removeItem(LS_KEY);
