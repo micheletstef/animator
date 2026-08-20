@@ -38,11 +38,11 @@
         );
         --fg: #000000;
         --pad-t: 72;
-        --pad-r: 52;
-        --pad-b: 72;
-        --pad-l: 52;
+        --pad-r: 56;
+        --pad-b: 96;
+        --pad-l: 56;
         --fs: 720;
-        --lh: 0.82;
+        --lh: 0.86;
         --tracking: -0.04;
         --oy: 0;
         --slnt: 0;
@@ -123,7 +123,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
+        overflow: visible;
         transform: translateY(calc(var(--oy) * 1px));
       }
 
@@ -134,7 +134,7 @@
         justify-content: center;
         width: 100%;
         max-width: 100%;
-        overflow: hidden;
+        overflow: visible;
       }
 
       .line {
@@ -148,7 +148,7 @@
         line-height: var(--lh);
         letter-spacing: 0;
         white-space: nowrap;
-        overflow: hidden;
+        overflow: visible;
         font-synthesis: none;
       }
 
@@ -156,7 +156,7 @@
         display: block;
         flex: 0 0 auto;
         min-width: 0;
-        overflow: hidden;
+        overflow: visible;
         line-height: inherit;
         letter-spacing: inherit;
         white-space: nowrap;
@@ -376,8 +376,8 @@
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.82" />
-          <span class="val" id="lhVal">0.82</span>
+          <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.86" />
+          <span class="val" id="lhVal">0.86</span>
         </div>
         <div class="row">
           <label for="tr">track</label>
@@ -486,7 +486,7 @@
           l1: "R41",
           l2: "X8",
           fs: 720,
-          lh: 0.82,
+          lh: 0.86,
           tr: -0.04,
           oy: 0,
           cwd: 65,
@@ -572,8 +572,8 @@
 
         function targetWidth() {
           var cs = getComputedStyle(root);
-          var padL = Number(cs.getPropertyValue("--pad-l")) || 52;
-          var padR = Number(cs.getPropertyValue("--pad-r")) || 52;
+          var padL = Number(cs.getPropertyValue("--pad-l")) || 56;
+          var padR = Number(cs.getPropertyValue("--pad-r")) || 56;
           var target = STAGE_W - padL - padR;
           return target < 40 ? 40 : target;
         }
@@ -730,7 +730,7 @@
 
           var extreme1 = (lines[0] && lines[0].extreme) || 1;
           var extreme2 = (lines[1] && lines[1].extreme) || extreme1;
-          var k1 = (target / extreme1) * 1.07;
+          var k1 = target / extreme1;
           var k2 = Math.max(target / extreme2, k1 * 1.12);
           if (k2 * extreme2 > target) k2 = target / extreme2;
           for (var n = 0; n < lines.length; n++) {
