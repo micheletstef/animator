@@ -123,6 +123,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
         transform: translateY(calc(var(--oy) * 1px));
       }
 
@@ -132,6 +133,8 @@
         align-items: stretch;
         justify-content: center;
         width: 100%;
+        max-width: 100%;
+        overflow: hidden;
       }
 
       .line {
@@ -139,9 +142,10 @@
         flex-direction: row;
         align-items: baseline;
         width: 100%;
+        max-width: 100%;
         font-size: calc(var(--fs) * 1px);
         line-height: var(--lh);
-        letter-spacing: calc(var(--tracking) * 1em);
+        letter-spacing: 0;
         white-space: nowrap;
         overflow: hidden;
         font-synthesis: none;
@@ -150,6 +154,7 @@
       .unit {
         display: block;
         flex: 0 0 auto;
+        min-width: 0;
         overflow: hidden;
         line-height: inherit;
         letter-spacing: inherit;
@@ -161,7 +166,8 @@
         display: block;
         width: max-content;
         line-height: inherit;
-        letter-spacing: inherit;
+        letter-spacing: calc(var(--tracking) * 1em);
+        margin-right: calc(var(--tracking) * -1em);
         white-space: nowrap;
         transform-origin: 0 50%;
         font-synthesis: none;
@@ -462,6 +468,7 @@
         var LS_KEY = "animator:v2:width-swap:settings:v4";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
+        var PAIR_OVERLAP_EM = 0.05;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -585,8 +592,10 @@
         }
 
         function measureWidth(text, fs, vf) {
+          var track = Number(els.tr.value) || 0;
           probe.style.fontSize = fs + "px";
-          probe.style.letterSpacing = (Number(els.tr.value) || 0) + "em";
+          probe.style.letterSpacing = track + "em";
+          probe.style.marginRight = -track + "em";
           probe.style.fontVariationSettings = vf;
           probe.textContent = text || "";
           return probe.getBoundingClientRect().width;
@@ -697,11 +706,12 @@
           }
         }
 
-        function applyUnit(unit, line, pct, target) {
-          var boxW = target * (pct / 100);
+        function applyUnit(unit, line, boxW, shift) {
           var fit = solveFit(unit.samples, boxW);
-          unit.el.style.flex = "0 0 " + pct + "%";
-          unit.el.style.width = pct + "%";
+          unit.el.style.flex = "0 0 " + boxW + "px";
+          unit.el.style.width = boxW + "px";
+          unit.el.style.maxWidth = boxW + "px";
+          unit.el.style.marginLeft = shift ? shift + "px" : "0";
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
             fit.wdth,
@@ -709,38 +719,39 @@
             Number(els.slnt.value) || 0
           );
           unit.inner.style.transform = "scaleX(" + fit.sx + ")";
-          return { wdth: fit.wdth, pct: pct };
+          return { wdth: fit.wdth, box: boxW };
         }
 
         function applyLine(line, t, target) {
           var units = line.units;
           if (!units.length) return [];
           if (units.length === 1) {
-            return [applyUnit(units[0], line, 100, target)];
+            return [applyUnit(units[0], line, target, 0)];
           }
 
           var a = units[0];
           var b = units[1];
+          var overlap = (Number(els.fs.value) || 720) * PAIR_OVERLAP_EM;
+          var innerW = target + overlap;
           var minA = a.minW || 8;
           var minB = b.minW || 8;
           var floor = 8;
           if (minA < floor) minA = floor;
           if (minB < floor) minB = floor;
-          if (minA + minB > target) {
-            var scale = target / (minA + minB);
+          if (minA + minB > innerW) {
+            var scale = innerW / (minA + minB);
             minA *= scale;
             minB *= scale;
           }
 
-          var span = target - minA - minB;
+          var span = innerW - minA - minB;
           var widthA =
             a.from === "condensed" ? minA + span * t : minA + span * (1 - t);
-          var pctA = (widthA / target) * 100;
-          var pctB = 100 - pctA;
+          var widthB = innerW - widthA;
 
           return [
-            applyUnit(a, line, pctA, target),
-            applyUnit(b, line, pctB, target),
+            applyUnit(a, line, widthA, 0),
+            applyUnit(b, line, widthB, -overlap),
           ];
         }
 
