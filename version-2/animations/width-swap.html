@@ -43,7 +43,7 @@
         --pad-l: 56;
         --fs: 720;
         --lh: 0.82;
-        --tracking: 0;
+          --tracking: -0.04;
         --oy: 0;
         --slnt: 0;
       }
@@ -145,6 +145,7 @@
         white-space: nowrap;
         overflow: hidden;
         font-synthesis: none;
+        gap: 0;
       }
 
       .unit {
@@ -155,6 +156,14 @@
         letter-spacing: inherit;
         white-space: nowrap;
         font-kerning: none;
+      }
+
+      .unit + .unit {
+        margin-left: -0.08em;
+      }
+
+      .unit:not(:last-child) .inner {
+        margin-right: calc(var(--tracking) * -1em);
       }
 
       .inner {
@@ -374,8 +383,8 @@
         </div>
         <div class="row">
           <label for="tr">track</label>
-          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="0" />
-          <span class="val" id="trVal">0.00</span>
+          <input id="tr" type="range" min="-0.08" max="0.08" step="0.005" value="-0.04" />
+          <span class="val" id="trVal">-0.04</span>
         </div>
         <div class="row">
           <label for="oy">y</label>
@@ -393,8 +402,8 @@
         </div>
         <div class="row">
           <label for="ewd">max</label>
-          <input id="ewd" type="range" min="65" max="130" step="1" value="118" />
-          <span class="val" id="ewdVal">118</span>
+          <input id="ewd" type="range" min="65" max="130" step="1" value="130" />
+          <span class="val" id="ewdVal">130</span>
         </div>
       </div>
 
@@ -459,7 +468,7 @@
       (function () {
         var GRADIENT =
           "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 20%, #1f4166 25%, #144a76 30%, #085488 35%, #01609a 40%, #0178b0 45%, #0091c4 50%, #16a9d5 55%, #58bdd9 60%, #a1d2e1 65%, #dbe5e7 70%, #eaeceb 80%, #e7e8e3 100%)";
-        var LS_KEY = "animator:v2:width-swap:settings:v4";
+        var LS_KEY = "animator:v2:width-swap:settings:v5";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
 
@@ -479,10 +488,10 @@
           l2: "X8",
           fs: 720,
           lh: 0.82,
-          tr: 0,
+          tr: -0.04,
           oy: 0,
           cwd: 65,
-          ewd: 118,
+          ewd: 130,
           l1w: 700,
           l1c: 0,
           l2w: 1000,
@@ -723,6 +732,10 @@
           var b = units[1];
           var minA = a.minW || 8;
           var minB = b.minW || 8;
+          if (line.index === 0) {
+            if (a.from === "condensed") minB *= 0.42;
+            else minA *= 0.42;
+          }
           var floor = 8;
           if (minA < floor) minA = floor;
           if (minB < floor) minB = floor;
@@ -895,6 +908,7 @@
             lines.push({
               el: lineEl,
               units: units,
+              index: rowIndex,
               wght: lineWeight(rowIndex),
               cntr: lineContrast(rowIndex),
             });
