@@ -108,29 +108,53 @@
       .fit {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         justify-content: center;
-        transform-origin: 50% 50%;
-        will-change: transform;
+        width: 100%;
       }
 
       .line {
         display: flex;
         flex-direction: row;
         align-items: baseline;
-        width: max-content;
+        width: 100%;
         font-size: calc(var(--fs) * 1px);
         line-height: var(--lh);
         letter-spacing: calc(var(--tracking) * 1em);
         white-space: nowrap;
+        overflow: hidden;
       }
 
       .unit {
         display: block;
         flex: 0 0 auto;
+        overflow: hidden;
         line-height: inherit;
         letter-spacing: inherit;
         white-space: nowrap;
+        font-kerning: none;
+      }
+
+      .inner {
+        display: block;
+        width: max-content;
+        line-height: inherit;
+        letter-spacing: inherit;
+        white-space: nowrap;
+        transform-origin: 0 50%;
+        will-change: transform, font-variation-settings;
+      }
+
+      .probe {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        visibility: hidden;
+        pointer-events: none;
+        white-space: nowrap;
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 1, "kern" 1;
         font-kerning: none;
       }
 
@@ -326,7 +350,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">condensed · R start / 41 end</p>
+        <p class="group-title">condensed · squeezed state</p>
         <div class="row">
           <label for="cwd">wdth</label>
           <input id="cwd" type="range" min="65" max="130" step="1" value="65" />
@@ -337,15 +361,10 @@
           <input id="cwg" type="range" min="200" max="1000" step="1" value="700" />
           <span class="val" id="cwgVal">700</span>
         </div>
-        <div class="row">
-          <label for="ccn">CNTR</label>
-          <input id="ccn" type="range" min="0" max="100" step="1" value="0" />
-          <span class="val" id="ccnVal">0</span>
-        </div>
       </div>
 
       <div class="group">
-        <p class="group-title">extended · X start / 41 start</p>
+        <p class="group-title">extended · stretched state</p>
         <div class="row">
           <label for="ewd">wdth</label>
           <input id="ewd" type="range" min="65" max="130" step="1" value="118" />
@@ -356,15 +375,20 @@
           <input id="ewg" type="range" min="200" max="1000" step="1" value="1000" />
           <span class="val" id="ewgVal">1000</span>
         </div>
-        <div class="row">
-          <label for="ecn">CNTR</label>
-          <input id="ecn" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="ecnVal">100</span>
-        </div>
       </div>
 
       <div class="group">
-        <p class="group-title">shared</p>
+        <p class="group-title">contrast · per line, not animated</p>
+        <div class="row">
+          <label for="l1c">line 1</label>
+          <input id="l1c" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="l1cVal">0</span>
+        </div>
+        <div class="row">
+          <label for="l2c">line 2</label>
+          <input id="l2c" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="l2cVal">100</span>
+        </div>
         <div class="row">
           <label for="slnt">slnt</label>
           <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
@@ -373,7 +397,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">motion · ping-pong width swap</p>
+        <p class="group-title">motion · ping-pong accordion</p>
         <p class="now" id="nowReadout">R condensed · 41 extended</p>
         <div class="row">
           <label for="move">move</label>
@@ -393,22 +417,22 @@
       </div>
     </aside>
 
+    <span class="probe" id="probe" aria-hidden="true"></span>
+
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:width-swap:settings:v1";
+        var LS_KEY = "animator:v2:width-swap:settings:v2";
         var STAGE_W = 1080;
-        var STAGE_H = 1440;
+        var WDTH_STEP = 5;
 
         var root = document.documentElement;
-        var stageEl = document.getElementById("stage");
         var fitEl = document.getElementById("fit");
+        var probe = document.getElementById("probe");
         var nowReadout = document.getElementById("nowReadout");
-        var units = [];
-        var fitScale = 1;
+        var lines = [];
+        var sampleCache = {};
         var t0 = 0;
-        var lastMix = 0;
-        var needsFit = true;
 
         var DEFAULTS = {
           bg: "#ffffff",
@@ -421,10 +445,10 @@
           oy: 0,
           cwd: 65,
           cwg: 700,
-          ccn: 0,
           ewd: 118,
           ewg: 1000,
-          ecn: 100,
+          l1c: 0,
+          l2c: 100,
           slnt: 0,
           move: 1800,
           hold: 700,
@@ -443,10 +467,10 @@
           oy: document.getElementById("oyVal"),
           cwd: document.getElementById("cwdVal"),
           cwg: document.getElementById("cwgVal"),
-          ccn: document.getElementById("ccnVal"),
           ewd: document.getElementById("ewdVal"),
           ewg: document.getElementById("ewgVal"),
-          ecn: document.getElementById("ecnVal"),
+          l1c: document.getElementById("l1cVal"),
+          l2c: document.getElementById("l2cVal"),
           slnt: document.getElementById("slntVal"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
@@ -470,34 +494,16 @@
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         }
 
-        function axisState(prefix) {
-          return {
-            wdth: Number(els[prefix + "wd"].value),
-            wght: Number(els[prefix + "wg"].value),
-            cntr: Number(els[prefix + "cn"].value),
-            slnt: Number(els.slnt.value) || 0,
-          };
-        }
-
-        function mixState(a, b, t) {
-          return {
-            wdth: lerp(a.wdth, b.wdth, t),
-            wght: lerp(a.wght, b.wght, t),
-            cntr: lerp(a.cntr, b.cntr, t),
-            slnt: lerp(a.slnt, b.slnt, t),
-          };
-        }
-
-        function vfString(s) {
+        function vfString(wght, wdth, cntr, slnt) {
           return (
             '"wght" ' +
-            s.wght +
+            wght +
             ', "wdth" ' +
-            s.wdth +
+            wdth +
             ', "CNTR" ' +
-            s.cntr +
+            cntr +
             ', "slnt" ' +
-            s.slnt
+            slnt
           );
         }
 
@@ -507,71 +513,210 @@
           return [text.charAt(0), text.slice(1)];
         }
 
-        function applyUnit(unit, condensed, extended, t) {
-          var s =
-            unit.from === "condensed"
-              ? mixState(condensed, extended, t)
-              : mixState(extended, condensed, t);
-          unit.el.style.fontVariationSettings = vfString(s);
-          unit.el.style.fontWeight = String(Math.round(s.wght));
-          return s;
-        }
-
-        function applyMix(t, updateReadout) {
-          var condensed = axisState("c");
-          var extended = axisState("e");
-          var states = [];
-          for (var i = 0; i < units.length; i++) {
-            states.push(applyUnit(units[i], condensed, extended, t));
+        function wdthRange() {
+          var lo = Number(els.cwd.value);
+          var hi = Number(els.ewd.value);
+          if (!isFinite(lo)) lo = 65;
+          if (!isFinite(hi)) hi = 118;
+          if (lo > hi) {
+            var tmp = lo;
+            lo = hi;
+            hi = tmp;
           }
-          lastMix = t;
-          if (!updateReadout || !nowReadout) return;
-          if (!states.length) {
-            nowReadout.textContent = "—";
-            return;
-          }
-          nowReadout.textContent = units
-            .map(function (unit, i) {
-              return unit.label + " wdth " + Math.round(states[i].wdth);
-            })
-            .join(" · ");
+          return { lo: lo, hi: hi };
         }
 
-        function artboardSize(el) {
-          if (!el) return { w: 0, h: 0 };
-          var rect = el.getBoundingClientRect();
-          var stageW = stageEl ? stageEl.getBoundingClientRect().width : 0;
-          var k = stageW > 0 ? STAGE_W / stageW : 1;
-          return { w: rect.width * k, h: rect.height * k };
-        }
-
-        function padBox() {
+        function targetWidth() {
           var cs = getComputedStyle(root);
-          var padT = Number(cs.getPropertyValue("--pad-t")) || 0;
-          var padR = Number(cs.getPropertyValue("--pad-r")) || 0;
-          var padB = Number(cs.getPropertyValue("--pad-b")) || 0;
-          var padL = Number(cs.getPropertyValue("--pad-l")) || 0;
-          return {
-            w: Math.max(40, STAGE_W - padL - padR),
-            h: Math.max(40, STAGE_H - padT - padB),
-          };
+          var padL = Number(cs.getPropertyValue("--pad-l")) || 56;
+          var padR = Number(cs.getPropertyValue("--pad-r")) || 56;
+          var target = STAGE_W - padL - padR;
+          return target < 40 ? 40 : target;
         }
 
-        function recomputeFit() {
-          if (!fitEl) return;
-          fitEl.style.transform = "none";
-          applyMix(0, false);
-          var a = artboardSize(fitEl);
-          applyMix(1, false);
-          var b = artboardSize(fitEl);
-          var box = padBox();
-          var w = Math.max(a.w, b.w, 1);
-          var h = Math.max(a.h, b.h, 1);
-          fitScale = Math.min(box.w / w, box.h / h, 1);
-          if (!isFinite(fitScale) || fitScale <= 0) fitScale = 1;
-          fitEl.style.transform = "scale(" + fitScale + ")";
-          applyMix(lastMix, true);
-          needsFit = false;
+        function measureWidth(text, fs, vf) {
+          probe.style.fontSize = fs + "px";
+          probe.style.letterSpacing = (Number(els.tr.value) || 0) + "em";
+          probe.style.fontVariationSettings = vf;
+          probe.textContent = text || "";
+          return probe.getBoundingClientRect().width;
+        }
+
+        function getSamples(text, wght, cntr, slnt) {
+          var range = wdthRange();
+          var qWght = Math.round(wght / 5) * 5;
+          var key =
+            text +
+            "|" +
+            qWght +
+            "|" +
+            cntr +
+            "|" +
+            slnt +
+            "|" +
+            els.tr.value +
+            "|" +
+            range.lo +
+            "|" +
+            range.hi;
+          if (sampleCache[key]) return sampleCache[key];
+          var wdths = [];
+          var widths = [];
+          for (var w = range.lo; w <= range.hi; w += WDTH_STEP) {
+            wdths.push(w);
+            widths.push(measureWidth(text, 100, vfString(qWght, w, cntr, slnt)));
+          }
+          if (wdths[wdths.length - 1] !== range.hi) {
+            wdths.push(range.hi);
+            widths.push(measureWidth(text, 100, vfString(qWght, range.hi, cntr, slnt)));
+          }
+          sampleCache[key] = { wdths: wdths, widths: widths };
+          return sampleCache[key];
+        }
+
+        function lookupWdth(samples, targetW100) {
+          var wdths = samples.wdths;
+          var widths = samples.widths;
+          var n = widths.length;
+          if (!n) return { wdth: wdthRange().lo, w100: 0 };
+          if (targetW100 <= widths[0]) {
+            return { wdth: wdths[0], w100: widths[0] };
+          }
+          if (targetW100 >= widths[n - 1]) {
+            return { wdth: wdths[n - 1], w100: widths[n - 1] };
+          }
+          for (var i = 0; i < n - 1; i++) {
+            if (targetW100 <= widths[i + 1]) {
+              var span = widths[i + 1] - widths[i];
+              var u = span <= 0 ? 0 : (targetW100 - widths[i]) / span;
+              return {
+                wdth: lerp(wdths[i], wdths[i + 1], u),
+                w100: lerp(widths[i], widths[i + 1], u),
+              };
+            }
+          }
+          return { wdth: wdths[n - 1], w100: widths[n - 1] };
+        }
+
+        function widthAt(text, fs, wdth, wght, cntr, slnt) {
+          var samples = getSamples(text, wght, cntr, slnt);
+          var wdths = samples.wdths;
+          var widths = samples.widths;
+          if (!wdths.length) return 0;
+          if (wdth <= wdths[0]) return widths[0] * (fs / 100);
+          if (wdth >= wdths[wdths.length - 1]) {
+            return widths[widths.length - 1] * (fs / 100);
+          }
+          for (var i = 0; i < wdths.length - 1; i++) {
+            if (wdth <= wdths[i + 1]) {
+              var span = wdths[i + 1] - wdths[i];
+              var u = span <= 0 ? 0 : (wdth - wdths[i]) / span;
+              return lerp(widths[i], widths[i + 1], u) * (fs / 100);
+            }
+          }
+          return widths[widths.length - 1] * (fs / 100);
+        }
+
+        function solveFit(text, fs, wght, cntr, slnt, target) {
+          if (!text || target <= 0) {
+            return { wdth: wdthRange().lo, sx: 1 };
+          }
+          var samples = getSamples(text, wght, cntr, slnt);
+          var targetW100 = fs > 0 ? (target * 100) / fs : target;
+          var found = lookupWdth(samples, targetW100);
+          var actual = found.w100 * (fs / 100);
+          var sx = actual > 0.5 ? target / actual : 1;
+          return { wdth: found.wdth, sx: sx };
+        }
+
+        function applyUnit(unit, wght, cntr, slnt, widthPx, fs) {
+          var fit = solveFit(unit.text, fs, wght, cntr, slnt, widthPx);
+          unit.el.style.width = widthPx + "px";
+          unit.el.style.flex = "0 0 " + widthPx + "px";
+          unit.el.style.fontWeight = String(Math.round(wght));
+          unit.inner.style.fontVariationSettings = vfString(
+            wght,
+            fit.wdth,
+            cntr,
+            slnt
+          );
+          unit.inner.style.fontWeight = String(Math.round(wght));
+          unit.inner.style.transform = "scaleX(" + fit.sx + ")";
+          return { wdth: fit.wdth, wght: wght, width: widthPx };
+        }
+
+        function mixWght(from, t, condensed, extended) {
+          return from === "condensed"
+            ? lerp(condensed, extended, t)
+            : lerp(extended, condensed, t);
+        }
+
+        function applyLine(line, t, condensedWght, extendedWght, slnt, fs, target) {
+          var units = line.units;
+          var cntr = line.cntr;
+          if (!units.length) return [];
+          if (units.length === 1) {
+            var wght = mixWght(units[0].from, t, condensedWght, extendedWght);
+            return [applyUnit(units[0], wght, cntr, slnt, target, fs)];
+          }
+
+          var a = units[0];
+          var b = units[1];
+          var wghtA = mixWght(a.from, t, condensedWght, extendedWght);
+          var wghtB = mixWght(b.from, t, condensedWght, extendedWght);
+          var minWdth = wdthRange().lo;
+          var minA = widthAt(a.text, fs, minWdth, wghtA, cntr, slnt);
+          var minB = widthAt(b.text, fs, minWdth, wghtB, cntr, slnt);
+          var floor = 8;
+          if (minA < floor) minA = floor;
+          if (minB < floor) minB = floor;
+          if (minA + minB > target) {
+            var scale = target / (minA + minB);
+            minA *= scale;
+            minB *= scale;
+          }
+
+          var widthA;
+          if (a.from === "condensed") {
+            widthA = lerp(minA, target - minB, t);
+          } else {
+            widthA = lerp(target - minB, minA, t);
+          }
+          widthA = clamp(widthA, floor, target - floor);
+          var widthB = target - widthA;
+
+          return [
+            applyUnit(a, wghtA, cntr, slnt, widthA, fs),
+            applyUnit(b, wghtB, cntr, slnt, widthB, fs),
+          ];
+        }
+
+        function applyMix(t) {
+          var condensedWght = Number(els.cwg.value);
+          var extendedWght = Number(els.ewg.value);
+          if (!isFinite(condensedWght)) condensedWght = 700;
+          if (!isFinite(extendedWght)) extendedWght = 1000;
+          var slnt = Number(els.slnt.value) || 0;
+          var fs = Number(els.fs.value) || 720;
+          var target = targetWidth();
+          var bits = [];
+          for (var i = 0; i < lines.length; i++) {
+            var states = applyLine(
+              lines[i],
+              t,
+              condensedWght,
+              extendedWght,
+              slnt,
+              fs,
+              target
+            );
+            for (var j = 0; j < states.length; j++) {
+              bits.push(
+                lines[i].units[j].label + " wdth " + Math.round(states[j].wdth)
+              );
+            }
+          }
+          nowReadout.textContent = bits.length ? bits.join(" · ") : "—";
         }
 
         function sample(elapsed) {
@@ -590,8 +735,7 @@
         }
 
         function frame(now) {
-          if (needsFit) recomputeFit();
-          applyMix(sample(now - t0), true);
+          applyMix(sample(now - t0));
           requestAnimationFrame(frame);
         }
 
@@ -655,33 +799,63 @@
           });
         }
 
+        function contrastForLine(index) {
+          var key = index === 0 ? "l1c" : "l2c";
+          var n = Number(els[key].value);
+          if (!isFinite(n)) return index === 0 ? 0 : 100;
+          return n;
+        }
+
         function buildLockup() {
           fitEl.innerHTML = "";
-          units = [];
+          lines = [];
+          sampleCache = {};
           var rows = [
             { text: els.l1.value, firstFrom: "condensed" },
             { text: els.l2.value, firstFrom: "extended" },
           ];
-          rows.forEach(function (row) {
+          rows.forEach(function (row, rowIndex) {
             var parts = splitLine(row.text);
-            var line = document.createElement("div");
-            line.className = "line";
+            var lineEl = document.createElement("div");
+            lineEl.className = "line";
+            var units = [];
             parts.forEach(function (text, i) {
               if (!text) return;
-              var unit = document.createElement("span");
-              unit.className = "unit";
-              unit.textContent = text;
-              var from = i === 0 ? row.firstFrom : row.firstFrom === "condensed" ? "extended" : "condensed";
-              line.appendChild(unit);
+              var unitEl = document.createElement("span");
+              unitEl.className = "unit";
+              var inner = document.createElement("span");
+              inner.className = "inner";
+              inner.textContent = text;
+              unitEl.appendChild(inner);
+              lineEl.appendChild(unitEl);
               units.push({
-                el: unit,
-                from: from,
+                el: unitEl,
+                inner: inner,
+                text: text,
+                from:
+                  i === 0
+                    ? row.firstFrom
+                    : row.firstFrom === "condensed"
+                      ? "extended"
+                      : "condensed",
                 label: text,
               });
             });
-            if (line.childNodes.length) fitEl.appendChild(line);
+            if (!units.length) return;
+            fitEl.appendChild(lineEl);
+            lines.push({
+              el: lineEl,
+              units: units,
+              cntr: contrastForLine(rowIndex),
+            });
           });
-          needsFit = true;
+        }
+
+        function refreshContrast() {
+          for (var i = 0; i < lines.length; i++) {
+            lines[i].cntr = contrastForLine(i);
+          }
+          sampleCache = {};
         }
 
         function reset() {
@@ -707,7 +881,17 @@
             applyVars();
             paintVals();
             if (key === "l1" || key === "l2") buildLockup();
-            else needsFit = true;
+            else if (key === "l1c" || key === "l2c") refreshContrast();
+            else if (
+              key === "cwd" ||
+              key === "ewd" ||
+              key === "cwg" ||
+              key === "ewg" ||
+              key === "slnt" ||
+              key === "tr"
+            ) {
+              sampleCache = {};
+            }
             save();
           });
         });
@@ -722,7 +906,6 @@
         restart();
 
         var start = function () {
-          recomputeFit();
           requestAnimationFrame(frame);
         };
         if (document.fonts && document.fonts.ready) {
