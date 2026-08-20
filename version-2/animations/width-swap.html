@@ -484,6 +484,7 @@
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var TRACK_EXT_DELTA = -0.03;
+        var REST_WDTH_LO = 82;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -614,7 +615,7 @@
         function trackAtWdth(unit, wdth) {
           var base = baseTrack();
           if (!unit || !unit.text || unit.text.length < 2) return base;
-          var range = wdthRange();
+          var range = unitWdthRange(unit);
           var span = range.hi - range.lo;
           var u = span <= 0 ? 0 : (wdth - range.lo) / span;
           if (u < 0) u = 0;
@@ -698,9 +699,19 @@
           return widths[widths.length - 1];
         }
 
-        function mixWdth(from, t) {
+        function unitWdthRange(unit) {
           var range = wdthRange();
-          return from === "condensed"
+          if (unit && unit.text && unit.text.length > 1) {
+            var lo = Math.max(range.lo, REST_WDTH_LO);
+            if (lo > range.hi) lo = range.hi;
+            return { lo: lo, hi: range.hi };
+          }
+          return range;
+        }
+
+        function mixWdth(unit, t) {
+          var range = unitWdthRange(unit);
+          return unit.from === "condensed"
             ? lerp(range.lo, range.hi, t)
             : lerp(range.hi, range.lo, t);
         }
@@ -734,8 +745,8 @@
                 slnt,
                 fs
               );
-              unit.minW = widthAt(unit.samples, range.lo);
-              unit.maxW = widthAt(unit.samples, range.hi);
+              unit.minW = widthAt(unit.samples, unitWdthRange(unit).lo);
+              unit.maxW = widthAt(unit.samples, unitWdthRange(unit).hi);
               unit.inner.style.fontWeight = String(Math.round(line.wght));
               unit.inner.style.transform = "none";
             }
@@ -779,7 +790,7 @@
           var k = line.k || 1;
           if (!units.length) return [];
           if (units.length === 1) {
-            var wdth = mixWdth(units[0].from, t);
+            var wdth = mixWdth(units[0], t);
             return [
               applyUnit(units[0], line, wdth, widthAt(units[0].samples, wdth) * k),
             ];
@@ -787,8 +798,8 @@
 
           var a = units[0];
           var b = units[1];
-          var wdthA = mixWdth(a.from, t);
-          var wdthB = mixWdth(b.from, t);
+          var wdthA = mixWdth(a, t);
+          var wdthB = mixWdth(b, t);
           var widthA = widthAt(a.samples, wdthA) * k;
           var widthB = widthAt(b.samples, wdthB) * k;
 
