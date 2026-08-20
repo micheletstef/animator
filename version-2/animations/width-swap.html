@@ -168,6 +168,10 @@
         right: auto;
       }
 
+      .unit.is-x {
+        left: 0.06em;
+      }
+
       .unit.is-end {
         left: auto;
         right: 0;
@@ -930,7 +934,10 @@
             parts.forEach(function (text, i) {
               if (!text) return;
               var unitEl = document.createElement("span");
-              unitEl.className = "unit " + (i === 0 ? "is-start" : "is-end");
+              unitEl.className =
+                "unit " +
+                (i === 0 ? "is-start" : "is-end") +
+                (rowIndex === 1 && i === 0 ? " is-x" : "");
               var inner = document.createElement("span");
               inner.className = "inner";
               inner.textContent = text;
