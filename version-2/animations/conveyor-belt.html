@@ -22,6 +22,10 @@
         --fg: #000000;
         --oy: 0;
         --ox: 0;
+        --wght: 1000;
+        --wdth: 100;
+        --cntr: 0;
+        --slnt: 0;
       }
 
       * {
@@ -84,6 +88,11 @@
         font-family: "IkarusPlusVariable", sans-serif;
         font-synthesis: none;
         font-feature-settings: "liga" 1, "kern" 1;
+        font-variation-settings:
+          "wght" var(--wght),
+          "wdth" var(--wdth),
+          "CNTR" var(--cntr),
+          "slnt" var(--slnt);
         pointer-events: none;
       }
 
@@ -108,6 +117,7 @@
         transform-origin: 0 0;
         font-kerning: none;
         font-synthesis: none;
+        font-variation-settings: inherit;
         -webkit-font-smoothing: antialiased;
       }
 
@@ -257,8 +267,13 @@
         <p class="group-title">composition</p>
         <div class="row">
           <label for="col">width</label>
-          <input id="col" type="range" min="420" max="1080" step="2" value="920" />
-          <span class="val" id="colVal">920px</span>
+          <input id="col" type="range" min="420" max="1080" step="2" value="1080" />
+          <span class="val" id="colVal">1080px</span>
+        </div>
+        <div class="row">
+          <label for="pack">pack</label>
+          <input id="pack" type="range" min="0.55" max="1" step="0.01" value="0.68" />
+          <span class="val" id="packVal">0.68</span>
         </div>
         <div class="row">
           <label for="ox">x</label>
@@ -292,22 +307,27 @@
       </div>
 
       <div class="group">
-        <p class="group-title">contrast · peaks at artboard center</p>
-        <p class="now" id="nowReadout">CNTR 0 → 100</p>
+        <p class="group-title">contrast · whole artboard 0 → 100 → 0</p>
+        <p class="now" id="nowReadout">CNTR 0</p>
         <div class="row">
-          <label for="c0">edge</label>
+          <label for="c0">from</label>
           <input id="c0" type="range" min="0" max="100" step="1" value="0" />
           <span class="val" id="c0Val">0</span>
         </div>
         <div class="row">
-          <label for="c1">center</label>
+          <label for="c1">to</label>
           <input id="c1" type="range" min="0" max="100" step="1" value="100" />
           <span class="val" id="c1Val">100</span>
         </div>
         <div class="row">
-          <label for="fall">fall</label>
-          <input id="fall" type="range" min="0.25" max="1.4" step="0.01" value="0.72" />
-          <span class="val" id="fallVal">0.72</span>
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="4000" step="20" value="1400" />
+          <span class="val" id="moveVal">1400ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2400" step="50" value="400" />
+          <span class="val" id="holdVal">400ms</span>
         </div>
       </div>
 
@@ -329,24 +349,24 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:conveyor-belt:settings:v1";
+        var LS_KEY = "animator:v2:conveyor-belt:settings:v2";
         var STAGE_W = 1080;
         var STAGE_H = 1440;
-        var SRC_W = 204;
+        var SRC_W = 171;
         var SRC_H = 470;
         var PROBE_FS = 200;
 
-        // Ink boxes from the source lockup, origin at the first question mark top (y=18).
+        // Ink boxes from the source lockup, cropped to the glyph bounds (x=14).
         var ITEMS = [
-          { ch: "?", l: 24, t: 0, w: 81, h: 117 },
-          { ch: "!", l: 127, t: 61, w: 41, h: 114 },
-          { ch: ",", l: 31, t: 134, w: 34, h: 55, feat: "ss13" },
-          { ch: "(", l: 67, t: 146, w: 45, h: 131 },
-          { ch: "*", l: 111, t: 201, w: 73, h: 72 },
-          { ch: "\u300B", l: 21, t: 254, w: 64, h: 95 },
-          { ch: "\u2153", l: 96, t: 302, w: 89, h: 89 },
-          { ch: "\u2463", l: 14, t: 361, w: 80, h: 85 },
-          { ch: "\u00B6", l: 107, t: 416, w: 65, h: 84 },
+          { ch: "?", l: 10, t: 0, w: 81, h: 117 },
+          { ch: "!", l: 113, t: 61, w: 41, h: 114 },
+          { ch: ",", l: 17, t: 134, w: 34, h: 55, feat: "ss13" },
+          { ch: "(", l: 53, t: 146, w: 45, h: 131 },
+          { ch: "*", l: 97, t: 201, w: 73, h: 72 },
+          { ch: "\u300B", l: 7, t: 254, w: 64, h: 95 },
+          { ch: "\u2153", l: 82, t: 302, w: 89, h: 89 },
+          { ch: "\u2463", l: 0, t: 361, w: 80, h: 85 },
+          { ch: "\u00B6", l: 93, t: 416, w: 65, h: 84 },
         ];
 
         var root = document.documentElement;
@@ -357,7 +377,8 @@
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
-          col: 920,
+          col: 1080,
+          pack: 0.68,
           ox: 0,
           oy: 0,
           slnt: 0,
@@ -365,7 +386,8 @@
           wght: 1000,
           c0: 0,
           c1: 100,
-          fall: 0.72,
+          move: 1400,
+          hold: 400,
           loop: 28,
         };
 
@@ -376,6 +398,7 @@
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
           col: document.getElementById("colVal"),
+          pack: document.getElementById("packVal"),
           ox: document.getElementById("oxVal"),
           oy: document.getElementById("oyVal"),
           slnt: document.getElementById("slntVal"),
@@ -383,7 +406,8 @@
           wght: document.getElementById("wghtVal"),
           c0: document.getElementById("c0Val"),
           c1: document.getElementById("c1Val"),
-          fall: document.getElementById("fallVal"),
+          move: document.getElementById("moveVal"),
+          hold: document.getElementById("holdVal"),
           loop: document.getElementById("loopVal"),
         };
 
@@ -426,6 +450,11 @@
           );
         }
 
+        function packValue() {
+          var n = Number(els.pack.value);
+          return isFinite(n) && n > 0 ? n : 0.68;
+        }
+
         function stageScale() {
           var w = stageEl.getBoundingClientRect().width;
           return w > 0 ? w / STAGE_W : 1;
@@ -447,14 +476,13 @@
           applyFeature(el, item.feat);
           el.style.fontSize = PROBE_FS + "px";
           el.style.fontWeight = String(Math.round(Number(els.wght.value) || 1000));
-          el.style.fontVariationSettings = vfString(Number(els.c0.value) || 0);
           return el;
         }
 
         function build() {
-          var col = Number(els.col.value) || 920;
+          var col = Number(els.col.value) || 1080;
           var scale = col / SRC_W;
-          tileH = SRC_H * scale;
+          tileH = SRC_H * scale * packValue();
           copyCount = Math.max(3, Math.ceil(STAGE_H / tileH) + 2);
           belt.innerHTML = "";
           glyphEls = [];
@@ -482,7 +510,7 @@
         }
 
         function layoutBelt() {
-          var col = Number(els.col.value) || 920;
+          var col = Number(els.col.value) || 1080;
           var ox = Number(els.ox.value) || 0;
           var oy = Number(els.oy.value) || 0;
           belt.style.marginLeft = -col / 2 + ox + "px";
@@ -501,11 +529,14 @@
         }
 
         function fitAll() {
-          var col = Number(els.col.value) || 920;
+          var col = Number(els.col.value) || 1080;
+          var pack = packValue();
           var scale = col / SRC_W;
           var sc = stageScale();
           var key =
             col +
+            "|" +
+            pack +
             "|" +
             els.wght.value +
             "|" +
@@ -513,20 +544,17 @@
             "|" +
             els.slnt.value +
             "|" +
-            els.c0.value +
-            "|" +
             sc.toFixed(4);
           if (key === fitKey) return;
           fitKey = key;
 
+          root.style.setProperty("--cntr", "0");
+
           glyphEls.forEach(function (el) {
-            var item = el._item;
-            var tile = el._tile;
             el.style.left = "0px";
             el.style.top = "0px";
             el.style.fontSize = PROBE_FS + "px";
             el.style.transform = "none";
-            el.style.fontVariationSettings = vfString(Number(els.c0.value) || 0);
           });
 
           glyphEls.forEach(function (el) {
@@ -534,7 +562,7 @@
             var tile = el._tile;
             var box = {
               l: item.l * scale,
-              t: item.t * scale,
+              t: item.t * scale * pack,
               w: item.w * scale,
               h: item.h * scale,
             };
@@ -543,56 +571,35 @@
             var inkW = r.width / sc;
             var inkH = r.height / sc;
             if (inkW < 0.5 || inkH < 0.5) return;
-            var k = box.h / inkH;
+            var k = Math.max(box.w / inkW, box.h / inkH);
             var curL = (r.left - tileR.left) / sc;
             var curT = (r.top - tileR.top) / sc;
             var tx = box.l + (box.w - inkW * k) / 2 - curL * k;
-            var ty = box.t - curT * k;
-            el._tx = tx;
-            el._ty = ty;
-            el._k = k;
+            var ty = box.t + (box.h - inkH * k) / 2 - curT * k;
             el.style.transform =
               "translate(" + tx + "px, " + ty + "px) scale(" + k + ")";
           });
         }
 
-        function glyphCenterY(el) {
-          var col = Number(els.col.value) || 920;
-          var scale = col / SRC_W;
-          var oy = Number(els.oy.value) || 0;
-          var cy = (el._item.t + el._item.h / 2) * scale;
-          return oy - scrollY + el._copy * tileH + cy;
-        }
-
-        function sampleCntr(el) {
-          var dist = Math.abs(glyphCenterY(el) - STAGE_H / 2);
-          var fall = Number(els.fall.value);
-          if (!isFinite(fall) || fall <= 0) fall = 0.72;
-          var radius = (STAGE_H / 2) * fall;
-          var t = ease(clamp(1 - dist / radius, 0, 1));
+        function sampleCntr(elapsed) {
           var c0 = Number(els.c0.value);
           var c1 = Number(els.c1.value);
           if (!isFinite(c0)) c0 = 0;
           if (!isFinite(c1)) c1 = 100;
-          return lerp(c0, c1, t);
+          var move = Math.max(80, Number(els.move.value) || 1400);
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          var seg = move + hold;
+          var total = seg * 2;
+          var t = elapsed % total;
+          if (t < hold) return c0;
+          if (t < hold + move) return lerp(c0, c1, ease((t - hold) / move));
+          if (t < hold + move + hold) return c1;
+          return lerp(c1, c0, ease((t - hold - move - hold) / move));
         }
 
-        function applyContrast() {
-          var peak = -1;
-          var i;
-          for (i = 0; i < glyphEls.length; i++) {
-            var el = glyphEls[i];
-            var cntr = sampleCntr(el);
-            el.style.fontVariationSettings = vfString(cntr);
-            if (cntr > peak) peak = cntr;
-          }
-          nowReadout.textContent =
-            "CNTR " +
-            Math.round(Number(els.c0.value) || 0) +
-            " → " +
-            Math.round(Number(els.c1.value) || 100) +
-            " · peak " +
-            Math.round(peak);
+        function applyContrast(cntr) {
+          root.style.setProperty("--cntr", String(cntr));
+          nowReadout.textContent = "CNTR " + Math.round(cntr);
         }
 
         function frame(now) {
@@ -603,7 +610,7 @@
           var oy = Number(els.oy.value) || 0;
           belt.style.transform = "translateY(" + -scrollY + "px)";
           belt.style.top = oy + "px";
-          applyContrast();
+          applyContrast(sampleCntr(elapsed));
           raf = requestAnimationFrame(frame);
         }
 

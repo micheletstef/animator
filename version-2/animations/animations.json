@@ -59,6 +59,12 @@
       "label": "conveyor belt",
       "url": "animations/conveyor-belt.html",
       "mtime": 1787262804
+    },
+    {
+      "id": "psi-count",
+      "label": "PSI 0 → 60",
+      "url": "animations/psi-count.html",
+      "mtime": 1787263407
     }
   ]
 }
