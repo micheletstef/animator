@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>conveyor belt</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --fg: #000000;
+        --oy: 0;
+        --ox: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 1, "kern" 1;
+        pointer-events: none;
+      }
+
+      .belt {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        will-change: transform;
+      }
+
+      .tile {
+        position: relative;
+        overflow: visible;
+      }
+
+      .g {
+        position: absolute;
+        left: 0;
+        top: 0;
+        line-height: 1;
+        white-space: nowrap;
+        transform-origin: 0 0;
+        font-kerning: none;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 10px 0;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+    <link rel="stylesheet" href="../../animation-chrome.css?v=3" />
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="conveyor belt">
+          <div class="belt" id="belt"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">
+        scroll to zoom · drag to pan · double-click to fit · 1080 × 1440
+      </p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">composition</p>
+        <div class="row">
+          <label for="col">width</label>
+          <input id="col" type="range" min="420" max="1080" step="2" value="920" />
+          <span class="val" id="colVal">920px</span>
+        </div>
+        <div class="row">
+          <label for="ox">x</label>
+          <input id="ox" type="range" min="-360" max="360" step="1" value="0" />
+          <span class="val" id="oxVal">0px</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">variables</p>
+        <div class="row">
+          <label for="slnt">slnt</label>
+          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slntVal">0</span>
+        </div>
+        <div class="row">
+          <label for="wdth">wdth</label>
+          <input id="wdth" type="range" min="65" max="130" step="1" value="100" />
+          <span class="val" id="wdthVal">100</span>
+        </div>
+        <div class="row">
+          <label for="wght">wght</label>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="1000" />
+          <span class="val" id="wghtVal">1000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">contrast · peaks at artboard center</p>
+        <p class="now" id="nowReadout">CNTR 0 → 100</p>
+        <div class="row">
+          <label for="c0">edge</label>
+          <input id="c0" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="c0Val">0</span>
+        </div>
+        <div class="row">
+          <label for="c1">center</label>
+          <input id="c1" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="c1Val">100</span>
+        </div>
+        <div class="row">
+          <label for="fall">fall</label>
+          <input id="fall" type="range" min="0.25" max="1.4" step="0.01" value="0.72" />
+          <span class="val" id="fallVal">0.72</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion · infinite scroll up</p>
+        <div class="row">
+          <label for="loop">loop</label>
+          <input id="loop" type="range" min="8" max="60" step="0.5" value="28" />
+          <span class="val" id="loopVal">28s</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+        <button type="button" id="replayBtn">replay</button>
+      </div>
+    </aside>
+
+    <script src="artboard-view.js?v=2"></script>
+    <script>
+      (function () {
+        var LS_KEY = "animator:v2:conveyor-belt:settings:v1";
+        var STAGE_W = 1080;
+        var STAGE_H = 1440;
+        var SRC_W = 204;
+        var SRC_H = 470;
+        var PROBE_FS = 200;
+
+        // Ink boxes from the source lockup, origin at the first question mark top (y=18).
+        var ITEMS = [
+          { ch: "?", l: 24, t: 0, w: 81, h: 117 },
+          { ch: "!", l: 127, t: 61, w: 41, h: 114 },
+          { ch: ",", l: 31, t: 134, w: 34, h: 55, feat: "ss13" },
+          { ch: "(", l: 67, t: 146, w: 45, h: 131 },
+          { ch: "*", l: 111, t: 201, w: 73, h: 72 },
+          { ch: "\u300B", l: 21, t: 254, w: 64, h: 95 },
+          { ch: "\u2153", l: 96, t: 302, w: 89, h: 89 },
+          { ch: "\u2463", l: 14, t: 361, w: 80, h: 85 },
+          { ch: "\u00B6", l: 107, t: 416, w: 65, h: 84 },
+        ];
+
+        var root = document.documentElement;
+        var stageEl = document.getElementById("stage");
+        var belt = document.getElementById("belt");
+        var nowReadout = document.getElementById("nowReadout");
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          col: 920,
+          ox: 0,
+          oy: 0,
+          slnt: 0,
+          wdth: 100,
+          wght: 1000,
+          c0: 0,
+          c1: 100,
+          fall: 0.72,
+          loop: 28,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+
+        var els = {};
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          col: document.getElementById("colVal"),
+          ox: document.getElementById("oxVal"),
+          oy: document.getElementById("oyVal"),
+          slnt: document.getElementById("slntVal"),
+          wdth: document.getElementById("wdthVal"),
+          wght: document.getElementById("wghtVal"),
+          c0: document.getElementById("c0Val"),
+          c1: document.getElementById("c1Val"),
+          fall: document.getElementById("fallVal"),
+          loop: document.getElementById("loopVal"),
+        };
+
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+        });
+
+        var glyphEls = [];
+        var tileH = 0;
+        var copyCount = 0;
+        var scrollY = 0;
+        var t0 = 0;
+        var raf = 0;
+        var fitKey = "";
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function clamp(n, lo, hi) {
+          return Math.max(lo, Math.min(hi, n));
+        }
+
+        function ease(t) {
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return 0.5 - 0.5 * Math.cos(Math.PI * t);
+        }
+
+        function vfString(cntr) {
+          return (
+            '"wght" ' +
+            (Number(els.wght.value) || 1000) +
+            ', "wdth" ' +
+            (Number(els.wdth.value) || 100) +
+            ', "CNTR" ' +
+            cntr +
+            ', "slnt" ' +
+            (Number(els.slnt.value) || 0)
+          );
+        }
+
+        function stageScale() {
+          var w = stageEl.getBoundingClientRect().width;
+          return w > 0 ? w / STAGE_W : 1;
+        }
+
+        function applyFeature(el, feat) {
+          if (feat) {
+            el.style.fontFeatureSettings =
+              '"' + feat + '" 1, "liga" 1, "kern" 1';
+          } else {
+            el.style.fontFeatureSettings = '"liga" 1, "kern" 1';
+          }
+        }
+
+        function makeGlyph(item) {
+          var el = document.createElement("span");
+          el.className = "g";
+          el.textContent = item.ch;
+          applyFeature(el, item.feat);
+          el.style.fontSize = PROBE_FS + "px";
+          el.style.fontWeight = String(Math.round(Number(els.wght.value) || 1000));
+          el.style.fontVariationSettings = vfString(Number(els.c0.value) || 0);
+          return el;
+        }
+
+        function build() {
+          var col = Number(els.col.value) || 920;
+          var scale = col / SRC_W;
+          tileH = SRC_H * scale;
+          copyCount = Math.max(3, Math.ceil(STAGE_H / tileH) + 2);
+          belt.innerHTML = "";
+          glyphEls = [];
+          var c;
+          for (c = 0; c < copyCount; c++) {
+            var tile = document.createElement("div");
+            tile.className = "tile";
+            tile.style.width = col + "px";
+            tile.style.height = tileH + "px";
+            ITEMS.forEach(function (item) {
+              var el = makeGlyph(item);
+              el._item = item;
+              el._tile = tile;
+              el._copy = c;
+              tile.appendChild(el);
+              glyphEls.push(el);
+            });
+            belt.appendChild(tile);
+          }
+          belt.style.width = col + "px";
+          fitKey = "";
+          layoutBelt();
+          belt.offsetHeight;
+          fitAll();
+        }
+
+        function layoutBelt() {
+          var col = Number(els.col.value) || 920;
+          var ox = Number(els.ox.value) || 0;
+          var oy = Number(els.oy.value) || 0;
+          belt.style.marginLeft = -col / 2 + ox + "px";
+          belt.style.top = oy + "px";
+        }
+
+        function inkRect(el) {
+          var range = document.createRange();
+          range.selectNodeContents(el);
+          var rects = range.getClientRects();
+          var r = rects.length ? rects[0] : range.getBoundingClientRect();
+          if (!r || r.width < 0.5 || r.height < 0.5) {
+            r = el.getBoundingClientRect();
+          }
+          return r;
+        }
+
+        function fitAll() {
+          var col = Number(els.col.value) || 920;
+          var scale = col / SRC_W;
+          var sc = stageScale();
+          var key =
+            col +
+            "|" +
+            els.wght.value +
+            "|" +
+            els.wdth.value +
+            "|" +
+            els.slnt.value +
+            "|" +
+            els.c0.value +
+            "|" +
+            sc.toFixed(4);
+          if (key === fitKey) return;
+          fitKey = key;
+
+          glyphEls.forEach(function (el) {
+            var item = el._item;
+            var tile = el._tile;
+            el.style.left = "0px";
+            el.style.top = "0px";
+            el.style.fontSize = PROBE_FS + "px";
+            el.style.transform = "none";
+            el.style.fontVariationSettings = vfString(Number(els.c0.value) || 0);
+          });
+
+          glyphEls.forEach(function (el) {
+            var item = el._item;
+            var tile = el._tile;
+            var box = {
+              l: item.l * scale,
+              t: item.t * scale,
+              w: item.w * scale,
+              h: item.h * scale,
+            };
+            var r = inkRect(el);
+            var tileR = tile.getBoundingClientRect();
+            var inkW = r.width / sc;
+            var inkH = r.height / sc;
+            if (inkW < 0.5 || inkH < 0.5) return;
+            var k = box.h / inkH;
+            var curL = (r.left - tileR.left) / sc;
+            var curT = (r.top - tileR.top) / sc;
+            var tx = box.l + (box.w - inkW * k) / 2 - curL * k;
+            var ty = box.t - curT * k;
+            el._tx = tx;
+            el._ty = ty;
+            el._k = k;
+            el.style.transform =
+              "translate(" + tx + "px, " + ty + "px) scale(" + k + ")";
+          });
+        }
+
+        function glyphCenterY(el) {
+          var col = Number(els.col.value) || 920;
+          var scale = col / SRC_W;
+          var oy = Number(els.oy.value) || 0;
+          var cy = (el._item.t + el._item.h / 2) * scale;
+          return oy - scrollY + el._copy * tileH + cy;
+        }
+
+        function sampleCntr(el) {
+          var dist = Math.abs(glyphCenterY(el) - STAGE_H / 2);
+          var fall = Number(els.fall.value);
+          if (!isFinite(fall) || fall <= 0) fall = 0.72;
+          var radius = (STAGE_H / 2) * fall;
+          var t = ease(clamp(1 - dist / radius, 0, 1));
+          var c0 = Number(els.c0.value);
+          var c1 = Number(els.c1.value);
+          if (!isFinite(c0)) c0 = 0;
+          if (!isFinite(c1)) c1 = 100;
+          return lerp(c0, c1, t);
+        }
+
+        function applyContrast() {
+          var peak = -1;
+          var i;
+          for (i = 0; i < glyphEls.length; i++) {
+            var el = glyphEls[i];
+            var cntr = sampleCntr(el);
+            el.style.fontVariationSettings = vfString(cntr);
+            if (cntr > peak) peak = cntr;
+          }
+          nowReadout.textContent =
+            "CNTR " +
+            Math.round(Number(els.c0.value) || 0) +
+            " → " +
+            Math.round(Number(els.c1.value) || 100) +
+            " · peak " +
+            Math.round(peak);
+        }
+
+        function frame(now) {
+          var loop = Number(els.loop.value);
+          if (!isFinite(loop) || loop < 1) loop = 28;
+          var elapsed = now - t0;
+          scrollY = tileH ? (((elapsed / 1000) % loop) / loop) * tileH : 0;
+          var oy = Number(els.oy.value) || 0;
+          belt.style.transform = "translateY(" + -scrollY + "px)";
+          belt.style.top = oy + "px";
+          applyContrast();
+          raf = requestAnimationFrame(frame);
+        }
+
+        function restart() {
+          t0 = performance.now();
+        }
+
+        function fmt(key, v) {
+          if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
+          if (key === "fall") return Number(v).toFixed(2);
+          if (key === "loop") return Number(v).toFixed(1).replace(/\.0$/, "") + "s";
+          if (key === "wdth" || key === "wght" || key === "c0" || key === "c1") {
+            return String(Math.round(Number(v)));
+          }
+          return Math.round(Number(v)) + "px";
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--ox", String(els.ox.value));
+          root.style.setProperty("--oy", String(els.oy.value));
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = fmt(key, els[key].value);
+          });
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            data[key] = els[key].value;
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw = null;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
+          if (!raw) return;
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            els[key].value = data[key];
+          });
+        }
+
+        function reset() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].value = DEFAULTS[key];
+          });
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (e) {}
+          applyVars();
+          paintVals();
+          build();
+          restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          els[key].addEventListener("input", function () {
+            applyVars();
+            paintVals();
+            save();
+            if (key === "col") {
+              build();
+            } else if (key === "ox" || key === "oy") {
+              layoutBelt();
+            } else if (key === "wght" || key === "wdth" || key === "slnt" || key === "c0") {
+              fitKey = "";
+              glyphEls.forEach(function (el) {
+                el.style.fontWeight = String(
+                  Math.round(Number(els.wght.value) || 1000)
+                );
+              });
+              fitAll();
+            }
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("replayBtn").addEventListener("click", restart);
+
+        if (typeof ResizeObserver !== "undefined") {
+          var ro = new ResizeObserver(function () {
+            fitKey = "";
+            fitAll();
+          });
+          ro.observe(stageEl);
+        }
+
+        function start() {
+          loadSaved();
+          applyVars();
+          paintVals();
+          build();
+          restart();
+          raf = requestAnimationFrame(frame);
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(start).catch(start);
+        } else {
+          start();
+        }
+      })();
+    </script>
+  </body>
+</html>

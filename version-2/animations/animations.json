@@ -53,6 +53,12 @@
       "label": "white circled",
       "url": "animations/white-circled.html",
       "mtime": 1787062100
+    },
+    {
+      "id": "conveyor-belt",
+      "label": "conveyor belt",
+      "url": "animations/conveyor-belt.html",
+      "mtime": 1787262804
     }
   ]
 }
