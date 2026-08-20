@@ -43,7 +43,8 @@
         --pad-l: 56;
         --fs: 720;
         --lh: 0.82;
-          --tracking: -0.04;
+        --l1s: 0.84;
+        --tracking: -0.04;
         --oy: 0;
         --slnt: 0;
       }
@@ -143,15 +144,20 @@
         line-height: var(--lh);
         letter-spacing: calc(var(--tracking) * 1em);
         white-space: nowrap;
-        overflow: hidden;
+        overflow: visible;
         font-synthesis: none;
         gap: 0;
+      }
+
+      .line.is-top {
+        font-size: calc(var(--fs) * var(--l1s) * 1px);
+        line-height: 0.92;
       }
 
       .unit {
         display: block;
         flex: 0 0 auto;
-        overflow: hidden;
+        overflow: visible;
         line-height: inherit;
         letter-spacing: inherit;
         white-space: nowrap;
@@ -689,6 +695,7 @@
           var minWdth = wdthRange().lo;
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
+            var lineFs = i === 0 ? fs * 0.84 : fs;
             line.wght = lineWeight(i);
             line.cntr = lineContrast(i);
             for (var j = 0; j < line.units.length; j++) {
@@ -698,7 +705,7 @@
                 line.wght,
                 line.cntr,
                 slnt,
-                fs
+                lineFs
               );
               unit.minW = widthAt(unit.samples, minWdth);
               unit.inner.style.fontWeight = String(Math.round(line.wght));
@@ -747,7 +754,8 @@
             var natA = Math.max(widthAt(a.samples, wdthA), 1);
             var natB = Math.max(widthAt(b.samples, wdthB), 1);
             var total = natA + natB;
-            var sx = total > 0.5 ? target / total : 1;
+            var lineTarget = target * 0.96;
+            var sx = total > 0.5 ? lineTarget / total : 1;
             var pctA = (natA / total) * 100;
             return [
               applyUnitAtWdth(a, line, wdthA, pctA, sx),
@@ -901,6 +909,7 @@
             var parts = splitLine(row.text);
             var lineEl = document.createElement("div");
             lineEl.className = "line";
+            if (rowIndex === 0) lineEl.classList.add("is-top");
             var units = [];
             parts.forEach(function (text, i) {
               if (!text) return;
