@@ -27,13 +27,13 @@
           #144a76 30%,
           #085488 35%,
           #01609a 40%,
-          #0178b0 48%,
-          #0091c4 55%,
-          #16a9d5 62%,
-          #58bdd9 68%,
-          #a1d2e1 74%,
-          #dbe5e7 80%,
-          #eaeceb 88%,
+          #0178b0 52%,
+          #0091c4 60%,
+          #16a9d5 68%,
+          #58bdd9 74%,
+          #a1d2e1 80%,
+          #dbe5e7 86%,
+          #eaeceb 92%,
           #e7e8e3 100%
         );
         --fg: #000000;
@@ -465,10 +465,11 @@
     <script>
       (function () {
         var GRADIENT =
-          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 20%, #1f4166 25%, #144a76 30%, #085488 35%, #01609a 40%, #0178b0 48%, #0091c4 55%, #16a9d5 62%, #58bdd9 68%, #a1d2e1 74%, #dbe5e7 80%, #eaeceb 88%, #e7e8e3 100%)";
+          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 20%, #1f4166 25%, #144a76 30%, #085488 35%, #01609a 40%, #0178b0 52%, #0091c4 60%, #16a9d5 68%, #58bdd9 74%, #a1d2e1 80%, #dbe5e7 86%, #eaeceb 92%, #e7e8e3 100%)";
         var LS_KEY = "animator:v2:width-swap:settings:v4";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
+        var TRACK_EXT_DELTA = -0.03;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -591,8 +592,24 @@
           return n;
         }
 
-        function measureWidth(text, fs, vf) {
-          var track = Number(els.tr.value) || 0;
+        function baseTrack() {
+          var n = Number(els.tr.value);
+          return isFinite(n) ? n : -0.04;
+        }
+
+        function trackAtWdth(unit, wdth) {
+          var base = baseTrack();
+          if (!unit || !unit.text || unit.text.length < 2) return base;
+          var range = wdthRange();
+          var span = range.hi - range.lo;
+          var u = span <= 0 ? 0 : (wdth - range.lo) / span;
+          if (u < 0) u = 0;
+          if (u > 1) u = 1;
+          return lerp(base, base + TRACK_EXT_DELTA, u);
+        }
+
+        function measureWidth(text, fs, vf, track) {
+          if (track == null) track = baseTrack();
           probe.style.fontSize = fs + "px";
           probe.style.letterSpacing = track + "em";
           probe.style.marginRight = -track + "em";
@@ -601,7 +618,8 @@
           return probe.getBoundingClientRect().width;
         }
 
-        function getSamples(text, wght, cntr, slnt, fs) {
+        function getSamples(unit, wght, cntr, slnt, fs) {
+          var text = unit.text;
           var range = wdthRange();
           var key =
             text +
@@ -614,7 +632,9 @@
             "|" +
             fs +
             "|" +
-            els.tr.value +
+            baseTrack() +
+            "|" +
+            (unit.text.length > 1 ? TRACK_EXT_DELTA : 0) +
             "|" +
             range.lo +
             "|" +
@@ -624,11 +644,25 @@
           var widths = [];
           for (var w = range.lo; w <= range.hi; w += WDTH_STEP) {
             wdths.push(w);
-            widths.push(measureWidth(text, fs, vfString(wght, w, cntr, slnt)));
+            widths.push(
+              measureWidth(
+                text,
+                fs,
+                vfString(wght, w, cntr, slnt),
+                trackAtWdth(unit, w)
+              )
+            );
           }
           if (wdths[wdths.length - 1] !== range.hi) {
             wdths.push(range.hi);
-            widths.push(measureWidth(text, fs, vfString(wght, range.hi, cntr, slnt)));
+            widths.push(
+              measureWidth(
+                text,
+                fs,
+                vfString(wght, range.hi, cntr, slnt),
+                trackAtWdth(unit, range.hi)
+              )
+            );
           }
           sampleCache[key] = { wdths: wdths, widths: widths };
           return sampleCache[key];
@@ -680,7 +714,7 @@
             for (var j = 0; j < line.units.length; j++) {
               var unit = line.units[j];
               unit.samples = getSamples(
-                unit.text,
+                unit,
                 line.wght,
                 line.cntr,
                 slnt,
@@ -706,10 +740,13 @@
         }
 
         function applyUnit(unit, line, wdth, boxW) {
+          var track = trackAtWdth(unit, wdth);
           unit.el.style.flex = "0 0 " + boxW + "px";
           unit.el.style.width = boxW + "px";
           unit.el.style.maxWidth = boxW + "px";
           unit.el.style.marginLeft = "0";
+          unit.inner.style.letterSpacing = track + "em";
+          unit.inner.style.marginRight = -track + "em";
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
             wdth,
