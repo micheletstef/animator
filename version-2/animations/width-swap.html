@@ -146,6 +146,8 @@
         letter-spacing: calc(var(--tracking) * 1em);
         white-space: nowrap;
         overflow: hidden;
+        font-synthesis: none;
+        font-weight: var(--wght, 700);
       }
 
       .unit {
@@ -159,6 +161,7 @@
         letter-spacing: inherit;
         white-space: nowrap;
         font-kerning: none;
+        font-weight: inherit;
       }
 
       .inner {
@@ -171,7 +174,8 @@
         line-height: inherit;
         letter-spacing: inherit;
         white-space: nowrap;
-        transform-origin: 0 50%;
+        font-weight: inherit;
+        font-synthesis: none;
         text-rendering: geometricPrecision;
         -webkit-font-smoothing: antialiased;
         font-optical-sizing: none;
@@ -677,11 +681,9 @@
 
         function solveFit(samples, target) {
           if (!samples || target <= 0) {
-            return { wdth: wdthRange().lo, sx: 1 };
+            return wdthRange().lo;
           }
-          var found = lookupWdth(samples, target);
-          var sx = found.width > 0.5 ? target / found.width : 1;
-          return { wdth: found.wdth, sx: sx };
+          return lookupWdth(samples, target).wdth;
         }
 
         function prepareUnits() {
@@ -692,6 +694,7 @@
             var line = lines[i];
             line.wght = lineWeight(i);
             line.cntr = lineContrast(i);
+            line.el.style.fontWeight = String(Math.round(line.wght));
             for (var j = 0; j < line.units.length; j++) {
               var unit = line.units[j];
               unit.samples = getSamples(
@@ -703,31 +706,36 @@
               );
               unit.minW = widthAt(unit.samples, minWdth);
               unit.inner.style.fontWeight = String(Math.round(line.wght));
-              unit.el.style.fontWeight = String(Math.round(line.wght));
+              unit.inner.style.transform = "none";
+              unit.inner.style.fontVariationSettings = vfString(
+                line.wght,
+                minWdth,
+                line.cntr,
+                slnt
+              );
             }
           }
         }
 
-        function applyUnit(unit, line, slnt, pct, target) {
+        function applyUnit(unit, line, pct, target) {
           var boxW = target * (pct / 100);
-          var fit = solveFit(unit.samples, boxW);
+          var wdth = solveFit(unit.samples, boxW);
           unit.el.style.flex = "0 0 " + pct + "%";
           unit.el.style.width = pct + "%";
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
-            fit.wdth,
+            wdth,
             line.cntr,
-            slnt
+            Number(els.slnt.value) || 0
           );
-          unit.inner.style.transform = "scaleX(" + fit.sx + ")";
-          return { wdth: fit.wdth, pct: pct };
+          return { wdth: wdth, pct: pct };
         }
 
-        function applyLine(line, t, slnt, target) {
+        function applyLine(line, t, target) {
           var units = line.units;
           if (!units.length) return [];
           if (units.length === 1) {
-            return [applyUnit(units[0], line, slnt, 100, target)];
+            return [applyUnit(units[0], line, 100, target)];
           }
 
           var a = units[0];
@@ -750,17 +758,16 @@
           var pctB = 100 - pctA;
 
           return [
-            applyUnit(a, line, slnt, pctA, target),
-            applyUnit(b, line, slnt, pctB, target),
+            applyUnit(a, line, pctA, target),
+            applyUnit(b, line, pctB, target),
           ];
         }
 
         function applyMix(t) {
-          var slnt = Number(els.slnt.value) || 0;
           var target = targetWidth();
           var bits = [];
           for (var i = 0; i < lines.length; i++) {
-            var states = applyLine(lines[i], t, slnt, target);
+            var states = applyLine(lines[i], t, target);
             for (var j = 0; j < states.length; j++) {
               bits.push(
                 lines[i].units[j].label + " wdth " + Math.round(states[j].wdth)
