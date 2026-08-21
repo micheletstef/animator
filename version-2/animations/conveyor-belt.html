@@ -272,13 +272,13 @@
         </div>
         <div class="row">
           <label for="pack">fill</label>
-          <input id="pack" type="range" min="0.7" max="1" step="0.01" value="0.9" />
-          <span class="val" id="packVal">0.90</span>
+          <input id="pack" type="range" min="0.65" max="1" step="0.01" value="0.96" />
+          <span class="val" id="packVal">0.96</span>
         </div>
         <div class="row">
           <label for="gap">gap</label>
-          <input id="gap" type="range" min="4" max="48" step="1" value="20" />
-          <span class="val" id="gapVal">20px</span>
+          <input id="gap" type="range" min="0" max="32" step="1" value="6" />
+          <span class="val" id="gapVal">6px</span>
         </div>
         <div class="row">
           <label for="ox">x</label>
@@ -354,11 +354,10 @@
     <script src="artboard-view.js?v=2"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:conveyor-belt:settings:v5";
+        var LS_KEY = "animator:v2:conveyor-belt:settings:v6";
         var STAGE_W = 1080;
         var STAGE_H = 1440;
         var PROBE_FS = 200;
-        var NCOLS = 2;
 
         // Ink boxes from the source lockup, cropped to the glyph bounds (x=14).
         var ITEMS = [
@@ -382,8 +381,8 @@
           bg: "#ffffff",
           fg: "#000000",
           col: 1080,
-          pack: 0.9,
-          gap: 20,
+          pack: 0.96,
+          gap: 6,
           ox: 0,
           oy: 0,
           slnt: 0,
@@ -445,12 +444,17 @@
 
         function packValue() {
           var n = Number(els.pack.value);
-          return isFinite(n) && n > 0 ? n : 0.9;
+          return isFinite(n) && n > 0 ? n : 0.96;
         }
 
         function gapValue() {
           var n = Number(els.gap.value);
-          return isFinite(n) ? Math.max(0, n) : 20;
+          return isFinite(n) ? Math.max(0, n) : 6;
+        }
+
+        function hash01(i, salt) {
+          var x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+          return x - Math.floor(x);
         }
 
         function stageScale() {
@@ -559,6 +563,7 @@
           var n = ITEMS.length;
           var inks = [];
           var i;
+          var maxW = 0;
           for (i = 0; i < n; i++) {
             var el = glyphEls[i];
             var r = inkRect(el);
@@ -570,35 +575,88 @@
               h: r.height / sc,
             };
             inks.push(ink);
+            if (ink.w > maxW) maxW = ink.w;
           }
-          if (!inks.length || inks[0].w < 0.5) return;
+          if (maxW < 0.5) return;
 
-          var colW = (col - gap * (NCOLS + 1)) / NCOLS;
-          if (colW < 8) colW = 8;
-          var colX = [gap, gap + colW + gap];
-          var colH = [gap, gap];
-          var poses = [];
-          var capH = colW * 1.15;
+          var g = Math.max(2, gap * (1.35 - pack));
+          var k = ((col * 0.5 - g) * pack) / maxW;
+          var mid = col / 2;
+          var colH = [g, g + inks[0].h * k * (0.28 + 0.22 * hash01(0, 3))];
+          var boxes = [];
 
           for (i = 0; i < n; i++) {
-            var k = Math.min(
-              (colW * pack) / inks[i].w,
-              capH / inks[i].h
-            );
             var w = inks[i].w * k;
             var h = inks[i].h * k;
-            var c = colH[0] <= colH[1] ? 0 : 1;
-            var x = colX[c] + (colW - w) / 2;
-            var y = colH[c];
-            poses.push({
-              tx: x - inks[i].l * k,
-              ty: y - inks[i].t * k,
-              k: k,
-            });
-            colH[c] += h + gap;
+            var c = i % 2;
+            if (hash01(i, 1) > 0.62) c = 1 - c;
+            var jitterX = (hash01(i, 2) - 0.5) * w * 0.22;
+            var jitterY = (hash01(i, 4) - 0.45) * g * 1.8;
+            var x;
+            if (c === 0) {
+              x = mid - g * 0.35 - w + jitterX;
+            } else {
+              x = mid + g * 0.35 + jitterX;
+            }
+            x = clamp(x, g * 0.25, col - w - g * 0.25);
+            var y = colH[c] + jitterY;
+            if (y < g * 0.5) y = g * 0.5;
+            boxes.push({ x: x, y: y, w: w, h: h, c: c });
+            colH[c] = y + h + g * (0.45 + 0.4 * hash01(i, 5));
           }
 
-          tileH = Math.max(colH[0], colH[1]);
+          var iter;
+          var j;
+          for (iter = 0; iter < 10; iter++) {
+            var moved = false;
+            for (i = 0; i < n; i++) {
+              for (j = i + 1; j < n; j++) {
+                var a = boxes[i];
+                var b = boxes[j];
+                var ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+                var oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+                if (ox <= g || oy <= g) continue;
+                var push = (Math.min(ox, oy) - g) * 0.55;
+                if (Math.abs(a.x + a.w / 2 - (b.x + b.w / 2)) >=
+                    Math.abs(a.y + a.h / 2 - (b.y + b.h / 2))) {
+                  if (a.x + a.w / 2 < b.x + b.w / 2) {
+                    a.x -= push / 2;
+                    b.x += push / 2;
+                  } else {
+                    a.x += push / 2;
+                    b.x -= push / 2;
+                  }
+                } else {
+                  if (a.y + a.h / 2 < b.y + b.h / 2) {
+                    a.y -= push / 2;
+                    b.y += push / 2;
+                  } else {
+                    a.y += push / 2;
+                    b.y -= push / 2;
+                  }
+                }
+                a.x = clamp(a.x, 0, col - a.w);
+                b.x = clamp(b.x, 0, col - b.w);
+                if (a.y < 0) a.y = 0;
+                if (b.y < 0) b.y = 0;
+                moved = true;
+              }
+            }
+            if (!moved) break;
+          }
+
+          tileH = 0;
+          var poses = [];
+          for (i = 0; i < n; i++) {
+            var box = boxes[i];
+            poses.push({
+              tx: box.x - inks[i].l * k,
+              ty: box.y - inks[i].t * k,
+              k: k,
+            });
+            tileH = Math.max(tileH, box.y + box.h + g);
+          }
+
           var tiles = belt.querySelectorAll(".tile");
           for (i = 0; i < tiles.length; i++) {
             tiles[i].style.height = tileH + "px";
