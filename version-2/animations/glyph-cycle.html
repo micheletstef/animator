@@ -101,10 +101,11 @@
 
       .lockup {
         position: absolute;
-        top: calc(var(--pad-t) * 1px);
-        right: calc(var(--pad-r) * 1px);
-        bottom: calc(var(--pad-b) * 1px);
-        left: calc(var(--pad-l) * 1px);
+        top: var(--guide-t, calc(var(--pad-t) * 1px));
+        right: var(--guide-r, calc(var(--pad-r) * 1px));
+        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        left: var(--guide-l, calc(var(--pad-l) * 1px));
+        z-index: 3;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -272,7 +273,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=11" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=12" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -441,6 +442,7 @@
         Object.keys(DEFAULTS).forEach(function (key) {
           els[key] = document.getElementById(key);
         });
+        if (els.ch) els.ch.value = DEFAULT_CHAR;
 
         var t0 = 0;
         var raf = 0;
@@ -455,11 +457,15 @@
         }
 
         function keyframe(i) {
+          var slnt = els["slnt" + i];
+          var wdth = els["wdth" + i];
+          var wght = els["wght" + i];
+          var cntr = els["cntr" + i];
           return {
-            slnt: parseFloat(els["slnt" + i].value),
-            wdth: parseFloat(els["wdth" + i].value),
-            wght: parseFloat(els["wght" + i].value),
-            cntr: parseFloat(els["cntr" + i].value),
+            slnt: parseFloat(slnt && slnt.value) || 0,
+            wdth: parseFloat(wdth && wdth.value) || 130,
+            wght: parseFloat(wght && wght.value) || 1000,
+            cntr: parseFloat(cntr && cntr.value) || 0,
           };
         }
 
@@ -586,7 +592,7 @@
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
             if (SHARED_KEYS[key]) shared[key] = els[key].value;
-            else local[key] = els[key].value;
+            else if (key !== "ch") local[key] = els[key].value;
           });
           writeJson(LS_KEY, local);
           writeJson(LAYOUT_KEY, shared);
@@ -596,12 +602,13 @@
           var local = readJson(LS_KEY);
           if (local) {
             Object.keys(DEFAULTS).forEach(function (key) {
-              if (SHARED_KEYS[key]) return;
+              if (SHARED_KEYS[key] || key === "ch") return;
               if (!els[key] || local[key] == null) return;
               els[key].value = local[key];
             });
           }
           applyShared(readJson(LAYOUT_KEY));
+          if (els.ch) els.ch.value = DEFAULT_CHAR;
         }
 
         function reset() {

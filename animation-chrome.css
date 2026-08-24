@@ -307,7 +307,7 @@ body,
   bottom: var(--guide-b, 88px);
   left: var(--guide-l, 64px);
   border: 0;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px #ff00ff;
 }
 
 .guide-cols {

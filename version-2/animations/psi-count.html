@@ -29,6 +29,9 @@
         --num-fs: 724;
         --lh: 0.84;
         --oy: 0;
+        --lock-align: center;
+        --lock-text: center;
+        --lock-origin: 50% 0;
       }
 
       * {
@@ -100,16 +103,16 @@
 
       .lockup {
         position: absolute;
-        top: calc(var(--pad-t) * 1px);
-        right: calc(var(--pad-r) * 1px);
-        bottom: calc(var(--pad-b) * 1px);
-        left: calc(var(--pad-l) * 1px);
+        top: var(--guide-t, calc(var(--pad-t) * 1px));
+        right: var(--guide-r, calc(var(--pad-r) * 1px));
+        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        left: var(--guide-l, calc(var(--pad-l) * 1px));
         z-index: 1;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        align-items: center;
-        text-align: center;
+        align-items: var(--lock-align, center);
+        text-align: var(--lock-text, center);
         transform: translateY(calc(var(--oy) * 1px));
       }
 
@@ -122,16 +125,15 @@
         font-kerning: none;
         font-synthesis: none;
         -webkit-font-smoothing: antialiased;
+        transform-origin: var(--lock-origin, 50% 0);
       }
 
       .psi {
         font-size: calc(var(--psi-fs) * 1px);
-        transform-origin: 50% 0;
       }
 
       .num {
         font-size: calc(var(--num-fs) * 1px);
-        transform-origin: 50% 0;
       }
 
       .panel {
@@ -254,7 +256,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=11" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=12" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -294,6 +296,26 @@
 
       <div class="group">
         <p class="group-title">content</p>
+        <div class="row row-span">
+          <label for="lab">psi</label>
+          <input id="lab" type="text" value="PSI" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row row-span">
+          <label for="n0">from</label>
+          <input id="n0" type="text" inputmode="numeric" value="0" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row row-span">
+          <label for="n1">to</label>
+          <input id="n1" type="text" inputmode="numeric" value="60" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row row-span">
+          <label for="align">align</label>
+          <select id="align">
+            <option value="left">left</option>
+            <option value="center" selected>center</option>
+            <option value="right">right</option>
+          </select>
+        </div>
       </div>
 
       <div class="group">
@@ -321,7 +343,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">psi · from 0</p>
+        <p class="group-title" id="psiFromTitle">psi · from 0</p>
         <div class="row">
           <label for="pw0">wdth</label>
           <input id="pw0" type="range" min="65" max="130" step="1" value="130" />
@@ -350,7 +372,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">psi · to 60</p>
+        <p class="group-title" id="psiToTitle">psi · to 60</p>
         <div class="row">
           <label for="pw1">wdth</label>
           <input id="pw1" type="range" min="65" max="130" step="1" value="65" />
@@ -379,7 +401,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">num · from 0</p>
+        <p class="group-title" id="numFromTitle">num · from 0</p>
         <div class="row">
           <label for="w0">wdth</label>
           <input id="w0" type="range" min="65" max="130" step="1" value="130" />
@@ -408,7 +430,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">num · to 60</p>
+        <p class="group-title" id="numToTitle">num · to 60</p>
         <div class="row">
           <label for="w1">wdth</label>
           <input id="w1" type="range" min="65" max="130" step="1" value="65" />
@@ -437,7 +459,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">motion · 0 → 60 → 0</p>
+        <p class="group-title" id="motionTitle">motion · 0 → 60 → 0</p>
         <p class="now" id="nowReadout">PSI 0 · wdth 130 · wght 200</p>
         <div class="row">
           <label for="move">move</label>
@@ -460,9 +482,7 @@
     <script src="artboard-view.js?v=14"></script>
     <script>
       (function () {
-        var LS_KEY = "animator:v2:psi-count:settings:v5";
-        var START = 0;
-        var END = 60;
+        var LS_KEY = "animator:v2:psi-count:settings:v6";
         var GRADIENT = 'url("psi-count-bg.jpg")';
 
         var root = document.documentElement;
@@ -474,6 +494,10 @@
           grad: "1",
           bg: "#000000",
           fg: "#ffffff",
+          lab: "PSI",
+          n0: "0",
+          n1: "60",
+          align: "center",
           psiFs: 584,
           numFs: 724,
           lh: 0.84,
@@ -504,6 +528,7 @@
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
         var CHECK_KEYS = { grad: 1 };
+        var TEXT_KEYS = { lab: 1, n0: 1, n1: 1, align: 1 };
 
         var els = {};
         var vals = {
@@ -546,6 +571,48 @@
         var raf = 0;
         var playing = true;
         var lastValue = -1;
+
+        function countFrom() {
+          var n = Number(els.n0 && els.n0.value);
+          return isFinite(n) ? n : 0;
+        }
+
+        function countTo() {
+          var n = Number(els.n1 && els.n1.value);
+          return isFinite(n) ? n : 60;
+        }
+
+        function applyAlign() {
+          var a = (els.align && els.align.value) || "center";
+          if (a === "left") {
+            root.style.setProperty("--lock-align", "flex-start");
+            root.style.setProperty("--lock-text", "left");
+            root.style.setProperty("--lock-origin", "0% 0");
+          } else if (a === "right") {
+            root.style.setProperty("--lock-align", "flex-end");
+            root.style.setProperty("--lock-text", "right");
+            root.style.setProperty("--lock-origin", "100% 0");
+          } else {
+            root.style.setProperty("--lock-align", "center");
+            root.style.setProperty("--lock-text", "center");
+            root.style.setProperty("--lock-origin", "50% 0");
+          }
+        }
+
+        function syncTitles() {
+          var from = String(Math.round(countFrom()));
+          var to = String(Math.round(countTo()));
+          var psiFrom = document.getElementById("psiFromTitle");
+          var psiTo = document.getElementById("psiToTitle");
+          var numFrom = document.getElementById("numFromTitle");
+          var numTo = document.getElementById("numToTitle");
+          var motion = document.getElementById("motionTitle");
+          if (psiFrom) psiFrom.textContent = "psi · from " + from;
+          if (psiTo) psiTo.textContent = "psi · to " + to;
+          if (numFrom) numFrom.textContent = "num · from " + from;
+          if (numTo) numTo.textContent = "num · to " + to;
+          if (motion) motion.textContent = "motion · " + from + " → " + to + " → " + from;
+        }
 
         function lerp(a, b, t) {
           return a + (b - a) * t;
@@ -614,11 +681,13 @@
           var cntr = lerp(numVal("c0", 100), numVal("c1", 100), p);
           var slnt = lerp(numVal("s0", 0), numVal("s1", 0), p);
           var tracking = lerp(numVal("t0", -0.04), numVal("t1", 0.01), p);
-          var value = Math.round(lerp(START, END, p));
+          var value = Math.round(lerp(countFrom(), countTo(), p));
 
           applyType(psi, psiWdth, psiWght, psiCntr, psiSlnt, psiTrack);
           applyType(num, wdth, wght, cntr, slnt, tracking);
 
+          var label = els.lab ? String(els.lab.value) : "PSI";
+          if (psi.textContent !== label) psi.textContent = label;
           if (value !== lastValue) {
             lastValue = value;
             num.textContent = String(value);
@@ -669,6 +738,7 @@
         }
 
         function fmt(key, v) {
+          if (TEXT_KEYS[key]) return String(v);
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (key === "lh") return Number(v).toFixed(2);
@@ -706,6 +776,8 @@
           root.style.setProperty("--num-fs", String(els.numFs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--oy", String(els.oy.value));
+          applyAlign();
+          syncTitles();
         }
 
         function paintVals() {
@@ -776,6 +848,7 @@
         Object.keys(els).forEach(function (key) {
           if (!els[key]) return;
           els[key].addEventListener("input", function () {
+            if (key === "lab" || key === "n0" || key === "n1") lastValue = -1;
             applyVars();
             paintVals();
             save();

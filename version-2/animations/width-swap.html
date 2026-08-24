@@ -417,7 +417,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=11" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=12" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -476,11 +476,6 @@
 
       <div class="group">
         <p class="group-title">type</p>
-        <div class="row">
-          <label for="fs">size</label>
-          <input id="fs" type="range" min="120" max="800" step="1" value="720" />
-          <span class="val" id="fsVal">720px</span>
-        </div>
         <div class="row">
           <label for="lh">leading</label>
           <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.86" />
@@ -541,6 +536,11 @@
       <div class="group">
         <p class="group-title" id="l1HeldTitle">line 1 · R41 held</p>
         <div class="row">
+          <label for="l1fs">size</label>
+          <input id="l1fs" type="range" min="120" max="800" step="1" value="720" />
+          <span class="val" id="l1fsVal">720px</span>
+        </div>
+        <div class="row">
           <label for="l1w">wght</label>
           <input id="l1w" type="range" min="200" max="1000" step="1" value="700" />
           <span class="val" id="l1wVal">700</span>
@@ -554,6 +554,11 @@
 
       <div class="group">
         <p class="group-title" id="l2HeldTitle">line 2 · X8 held</p>
+        <div class="row">
+          <label for="l2fs">size</label>
+          <input id="l2fs" type="range" min="120" max="800" step="1" value="720" />
+          <span class="val" id="l2fsVal">720px</span>
+        </div>
         <div class="row">
           <label for="l2w">wght</label>
           <input id="l2w" type="range" min="200" max="1000" step="1" value="1000" />
@@ -585,11 +590,6 @@
           <span class="val" id="holdVal">700ms</span>
         </div>
       </div>
-
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-        <button type="button" id="replayBtn">replay</button>
-      </div>
     </aside>
 
     <span class="probe" id="probe" aria-hidden="true"></span>
@@ -599,11 +599,10 @@
       (function () {
         var GRADIENT =
           "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 20%, #1f4166 25%, #144a76 30%, #085488 35%, #01609a 40%, #0178b0 52%, #0091c4 60%, #16a9d5 68%, #58bdd9 74%, #a1d2e1 80%, #dbe5e7 86%, #eaeceb 92%, #e7e8e3 100%)";
-        var LS_KEY = "animator:v2:width-swap:settings:v5";
-        var LS_KEY_PREV = "animator:v2:width-swap:settings:v4";
+        var LS_KEY = "animator:v2:width-swap:settings:v6";
+        var LS_KEY_PREV = "animator:v2:width-swap:settings:v5";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
-        var TRACK_EXT_DELTA = -0.085;
         var R_EXT_NUDGE_EM = -0.05;
 
         var root = document.documentElement;
@@ -623,7 +622,6 @@
           tB: "41",
           tC: "X",
           tD: "8",
-          fs: 720,
           lh: 0.86,
           tr: -0.04,
           oy: 0,
@@ -635,8 +633,10 @@
           wC1: 65,
           wD0: 65,
           wD1: 130,
+          l1fs: 720,
           l1w: 700,
           l1c: 0,
+          l2fs: 720,
           l2w: 1000,
           l2c: 100,
           slnt: 0,
@@ -659,12 +659,13 @@
           bg: document.getElementById("bgVal"),
           grad: document.getElementById("gradVal"),
           fg: document.getElementById("fgVal"),
-          fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
           oy: document.getElementById("oyVal"),
+          l1fs: document.getElementById("l1fsVal"),
           l1w: document.getElementById("l1wVal"),
           l1c: document.getElementById("l1cVal"),
+          l2fs: document.getElementById("l2fsVal"),
           l2w: document.getElementById("l2wVal"),
           l2c: document.getElementById("l2cVal"),
           slnt: document.getElementById("slntVal"),
@@ -777,6 +778,13 @@
           return target < 40 ? 40 : target;
         }
 
+        function lineSize(index) {
+          var key = index === 0 ? "l1fs" : "l2fs";
+          var n = Number(els[key] && els[key].value);
+          if (!isFinite(n)) return 720;
+          return n;
+        }
+
         function lineWeight(index) {
           var key = index === 0 ? "l1w" : "l2w";
           var n = Number(els[key].value);
@@ -797,14 +805,7 @@
         }
 
         function trackAtWdth(unit, wdth) {
-          var base = baseTrack();
-          if (!unit || !unit.text || unit.text.length < 2) return base;
-          var range = unitWdthRange(unit);
-          var span = range.hi - range.lo;
-          var u = span <= 0 ? 0 : (wdth - range.lo) / span;
-          if (u < 0) u = 0;
-          if (u > 1) u = 1;
-          return lerp(base, base + TRACK_EXT_DELTA, u);
+          return baseTrack();
         }
 
         function measureWidth(text, fs, vf, track) {
@@ -834,8 +835,6 @@
             fs +
             "|" +
             baseTrack() +
-            "|" +
-            (unit.text.length > 1 ? TRACK_EXT_DELTA : 0) +
             "|" +
             range.lo +
             "|" +
@@ -904,12 +903,13 @@
 
         function prepareUnits() {
           var slnt = Number(els.slnt.value) || 0;
-          var fs = Number(els.fs.value) || 720;
-          var target = targetWidth();
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
+            var fs = lineSize(i);
             line.wght = lineWeight(i);
             line.cntr = lineContrast(i);
+            line.k = 1;
+            line.el.style.fontSize = fs + "px";
             for (var j = 0; j < line.units.length; j++) {
               var unit = line.units[j];
               unit.samples = getSamples(
@@ -921,19 +921,11 @@
               );
               unit.minW = widthAt(unit.samples, unit.fromW);
               unit.maxW = widthAt(unit.samples, unit.toW);
+              unit.inner.style.fontSize = fs + "px";
               unit.inner.style.fontWeight = String(Math.round(line.wght));
               unit.inner.style.transform = "none";
             }
             line.extreme = lineExtreme(line);
-          }
-
-          var extreme1 = (lines[0] && lines[0].extreme) || 1;
-          var extreme2 = (lines[1] && lines[1].extreme) || extreme1;
-          var k1 = (target / extreme1) * 1.06;
-          var k2 = k1 * 1.03;
-          for (var n = 0; n < lines.length; n++) {
-            lines[n].k = n === 1 ? k2 : k1;
-            lines[n].el.style.fontSize = fs * lines[n].k + "px";
           }
         }
 
@@ -1069,7 +1061,7 @@
           if (CHECK_KEYS[key]) return v === "1" || v === true || v === "on" ? "on" : "off";
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (TEXT_KEYS[key]) return String(v);
-          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "l1fs" || key === "l2fs" || key === "oy") return Math.round(Number(v)) + "px";
           if (key === "lh" || key === "tr") return Number(v).toFixed(2);
           if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
           if (key === "move" || key === "hold") return Math.round(Number(v)) + "ms";
@@ -1080,7 +1072,6 @@
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--bg-image", els.grad.checked ? GRADIENT : "none");
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--tracking", String(els.tr.value));
           root.style.setProperty("--oy", String(els.oy.value));
@@ -1110,7 +1101,10 @@
         function loadSaved() {
           var raw = null;
           try {
-            raw = localStorage.getItem(LS_KEY) || localStorage.getItem(LS_KEY_PREV);
+            raw =
+              localStorage.getItem(LS_KEY) ||
+              localStorage.getItem(LS_KEY_PREV) ||
+              localStorage.getItem("animator:v2:width-swap:settings:v4");
           } catch (e) {}
           if (!raw) return;
           var data;
@@ -1137,6 +1131,8 @@
           if (data.wC1 == null && data.cwd != null) data.wC1 = data.cwd;
           if (data.wD0 == null && data.cwd != null) data.wD0 = data.cwd;
           if (data.wD1 == null && data.ewd != null) data.wD1 = data.ewd;
+          if (data.l1fs == null && data.fs != null) data.l1fs = data.fs;
+          if (data.l2fs == null && data.fs != null) data.l2fs = data.fs;
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
             writeVal(key, data[key]);
@@ -1231,13 +1227,14 @@
               key === "wC1" ||
               key === "wD0" ||
               key === "wD1" ||
+              key === "l1fs" ||
+              key === "l2fs" ||
               key === "l1w" ||
               key === "l2w" ||
               key === "l1c" ||
               key === "l2c" ||
               key === "slnt" ||
-              key === "tr" ||
-              key === "fs"
+              key === "tr"
             ) {
               if (
                 key === "wA0" ||
@@ -1263,9 +1260,6 @@
             save();
           });
         });
-
-        document.getElementById("resetBtn").addEventListener("click", reset);
-        document.getElementById("replayBtn").addEventListener("click", restart);
 
         loadSaved();
         applyVars();
