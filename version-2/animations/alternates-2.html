@@ -20,6 +20,7 @@
         --ar-h: 1440;
         --bg: #ffffff;
         --fg: #000000;
+        --hl: #ee0000;
         --pad-t: 120;
         --pad-r: 80;
         --pad-b: 120;
@@ -132,39 +133,7 @@
       }
 
       .ch.is-alt {
-        color: transparent;
-        -webkit-text-fill-color: transparent;
-        -webkit-text-stroke: 0;
-        background-image:
-          radial-gradient(
-            ellipse 72% 48% at 28% 18%,
-            rgba(255, 255, 255, 0.96) 0%,
-            rgba(255, 255, 255, 0.42) 26%,
-            rgba(255, 255, 255, 0) 58%
-          ),
-          radial-gradient(
-            ellipse 64% 42% at 78% 86%,
-            rgba(210, 224, 238, 0.38) 0%,
-            rgba(210, 224, 238, 0) 62%
-          ),
-          linear-gradient(
-            148deg,
-            #e4eaef 0%,
-            #fbfcfd 10%,
-            #c5ced8 22%,
-            #8b97a4 34%,
-            #4e5966 46%,
-            #f4f7fa 54%,
-            #ffffff 58%,
-            #7d8a98 70%,
-            #3a434e 82%,
-            #cfd6de 94%,
-            #8a93a0 100%
-          );
-        background-repeat: no-repeat;
-        background-size: 100% 100%;
-        -webkit-background-clip: text;
-        background-clip: text;
+        color: var(--hl);
       }
 
       .ch-run {
@@ -327,6 +296,11 @@
           <input id="fg" type="color" value="#000000" />
           <span class="val" id="fgVal">#000000</span>
         </div>
+        <div class="row">
+          <label for="hl">alt</label>
+          <input id="hl" type="color" value="#ee0000" />
+          <span class="val" id="hlVal">#ee0000</span>
+        </div>
       </div>
 
       <div class="group">
@@ -452,6 +426,7 @@ Apart</textarea>
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
+          hl: "#ee0000",
           tx: DEFAULT_TEXT,
           fs: 188,
           lh: 0.92,
@@ -466,11 +441,12 @@ Apart</textarea>
           hold1: 1200,
         };
 
-        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
 
         var els = {
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
+          hl: document.getElementById("hl"),
           tx: document.getElementById("tx"),
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
@@ -488,6 +464,7 @@ Apart</textarea>
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
+          hl: document.getElementById("hlVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
@@ -648,6 +625,7 @@ Apart</textarea>
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--hl", els.hl.value);
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--tracking", String(els.tr.value));

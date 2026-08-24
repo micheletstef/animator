@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>width fill</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-stretch: 65% 130%;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --fg: #000000;
+        --pad-t: 88;
+        --pad-r: 72;
+        --pad-b: 88;
+        --pad-l: 72;
+        --fs: 168;
+        --lh: 0.88;
+        --tracking: -0.02;
+        --oy: 0;
+        --wght: 400;
+        --cntr: 0;
+        --slnt: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: none;
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 1, "kern" 1;
+        pointer-events: none;
+      }
+
+      .lockup {
+        position: absolute;
+        top: var(--guide-t, calc(var(--pad-t) * 1px));
+        right: var(--guide-r, calc(var(--pad-r) * 1px));
+        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        left: var(--guide-l, calc(var(--pad-l) * 1px));
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        text-align: left;
+        overflow: visible;
+        transform: translateY(calc(var(--oy) * 1px));
+      }
+
+      .line {
+        display: block;
+        width: max-content;
+        max-width: none;
+        height: calc(var(--fs) * var(--lh) * 1px);
+        font-size: calc(var(--fs) * 1px);
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
+        white-space: nowrap;
+        font-kerning: none;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .probe {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        opacity: 0;
+        pointer-events: none;
+        white-space: nowrap;
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 1, "kern" 1;
+        font-kerning: none;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row input[type="text"],
+      .row textarea,
+      .row select {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
+      }
+
+      .row textarea {
+        min-height: 118px;
+        resize: vertical;
+        line-height: 1.25;
+        white-space: pre;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 10px 0;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="width fill">
+          <div class="lockup" id="lockup"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">
+        scroll to zoom · drag to pan · double-click to fit · 1080 × 1440
+      </p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">content</p>
+        <div class="row">
+          <label for="tx">text</label>
+          <textarea id="tx" spellcheck="false" autocomplete="off">Eclipse
+Super 63
+H&amp;S Ultra
+Badger 350
+Sparmax GP-50
+Grex Genesis.XT</textarea>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="48" max="320" step="1" value="168" />
+          <span class="val" id="fsVal">168px</span>
+        </div>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.88" />
+          <span class="val" id="lhVal">0.88</span>
+        </div>
+        <div class="row">
+          <label for="tr">track</label>
+          <input id="tr" type="range" min="-0.12" max="0.08" step="0.005" value="-0.02" />
+          <span class="val" id="trVal">-0.02</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">variables</p>
+        <div class="row">
+          <label for="wght">wght</label>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="400" />
+          <span class="val" id="wghtVal">400</span>
+        </div>
+        <div class="row">
+          <label for="wd0">condensed</label>
+          <input id="wd0" type="range" min="65" max="130" step="1" value="65" />
+          <span class="val" id="wd0Val">65</span>
+        </div>
+        <div class="row">
+          <label for="wd1">extended</label>
+          <input id="wd1" type="range" min="65" max="130" step="1" value="130" />
+          <span class="val" id="wd1Val">130</span>
+        </div>
+        <div class="row">
+          <label for="cntr">CNTR</label>
+          <input id="cntr" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="cntrVal">0</span>
+        </div>
+        <div class="row">
+          <label for="slnt">slnt</label>
+          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slntVal">0</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion · bottom to top</p>
+        <p class="now" id="nowReadout">wdth 65 65 65 65 65 65</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="2400" step="20" value="800" />
+          <span class="val" id="moveVal">800ms</span>
+        </div>
+        <div class="row">
+          <label for="lag">lag</label>
+          <input id="lag" type="range" min="0" max="800" step="10" value="140" />
+          <span class="val" id="lagVal">140ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2000" step="50" value="500" />
+          <span class="val" id="holdVal">500ms</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="resetBtn">reset</button>
+        <button type="button" id="replayBtn">replay</button>
+      </div>
+    </aside>
+
+    <span class="probe" id="probe" aria-hidden="true"></span>
+
+    <script src="artboard-view.js?v=14"></script>
+    <script>
+      (function () {
+        var DEFAULT_TEXT =
+          "Eclipse\nSuper 63\nH&S Ultra\nBadger 350\nSparmax GP-50\nGrex Genesis.XT";
+        var LS_KEY = "animator:v2:width-fill:settings:v1";
+        var WDTH_STEP = 1;
+        var WDTH_MIN = 65;
+        var WDTH_MAX = 130;
+
+        var root = document.documentElement;
+        var lockup = document.getElementById("lockup");
+        var probe = document.getElementById("probe");
+        var nowReadout = document.getElementById("nowReadout");
+        var lines = [];
+        var sampleCache = {};
+        var t0 = 0;
+        var raf = 0;
+        var playing = false;
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          tx: DEFAULT_TEXT,
+          fs: 168,
+          lh: 0.88,
+          tr: -0.02,
+          oy: 0,
+          wght: 400,
+          wd0: 65,
+          wd1: 130,
+          cntr: 0,
+          slnt: 0,
+          move: 800,
+          lag: 140,
+          hold: 500,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var TEXT_KEYS = { tx: 1 };
+        var MEASURE_KEYS = {
+          tx: 1,
+          fs: 1,
+          tr: 1,
+          wght: 1,
+          wd0: 1,
+          wd1: 1,
+          cntr: 1,
+          slnt: 1,
+        };
+
+        var els = {};
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          fs: document.getElementById("fsVal"),
+          lh: document.getElementById("lhVal"),
+          tr: document.getElementById("trVal"),
+          oy: document.getElementById("oyVal"),
+          wght: document.getElementById("wghtVal"),
+          wd0: document.getElementById("wd0Val"),
+          wd1: document.getElementById("wd1Val"),
+          cntr: document.getElementById("cntrVal"),
+          slnt: document.getElementById("slntVal"),
+          move: document.getElementById("moveVal"),
+          lag: document.getElementById("lagVal"),
+          hold: document.getElementById("holdVal"),
+        };
+
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+        });
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function clamp(n, lo, hi) {
+          return Math.max(lo, Math.min(hi, n));
+        }
+
+        function easeInOutCubic(t) {
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function numVal(key, fallback) {
+          var n = Number(els[key] && els[key].value);
+          return isFinite(n) ? n : fallback;
+        }
+
+        function startWdth() {
+          var a = numVal("wd0", WDTH_MIN);
+          var b = numVal("wd1", WDTH_MAX);
+          return Math.min(a, b);
+        }
+
+        function endWdthCap() {
+          var a = numVal("wd0", WDTH_MIN);
+          var b = numVal("wd1", WDTH_MAX);
+          return Math.max(a, b);
+        }
+
+        function vfString(wght, wdth, cntr, slnt) {
+          return (
+            '"wght" ' +
+            wght +
+            ', "wdth" ' +
+            wdth +
+            ', "CNTR" ' +
+            cntr +
+            ', "slnt" ' +
+            slnt
+          );
+        }
+
+        function parseLines(raw) {
+          return String(raw || "")
+            .replace(/\r\n/g, "\n")
+            .split("\n")
+            .map(function (s) {
+              return s.replace(/\s+$/, "");
+            })
+            .filter(function (s) {
+              return s.length > 0;
+            });
+        }
+
+        function measureWidth(text, fs, vf, track) {
+          probe.style.fontFamily = '"IkarusPlusVariable", sans-serif';
+          probe.style.fontSize = fs + "px";
+          probe.style.letterSpacing = track + "em";
+          probe.style.marginRight = -track + "em";
+          probe.style.fontVariationSettings = vf;
+          probe.textContent = text || "";
+          probe.offsetWidth;
+          return probe.getBoundingClientRect().width;
+        }
+
+        function getSamples(text, wght, cntr, slnt, fs, track, lo, hi) {
+          var key =
+            text +
+            "|" +
+            wght +
+            "|" +
+            cntr +
+            "|" +
+            slnt +
+            "|" +
+            fs +
+            "|" +
+            track +
+            "|" +
+            lo +
+            "|" +
+            hi;
+          if (sampleCache[key]) return sampleCache[key];
+          var wdths = [];
+          var widths = [];
+          for (var w = lo; w <= hi; w += WDTH_STEP) {
+            wdths.push(w);
+            widths.push(
+              measureWidth(text, fs, vfString(wght, w, cntr, slnt), track)
+            );
+          }
+          if (wdths.length && wdths[wdths.length - 1] !== hi) {
+            wdths.push(hi);
+            widths.push(
+              measureWidth(text, fs, vfString(wght, hi, cntr, slnt), track)
+            );
+          }
+          sampleCache[key] = { wdths: wdths, widths: widths };
+          return sampleCache[key];
+        }
+
+        function widthAt(samples, wdth) {
+          var wdths = samples.wdths;
+          var widths = samples.widths;
+          if (!wdths.length) return 0;
+          if (wdth <= wdths[0]) return widths[0];
+          if (wdth >= wdths[wdths.length - 1]) return widths[widths.length - 1];
+          for (var i = 0; i < wdths.length - 1; i++) {
+            if (wdth <= wdths[i + 1]) {
+              var span = wdths[i + 1] - wdths[i];
+              var u = span <= 0 ? 0 : (wdth - wdths[i]) / span;
+              return lerp(widths[i], widths[i + 1], u);
+            }
+          }
+          return widths[widths.length - 1];
+        }
+
+        function wdthForWidth(samples, target) {
+          var wdths = samples.wdths;
+          var widths = samples.widths;
+          if (!wdths.length) return startWdth();
+          if (target <= widths[0]) return wdths[0];
+          if (target >= widths[widths.length - 1]) return wdths[wdths.length - 1];
+          for (var i = 0; i < widths.length - 1; i++) {
+            if (target <= widths[i + 1]) {
+              var span = widths[i + 1] - widths[i];
+              var u = span <= 0 ? 0 : (target - widths[i]) / span;
+              return lerp(wdths[i], wdths[i + 1], u);
+            }
+          }
+          return wdths[wdths.length - 1];
+        }
+
+        function applyLine(line, wdth) {
+          var wght = numVal("wght", 400);
+          var cntr = numVal("cntr", 0);
+          var slnt = numVal("slnt", 0);
+          var track = numVal("tr", -0.02);
+          line.el.style.fontWeight = String(Math.round(wght));
+          line.el.style.fontStretch = wdth + "%";
+          line.el.style.letterSpacing = track + "em";
+          line.el.style.marginRight = -track + "em";
+          line.el.style.fontVariationSettings = vfString(
+            wght,
+            wdth,
+            cntr,
+            slnt
+          );
+        }
+
+        function prepareLines() {
+          var wght = numVal("wght", 400);
+          var cntr = numVal("cntr", 0);
+          var slnt = numVal("slnt", 0);
+          var fs = numVal("fs", 168);
+          var track = numVal("tr", -0.02);
+          var lo = startWdth();
+          var hi = endWdthCap();
+          var i;
+          var maxStart = 0;
+          for (i = 0; i < lines.length; i++) {
+            lines[i].samples = getSamples(
+              lines[i].text,
+              wght,
+              cntr,
+              slnt,
+              fs,
+              track,
+              lo,
+              hi
+            );
+            lines[i].fromW = lo;
+            lines[i].startPx = widthAt(lines[i].samples, lo);
+            if (lines[i].startPx > maxStart) maxStart = lines[i].startPx;
+          }
+          var column = maxStart;
+          for (i = 0; i < lines.length; i++) {
+            lines[i].toW = wdthForWidth(lines[i].samples, column);
+            if (lines[i].toW < lines[i].fromW) lines[i].toW = lines[i].fromW;
+          }
+        }
+
+        function mixWdth(line, t) {
+          return lerp(line.fromW, line.toW, t);
+        }
+
+        function travelMs() {
+          var n = Math.max(1, lines.length);
+          var move = Math.max(80, numVal("move", 800));
+          var lag = Math.max(0, numVal("lag", 140));
+          return (n - 1) * lag + move;
+        }
+
+        function durationMs() {
+          var hold = Math.max(0, numVal("hold", 500));
+          return Math.max(1, (hold + travelMs()) * 2);
+        }
+
+        function sample(elapsed) {
+          var n = lines.length;
+          var move = Math.max(80, numVal("move", 800));
+          var lag = Math.max(0, numVal("lag", 140));
+          var hold = Math.max(0, numVal("hold", 500));
+          var travel = travelMs();
+          var half = hold + travel;
+          var total = Math.max(1, half * 2);
+          var t = elapsed % total;
+          var progress = new Array(n);
+          var i;
+          var local;
+          var delay;
+          var p;
+
+          if (!n) return progress;
+
+          if (t < hold) {
+            for (i = 0; i < n; i++) progress[i] = 0;
+            return progress;
+          }
+
+          if (t < half) {
+            local = t - hold;
+            for (i = 0; i < n; i++) {
+              delay = (n - 1 - i) * lag;
+              p = move <= 0 ? 1 : (local - delay) / move;
+              progress[i] = easeInOutCubic(clamp(p, 0, 1));
+            }
+            return progress;
+          }
+
+          if (t < half + hold) {
+            for (i = 0; i < n; i++) progress[i] = 1;
+            return progress;
+          }
+
+          local = t - half - hold;
+          for (i = 0; i < n; i++) {
+            delay = i * lag;
+            p = move <= 0 ? 1 : (local - delay) / move;
+            progress[i] = 1 - easeInOutCubic(clamp(p, 0, 1));
+          }
+          return progress;
+        }
+
+        function applyMix(progress) {
+          var bits = [];
+          for (var i = 0; i < lines.length; i++) {
+            var t = progress[i] || 0;
+            var wdth = mixWdth(lines[i], t);
+            applyLine(lines[i], wdth);
+            bits.push(Math.round(wdth));
+          }
+          nowReadout.textContent = bits.length
+            ? "wdth " + bits.join(" ")
+            : "—";
+        }
+
+        function frame(now) {
+          applyMix(sample(now - t0));
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
+        }
+
+        function restart() {
+          t0 = performance.now();
+        }
+
+        function fmt(key, v) {
+          if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (TEXT_KEYS[key]) return String(v);
+          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "lh" || key === "tr") return Number(v).toFixed(2);
+          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
+          if (key === "move" || key === "lag" || key === "hold") {
+            return Math.round(Number(v)) + "ms";
+          }
+          return String(Math.round(Number(v)));
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--fs", String(els.fs.value));
+          root.style.setProperty("--lh", String(els.lh.value));
+          root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--oy", String(els.oy.value));
+          root.style.setProperty("--wght", String(els.wght.value));
+          root.style.setProperty("--cntr", String(els.cntr.value));
+          root.style.setProperty("--slnt", String(els.slnt.value));
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = fmt(key, els[key].value);
+          });
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            data[key] = els[key].value;
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw = null;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
+          if (!raw) return;
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            els[key].value = data[key];
+          });
+        }
+
+        function buildLockup() {
+          lockup.innerHTML = "";
+          lines = [];
+          sampleCache = {};
+          var words = parseLines(els.tx.value);
+          words.forEach(function (text) {
+            var el = document.createElement("span");
+            el.className = "line";
+            el.textContent = text;
+            lockup.appendChild(el);
+            lines.push({ el: el, text: text, fromW: 65, toW: 65 });
+          });
+          prepareLines();
+        }
+
+        function reset() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].value = DEFAULTS[key];
+          });
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (e) {}
+          applyVars();
+          paintVals();
+          buildLockup();
+          restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          els[key].addEventListener("input", function () {
+            applyVars();
+            paintVals();
+            if (MEASURE_KEYS[key]) {
+              if (key === "tx") buildLockup();
+              else {
+                sampleCache = {};
+                prepareLines();
+              }
+            }
+            save();
+          });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("replayBtn").addEventListener("click", restart);
+
+        loadSaved();
+        applyVars();
+        paintVals();
+        buildLockup();
+        restart();
+
+        function remeasure() {
+          sampleCache = {};
+          prepareLines();
+        }
+
+        function start() {
+          remeasure();
+          if (playing) return;
+          startPlayback();
+        }
+
+        function afterFonts() {
+          requestAnimationFrame(function () {
+            requestAnimationFrame(start);
+          });
+        }
+
+        if (document.fonts && document.fonts.load) {
+          Promise.all([
+            document.fonts.load('400 168px "IkarusPlusVariable"'),
+            document.fonts.ready,
+          ])
+            .then(afterFonts)
+            .catch(afterFonts);
+        } else if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(afterFonts);
+        } else {
+          afterFonts();
+        }
+        window.addEventListener("load", afterFonts);
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "width-fill.mp4",
+          durationMs: durationMs,
+          seek: function (ms) {
+            applyMix(sample(ms));
+          },
+          stop: stopPlayback,
+          start: startPlayback,
+        };
+      })();
+    </script>
+    <script type="module" src="../../web-export.js?v=6"></script>
+  </body>
+</html>

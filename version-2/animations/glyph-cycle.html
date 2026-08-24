@@ -617,6 +617,68 @@
             Number(s.slnt).toFixed(2).replace(/\.00$/, "");
         }
 
+        function liveCaption(from, to, s) {
+          var dw = Math.abs(to.wght - from.wght);
+          var dc = Math.abs(to.cntr - from.cntr);
+          if (dw < 0.5 && dc < 0.5) {
+            var start = keyframe(0);
+            dw = Math.abs(s.wght - start.wght);
+            dc = Math.abs(s.cntr - start.cntr);
+          }
+          if (dw > dc) return "weight " + Math.round(s.wght);
+          return "contour " + Math.round(s.cntr);
+        }
+
+        var lastCaption = "";
+        function setLiveCaption(text) {
+          if (text === lastCaption) return;
+          lastCaption = text;
+          if (window.ArtboardView && window.ArtboardView.setCaption) {
+            window.ArtboardView.setCaption(text);
+          } else {
+            var el = document.querySelector(".stage-caption");
+            if (el) el.textContent = text;
+          }
+          var input = document.getElementById("stageCaption");
+          if (input) input.value = text;
+        }
+
+        function lockLiveCaption() {
+          var input = document.getElementById("stageCaption");
+          if (!input) return;
+          input.readOnly = true;
+          input.placeholder = "live: contour / weight";
+          input.title = "follows contour, then weight";
+        }
+
+        function segmentAt(elapsed) {
+          if (holdKf >= 0) {
+            var held = keyframe(holdKf);
+            return { state: held, from: held, to: held };
+          }
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          var move = Math.max(40, Number(els.move.value) || 1400);
+          var seg = hold + move;
+          var total = SEQUENCE.length * seg;
+          if (total <= 0) total = 1;
+          var t = elapsed % total;
+          if (t < 0) t += total;
+          var i = Math.floor(t / seg);
+          var local = t - i * seg;
+          var from = keyframe(SEQUENCE[i]);
+          var to = keyframe(SEQUENCE[(i + 1) % SEQUENCE.length]);
+          var state =
+            local < hold
+              ? from
+              : mix(from, to, easeInOutCubic((local - hold) / move));
+          return { state: state, from: from, to: to };
+        }
+
+        function applySegment(seg) {
+          applyState(seg.state);
+          setLiveCaption(liveCaption(seg.from, seg.to, seg.state));
+        }
+
         function liveKf(elapsed) {
           if (holdKf >= 0) return holdKf;
           var hold = Math.max(0, Number(els.hold.value) || 0);
@@ -668,27 +730,12 @@
           holdKf = hold ? i : -1;
           lastLiveKf = -1;
           paintKfTabs();
-          if (holdKf >= 0) applyState(keyframe(holdKf));
-        }
-
-        function sample(elapsed) {
-          if (holdKf >= 0) return keyframe(holdKf);
-          var hold = Math.max(0, Number(els.hold.value) || 0);
-          var move = Math.max(40, Number(els.move.value) || 1400);
-          var seg = hold + move;
-          var total = SEQUENCE.length * seg;
-          var t = elapsed % total;
-          var i = Math.floor(t / seg);
-          var local = t - i * seg;
-          var from = keyframe(SEQUENCE[i]);
-          var to = keyframe(SEQUENCE[(i + 1) % SEQUENCE.length]);
-          if (local < hold) return from;
-          return mix(from, to, easeInOutCubic((local - hold) / move));
+          if (holdKf >= 0) applySegment(segmentAt(0));
         }
 
         function frame(now) {
           var elapsed = now - t0;
-          applyState(sample(elapsed));
+          applySegment(segmentAt(elapsed));
           paintLiveTab(elapsed);
           if (playing) raf = requestAnimationFrame(frame);
         }
@@ -867,7 +914,9 @@
         applyVars();
         paintVals();
         paintKfTabs();
+        lockLiveCaption();
         restart();
+        applySegment(segmentAt(0));
         raf = requestAnimationFrame(frame);
 
         window.AnimatorExport = {
@@ -877,7 +926,7 @@
           },
           durationMs: durationMs,
           seek: function (ms) {
-            applyState(sample(ms));
+            applySegment(segmentAt(ms));
           },
           stop: stopPlayback,
           start: startPlayback,
