@@ -201,16 +201,6 @@
         font-kerning: none;
       }
 
-      .probe-svg {
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        width: 4000px;
-        height: 2000px;
-        overflow: visible;
-        pointer-events: none;
-      }
-
       .panel {
         align-self: stretch;
         max-height: 100%;
@@ -342,7 +332,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=8" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=9" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -484,10 +474,6 @@
     </aside>
 
     <span class="probe" id="probe" aria-hidden="true"></span>
-    <svg class="probe-svg" id="inkSvg" aria-hidden="true">
-      <text id="inkText"></text>
-    </svg>
-    <canvas id="inkCanvas" hidden></canvas>
 
     <script src="artboard-view.js?v=11"></script>
     <script>
@@ -498,12 +484,11 @@
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var TRACK_EXT_DELTA = -0.085;
+        var R_EXT_NUDGE_EM = -0.05;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
         var probe = document.getElementById("probe");
-        var inkText = document.getElementById("inkText");
-        var inkCanvas = document.getElementById("inkCanvas");
         var nowReadout = document.getElementById("nowReadout");
         var lines = [];
         var sampleCache = {};
@@ -783,13 +768,22 @@
           unit.el.style.flex = "none";
           unit.el.style.maxWidth = "none";
           unit.inner.style.letterSpacing = track + "em";
-          unit.inner.style.marginRight = -track + "em";
           if (unit.align === "end") {
+            unit.inner.style.marginRight = "0";
             unit.el.style.left = "auto";
             unit.el.style.right = "0px";
           } else {
+            unit.inner.style.marginRight = -track + "em";
             unit.el.style.right = "auto";
             unit.el.style.left = "0px";
+            if (line.index === 0 && unit.align === "start") {
+              var range = unitWdthRange(unit);
+              var span = range.hi - range.lo;
+              var u = span <= 0 ? 1 : (wdth - range.lo) / span;
+              if (u < 0) u = 0;
+              if (u > 1) u = 1;
+              unit.el.style.left = R_EXT_NUDGE_EM * u + "em";
+            }
           }
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
@@ -799,147 +793,6 @@
           );
           unit.inner.style.transform = "none";
           return { wdth: wdth, box: boxW };
-        }
-
-        function stageScale() {
-          var stage = document.getElementById("stage");
-          if (!stage) return 1;
-          var w = stage.getBoundingClientRect().width;
-          return w > 1 ? w / STAGE_W : 1;
-        }
-
-        function guideRect() {
-          var g = document.querySelector(".guide-margin");
-          if (g && g.getClientRects().length) return g.getBoundingClientRect();
-          var lockup = document.getElementById("lockup");
-          return lockup ? lockup.getBoundingClientRect() : null;
-        }
-
-        function syncInkText(el) {
-          var cs = getComputedStyle(el);
-          inkText.textContent = el.textContent || "";
-          inkText.setAttribute("x", "0");
-          inkText.setAttribute("y", "0");
-          inkText.setAttribute("font-family", "IkarusPlusVariable");
-          inkText.setAttribute("font-size", cs.fontSize);
-          inkText.setAttribute("font-weight", cs.fontWeight);
-          inkText.style.fontFamily = cs.fontFamily;
-          inkText.style.fontSize = cs.fontSize;
-          inkText.style.fontWeight = cs.fontWeight;
-          inkText.style.fontStyle = cs.fontStyle;
-          inkText.style.fontVariationSettings = cs.fontVariationSettings;
-          inkText.style.letterSpacing = cs.letterSpacing;
-          inkText.style.fontKerning = "none";
-          inkText.style.fontSynthesis = "none";
-          inkText.style.fontFeatureSettings = cs.fontFeatureSettings;
-          inkText.style.whiteSpace = "nowrap";
-        }
-
-        function outlineInk(el) {
-          syncInkText(el);
-          var bb = inkText.getBBox();
-          var painted = paintInk(el);
-          var left = bb.x;
-          var right = bb.x + bb.width;
-          if (painted) {
-            if (painted.left < left) left = painted.left;
-            if (painted.right > right) right = painted.right;
-          }
-          return { x: left, w: Math.max(0, right - left) };
-        }
-
-        function paintInk(el) {
-          if (!inkCanvas) return null;
-          var cs = getComputedStyle(el);
-          var fs = parseFloat(cs.fontSize);
-          if (!isFinite(fs) || fs < 2) return null;
-          var text = el.textContent || "";
-          if (!text) return null;
-          var pad = Math.ceil(fs * 0.35);
-          var w = Math.max(32, Math.ceil(fs * (text.length + 2) + pad * 2));
-          var h = Math.max(32, Math.ceil(fs * 1.8 + pad * 2));
-          inkCanvas.hidden = false;
-          inkCanvas.width = w;
-          inkCanvas.height = h;
-          inkCanvas.style.position = "absolute";
-          inkCanvas.style.left = "-9999px";
-          inkCanvas.style.top = "0";
-          inkCanvas.style.fontFamily = cs.fontFamily;
-          inkCanvas.style.fontSize = cs.fontSize;
-          inkCanvas.style.fontWeight = cs.fontWeight;
-          inkCanvas.style.fontVariationSettings = cs.fontVariationSettings;
-          inkCanvas.style.letterSpacing = cs.letterSpacing;
-          inkCanvas.style.fontKerning = "none";
-          inkCanvas.style.fontFeatureSettings = cs.fontFeatureSettings;
-          inkCanvas.style.fontSynthesis = "none";
-          var ctx = inkCanvas.getContext("2d", { willReadFrequently: true });
-          if (!ctx) return null;
-          ctx.clearRect(0, 0, w, h);
-          ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
-          if (ctx.letterSpacing != null) ctx.letterSpacing = cs.letterSpacing;
-          if (ctx.fontKerning != null) ctx.fontKerning = "none";
-          if (ctx.fontStretch != null) ctx.fontStretch = cs.fontStretch;
-          ctx.textBaseline = "alphabetic";
-          ctx.textAlign = "left";
-          ctx.fillStyle = "#000";
-          ctx.fillText(text, pad, pad + fs * 0.8);
-          var img = ctx.getImageData(0, 0, w, h);
-          var data = img.data;
-          var minX = w;
-          var maxX = -1;
-          var cut = 12;
-          for (var y = 0; y < h; y++) {
-            var row = y * w * 4;
-            for (var x = 0; x < w; x++) {
-              if (data[row + x * 4 + 3] > cut) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-              }
-            }
-          }
-          inkCanvas.hidden = true;
-          if (maxX < 0) return null;
-          return { left: minX - pad, right: maxX + 1 - pad };
-        }
-
-        function flushInk() {
-          var box = guideRect();
-          if (!box || !inkText) return;
-          var sc = stageScale();
-          if (sc < 0.001) return;
-          var i;
-          var j;
-          var unit;
-          for (i = 0; i < lines.length; i++) {
-            for (j = 0; j < lines[i].units.length; j++) {
-              unit = lines[i].units[j];
-              if (unit.align === "end") {
-                unit.el.style.left = "auto";
-                unit.el.style.right = "0px";
-              } else {
-                unit.el.style.right = "auto";
-                unit.el.style.left = "0px";
-              }
-            }
-          }
-          var lockup = document.getElementById("lockup");
-          if (lockup) lockup.offsetWidth;
-          box = guideRect();
-          if (!box) return;
-          for (i = 0; i < lines.length; i++) {
-            for (j = 0; j < lines[i].units.length; j++) {
-              unit = lines[i].units[j];
-              var ink = outlineInk(unit.inner);
-              var elBox = unit.inner.getBoundingClientRect();
-              var inkLeft = elBox.left + ink.x * sc;
-              var inkRight = elBox.left + (ink.x + ink.w) * sc;
-              if (unit.align === "end") {
-                unit.el.style.right = (inkRight - box.right) / sc + "px";
-              } else {
-                unit.el.style.left = (box.left - inkLeft) / sc + "px";
-              }
-            }
-          }
         }
 
         function applyLine(line, t) {
@@ -977,7 +830,6 @@
             }
           }
           nowReadout.textContent = bits.length ? bits.join(" · ") : "—";
-          flushInk();
         }
 
         function sample(elapsed) {
