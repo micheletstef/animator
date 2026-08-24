@@ -314,7 +314,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -471,13 +471,9 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-        <button type="button" id="replayBtn">replay</button>
-      </div>
     </aside>
 
-    <script src="artboard-view.js?v=14"></script>
+    <script src="artboard-view.js?v=18"></script>
     <script>
       (function () {
         function queryChar() {
@@ -720,7 +716,7 @@
           if (kfSeq) {
             kfSeq.textContent =
               holdKf >= 0
-                ? "holding pose " + (holdKf + 1) + " · replay to play"
+                ? "holding pose " + (holdKf + 1) + " · click again to play"
                 : "1 → 2 → 3 → 2 → 1 · click a pose to hold";
           }
         }
@@ -891,12 +887,10 @@
         kfTabs.forEach(function (tab, i) {
           if (!tab) return;
           tab.addEventListener("click", function () {
-            setActiveKf(i, true);
+            if (holdKf === i) restart();
+            else setActiveKf(i, true);
           });
         });
-
-        document.getElementById("resetBtn").addEventListener("click", reset);
-        document.getElementById("replayBtn").addEventListener("click", restart);
 
         window.addEventListener("storage", function (e) {
           if (e.key !== LAYOUT_KEY || !e.newValue) return;

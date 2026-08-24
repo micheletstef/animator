@@ -270,7 +270,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -386,20 +386,17 @@ Grex Genesis.XT</textarea>
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-        <button type="button" id="replayBtn">replay</button>
-      </div>
     </aside>
 
     <span class="probe" id="probe" aria-hidden="true"></span>
 
-    <script src="artboard-view.js?v=14"></script>
+    <script src="artboard-view.js?v=18"></script>
     <script>
       (function () {
         var DEFAULT_TEXT =
           "Eclipse\nSuper 63\nH&S Ultra\nBadger 350\nSparmax GP-50\nGrex Genesis.XT";
         var LS_KEY = "animator:v2:width-fill:settings:v1";
+        var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var WDTH_MIN = 65;
         var WDTH_MAX = 130;
@@ -523,6 +520,18 @@ Grex Genesis.XT</textarea>
             });
         }
 
+        function lockupWidth() {
+          var cs = getComputedStyle(root);
+          var padL = parseFloat(cs.getPropertyValue("--guide-l"));
+          var padR = parseFloat(cs.getPropertyValue("--guide-r"));
+          if (!isFinite(padL)) padL = Number(cs.getPropertyValue("--pad-l")) || 72;
+          if (!isFinite(padR)) padR = Number(cs.getPropertyValue("--pad-r")) || 72;
+          var box = lockup.offsetWidth;
+          if (box > 40) return box;
+          var target = STAGE_W - padL - padR;
+          return target < 40 ? 40 : target;
+        }
+
         function measureWidth(text, fs, vf, track) {
           probe.style.fontFamily = '"IkarusPlusVariable", sans-serif';
           probe.style.fontSize = fs + "px";
@@ -628,7 +637,7 @@ Grex Genesis.XT</textarea>
           var lo = startWdth();
           var hi = endWdthCap();
           var i;
-          var maxStart = 0;
+          var column = lockupWidth();
           for (i = 0; i < lines.length; i++) {
             lines[i].samples = getSamples(
               lines[i].text,
@@ -642,10 +651,6 @@ Grex Genesis.XT</textarea>
             );
             lines[i].fromW = lo;
             lines[i].startPx = widthAt(lines[i].samples, lo);
-            if (lines[i].startPx > maxStart) maxStart = lines[i].startPx;
-          }
-          var column = maxStart;
-          for (i = 0; i < lines.length; i++) {
             lines[i].toW = wdthForWidth(lines[i].samples, column);
             if (lines[i].toW < lines[i].fromW) lines[i].toW = lines[i].fromW;
           }
@@ -856,8 +861,11 @@ Grex Genesis.XT</textarea>
           });
         });
 
-        document.getElementById("resetBtn").addEventListener("click", reset);
-        document.getElementById("replayBtn").addEventListener("click", restart);
+        var guideMargin = document.getElementById("guideMargin");
+        if (guideMargin) {
+          guideMargin.addEventListener("input", prepareLines);
+          guideMargin.addEventListener("change", prepareLines);
+        }
 
         loadSaved();
         applyVars();

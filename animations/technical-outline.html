@@ -501,13 +501,10 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-      </div>
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="glyph-outlines.js"></script>
+    <script src="glyph-outlines.js?v=2"></script>
     <script src="artboard-zoom.js?v=3"></script>
     <script>
       (function () {
@@ -982,12 +979,6 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] || STRING_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-          });
-        });
-
-        document.getElementById("resetBtn").addEventListener("click", function () {
-          Object.keys(DEFAULTS).forEach(function (k) {
-            setValue(k, DEFAULTS[k]);
           });
         });
 

@@ -226,6 +226,108 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .row.row-dual {
+        grid-template-columns: 64px minmax(0, 1fr);
+        margin-bottom: 12px;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 40px;
+        min-width: 0;
+      }
+
+      .dual-val {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        font-size: 10px;
+        line-height: 1.2;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+        z-index: 2;
+        white-space: nowrap;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 24px;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 14px;
+        width: 100%;
+        height: 22px;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track,
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb,
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
       .now {
         margin: 0 0 10px 0;
         color: #9a9a9a;
@@ -256,7 +358,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -343,118 +445,110 @@
       </div>
 
       <div class="group">
-        <p class="group-title" id="psiFromTitle">psi · from 0</p>
-        <div class="row">
+        <p class="group-title" id="psiTitle">psi · begin → end</p>
+        <div class="row row-dual">
           <label for="pw0">wdth</label>
-          <input id="pw0" type="range" min="65" max="130" step="1" value="130" />
-          <span class="val" id="pw0Val">130</span>
+          <div class="dual-range">
+            <span class="dual-val" id="pw0Val">130</span>
+            <span class="dual-val" id="pw1Val">65</span>
+            <div class="dual-track"><div class="dual-fill" id="pwFill"></div></div>
+            <input id="pw0" class="is-start" type="range" min="65" max="130" step="1" value="130" aria-label="psi wdth begin" />
+            <input id="pw1" class="is-end" type="range" min="65" max="130" step="1" value="65" aria-label="psi wdth end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="pg0">wght</label>
-          <input id="pg0" type="range" min="200" max="1000" step="1" value="200" />
-          <span class="val" id="pg0Val">200</span>
+          <div class="dual-range">
+            <span class="dual-val" id="pg0Val">200</span>
+            <span class="dual-val" id="pg1Val">1000</span>
+            <div class="dual-track"><div class="dual-fill" id="pgFill"></div></div>
+            <input id="pg0" class="is-start" type="range" min="200" max="1000" step="1" value="200" aria-label="psi wght begin" />
+            <input id="pg1" class="is-end" type="range" min="200" max="1000" step="1" value="1000" aria-label="psi wght end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="pc0">CNTR</label>
-          <input id="pc0" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="pc0Val">100</span>
+          <div class="dual-range">
+            <span class="dual-val" id="pc0Val">100</span>
+            <span class="dual-val" id="pc1Val">100</span>
+            <div class="dual-track"><div class="dual-fill" id="pcFill"></div></div>
+            <input id="pc0" class="is-start" type="range" min="0" max="100" step="1" value="100" aria-label="psi CNTR begin" />
+            <input id="pc1" class="is-end" type="range" min="0" max="100" step="1" value="100" aria-label="psi CNTR end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="ps0">slnt</label>
-          <input id="ps0" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="ps0Val">0</span>
+          <div class="dual-range">
+            <span class="dual-val" id="ps0Val">0</span>
+            <span class="dual-val" id="ps1Val">0</span>
+            <div class="dual-track"><div class="dual-fill" id="psFill"></div></div>
+            <input id="ps0" class="is-start" type="range" min="-12" max="0" step="0.25" value="0" aria-label="psi slnt begin" />
+            <input id="ps1" class="is-end" type="range" min="-12" max="0" step="0.25" value="0" aria-label="psi slnt end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="pt0">track</label>
-          <input id="pt0" type="range" min="-0.16" max="0.08" step="0.005" value="-0.04" />
-          <span class="val" id="pt0Val">-0.04</span>
+          <div class="dual-range">
+            <span class="dual-val" id="pt0Val">-0.04</span>
+            <span class="dual-val" id="pt1Val">0.01</span>
+            <div class="dual-track"><div class="dual-fill" id="ptFill"></div></div>
+            <input id="pt0" class="is-start" type="range" min="-0.16" max="0.08" step="0.005" value="-0.04" aria-label="psi track begin" />
+            <input id="pt1" class="is-end" type="range" min="-0.16" max="0.08" step="0.005" value="0.01" aria-label="psi track end" />
+          </div>
         </div>
       </div>
 
       <div class="group">
-        <p class="group-title" id="psiToTitle">psi · to 60</p>
-        <div class="row">
-          <label for="pw1">wdth</label>
-          <input id="pw1" type="range" min="65" max="130" step="1" value="65" />
-          <span class="val" id="pw1Val">65</span>
-        </div>
-        <div class="row">
-          <label for="pg1">wght</label>
-          <input id="pg1" type="range" min="200" max="1000" step="1" value="1000" />
-          <span class="val" id="pg1Val">1000</span>
-        </div>
-        <div class="row">
-          <label for="pc1">CNTR</label>
-          <input id="pc1" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="pc1Val">100</span>
-        </div>
-        <div class="row">
-          <label for="ps1">slnt</label>
-          <input id="ps1" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="ps1Val">0</span>
-        </div>
-        <div class="row">
-          <label for="pt1">track</label>
-          <input id="pt1" type="range" min="-0.16" max="0.08" step="0.005" value="0.01" />
-          <span class="val" id="pt1Val">0.01</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title" id="numFromTitle">num · from 0</p>
-        <div class="row">
+        <p class="group-title" id="numTitle">num · begin → end</p>
+        <div class="row row-dual">
           <label for="w0">wdth</label>
-          <input id="w0" type="range" min="65" max="130" step="1" value="130" />
-          <span class="val" id="w0Val">130</span>
+          <div class="dual-range">
+            <span class="dual-val" id="w0Val">130</span>
+            <span class="dual-val" id="w1Val">65</span>
+            <div class="dual-track"><div class="dual-fill" id="wFill"></div></div>
+            <input id="w0" class="is-start" type="range" min="65" max="130" step="1" value="130" aria-label="num wdth begin" />
+            <input id="w1" class="is-end" type="range" min="65" max="130" step="1" value="65" aria-label="num wdth end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="g0">wght</label>
-          <input id="g0" type="range" min="200" max="1000" step="1" value="200" />
-          <span class="val" id="g0Val">200</span>
+          <div class="dual-range">
+            <span class="dual-val" id="g0Val">200</span>
+            <span class="dual-val" id="g1Val">1000</span>
+            <div class="dual-track"><div class="dual-fill" id="gFill"></div></div>
+            <input id="g0" class="is-start" type="range" min="200" max="1000" step="1" value="200" aria-label="num wght begin" />
+            <input id="g1" class="is-end" type="range" min="200" max="1000" step="1" value="1000" aria-label="num wght end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="c0">CNTR</label>
-          <input id="c0" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="c0Val">100</span>
+          <div class="dual-range">
+            <span class="dual-val" id="c0Val">100</span>
+            <span class="dual-val" id="c1Val">100</span>
+            <div class="dual-track"><div class="dual-fill" id="cFill"></div></div>
+            <input id="c0" class="is-start" type="range" min="0" max="100" step="1" value="100" aria-label="num CNTR begin" />
+            <input id="c1" class="is-end" type="range" min="0" max="100" step="1" value="100" aria-label="num CNTR end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="s0">slnt</label>
-          <input id="s0" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="s0Val">0</span>
+          <div class="dual-range">
+            <span class="dual-val" id="s0Val">0</span>
+            <span class="dual-val" id="s1Val">0</span>
+            <div class="dual-track"><div class="dual-fill" id="sFill"></div></div>
+            <input id="s0" class="is-start" type="range" min="-12" max="0" step="0.25" value="0" aria-label="num slnt begin" />
+            <input id="s1" class="is-end" type="range" min="-12" max="0" step="0.25" value="0" aria-label="num slnt end" />
+          </div>
         </div>
-        <div class="row">
+        <div class="row row-dual">
           <label for="t0">track</label>
-          <input id="t0" type="range" min="-0.16" max="0.08" step="0.005" value="-0.04" />
-          <span class="val" id="t0Val">-0.04</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title" id="numToTitle">num · to 60</p>
-        <div class="row">
-          <label for="w1">wdth</label>
-          <input id="w1" type="range" min="65" max="130" step="1" value="65" />
-          <span class="val" id="w1Val">65</span>
-        </div>
-        <div class="row">
-          <label for="g1">wght</label>
-          <input id="g1" type="range" min="200" max="1000" step="1" value="1000" />
-          <span class="val" id="g1Val">1000</span>
-        </div>
-        <div class="row">
-          <label for="c1">CNTR</label>
-          <input id="c1" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="c1Val">100</span>
-        </div>
-        <div class="row">
-          <label for="s1">slnt</label>
-          <input id="s1" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="s1Val">0</span>
-        </div>
-        <div class="row">
-          <label for="t1">track</label>
-          <input id="t1" type="range" min="-0.16" max="0.08" step="0.005" value="0.01" />
-          <span class="val" id="t1Val">0.01</span>
+          <div class="dual-range">
+            <span class="dual-val" id="t0Val">-0.04</span>
+            <span class="dual-val" id="t1Val">0.01</span>
+            <div class="dual-track"><div class="dual-fill" id="tFill"></div></div>
+            <input id="t0" class="is-start" type="range" min="-0.16" max="0.08" step="0.005" value="-0.04" aria-label="num track begin" />
+            <input id="t1" class="is-end" type="range" min="-0.16" max="0.08" step="0.005" value="0.01" aria-label="num track end" />
+          </div>
         </div>
       </div>
 
@@ -473,13 +567,9 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-        <button type="button" id="replayBtn">replay</button>
-      </div>
     </aside>
 
-    <script src="artboard-view.js?v=14"></script>
+    <script src="artboard-view.js?v=18"></script>
     <script>
       (function () {
         var LS_KEY = "animator:v2:psi-count:settings:v6";
@@ -539,29 +629,22 @@
           numFs: document.getElementById("numFsVal"),
           lh: document.getElementById("lhVal"),
           oy: document.getElementById("oyVal"),
-          pw0: document.getElementById("pw0Val"),
-          pg0: document.getElementById("pg0Val"),
-          pc0: document.getElementById("pc0Val"),
-          ps0: document.getElementById("ps0Val"),
-          pt0: document.getElementById("pt0Val"),
-          pw1: document.getElementById("pw1Val"),
-          pg1: document.getElementById("pg1Val"),
-          pc1: document.getElementById("pc1Val"),
-          ps1: document.getElementById("ps1Val"),
-          pt1: document.getElementById("pt1Val"),
-          w0: document.getElementById("w0Val"),
-          g0: document.getElementById("g0Val"),
-          c0: document.getElementById("c0Val"),
-          s0: document.getElementById("s0Val"),
-          t0: document.getElementById("t0Val"),
-          w1: document.getElementById("w1Val"),
-          g1: document.getElementById("g1Val"),
-          c1: document.getElementById("c1Val"),
-          s1: document.getElementById("s1Val"),
-          t1: document.getElementById("t1Val"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
         };
+
+        var DUALS = [
+          { start: "pw0", end: "pw1", fill: "pwFill" },
+          { start: "pg0", end: "pg1", fill: "pgFill" },
+          { start: "pc0", end: "pc1", fill: "pcFill" },
+          { start: "ps0", end: "ps1", fill: "psFill" },
+          { start: "pt0", end: "pt1", fill: "ptFill" },
+          { start: "w0", end: "w1", fill: "wFill" },
+          { start: "g0", end: "g1", fill: "gFill" },
+          { start: "c0", end: "c1", fill: "cFill" },
+          { start: "s0", end: "s1", fill: "sFill" },
+          { start: "t0", end: "t1", fill: "tFill" },
+        ];
 
         Object.keys(DEFAULTS).forEach(function (key) {
           els[key] = document.getElementById(key);
@@ -602,15 +685,11 @@
         function syncTitles() {
           var from = String(Math.round(countFrom()));
           var to = String(Math.round(countTo()));
-          var psiFrom = document.getElementById("psiFromTitle");
-          var psiTo = document.getElementById("psiToTitle");
-          var numFrom = document.getElementById("numFromTitle");
-          var numTo = document.getElementById("numToTitle");
+          var psiTitle = document.getElementById("psiTitle");
+          var numTitle = document.getElementById("numTitle");
           var motion = document.getElementById("motionTitle");
-          if (psiFrom) psiFrom.textContent = "psi · from " + from;
-          if (psiTo) psiTo.textContent = "psi · to " + to;
-          if (numFrom) numFrom.textContent = "num · from " + from;
-          if (numTo) numTo.textContent = "num · to " + to;
+          if (psiTitle) psiTitle.textContent = "psi · " + from + " → " + to;
+          if (numTitle) numTitle.textContent = "num · " + from + " → " + to;
           if (motion) motion.textContent = "motion · " + from + " → " + to + " → " + from;
         }
 
@@ -768,6 +847,45 @@
           return Math.round(Number(v)) + "px";
         }
 
+        function thumbPct(el) {
+          var min = parseFloat(el.min);
+          var max = parseFloat(el.max);
+          var span = max - min || 1;
+          return ((parseFloat(el.value) - min) / span) * 100;
+        }
+
+        function updateDualUI(spec) {
+          var startEl = els[spec.start];
+          var endEl = els[spec.end];
+          if (!startEl || !endEl) return;
+          var fill = document.getElementById(spec.fill);
+          var startVal = document.getElementById(spec.start + "Val");
+          var endVal = document.getElementById(spec.end + "Val");
+          var a = parseFloat(startEl.value);
+          var b = parseFloat(endEl.value);
+          var min = parseFloat(startEl.min);
+          var max = parseFloat(startEl.max);
+          var span = max - min || 1;
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          if (fill) {
+            fill.style.left = ((lo - min) / span) * 100 + "%";
+            fill.style.width = Math.max(0, ((hi - lo) / span) * 100) + "%";
+          }
+          if (startVal) {
+            startVal.textContent = fmt(spec.start, a);
+            startVal.style.left = thumbPct(startEl) + "%";
+          }
+          if (endVal) {
+            endVal.textContent = fmt(spec.end, b);
+            endVal.style.left = thumbPct(endEl) + "%";
+          }
+        }
+
+        function updateAllDualUI() {
+          DUALS.forEach(updateDualUI);
+        }
+
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--bg-image", els.grad.checked ? GRADIENT : "none");
@@ -778,6 +896,7 @@
           root.style.setProperty("--oy", String(els.oy.value));
           applyAlign();
           syncTitles();
+          updateAllDualUI();
         }
 
         function paintVals() {
@@ -854,9 +973,6 @@
             save();
           });
         });
-
-        document.getElementById("resetBtn").addEventListener("click", reset);
-        document.getElementById("replayBtn").addEventListener("click", restart);
 
         function start() {
           loadSaved();

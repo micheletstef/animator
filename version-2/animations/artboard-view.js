@@ -196,16 +196,24 @@
     };
     wrap._artboardView = api;
     global.ArtboardView.current = api;
-    ensureCaption();
+    if (captionsEnabled()) {
+      ensureCaption();
+      ensureCaptionUi();
+    }
     ensureGuides();
     ensureGuidesUi();
-    ensureCaptionUi();
     enhancePanel();
+    ensureCaseUi();
     watchPanel();
     return api;
   }
 
   var DEFAULT_CAPTION = "ABC Placeholder Caption";
+
+  function captionsEnabled() {
+    var root = global.document.body || global.document.documentElement;
+    return !(root && root.hasAttribute("data-no-caption"));
+  }
 
   function pageKey(prefix) {
     return prefix + global.location.pathname + global.location.search;
@@ -409,6 +417,108 @@
     });
   }
 
+  var CASE_MODES = ["none", "lower", "upper"];
+  var CASE_GLYPH = { none: "Aa", lower: "aa", upper: "AA" };
+  var CASE_NAME = { none: "unchanged", lower: "lowercase", upper: "uppercase" };
+
+  function applyCaseText(text, mode) {
+    text = String(text == null ? "" : text);
+    if (mode === "lower") return text.toLowerCase();
+    if (mode === "upper") return text.toUpperCase();
+    return text;
+  }
+
+  function isContentTextField(el) {
+    if (!el || el.id === "stageCaption") return false;
+    var tag = el.tagName;
+    if (tag === "TEXTAREA") return true;
+    if (tag !== "INPUT") return false;
+    var type = (el.getAttribute("type") || "text").toLowerCase();
+    if (type !== "text") return false;
+    if ((el.getAttribute("inputmode") || "").toLowerCase() === "numeric") return false;
+    return true;
+  }
+
+  function paintCaseBtn(btn, mode) {
+    btn.textContent = CASE_GLYPH[mode] || CASE_GLYPH.none;
+    btn.setAttribute("data-mode", mode);
+    btn.title = CASE_NAME[mode] || CASE_NAME.none;
+    btn.setAttribute(
+      "aria-label",
+      "letter case: " + (CASE_NAME[mode] || CASE_NAME.none)
+    );
+  }
+
+  function enhanceCaseField(field) {
+    if (!isContentTextField(field) || field.dataset.caseToggle === "1") return;
+    var row = field.closest(".row");
+    if (!row) return;
+    field.dataset.caseToggle = "1";
+    row.classList.add("row-case");
+
+    var state = { mode: "none", source: field.value, applying: false };
+
+    var btn = global.document.createElement("button");
+    btn.type = "button";
+    btn.className = "case-toggle";
+    paintCaseBtn(btn, state.mode);
+
+    function apply() {
+      var next = applyCaseText(state.source, state.mode);
+      paintCaseBtn(btn, state.mode);
+      if (field.value === next) return;
+      state.applying = true;
+      field.value = next;
+      try {
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+      } finally {
+        state.applying = false;
+      }
+    }
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (state.mode === "none") state.source = field.value;
+      var idx = CASE_MODES.indexOf(state.mode);
+      state.mode = CASE_MODES[(idx + 1) % CASE_MODES.length];
+      apply();
+    });
+
+    field.addEventListener(
+      "input",
+      function () {
+        if (state.applying) return;
+        state.source = field.value;
+        if (state.mode === "none") return;
+        var next = applyCaseText(state.source, state.mode);
+        if (next === field.value) return;
+        var start = field.selectionStart;
+        var end = field.selectionEnd;
+        state.applying = true;
+        field.value = next;
+        state.applying = false;
+        try {
+          if (start != null && end != null) field.setSelectionRange(start, end);
+        } catch (err) {}
+      },
+      true
+    );
+
+    if (field.nextSibling) {
+      field.parentNode.insertBefore(btn, field.nextSibling);
+    } else {
+      field.parentNode.appendChild(btn);
+    }
+  }
+
+  function ensureCaseUi() {
+    var group = findPanelGroup("content") || findPanelGroup("copy");
+    if (!group) return;
+    var fields = group.querySelectorAll("input, textarea");
+    for (var i = 0; i < fields.length; i++) enhanceCaseField(fields[i]);
+  }
+
   function defaultGuides() {
     var m = Math.round(cssVarNumber("--pad-l", cssVarNumber("--pad-t", 64)));
     return {
@@ -474,11 +584,22 @@
     overlay.setAttribute("aria-hidden", g.on ? "false" : "true");
     var cols = overlay.querySelector(".guide-cols");
     if (!cols) return;
-    cols.style.gap = g.gutter + "px";
-    cols.style.gridTemplateColumns = "repeat(" + g.cols + ", minmax(0, 1fr))";
-    while (cols.childElementCount > g.cols) cols.removeChild(cols.lastChild);
-    while (cols.childElementCount < g.cols) {
+    var tracks = [];
+    var i;
+    for (i = 0; i < g.cols; i++) {
+      if (i) tracks.push((g.gutter > 0 ? g.gutter : 1) + "px");
+      tracks.push("minmax(0, 1fr)");
+    }
+    cols.style.gap = "0px";
+    cols.style.gridTemplateColumns = tracks.join(" ");
+    var want = g.cols > 1 ? g.cols * 2 - 1 : 1;
+    while (cols.childElementCount > want) cols.removeChild(cols.lastChild);
+    while (cols.childElementCount < want) {
       cols.appendChild(global.document.createElement("span"));
+    }
+    for (i = 0; i < cols.childElementCount; i++) {
+      cols.children[i].className =
+        g.cols > 1 && i % 2 === 1 ? "guide-gutter" : "";
     }
   }
 
@@ -502,7 +623,18 @@
         '<span class="guide-matte-l"></span>' +
         "</div>" +
         '<div class="guide-margin"></div>' +
-        '<div class="guide-cols"></div>';
+        '<div class="guide-cols"></div>' +
+        '<div class="guide-center">' +
+        '<span class="guide-center-h"></span>' +
+        '<span class="guide-center-v"></span>' +
+        "</div>";
+    } else if (!overlay.querySelector(".guide-center")) {
+      var center = global.document.createElement("div");
+      center.className = "guide-center";
+      center.innerHTML =
+        '<span class="guide-center-h"></span>' +
+        '<span class="guide-center-v"></span>';
+      overlay.appendChild(center);
     }
     applyGuides();
   }
@@ -534,8 +666,18 @@
       "</div>";
     var captionGroup = global.document.getElementById("stageCaption");
     captionGroup = captionGroup && captionGroup.closest(".group");
-    if (captionGroup) panel.insertBefore(group, captionGroup);
-    else panel.appendChild(group);
+    if (captionGroup) {
+      panel.insertBefore(group, captionGroup);
+    } else {
+      var colorGroup = findPanelGroup("color");
+      if (colorGroup && colorGroup.nextSibling) {
+        panel.insertBefore(group, colorGroup.nextSibling);
+      } else {
+        var actions = panel.querySelector(".actions");
+        if (actions) panel.insertBefore(group, actions);
+        else panel.appendChild(group);
+      }
+    }
 
     var els = {
       on: global.document.getElementById("guideOn"),
@@ -682,6 +824,7 @@
     if (typeof MutationObserver === "undefined") return;
     var mo = new MutationObserver(function () {
       enhancePanel();
+      ensureCaseUi();
     });
     mo.observe(panel, { childList: true });
   }

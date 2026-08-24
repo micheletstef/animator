@@ -269,7 +269,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -381,13 +381,9 @@ fisheye,
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-        <button type="button" id="replayBtn">replay</button>
-      </div>
     </aside>
 
-    <script src="artboard-view.js?v=14"></script>
+    <script src="artboard-view.js?v=18"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = "Metallic\nCUT 30%\nMist & gun\nfisheye,\n60 psi";
@@ -711,9 +707,6 @@ fisheye,
             if (key === "tx") restart();
           });
         });
-
-        document.getElementById("resetBtn").addEventListener("click", reset);
-        document.getElementById("replayBtn").addEventListener("click", restart);
 
         loadSaved();
         buildLockup(els.tx.value);

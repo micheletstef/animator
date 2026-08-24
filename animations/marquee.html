@@ -466,9 +466,6 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-      </div>
     </aside>
 
     <script src="artboard-zoom.js?v=3"></script>
@@ -1020,14 +1017,6 @@
             setValue(k, v);
             if (LAYOUT_KEYS[k]) requestAnimationFrame(computeLayout);
           });
-        });
-
-        document.getElementById("resetBtn").addEventListener("click", function () {
-          Object.keys(DEFAULTS).forEach(function (k) {
-            setValue(k, DEFAULTS[k]);
-          });
-          updateAllDualUI();
-          requestAnimationFrame(computeLayout);
         });
 
         window.addEventListener("resize", function () {

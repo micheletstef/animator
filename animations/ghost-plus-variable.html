@@ -132,7 +132,6 @@
         filter: url(#ghost-outline);
       }
 
-
       .panel {
         align-self: stretch;
         max-height: 100%;
@@ -486,9 +485,6 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-      </div>
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
@@ -782,13 +778,6 @@
               buildGhosts();
             }
           });
-        });
-
-        document.getElementById("resetBtn").addEventListener("click", function () {
-          Object.keys(DEFAULTS).forEach(function (k) {
-            setValue(k, DEFAULTS[k]);
-          });
-          buildGhosts();
         });
 
         applyAxisLimits();

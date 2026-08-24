@@ -4,73 +4,73 @@
       "id": "width-fill",
       "label": "width fill",
       "url": "animations/width-fill.html",
-      "mtime": 1787577600
+      "mtime": 1787578800
     },
     {
       "id": "alternates-1",
       "label": "alternates 1",
       "url": "animations/alternates-1.html",
-      "mtime": 1787576400
+      "mtime": 1787578570
     },
     {
       "id": "alternates-2",
       "label": "alternates 2",
       "url": "animations/alternates-2.html",
-      "mtime": 1787576400
+      "mtime": 1787578570
     },
     {
       "id": "nine",
       "label": "Single – 9",
       "url": "animations/glyph-cycle.html?ch=9",
-      "mtime": 1787576034
+      "mtime": 1787578570
     },
     {
       "id": "g",
       "label": "Single – G",
       "url": "animations/glyph-cycle.html?ch=G",
-      "mtime": 1787576034
+      "mtime": 1787578570
     },
     {
       "id": "s",
       "label": "Single – S",
       "url": "animations/glyph-cycle.html?ch=S",
-      "mtime": 1787576034
+      "mtime": 1787578570
     },
     {
       "id": "width-swap",
       "label": "width swap",
       "url": "animations/width-swap.html",
-      "mtime": 1787576034
+      "mtime": 1787578570
     },
     {
       "id": "weight-cascade",
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",
-      "mtime": 1787576034
+      "mtime": 1787578570
     },
     {
       "id": "psi-count",
-      "label": "PSI 0 \u2192 60",
+      "label": "PSI 0 → 60",
       "url": "animations/psi-count.html",
-      "mtime": 1787576034
+      "mtime": 1787578570
     },
     {
       "id": "matrix-v2",
       "label": "matrix v2",
       "url": "animations/matrix-v2.html",
-      "mtime": 1787576344
+      "mtime": 1787578570
     },
     {
       "id": "technical-outline",
       "label": "technical outline v1",
       "url": "animations/technical-outline.html",
-      "mtime": 1787576344
+      "mtime": 1787578570
     },
     {
       "id": "technical-outline-v2",
       "label": "technical outline v2",
       "url": "animations/technical-outline-v2.html",
-      "mtime": 1787576344
+      "mtime": 1787578570
     }
   ]
 }

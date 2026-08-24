@@ -350,9 +350,6 @@
           <input id="hd" type="range" min="0" max="2000" step="50" value="0" />
           <span class="val" id="hd-val">0ms</span>
         </div>
-        <div class="actions">
-          <button type="button" id="resetBtn">reset</button>
-        </div>
       </div>
     </aside>
 
@@ -581,12 +578,6 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-          });
-        });
-
-        document.getElementById("resetBtn").addEventListener("click", function () {
-          Object.keys(DEFAULTS).forEach(function (k) {
-            setValue(k, DEFAULTS[k]);
           });
         });
 

@@ -236,10 +236,10 @@
   }
 
   /** Layout anchor from advances + font metrics — stable while ink bounds shift during animation. */
-  function layoutPlacementAnchor(font, fontSize, text, runs) {
+  function layoutPlacementAnchor(font, fontSize, text, runs, opts) {
     if (!runs.length) return null;
     var lines = splitLines(text);
-    var lineHeight = lineHeightPx(font, fontSize);
+    var lineHeight = leadingPx(font, fontSize, opts);
     var asc = (font.ascender / font.unitsPerEm) * fontSize;
     var desc = (font.descender / font.unitsPerEm) * fontSize;
     var emMid = (asc + desc) / 2;
@@ -262,7 +262,7 @@
 
   function resolvePlacementAnchor(font, fontSize, text, runs, opts) {
     if (opts && opts.stableAnchor) {
-      return layoutPlacementAnchor(font, fontSize, text, runs) || placementAnchorForRuns(runs);
+      return layoutPlacementAnchor(font, fontSize, text, runs, opts) || placementAnchorForRuns(runs);
     }
     return placementAnchorForRuns(runs);
   }
@@ -555,6 +555,14 @@
     return fontSize;
   }
 
+  /** Unitless CSS line-height × font size. Falls back to font metrics when unset. */
+  function leadingPx(font, fontSize, opts) {
+    if (opts && opts.leading != null && isFinite(Number(opts.leading))) {
+      return Number(opts.leading) * fontSize;
+    }
+    return lineHeightPx(font, fontSize);
+  }
+
   function splitLines(text) {
     return String(text).split(/\r\n|\r|\n/);
   }
@@ -591,11 +599,12 @@
   /**
    * Lay out glyphs via HarfBuzz (GPOS kern) + opentype paths.
    * Supports line breaks; lines are center-aligned; opts.tracking adds letter-spacing.
+   * opts.leading is a unitless CSS line-height (× font size).
    */
   function glyphRunsForText(font, text, fontSize, variation, opts) {
     if (!text) return [];
     var lines = splitLines(text);
-    var lineHeight = lineHeightPx(font, fontSize);
+    var lineHeight = leadingPx(font, fontSize, opts);
     var track = trackingPx(opts);
     var lineWidths = lines.map(function (line) {
       return shapeLineWithEngine(cachedHbState, font, line, 0, 0, fontSize, variation, track).width;
@@ -643,73 +652,98 @@
     return { x: fmt(p.x), y: fmt(p.y) };
   }
 
-  function appendOutlineToGroup(g, outline, map, colors, strokeW, nodeStrokeW, strokeAttr) {
+  function outlineDrawStyle(opts) {
+    var strokeW = opts && opts.strokeWidth != null ? Number(opts.strokeWidth) : 1.25;
+    var nodeStrokeW =
+      opts && opts.nodeStrokeWidth != null ? Number(opts.nodeStrokeWidth) : 1;
+    var nodeSize = opts && opts.nodeSize != null ? Number(opts.nodeSize) : 9;
+    var handleSize = opts && opts.handleSize != null ? Number(opts.handleSize) : 8;
+    var nodeFill = !!(opts && (opts.nodeFill === true || opts.nodeFill === "filled"));
+    var scale = opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
+    if (!isFinite(strokeW) || strokeW < 0) strokeW = 1.25;
+    if (!isFinite(nodeStrokeW) || nodeStrokeW < 0) nodeStrokeW = 1;
+    if (!isFinite(nodeSize) || nodeSize < 0) nodeSize = 9;
+    if (!isFinite(handleSize) || handleSize < 0) handleSize = 8;
+    if (!isFinite(scale) || scale <= 0) scale = 1;
+    return {
+      strokeW: strokeW * scale,
+      nodeStrokeW: nodeStrokeW * scale,
+      nodeSize: nodeSize * scale,
+      handleSize: handleSize * scale,
+      nodeFill: nodeFill,
+    };
+  }
+
+  function paintPoint(el, color, style) {
+    el.setAttribute("fill", style.nodeFill ? color : "none");
+    el.setAttribute("stroke", color);
+    el.setAttribute("stroke-width", String(style.nodeStrokeW));
+  }
+
+  function appendOutlineToGroup(g, outline, map, colors, strokeAttr, style) {
     var geom = outline.geom;
     var pathEl = ns("path");
     pathEl.setAttribute("class", "glyph-outline-path");
     pathEl.setAttribute("d", outline.d);
     pathEl.setAttribute("fill", "none");
     pathEl.setAttribute("stroke", strokeAttr || colors.path);
-    pathEl.setAttribute("stroke-width", String(strokeW));
-    pathEl.setAttribute("vector-effect", "non-scaling-stroke");
+    pathEl.setAttribute("stroke-width", String(style.strokeW));
     g.appendChild(pathEl);
 
-    geom.handleLines.forEach(function (seg) {
-      var a = mapPoint(map, seg[0]);
-      var b = mapPoint(map, seg[1]);
-      var line = ns("line");
-      line.setAttribute("class", "glyph-outline-handle-line");
-      line.setAttribute("x1", a.x);
-      line.setAttribute("y1", a.y);
-      line.setAttribute("x2", b.x);
-      line.setAttribute("y2", b.y);
-      line.setAttribute("stroke", strokeAttr || colors.handleLine);
-      line.setAttribute("stroke-width", String(nodeStrokeW));
-      line.setAttribute("vector-effect", "non-scaling-stroke");
-      g.appendChild(line);
-    });
+    if (style.handleSize > 0) {
+      geom.handleLines.forEach(function (seg) {
+        var a = mapPoint(map, seg[0]);
+        var b = mapPoint(map, seg[1]);
+        var line = ns("line");
+        line.setAttribute("class", "glyph-outline-handle-line");
+        line.setAttribute("x1", a.x);
+        line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x);
+        line.setAttribute("y2", b.y);
+        line.setAttribute("stroke", strokeAttr || colors.handleLine);
+        line.setAttribute("stroke-width", String(style.nodeStrokeW));
+        g.appendChild(line);
+      });
 
-    geom.handles.forEach(function (h) {
-      var p = mapPoint(map, h);
-      var c = ns("circle");
-      c.setAttribute("class", "glyph-outline-handle");
-      c.setAttribute("cx", p.x);
-      c.setAttribute("cy", p.y);
-      c.setAttribute("r", "4");
-      c.setAttribute("fill", "none");
-      c.setAttribute("stroke", strokeAttr || colors.offCurve);
-      c.setAttribute("stroke-width", String(nodeStrokeW));
-      g.appendChild(c);
-    });
-
-    geom.nodes.forEach(function (n) {
-      var p = mapPoint(map, n);
-      var stroke = strokeAttr || (n.smooth ? colors.onCurveSmooth : colors.onCurve);
-      if (n.smooth) {
+      var handleR = style.handleSize / 2;
+      geom.handles.forEach(function (h) {
+        var p = mapPoint(map, h);
         var c = ns("circle");
-        c.setAttribute("class", "glyph-outline-node glyph-outline-node-smooth");
+        c.setAttribute("class", "glyph-outline-handle");
         c.setAttribute("cx", p.x);
         c.setAttribute("cy", p.y);
-        c.setAttribute("r", "4.5");
-        c.setAttribute("fill", "none");
-        c.setAttribute("stroke", stroke);
-        c.setAttribute("stroke-width", String(nodeStrokeW));
+        c.setAttribute("r", String(handleR));
+        paintPoint(c, strokeAttr || colors.offCurve, style);
         g.appendChild(c);
-      } else {
-        var size = 9;
-        var half = size / 2;
-        var r = ns("rect");
-        r.setAttribute("class", "glyph-outline-node glyph-outline-node-corner");
-        r.setAttribute("x", fmt(p.x - half));
-        r.setAttribute("y", fmt(p.y - half));
-        r.setAttribute("width", size);
-        r.setAttribute("height", size);
-        r.setAttribute("fill", "none");
-        r.setAttribute("stroke", stroke);
-        r.setAttribute("stroke-width", String(nodeStrokeW));
-        g.appendChild(r);
-      }
-    });
+      });
+    }
+
+    if (style.nodeSize > 0) {
+      var nodeR = style.nodeSize / 2;
+      geom.nodes.forEach(function (n) {
+        var p = mapPoint(map, n);
+        var stroke = strokeAttr || (n.smooth ? colors.onCurveSmooth : colors.onCurve);
+        if (n.smooth) {
+          var c = ns("circle");
+          c.setAttribute("class", "glyph-outline-node glyph-outline-node-smooth");
+          c.setAttribute("cx", p.x);
+          c.setAttribute("cy", p.y);
+          c.setAttribute("r", String(nodeR));
+          paintPoint(c, stroke, style);
+          g.appendChild(c);
+        } else {
+          var half = style.nodeSize / 2;
+          var r = ns("rect");
+          r.setAttribute("class", "glyph-outline-node glyph-outline-node-corner");
+          r.setAttribute("x", fmt(p.x - half));
+          r.setAttribute("y", fmt(p.y - half));
+          r.setAttribute("width", String(style.nodeSize));
+          r.setAttribute("height", String(style.nodeSize));
+          paintPoint(r, stroke, style);
+          g.appendChild(r);
+        }
+      });
+    }
   }
 
   function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
@@ -745,9 +779,8 @@
 
     var colors = resolveColors(opts);
     var singleColor = resolveSingleColor(opts);
-    var strokeW = opts && opts.strokeWidth != null ? opts.strokeWidth : 1.25;
-    var nodeStrokeW = opts && opts.nodeStrokeWidth != null ? opts.nodeStrokeWidth : 1;
     var strokeAttr = singleColor ? "currentColor" : null;
+    var style = outlineDrawStyle(opts);
 
     var g = ns("g");
     g.setAttribute("class", "glyph-outline-group");
@@ -757,7 +790,7 @@
 
     runs.forEach(function (run) {
       var outline = buildOutline(run.commands, map);
-      if (outline) appendOutlineToGroup(g, outline, map, colors, strokeW, nodeStrokeW, strokeAttr);
+      if (outline) appendOutlineToGroup(g, outline, map, colors, strokeAttr, style);
     });
 
     svg.appendChild(g);

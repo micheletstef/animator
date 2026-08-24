@@ -21,15 +21,16 @@
         --bg-image: linear-gradient(
           to bottom,
           #2c2839 0%,
-          #2a2f45 10%,
-          #263957 24%,
-          #1f4166 32%,
-          #144a76 40%,
-          #085488 48%,
-          #01609a 56%,
-          #0178b0 72%,
-          #0091c4 84%,
-          #16a9d5 94%,
+          #2a2f45 8%,
+          #263957 18%,
+          #1f4166 26%,
+          #144a76 34%,
+          #085488 40%,
+          #01609a 48%,
+          #0178b0 58%,
+          #0091c4 68%,
+          #16a9d5 78%,
+          #58bdd9 90%,
           #58bdd9 100%
         );
         --fg: #000000;
@@ -413,7 +414,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -590,15 +591,16 @@
 
     <span class="probe" id="probe" aria-hidden="true"></span>
 
-    <script src="artboard-view.js?v=14"></script>
+    <script src="artboard-view.js?v=18"></script>
     <script>
       (function () {
         var GRADIENT =
-          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 10%, #263957 24%, #1f4166 32%, #144a76 40%, #085488 48%, #01609a 56%, #0178b0 72%, #0091c4 84%, #16a9d5 94%, #58bdd9 100%)";
+          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 18%, #1f4166 26%, #144a76 34%, #085488 40%, #01609a 48%, #0178b0 58%, #0091c4 68%, #16a9d5 78%, #58bdd9 90%, #58bdd9 100%)";
         var LS_KEY = "animator:v2:width-swap:settings:v6";
         var LS_KEY_PREV = "animator:v2:width-swap:settings:v5";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
+        var R_COND_NUDGE_EM = -0.05;
         var R_EXT_NUDGE_EM = -0.05;
 
         var root = document.documentElement;
@@ -945,7 +947,9 @@
               var u = span <= 0 ? 1 : (wdth - range.lo) / span;
               if (u < 0) u = 0;
               if (u > 1) u = 1;
-              unit.el.style.left = R_EXT_NUDGE_EM * u + "em";
+              unit.el.style.left =
+                (R_COND_NUDGE_EM + (R_EXT_NUDGE_EM - R_COND_NUDGE_EM) * u) +
+                "em";
             }
           }
           unit.inner.style.fontVariationSettings = vfString(

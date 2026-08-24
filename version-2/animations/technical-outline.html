@@ -98,11 +98,14 @@
       }
 
       .outline-layer .glyph-outline-path,
-      .outline-layer .glyph-outline-handle-line,
+      .outline-layer .glyph-outline-handle-line {
+        stroke: currentColor;
+        fill: none;
+      }
+
       .outline-layer .glyph-outline-handle,
       .outline-layer .glyph-outline-node {
         stroke: currentColor;
-        fill: none;
       }
 
       .probe {
@@ -220,7 +223,8 @@
       }
 
       .row input[type="text"],
-      .row textarea {
+      .row textarea,
+      .row select {
         grid-column: 2 / 4;
         width: 100%;
         padding: 4px 6px;
@@ -229,6 +233,10 @@
         background: #111;
         color: #1f1f1f;
         font: inherit;
+      }
+
+      .row select {
+        cursor: pointer;
       }
 
       .row textarea {
@@ -381,7 +389,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -421,6 +429,32 @@
           <label for="ln">line</label>
           <input id="ln" type="color" value="#0078ff" />
           <span class="val" id="lnVal">#0078ff</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">outline</p>
+        <div class="row">
+          <label for="sw">stroke</label>
+          <input id="sw" type="range" min="0.25" max="8" step="0.25" value="1.25" />
+          <span class="val" id="swVal">1.25</span>
+        </div>
+        <div class="row">
+          <label for="ns">nodes</label>
+          <input id="ns" type="range" min="0" max="24" step="0.5" value="9" />
+          <span class="val" id="nsVal">9.0</span>
+        </div>
+        <div class="row">
+          <label for="hs">handles</label>
+          <input id="hs" type="range" min="0" max="24" step="0.5" value="8" />
+          <span class="val" id="hsVal">8.0</span>
+        </div>
+        <div class="row">
+          <label for="nf">fill</label>
+          <select id="nf">
+            <option value="outline" selected>outline</option>
+            <option value="filled">filled</option>
+          </select>
         </div>
       </div>
 
@@ -515,15 +549,11 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="resetBtn">reset</button>
-        <button type="button" id="replayBtn">replay</button>
-      </div>
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js"></script>
-    <script src="artboard-view.js?v=14"></script>
+    <script src="../../animations/glyph-outlines.js?v=2"></script>
+    <script src="artboard-view.js?v=18"></script>
     <script>
       (function () {
         var outlineSvg = document.getElementById("outlines");
@@ -626,6 +656,15 @@
 
         function outlineScale() {
           return parseFloat(els.os.value) / 100;
+        }
+
+        function outlineStyleOpts() {
+          return {
+            strokeWidth: parseFloat(els.sw.value),
+            nodeSize: parseFloat(els.ns.value),
+            handleSize: parseFloat(els.hs.value),
+            nodeFill: els.nf && els.nf.value === "filled",
+          };
         }
 
         var KERN_DUAL = {
@@ -743,6 +782,7 @@
             tracking: kerningPxAt(t),
             stableAnchor: true,
           };
+          Object.assign(opts, outlineStyleOpts());
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(
             outlineSvg,
@@ -862,6 +902,10 @@
           os: 100,
           kn0: 0,
           kn1: 0,
+          sw: 1.25,
+          ns: 9,
+          hs: 8,
+          nf: "outline",
           wMin: 200,
           wMax: 1000,
           cMin: 0,
@@ -875,7 +919,7 @@
         };
 
         var COLOR_KEYS = { bg: 1, ln: 1 };
-        var STRING_KEYS = { ch: 1 };
+        var STRING_KEYS = { ch: 1, nf: 1 };
         var els = {
           bg: document.getElementById("bg"),
           ln: document.getElementById("ln"),
@@ -885,6 +929,10 @@
           os: document.getElementById("os"),
           kn0: document.getElementById("kn0"),
           kn1: document.getElementById("kn1"),
+          sw: document.getElementById("sw"),
+          ns: document.getElementById("ns"),
+          hs: document.getElementById("hs"),
+          nf: document.getElementById("nf"),
           wMin: document.getElementById("wMin"),
           wMax: document.getElementById("wMax"),
           cMin: document.getElementById("cMin"),
@@ -901,6 +949,9 @@
           bg: document.getElementById("bgVal"),
           ln: document.getElementById("lnVal"),
           os: document.getElementById("osVal"),
+          sw: document.getElementById("swVal"),
+          ns: document.getElementById("nsVal"),
+          hs: document.getElementById("hsVal"),
           cy: document.getElementById("cyVal"),
           hd: document.getElementById("hdVal"),
         };
@@ -915,6 +966,8 @@
         function fmt(key, v) {
           if (key === "bg" || key === "ln") return String(v).toLowerCase();
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
+          if (key === "sw") return Number(v).toFixed(2);
+          if (key === "ns" || key === "hs") return Number(v).toFixed(1);
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
           if (key === "hd") return Math.round(Number(v)) + "ms";
           return String(v);
@@ -946,6 +999,10 @@
             key === "bg" ||
             key === "os" ||
             key === "ch" ||
+            key === "sw" ||
+            key === "ns" ||
+            key === "hs" ||
+            key === "nf" ||
             key === "kn0" ||
             key === "kn1" ||
             key === "fs0" ||
@@ -1012,18 +1069,6 @@
             setValue(k, v);
           });
         });
-
-        document.getElementById("resetBtn").addEventListener("click", function () {
-          Object.keys(DEFAULTS).forEach(function (k) {
-            setValue(k, DEFAULTS[k]);
-          });
-          if (window.ArtboardView && window.ArtboardView.reset) {
-            window.ArtboardView.reset();
-          }
-          restart();
-        });
-
-        document.getElementById("replayBtn").addEventListener("click", restart);
 
         applyAxisLimits();
         load();

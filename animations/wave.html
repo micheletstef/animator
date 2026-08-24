@@ -354,9 +354,6 @@
           <input id="wh" type="range" min="400" max="1000" step="10" value="1000" />
           <span class="val" id="wh-val">1000</span>
         </div>
-        <div class="actions">
-          <button type="button" id="resetBtn">reset</button>
-        </div>
       </div>
     </aside>
 
@@ -544,12 +541,6 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
-          });
-        });
-
-        document.getElementById("resetBtn").addEventListener("click", function () {
-          Object.keys(DEFAULTS).forEach(function (k) {
-            setValue(k, DEFAULTS[k]);
           });
         });
 
