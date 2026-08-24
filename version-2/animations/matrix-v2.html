@@ -32,6 +32,59 @@
       }
 
       @font-face {
+        font-family: "IkarusFlairCondensedVariable";
+        src: url("../../fonts/ABCIkarusFlairCondensedVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusFlairVariable";
+        src: url("../../fonts/ABCIkarusFlairVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusFlairExtendedVariable";
+        src: url("../../fonts/ABCIkarusFlairExtendedVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusContrastCondensedVariable";
+        src: url("../../fonts/ABCIkarusContrastCondensedVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusContrastVariable";
+        src: url("../../fonts/ABCIkarusContrastVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "IkarusContrastExtendedVariable";
+        src: url("../../fonts/ABCIkarusContrastExtendedVariable.ttf")
+          format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
         font-family: "IkarusPlusVariable";
         src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
         font-weight: 100 1000;
@@ -125,19 +178,19 @@
       .matrix {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        align-items: stretch;
+        justify-content: flex-start;
         gap: 0;
         width: 100%;
         height: 100%;
       }
 
       .matrix-row {
-        display: flex;
-        flex-direction: row;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         align-items: center;
-        justify-content: center;
-        gap: 0;
+        justify-items: start;
+        gap: var(--guide-gutter, 24px);
         flex: 1 1 0;
         width: 100%;
         min-height: 0;
@@ -147,8 +200,9 @@
         position: relative;
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex: 0 0 auto;
+        justify-content: flex-start;
+        width: 100%;
+        min-width: 0;
         user-select: none;
         height: 100%;
       }
@@ -165,16 +219,40 @@
         font-variation-settings: "wght" 200, "slnt" 0;
       }
 
-      .glyph.col-condensed {
+      .glyph.fam-standard.col-condensed {
         font-family: "IkarusCondensedVariable", system-ui, sans-serif;
       }
 
-      .glyph.col-default {
+      .glyph.fam-standard.col-default {
         font-family: "IkarusVariable", system-ui, sans-serif;
       }
 
-      .glyph.col-extended {
+      .glyph.fam-standard.col-extended {
         font-family: "IkarusExtendedVariable", system-ui, sans-serif;
+      }
+
+      .glyph.fam-flair.col-condensed {
+        font-family: "IkarusFlairCondensedVariable", system-ui, sans-serif;
+      }
+
+      .glyph.fam-flair.col-default {
+        font-family: "IkarusFlairVariable", system-ui, sans-serif;
+      }
+
+      .glyph.fam-flair.col-extended {
+        font-family: "IkarusFlairExtendedVariable", system-ui, sans-serif;
+      }
+
+      .glyph.fam-contrast.col-condensed {
+        font-family: "IkarusContrastCondensedVariable", system-ui, sans-serif;
+      }
+
+      .glyph.fam-contrast.col-default {
+        font-family: "IkarusContrastVariable", system-ui, sans-serif;
+      }
+
+      .glyph.fam-contrast.col-extended {
+        font-family: "IkarusContrastExtendedVariable", system-ui, sans-serif;
       }
 
       .line {
@@ -321,6 +399,108 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .row.row-dual {
+        grid-template-columns: 80px minmax(0, 1fr);
+        margin-bottom: 12px;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 40px;
+        min-width: 0;
+      }
+
+      .dual-val {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        font-size: 10px;
+        line-height: 1.2;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+        z-index: 2;
+        white-space: nowrap;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 24px;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 14px;
+        width: 100%;
+        height: 22px;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track,
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb,
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
       .panel .actions {
         display: flex;
         gap: 8px;
@@ -349,7 +529,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
     <style>
       .stage .stage-caption {
         display: none !important;
@@ -423,6 +603,16 @@
           <input id="ms" type="range" min="8" max="72" step="1" value="26" />
           <span class="val" id="ms-val">26px</span>
         </div>
+        <div class="row row-dual">
+          <label for="w0">wght</label>
+          <div class="dual-range">
+            <span class="dual-val" id="w0Val">200</span>
+            <span class="dual-val" id="w1Val">1000</span>
+            <div class="dual-track"><div class="dual-fill" id="wFill"></div></div>
+            <input id="w0" class="is-start" type="range" min="200" max="1000" step="1" value="200" aria-label="wght begin" />
+            <input id="w1" class="is-end" type="range" min="200" max="1000" step="1" value="1000" aria-label="wght end" />
+          </div>
+        </div>
       </div>
 
       <div class="group">
@@ -441,9 +631,10 @@
 
     </aside>
 
-    <script src="artboard-view.js?v=18"></script>
+    <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
+        var FAMILIES = ["standard", "flair", "contrast"];
         var COLS = ["condensed", "default", "extended"];
         var COL_CLASS = {
           condensed: "col-condensed",
@@ -461,9 +652,8 @@
         var cells = [];
         var W_MIN = 200;
         var W_MAX = 1000;
-        var ROW_COUNT = 1;
-        var COL_COUNT = 3;
-        var ROW_KEYFRAMES = [[200, 1000, 200]];
+        var ROW_COUNT = FAMILIES.length;
+        var COL_COUNT = COLS.length;
 
         function parseChars(raw) {
           var lines = String(raw == null ? "" : raw).split(/\r?\n/);
@@ -475,13 +665,15 @@
             if (compact) nonempty.push(compact);
           }
           if (nonempty.length <= 1) {
-            chars = Array.from(nonempty.join("")).slice(0, 3);
+            chars = Array.from(nonempty.join("")).slice(0, ROW_COUNT);
           } else {
-            for (i = 0; i < nonempty.length && chars.length < 3; i++) {
+            for (i = 0; i < nonempty.length && chars.length < ROW_COUNT; i++) {
               chars.push(Array.from(nonempty[i])[0]);
             }
           }
-          return chars.length ? chars : ["a"];
+          if (!chars.length) chars = ["a"];
+          while (chars.length < ROW_COUNT) chars.push(chars[0]);
+          return chars;
         }
 
         function createCell(row, col, ch) {
@@ -491,33 +683,39 @@
           var measure = document.createElement("div");
           measure.className = "measure";
 
-          var metric = document.createElement("span");
-          metric.className = "metric";
+          var showMetric = row === ROW_COUNT - 1;
+          var metric = null;
+          var metricWeight = null;
+          if (showMetric) {
+            metric = document.createElement("span");
+            metric.className = "metric";
 
-          var metricFont = document.createElement("span");
-          metricFont.className = "metric-font";
-          metricFont.textContent = COL_LABELS[COLS[col]];
+            var metricFont = document.createElement("span");
+            metricFont.className = "metric-font";
+            metricFont.textContent = COL_LABELS[COLS[col]];
 
-          var metricWeight = document.createElement("span");
-          metricWeight.className = "metric-weight";
-          metricWeight.textContent = "200";
+            metricWeight = document.createElement("span");
+            metricWeight.className = "metric-weight";
+            metricWeight.textContent = "200";
 
-          metric.appendChild(metricFont);
-          metric.appendChild(metricWeight);
+            metric.appendChild(metricFont);
+            metric.appendChild(metricWeight);
+          }
 
           var lineLeft = document.createElement("span");
           lineLeft.className = "line line-left";
           lineLeft.setAttribute("aria-hidden", "true");
 
           var glyph = document.createElement("span");
-          glyph.className = "glyph " + COL_CLASS[COLS[col]];
+          glyph.className =
+            "glyph fam-" + FAMILIES[row] + " " + COL_CLASS[COLS[col]];
           glyph.textContent = ch;
 
           var lineRight = document.createElement("span");
           lineRight.className = "line line-right";
           lineRight.setAttribute("aria-hidden", "true");
 
-          measure.appendChild(metric);
+          if (metric) measure.appendChild(metric);
           measure.appendChild(lineLeft);
           measure.appendChild(glyph);
           measure.appendChild(lineRight);
@@ -538,12 +736,7 @@
         }
 
         function buildMatrix(chars) {
-          chars = chars && chars.length ? chars : ["a"];
-          ROW_COUNT = chars.length;
-          ROW_KEYFRAMES = [];
-          for (var r = 0; r < ROW_COUNT; r++) {
-            ROW_KEYFRAMES.push([W_MIN, W_MAX, W_MIN]);
-          }
+          chars = chars && chars.length === ROW_COUNT ? chars : parseChars("");
           matrix.innerHTML = "";
           cells = [];
           for (r = 0; r < ROW_COUNT; r++) {
@@ -560,7 +753,7 @@
 
         function applyChars(raw) {
           var chars = parseChars(raw);
-          if (chars.length !== ROW_COUNT || cells.length !== chars.length * COL_COUNT) {
+          if (cells.length !== ROW_COUNT * COL_COUNT) {
             buildMatrix(chars);
           } else {
             for (var i = 0; i < cells.length; i++) {
@@ -580,6 +773,8 @@
           ch: "a",
           fs: 180,
           ms: 26,
+          w0: W_MIN,
+          w1: W_MAX,
           cy: 4000,
           hd: 0,
         };
@@ -593,8 +788,16 @@
           ch: document.getElementById("ch"),
           fs: document.getElementById("fs"),
           ms: document.getElementById("ms"),
+          w0: document.getElementById("w0"),
+          w1: document.getElementById("w1"),
           cy: document.getElementById("cy"),
           hd: document.getElementById("hd"),
+        };
+
+        var WGHT_DUAL = {
+          start: "w0",
+          end: "w1",
+          fill: "wFill",
         };
 
         var vals = {
@@ -627,15 +830,55 @@
           return a + (b - a) * t;
         }
 
+        function weightRange() {
+          var start = parseFloat(els.w0.value);
+          var end = parseFloat(els.w1.value);
+          if (!isFinite(start)) start = W_MIN;
+          if (!isFinite(end)) end = W_MAX;
+          return {
+            start: Math.max(W_MIN, Math.min(W_MAX, start)),
+            end: Math.max(W_MIN, Math.min(W_MAX, end)),
+          };
+        }
+
         function weightForRow(row, p) {
-          var kf = ROW_KEYFRAMES[row] || [W_MIN, W_MAX, W_MIN];
-          var t;
-          if (p <= 0.5) {
-            t = easeInOutCubic(p / 0.5);
-            return lerp(kf[0], kf[1], t);
+          var range = weightRange();
+          return lerp(range.start, range.end, easeInOutCubic(p));
+        }
+
+        function thumbPct(el) {
+          var min = parseFloat(el.min);
+          var max = parseFloat(el.max);
+          var span = max - min || 1;
+          return ((parseFloat(el.value) - min) / span) * 100;
+        }
+
+        function updateDualUI() {
+          var startEl = els.w0;
+          var endEl = els.w1;
+          if (!startEl || !endEl) return;
+          var fill = document.getElementById(WGHT_DUAL.fill);
+          var startVal = document.getElementById("w0Val");
+          var endVal = document.getElementById("w1Val");
+          var a = parseFloat(startEl.value);
+          var b = parseFloat(endEl.value);
+          var min = parseFloat(startEl.min);
+          var max = parseFloat(startEl.max);
+          var span = max - min || 1;
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          if (fill) {
+            fill.style.left = ((lo - min) / span) * 100 + "%";
+            fill.style.width = Math.max(0, ((hi - lo) / span) * 100) + "%";
           }
-          t = easeInOutCubic((p - 0.5) / 0.5);
-          return lerp(kf[1], kf[2], t);
+          if (startVal) {
+            startVal.textContent = String(Math.round(a));
+            startVal.style.left = thumbPct(startEl) + "%";
+          }
+          if (endVal) {
+            endVal.textContent = String(Math.round(b));
+            endVal.style.left = thumbPct(endEl) + "%";
+          }
         }
 
         function formatVal(key, v) {
@@ -671,6 +914,8 @@
             else layoutGuides();
           } else if (key === "bg" || key === "fg" || key === "fs" || key === "ms") {
             applyAppearance();
+          } else if (key === "w0" || key === "w1") {
+            updateDualUI();
           }
           if (persist !== false) save();
         }
@@ -778,12 +1023,14 @@
               c.lineRight.style.top = lineTop + "px";
               c.lineRight.style.height = lineHeight + "px";
 
-              var metricSize = parseFloat(els.ms.value);
-              if (!isFinite(metricSize)) metricSize = 26;
-              c.metricWeight.textContent = String(Math.round(c.weight));
-              c.metric.style.left = leftX + "px";
-              c.metric.style.width = rightX - leftX + "px";
-              c.metric.style.top = lineTop + lineHeight - metricSize + "px";
+              if (c.metric && c.metricWeight) {
+                var metricSize = parseFloat(els.ms.value);
+                if (!isFinite(metricSize)) metricSize = 26;
+                c.metricWeight.textContent = String(Math.round(c.weight));
+                c.metric.style.left = leftX + "px";
+                c.metric.style.width = rightX - leftX + "px";
+                c.metric.style.top = lineTop + lineHeight - metricSize + "px";
+              }
             }
           }
         }

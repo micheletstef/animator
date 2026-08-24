@@ -437,7 +437,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -497,13 +497,20 @@
           <span class="val" id="nsVal">9.0</span>
         </div>
         <div class="row">
+          <label for="nf">node fill</label>
+          <select id="nf">
+            <option value="outline" selected>outline</option>
+            <option value="filled">filled</option>
+          </select>
+        </div>
+        <div class="row">
           <label for="hs">handles</label>
           <input id="hs" type="range" min="0" max="24" step="0.5" value="8" />
           <span class="val" id="hsVal">8.0</span>
         </div>
         <div class="row">
-          <label for="nf">fill</label>
-          <select id="nf">
+          <label for="hf">handle fill</label>
+          <select id="hf">
             <option value="outline" selected>outline</option>
             <option value="filled">filled</option>
           </select>
@@ -654,8 +661,8 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=2"></script>
-    <script src="artboard-view.js?v=18"></script>
+    <script src="../../animations/glyph-outlines.js?v=3"></script>
+    <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
         var outlineSvg = document.getElementById("outlines");
@@ -1056,6 +1063,7 @@
             nodeSize: parseFloat(els.ns.value),
             handleSize: parseFloat(els.hs.value),
             nodeFill: els.nf && els.nf.value === "filled",
+            handleFill: els.hf && els.hf.value === "filled",
           };
         }
 
@@ -1298,6 +1306,7 @@
           ns: 9,
           hs: 8,
           nf: "outline",
+          hf: "outline",
           tx: 0,
           ty: 0,
           wMin: 200,
@@ -1318,7 +1327,7 @@
         };
 
         var COLOR_KEYS = { bg: 1, ln: 1 };
-        var STRING_KEYS = { ch: 1, ep: 1, nf: 1 };
+        var STRING_KEYS = { ch: 1, ep: 1, nf: 1, hf: 1 };
         var els = {
           tx: document.getElementById("tx"),
           ty: document.getElementById("ty"),
@@ -1335,6 +1344,7 @@
           ns: document.getElementById("ns"),
           hs: document.getElementById("hs"),
           nf: document.getElementById("nf"),
+          hf: document.getElementById("hf"),
           wMin: document.getElementById("wMin"),
           wMax: document.getElementById("wMax"),
           cMin: document.getElementById("cMin"),
@@ -1421,6 +1431,7 @@
             key === "ns" ||
             key === "hs" ||
             key === "nf" ||
+            key === "hf" ||
             key === "ch" ||
             key === "kn0" ||
             key === "kn1" ||

@@ -105,10 +105,24 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        align-items: flex-start;
+        align-items: stretch;
         text-align: left;
         overflow: visible;
         transform: translateY(calc(var(--oy) * 1px));
+      }
+
+      .line-row {
+        display: flex;
+        align-items: stretch;
+        width: 100%;
+        height: calc(var(--fs) * var(--lh) * 1px);
+        gap: 20px;
+      }
+
+      .line-fill {
+        flex: 1;
+        min-width: 0;
+        overflow: visible;
       }
 
       .line {
@@ -122,6 +136,31 @@
         white-space: nowrap;
         font-kerning: none;
         font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .line-wdth {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        min-width: 3ch;
+        margin: 0;
+        padding: 0;
+        color: var(--fg);
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        font-stretch: 100%;
+        font-synthesis: none;
+        font-style: normal;
+        line-height: 1;
+        letter-spacing: 0;
+        white-space: nowrap;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-variation-settings: "wght" 700, "wdth" 100, "CNTR" 0, "slnt" 0;
+        font-feature-settings: "kern" 1, "tnum" 1;
         -webkit-font-smoothing: antialiased;
       }
 
@@ -270,7 +309,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -390,7 +429,7 @@ Grex Genesis.XT</textarea>
 
     <span class="probe" id="probe" aria-hidden="true"></span>
 
-    <script src="artboard-view.js?v=18"></script>
+    <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
         var DEFAULT_TEXT =
@@ -521,6 +560,10 @@ Grex Genesis.XT</textarea>
         }
 
         function lockupWidth() {
+          if (lines.length && lines[0].fillEl) {
+            var fill = lines[0].fillEl.offsetWidth;
+            if (fill > 40) return fill;
+          }
           var cs = getComputedStyle(root);
           var padL = parseFloat(cs.getPropertyValue("--guide-l"));
           var padR = parseFloat(cs.getPropertyValue("--guide-r"));
@@ -724,7 +767,9 @@ Grex Genesis.XT</textarea>
             var t = progress[i] || 0;
             var wdth = mixWdth(lines[i], t);
             applyLine(lines[i], wdth);
-            bits.push(Math.round(wdth));
+            var shown = Math.round(wdth);
+            if (lines[i].metaEl) lines[i].metaEl.textContent = String(shown);
+            bits.push(shown);
           }
           nowReadout.textContent = bits.length
             ? "wdth " + bits.join(" ")
@@ -819,11 +864,28 @@ Grex Genesis.XT</textarea>
           sampleCache = {};
           var words = parseLines(els.tx.value);
           words.forEach(function (text) {
+            var row = document.createElement("div");
+            row.className = "line-row";
+            var fill = document.createElement("div");
+            fill.className = "line-fill";
             var el = document.createElement("span");
             el.className = "line";
             el.textContent = text;
-            lockup.appendChild(el);
-            lines.push({ el: el, text: text, fromW: 65, toW: 65 });
+            var meta = document.createElement("span");
+            meta.className = "line-wdth";
+            meta.textContent = String(Math.round(startWdth()));
+            fill.appendChild(el);
+            row.appendChild(fill);
+            row.appendChild(meta);
+            lockup.appendChild(row);
+            lines.push({
+              el: el,
+              fillEl: fill,
+              metaEl: meta,
+              text: text,
+              fromW: 65,
+              toW: 65,
+            });
           });
           prepareLines();
         }

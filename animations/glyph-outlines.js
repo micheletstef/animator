@@ -658,7 +658,9 @@
       opts && opts.nodeStrokeWidth != null ? Number(opts.nodeStrokeWidth) : 1;
     var nodeSize = opts && opts.nodeSize != null ? Number(opts.nodeSize) : 9;
     var handleSize = opts && opts.handleSize != null ? Number(opts.handleSize) : 8;
-    var nodeFill = !!(opts && (opts.nodeFill === true || opts.nodeFill === "filled"));
+    var nodeFill = fillFlag(opts && opts.nodeFill, false);
+    var handleFill =
+      opts && opts.handleFill != null ? fillFlag(opts.handleFill, false) : nodeFill;
     var scale = opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
     if (!isFinite(strokeW) || strokeW < 0) strokeW = 1.25;
     if (!isFinite(nodeStrokeW) || nodeStrokeW < 0) nodeStrokeW = 1;
@@ -671,11 +673,18 @@
       nodeSize: nodeSize * scale,
       handleSize: handleSize * scale,
       nodeFill: nodeFill,
+      handleFill: handleFill,
     };
   }
 
-  function paintPoint(el, color, style) {
-    el.setAttribute("fill", style.nodeFill ? color : "none");
+  function fillFlag(v, fallback) {
+    if (v === true || v === "filled") return true;
+    if (v === false || v === "outline") return false;
+    return !!fallback;
+  }
+
+  function paintPoint(el, color, filled, style) {
+    el.setAttribute("fill", filled ? color : "none");
     el.setAttribute("stroke", color);
     el.setAttribute("stroke-width", String(style.nodeStrokeW));
   }
@@ -713,7 +722,7 @@
         c.setAttribute("cx", p.x);
         c.setAttribute("cy", p.y);
         c.setAttribute("r", String(handleR));
-        paintPoint(c, strokeAttr || colors.offCurve, style);
+        paintPoint(c, strokeAttr || colors.offCurve, style.handleFill, style);
         g.appendChild(c);
       });
     }
@@ -729,7 +738,7 @@
           c.setAttribute("cx", p.x);
           c.setAttribute("cy", p.y);
           c.setAttribute("r", String(nodeR));
-          paintPoint(c, stroke, style);
+          paintPoint(c, stroke, style.nodeFill, style);
           g.appendChild(c);
         } else {
           var half = style.nodeSize / 2;
@@ -739,7 +748,7 @@
           r.setAttribute("y", fmt(p.y - half));
           r.setAttribute("width", String(style.nodeSize));
           r.setAttribute("height", String(style.nodeSize));
-          paintPoint(r, stroke, style);
+          paintPoint(r, stroke, style.nodeFill, style);
           g.appendChild(r);
         }
       });

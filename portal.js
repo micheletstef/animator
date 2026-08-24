@@ -154,7 +154,7 @@
   }
 
   function loadManifest(version) {
-    return fetch(version.manifest + (version.manifest.indexOf("?") >= 0 ? "&" : "?") + "v=10", { cache: "no-store" })
+    return fetch(version.manifest + (version.manifest.indexOf("?") >= 0 ? "&" : "?") + "v=11", { cache: "no-store" })
       .then(function (r) {
         if (!r.ok) throw new Error("manifest " + r.status);
         return r.json();
@@ -523,6 +523,29 @@
     if (parsed && findAnim(parsed.version, parsed.id)) {
       load(parsed.version, parsed.id, { forceOpen: true });
     }
+  });
+
+  function isTypingTarget(el) {
+    if (!el) return false;
+    var tag = (el.tagName || "").toLowerCase();
+    if (tag === "textarea" || tag === "select") return true;
+    if (tag === "input") return true;
+    return !!el.isContentEditable;
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.defaultPrevented || e.repeat) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key !== "g" && e.key !== "G") return;
+    if (isTypingTarget(e.target) || isTypingTarget(document.activeElement)) return;
+    try {
+      var win = frame && frame.contentWindow;
+      if (!win || !win.ArtboardView || typeof win.ArtboardView.toggleGuides !== "function") {
+        return;
+      }
+      e.preventDefault();
+      win.ArtboardView.toggleGuides();
+    } catch (err) {}
   });
 
   readCollapsed();

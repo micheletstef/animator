@@ -24,6 +24,7 @@
         --pad-r: 80;
         --pad-b: 80;
         --pad-l: 80;
+        --lh: 1.3;
       }
 
       * {
@@ -114,7 +115,7 @@
         visibility: hidden;
         font-family: "IkarusPlusVariable", system-ui, sans-serif;
         font-size: calc(var(--fs) * 1px);
-        line-height: 1;
+        line-height: var(--lh);
         white-space: pre-wrap;
         text-align: center;
       }
@@ -389,7 +390,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -445,13 +446,20 @@
           <span class="val" id="nsVal">9.0</span>
         </div>
         <div class="row">
+          <label for="nf">node fill</label>
+          <select id="nf">
+            <option value="outline" selected>outline</option>
+            <option value="filled">filled</option>
+          </select>
+        </div>
+        <div class="row">
           <label for="hs">handles</label>
           <input id="hs" type="range" min="0" max="24" step="0.5" value="8" />
           <span class="val" id="hsVal">8.0</span>
         </div>
         <div class="row">
-          <label for="nf">fill</label>
-          <select id="nf">
+          <label for="hf">handle fill</label>
+          <select id="hf">
             <option value="outline" selected>outline</option>
             <option value="filled">filled</option>
           </select>
@@ -478,6 +486,11 @@
           <label for="os">scale</label>
           <input id="os" type="range" min="25" max="200" step="1" value="100" />
           <span class="val" id="osVal">1.00×</span>
+        </div>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.5" max="1.6" step="0.01" value="1.3" />
+          <span class="val" id="lhVal">1.30</span>
         </div>
         <div class="axis-row">
           <label for="kn0">track</label>
@@ -552,8 +565,8 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=2"></script>
-    <script src="artboard-view.js?v=18"></script>
+    <script src="../../animations/glyph-outlines.js?v=3"></script>
+    <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
         var outlineSvg = document.getElementById("outlines");
@@ -664,6 +677,7 @@
             nodeSize: parseFloat(els.ns.value),
             handleSize: parseFloat(els.hs.value),
             nodeFill: els.nf && els.nf.value === "filled",
+            handleFill: els.hf && els.hf.value === "filled",
           };
         }
 
@@ -780,6 +794,7 @@
             color: color,
             outlineScale: outlineScale(),
             tracking: kerningPxAt(t),
+            leading: parseFloat(els.lh.value),
             stableAnchor: true,
           };
           Object.assign(opts, outlineStyleOpts());
@@ -900,12 +915,14 @@
           fs0: 900,
           fs1: 900,
           os: 100,
+          lh: 1.3,
           kn0: 0,
           kn1: 0,
           sw: 1.25,
           ns: 9,
           hs: 8,
           nf: "outline",
+          hf: "outline",
           wMin: 200,
           wMax: 1000,
           cMin: 0,
@@ -919,7 +936,7 @@
         };
 
         var COLOR_KEYS = { bg: 1, ln: 1 };
-        var STRING_KEYS = { ch: 1, nf: 1 };
+        var STRING_KEYS = { ch: 1, nf: 1, hf: 1 };
         var els = {
           bg: document.getElementById("bg"),
           ln: document.getElementById("ln"),
@@ -927,12 +944,14 @@
           fs0: document.getElementById("fs0"),
           fs1: document.getElementById("fs1"),
           os: document.getElementById("os"),
+          lh: document.getElementById("lh"),
           kn0: document.getElementById("kn0"),
           kn1: document.getElementById("kn1"),
           sw: document.getElementById("sw"),
           ns: document.getElementById("ns"),
           hs: document.getElementById("hs"),
           nf: document.getElementById("nf"),
+          hf: document.getElementById("hf"),
           wMin: document.getElementById("wMin"),
           wMax: document.getElementById("wMax"),
           cMin: document.getElementById("cMin"),
@@ -949,6 +968,7 @@
           bg: document.getElementById("bgVal"),
           ln: document.getElementById("lnVal"),
           os: document.getElementById("osVal"),
+          lh: document.getElementById("lhVal"),
           sw: document.getElementById("swVal"),
           ns: document.getElementById("nsVal"),
           hs: document.getElementById("hsVal"),
@@ -966,6 +986,7 @@
         function fmt(key, v) {
           if (key === "bg" || key === "ln") return String(v).toLowerCase();
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
+          if (key === "lh") return Number(v).toFixed(2);
           if (key === "sw") return Number(v).toFixed(2);
           if (key === "ns" || key === "hs") return Number(v).toFixed(1);
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
@@ -978,6 +999,8 @@
           else if (key === "ln") {
             root.style.setProperty("--line", v);
             outlineSvg.style.color = v;
+          } else if (key === "lh") {
+            root.style.setProperty("--lh", String(v));
           }
         }
 
@@ -998,11 +1021,13 @@
             key === "ln" ||
             key === "bg" ||
             key === "os" ||
+            key === "lh" ||
             key === "ch" ||
             key === "sw" ||
             key === "ns" ||
             key === "hs" ||
             key === "nf" ||
+            key === "hf" ||
             key === "kn0" ||
             key === "kn1" ||
             key === "fs0" ||

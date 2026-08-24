@@ -202,6 +202,7 @@
     }
     ensureGuides();
     ensureGuidesUi();
+    bindGuideHotkey();
     enhancePanel();
     ensureCaseUi();
     watchPanel();
@@ -213,6 +214,21 @@
   function captionsEnabled() {
     var root = global.document.body || global.document.documentElement;
     return !(root && root.hasAttribute("data-no-caption"));
+  }
+
+  function splitCaptionEnabled() {
+    var root = global.document.body || global.document.documentElement;
+    return !!(root && root.hasAttribute("data-split-caption"));
+  }
+
+  function parseCaptionParts(text) {
+    text = String(text == null ? "" : text);
+    var i = text.lastIndexOf(" ");
+    if (i < 0) return { label: text, value: "" };
+    return {
+      label: text.slice(0, i),
+      value: text.slice(i + 1),
+    };
   }
 
   function pageKey(prefix) {
@@ -308,7 +324,27 @@
   function setCaption(text) {
     var el = captionEl();
     if (!el) return;
-    el.textContent = text == null ? "" : String(text);
+    text = text == null ? "" : String(text);
+    if (!splitCaptionEnabled()) {
+      el.classList.remove("is-split");
+      el.textContent = text;
+      return;
+    }
+    el.classList.add("is-split");
+    var parts = parseCaptionParts(text);
+    var label = el.querySelector(".caption-label");
+    var value = el.querySelector(".caption-value");
+    if (!label || !value) {
+      el.textContent = "";
+      label = global.document.createElement("span");
+      label.className = "caption-label";
+      value = global.document.createElement("span");
+      value.className = "caption-value";
+      el.appendChild(label);
+      el.appendChild(value);
+    }
+    label.textContent = parts.label;
+    value.textContent = parts.value;
   }
 
   function setCaptionColor(color) {
@@ -330,7 +366,7 @@
       el.className = "stage-caption";
       stage.appendChild(el);
     }
-    el.textContent = readCaption();
+    setCaption(readCaption());
     setCaptionColor(readCaptionColor());
   }
 
@@ -566,6 +602,54 @@
     } catch (err) {}
   }
 
+  function isTypingTarget(el) {
+    if (!el) return false;
+    var tag = (el.tagName || "").toLowerCase();
+    if (tag === "textarea" || tag === "select") return true;
+    if (tag === "input") {
+      var type = String(el.type || "text").toLowerCase();
+      return (
+        type !== "checkbox" &&
+        type !== "radio" &&
+        type !== "button" &&
+        type !== "submit" &&
+        type !== "reset" &&
+        type !== "file" &&
+        type !== "color" &&
+        type !== "range"
+      );
+    }
+    return !!el.isContentEditable;
+  }
+
+  function toggleGuides() {
+    var checkbox = global.document.getElementById("guideOn");
+    if (checkbox) {
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+    var g = readGuides();
+    g.on = !g.on;
+    applyGuides(g);
+    writeGuides(g);
+  }
+
+  function bindGuideHotkey() {
+    if (global.document.documentElement.dataset.guideHotkey === "1") return;
+    global.document.documentElement.dataset.guideHotkey = "1";
+    global.document.addEventListener("keydown", function (e) {
+      if (e.defaultPrevented || e.repeat) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key !== "g" && e.key !== "G") return;
+      if (isTypingTarget(e.target) || isTypingTarget(global.document.activeElement)) {
+        return;
+      }
+      e.preventDefault();
+      toggleGuides();
+    });
+  }
+
   function applyGuides(data) {
     var g = data || readGuides();
     var root = global.document.documentElement;
@@ -585,21 +669,30 @@
     var cols = overlay.querySelector(".guide-cols");
     if (!cols) return;
     var tracks = [];
+    var gutterPx = (g.gutter > 0 ? g.gutter : 1) + "px";
     var i;
-    for (i = 0; i < g.cols; i++) {
-      if (i) tracks.push((g.gutter > 0 ? g.gutter : 1) + "px");
+    if (g.cols === 1) {
       tracks.push("minmax(0, 1fr)");
+      if (g.gutter > 0) {
+        tracks.push(g.gutter + "px");
+        tracks.push("minmax(0, 1fr)");
+      }
+    } else {
+      for (i = 0; i < g.cols; i++) {
+        if (i) tracks.push(gutterPx);
+        tracks.push("minmax(0, 1fr)");
+      }
     }
     cols.style.gap = "0px";
     cols.style.gridTemplateColumns = tracks.join(" ");
-    var want = g.cols > 1 ? g.cols * 2 - 1 : 1;
+    var want = tracks.length;
     while (cols.childElementCount > want) cols.removeChild(cols.lastChild);
     while (cols.childElementCount < want) {
       cols.appendChild(global.document.createElement("span"));
     }
     for (i = 0; i < cols.childElementCount; i++) {
-      cols.children[i].className =
-        g.cols > 1 && i % 2 === 1 ? "guide-gutter" : "";
+      var isGutter = g.cols === 1 ? i === 1 && g.gutter > 0 : i % 2 === 1;
+      cols.children[i].className = isGutter ? "guide-gutter" : "";
     }
   }
 
@@ -626,16 +719,15 @@
         '<div class="guide-cols"></div>' +
         '<div class="guide-center">' +
         '<span class="guide-center-h"></span>' +
-        '<span class="guide-center-v"></span>' +
         "</div>";
     } else if (!overlay.querySelector(".guide-center")) {
       var center = global.document.createElement("div");
       center.className = "guide-center";
-      center.innerHTML =
-        '<span class="guide-center-h"></span>' +
-        '<span class="guide-center-v"></span>';
+      center.innerHTML = '<span class="guide-center-h"></span>';
       overlay.appendChild(center);
     }
+    var vline = overlay.querySelector(".guide-center-v");
+    if (vline && vline.parentNode) vline.parentNode.removeChild(vline);
     applyGuides();
   }
 
@@ -843,6 +935,7 @@
     },
     setCaption: setCaption,
     readCaption: readCaption,
+    toggleGuides: toggleGuides,
     enhancePanel: enhancePanel,
     MIN: MIN_USER,
     MAX: MAX_USER,

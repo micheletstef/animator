@@ -199,6 +199,26 @@
         border-radius: 2px;
       }
 
+      .row input[type="text"],
+      .row textarea,
+      .row select {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
+      }
+
+      .row textarea {
+        min-height: 148px;
+        resize: vertical;
+        line-height: 1.25;
+        white-space: pre;
+      }
+
       .row .val {
         text-align: right;
         color: #9a9a9a;
@@ -240,7 +260,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=18" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -272,6 +292,17 @@
 
       <div class="group">
         <p class="group-title">content</p>
+        <div class="row">
+          <label for="tx">text</label>
+          <textarea id="tx" spellcheck="false" autocomplete="off">Wave
+Escalate
+Modulate
+Pressure
+Ascend
+Shadow
+Fade
+Layering</textarea>
+        </div>
       </div>
 
       <div class="group">
@@ -349,21 +380,15 @@
 
     </aside>
 
-    <script src="artboard-view.js?v=18"></script>
+    <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
         var W_MIN = 200;
         var W_MAX = 1000;
-        var WORDS = [
-          { text: "Wave", start: 200 },
-          { text: "Escalate", start: 280 },
-          { text: "Modulate", start: 360 },
-          { text: "Pressure", start: 450 },
-          { text: "Ascend", start: 540 },
-          { text: "Shadow", start: 630 },
-          { text: "Fade", start: 720 },
-          { text: "Layering", start: 810 },
-        ];
+        var DEFAULT_TEXT =
+          "Wave\nEscalate\nModulate\nPressure\nAscend\nShadow\nFade\nLayering";
+        var START_WEIGHTS = [200, 280, 360, 450, 540, 630, 720, 810];
+        var WORDS = [];
 
         var LS_KEY = "animator:v2:weight-cascade:settings:v5";
         var root = document.documentElement;
@@ -374,6 +399,7 @@
         var DEFAULTS = {
           bg: "#000000",
           fg: "#ffffff",
+          tx: DEFAULT_TEXT,
           fs: 167,
           lh: 0.88,
           tn: -0.06,
@@ -389,6 +415,7 @@
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
+        var TEXT_KEYS = { tx: 1 };
 
         var els = {};
         var vals = {
@@ -459,6 +486,7 @@
           var cntr = Number(els.cntr.value) || 0;
           for (var i = 0; i < lines.length; i++) {
             var w = weights[i];
+            if (!isFinite(w)) continue;
             lines[i].style.fontVariationSettings =
               '"wght" ' +
               w.toFixed(1) +
@@ -510,6 +538,7 @@
         }
 
         function fmt(key, v) {
+          if (TEXT_KEYS[key]) return String(v);
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
           if (key === "lh" || key === "tn" || key === "tr") {
@@ -579,13 +608,43 @@
           } catch (e) {}
           applyVars();
           paintVals();
+          buildLockup();
           restart();
           if (window.ArtboardView && window.ArtboardView.reset) {
             window.ArtboardView.reset();
           }
         }
 
+        function parseLines(raw) {
+          return String(raw || "")
+            .replace(/\r\n/g, "\n")
+            .split("\n")
+            .map(function (s) {
+              return s.replace(/\s+$/, "");
+            })
+            .filter(function (s) {
+              return s.length > 0;
+            });
+        }
+
+        function startWeightAt(i, n) {
+          if (n <= 1) return START_WEIGHTS[0];
+          var pos = (i / (n - 1)) * (START_WEIGHTS.length - 1);
+          var lo = Math.floor(pos);
+          var hi = Math.min(START_WEIGHTS.length - 1, lo + 1);
+          return lerp(START_WEIGHTS[lo], START_WEIGHTS[hi], pos - lo);
+        }
+
+        function syncWords() {
+          var texts = parseLines(els.tx && els.tx.value);
+          if (!texts.length) texts = [""];
+          WORDS = texts.map(function (text, i) {
+            return { text: text, start: startWeightAt(i, texts.length) };
+          });
+        }
+
         function buildLockup() {
+          syncWords();
           lockup.innerHTML = "";
           lines = [];
           WORDS.forEach(function (word) {
@@ -595,6 +654,7 @@
             lockup.appendChild(line);
             lines.push(line);
           });
+          applyWeights(sample(playing ? performance.now() - t0 : 0));
         }
 
         Object.keys(els).forEach(function (key) {
@@ -602,14 +662,15 @@
           els[key].addEventListener("input", function () {
             applyVars();
             paintVals();
+            if (key === "tx") buildLockup();
             save();
           });
         });
 
-        buildLockup();
         loadSaved();
         applyVars();
         paintVals();
+        buildLockup();
         restart();
         raf = requestAnimationFrame(frame);
 

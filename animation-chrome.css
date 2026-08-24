@@ -309,6 +309,26 @@ body,
   display: none;
 }
 
+.stage .stage-caption.is-split {
+  text-align: unset;
+}
+
+.stage .stage-caption.is-split .caption-label,
+.stage .stage-caption.is-split .caption-value {
+  position: absolute;
+  bottom: 0;
+}
+
+.stage .stage-caption.is-split .caption-label {
+  right: calc(50% + var(--guide-gutter, 0px) / 2);
+  text-align: right;
+}
+
+.stage .stage-caption.is-split .caption-value {
+  left: calc(50% + var(--guide-gutter, 0px) / 2);
+  text-align: left;
+}
+
 .stage-guides {
   position: absolute;
   inset: 0;
@@ -384,27 +404,19 @@ body,
   box-shadow: inset 1px 0 0 #ff00ff, inset -1px 0 0 #ff00ff;
 }
 
-.guide-center-h,
-.guide-center-v {
-  position: absolute;
-  background: #ff00ff;
-  pointer-events: none;
-}
-
 .guide-center-h {
+  position: absolute;
   left: 0;
   right: 0;
   top: 50%;
   height: 1px;
+  background: #ff00ff;
+  pointer-events: none;
   transform: translateY(-50%);
 }
 
 .guide-center-v {
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  transform: translateX(-50%);
+  display: none;
 }
 
 .is-exporting .stage-guides,
