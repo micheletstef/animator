@@ -96,15 +96,15 @@
         color-scheme: light;
         --ar-w: 1080;
         --ar-h: 1440;
-        --bg: #b8b8b8;
+        --bg: #ffffff;
         --fg: #000000;
-        --glyph-size: 180;
-        --lh: 1;
+        --glyph-size: 357;
+        --lh: 1.47;
         --metric-size: 26;
-        --pad-t: 80;
-        --pad-r: 80;
-        --pad-b: 80;
-        --pad-l: 80;
+        --pad-t: 0;
+        --pad-r: 0;
+        --pad-b: 0;
+        --pad-l: 0;
       }
 
       * {
@@ -180,7 +180,7 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        justify-content: flex-start;
+        justify-content: center;
         gap: 0;
         width: 100%;
         height: 100%;
@@ -192,8 +192,9 @@
         align-items: center;
         justify-items: start;
         gap: var(--guide-gutter, 24px);
-        flex: 1 1 0;
+        flex: 0 0 auto;
         width: 100%;
+        height: calc(var(--glyph-size) * var(--lh) * 1px);
         min-height: 0;
       }
 
@@ -210,7 +211,9 @@
 
       .measure {
         position: relative;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        height: 100%;
       }
 
       .glyph {
@@ -258,6 +261,8 @@
 
       .line {
         position: absolute;
+        top: 0;
+        height: 100%;
         width: 2px;
         background: var(--fg);
         opacity: 0.5;
@@ -553,7 +558,12 @@
       }
     </style>
   </head>
-  <body data-no-caption>
+  <body
+    data-no-caption
+    data-guide-cols="3"
+    data-guide-gutter="14"
+    data-guide-margin="0"
+  >
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage">
@@ -574,8 +584,8 @@
         <p class="group-title">color</p>
         <div class="row">
           <label for="bg">bg</label>
-          <input id="bg" type="color" value="#b8b8b8" />
-          <span class="val" id="bg-val">#b8b8b8</span>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bg-val">#ffffff</span>
         </div>
         <div class="row">
           <label for="fg">text</label>
@@ -588,7 +598,7 @@
         <p class="group-title">content</p>
         <div class="row">
           <label for="ch">chars</label>
-          <textarea id="ch" rows="3" spellcheck="false" autocomplete="off">a</textarea>
+          <textarea id="ch" rows="3" spellcheck="false" autocomplete="off">a b c</textarea>
         </div>
       </div>
 
@@ -596,13 +606,13 @@
         <p class="group-title">type</p>
         <div class="row">
           <label for="fs">glyph</label>
-          <input id="fs" type="range" min="60" max="1200" step="4" value="180" />
-          <span class="val" id="fs-val">180px</span>
+          <input id="fs" type="range" min="60" max="1200" step="1" value="357" />
+          <span class="val" id="fs-val">357px</span>
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.5" max="3" step="0.01" value="1" />
-          <span class="val" id="lh-val">1.00</span>
+          <input id="lh" type="range" min="0.5" max="3" step="0.01" value="1.47" />
+          <span class="val" id="lh-val">1.47</span>
         </div>
         <div class="row">
           <label for="ms">values</label>
@@ -637,7 +647,7 @@
 
     </aside>
 
-    <script src="artboard-view.js?v=20"></script>
+    <script src="artboard-view.js?v=22"></script>
     <script>
       (function () {
         var FAMILIES = ["standard", "flair", "contrast"];
@@ -768,17 +778,17 @@
           }
         }
 
-        var LS_KEY = "animator:v2:matrix-v2:settings:v3";
+        var LS_KEY = "animator:v2:matrix-v2:settings:v4";
         var t0 = 0;
         var raf = 0;
         var playing = true;
 
         var DEFAULTS = {
-          bg: "#b8b8b8",
+          bg: "#ffffff",
           fg: "#000000",
-          ch: "a",
-          fs: 180,
-          lh: 1,
+          ch: "a b c",
+          fs: 357,
+          lh: 1.47,
           ms: 26,
           w0: W_MIN,
           w1: W_MAX,
@@ -1023,16 +1033,8 @@
 
               var leftX = (g.left - m.left) / zoom;
               var rightX = (g.right - m.left) / zoom;
-              var glyphSize = parseFloat(els.fs.value);
-              if (!isFinite(glyphSize)) glyphSize = 180;
-              var leading = parseFloat(els.lh.value);
-              if (!isFinite(leading)) leading = 1;
-              var lineHeight = Math.min(
-                rowHeight,
-                Math.max(0, glyphSize * leading)
-              );
-              var lineTop =
-                (rowTop - m.top) / zoom + (rowHeight - lineHeight) / 2;
+              var lineHeight = rowHeight;
+              var lineTop = (rowTop - m.top) / zoom;
 
               c.lineLeft.style.display = "block";
               c.lineRight.style.display = "block";

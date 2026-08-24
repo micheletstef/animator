@@ -117,7 +117,6 @@
         align-items: stretch;
         width: 100%;
         height: auto;
-        gap: 4px;
         margin-bottom: 12px;
       }
 
@@ -130,6 +129,15 @@
         width: 100%;
         min-width: 0;
         overflow: visible;
+      }
+
+      .line-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: max-content;
+        max-width: 100%;
+        gap: 4px;
       }
 
       .line {
@@ -162,7 +170,7 @@
         line-height: 1;
         letter-spacing: 0;
         white-space: nowrap;
-        text-align: left;
+        text-align: center;
         font-variant-numeric: tabular-nums;
         font-variation-settings: "wght" 700, "wdth" 100, "CNTR" 0, "slnt" 0;
         font-feature-settings: "kern" 1, "tnum" 1;
@@ -873,15 +881,18 @@ Grex Genesis.XT</textarea>
             row.className = "line-row";
             var fill = document.createElement("div");
             fill.className = "line-fill";
+            var stack = document.createElement("div");
+            stack.className = "line-stack";
             var el = document.createElement("span");
             el.className = "line";
             el.textContent = text;
             var meta = document.createElement("span");
             meta.className = "line-wdth";
             meta.textContent = String(Math.round(startWdth()));
-            fill.appendChild(el);
+            stack.appendChild(el);
+            stack.appendChild(meta);
+            fill.appendChild(stack);
             row.appendChild(fill);
-            row.appendChild(meta);
             lockup.appendChild(row);
             lines.push({
               el: el,

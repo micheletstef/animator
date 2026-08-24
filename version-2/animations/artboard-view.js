@@ -248,6 +248,10 @@
   }
 
   function guidesKey() {
+    var body = global.document.body;
+    if (body && body.hasAttribute("data-guide-cols")) {
+      return pageKey("animator:v2:guides:");
+    }
     return "animator:v2:guides";
   }
 
@@ -591,8 +595,20 @@
     for (var i = 0; i < fields.length; i++) enhanceCaseField(fields[i]);
   }
 
+  function attrNumber(name, fallback) {
+    var body = global.document.body;
+    if (!body || !body.hasAttribute(name)) return fallback;
+    var n = Number(body.getAttribute(name));
+    return isFinite(n) ? n : fallback;
+  }
+
   function defaultGuides() {
-    var m = Math.round(cssVarNumber("--pad-l", cssVarNumber("--pad-t", 64)));
+    var m = Math.round(
+      attrNumber(
+        "data-guide-margin",
+        cssVarNumber("--pad-l", cssVarNumber("--pad-t", 64))
+      )
+    );
     return {
       on: true,
       margin: m,
@@ -600,8 +616,8 @@
       r: m,
       b: m,
       l: m,
-      cols: 1,
-      gutter: 24,
+      cols: Math.max(1, Math.min(12, Math.round(attrNumber("data-guide-cols", 1)))),
+      gutter: Math.max(0, Math.min(160, Math.round(attrNumber("data-guide-gutter", 24)))),
     };
   }
 

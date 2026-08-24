@@ -86,7 +86,13 @@
         shape-rendering: geometricPrecision;
       }
 
-      .outline-layer .glyph-outline-path,
+      .outline-layer .glyph-outline-path {
+        stroke: currentColor;
+        fill: currentColor;
+        fill-opacity: 0.2;
+        fill-rule: evenodd;
+      }
+
       .outline-layer .glyph-outline-handle-line,
       .outline-layer .glyph-outline-handle,
       .outline-layer .glyph-outline-node {
@@ -504,7 +510,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="glyph-outlines.js?v=2"></script>
+    <script src="glyph-outlines.js?v=5"></script>
     <script src="artboard-zoom.js?v=3"></script>
     <script>
       (function () {

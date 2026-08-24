@@ -310,41 +310,47 @@ body,
 }
 
 .stage .stage-caption.is-split {
-  text-align: unset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: center;
+  gap: 0.2em;
 }
 
 .stage .stage-caption.is-stack {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 0.4em;
+  gap: 0.7em;
 }
 
 .stage .stage-caption.is-stack .caption-row {
   position: relative;
-  display: block;
-  height: 1em;
-  transition: opacity 180ms ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: auto;
+  gap: 0.2em;
 }
 
 .stage .stage-caption.is-stack .caption-row.is-inactive {
-  opacity: 0.35;
+  opacity: 0.16;
 }
 
 .stage .stage-caption.is-split .caption-label,
 .stage .stage-caption.is-split .caption-value {
-  position: absolute;
-  bottom: 0;
+  position: static;
 }
 
 .stage .stage-caption.is-split .caption-label {
-  right: calc(50% + var(--guide-gutter, 0px) / 2);
-  text-align: right;
+  text-align: center;
 }
 
 .stage .stage-caption.is-split .caption-value {
-  left: calc(50% + var(--guide-gutter, 0px) / 2);
-  text-align: left;
+  text-align: center;
+  font-size: 0.5em;
+}
+
+.stage .stage-caption.is-split .caption-value:empty {
+  display: none;
 }
 
 .stage-guides {

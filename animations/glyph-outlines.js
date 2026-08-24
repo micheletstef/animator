@@ -392,9 +392,31 @@
     return { nodes: nodes, handles: handles, handleLines: handleLines };
   }
 
+  /** opentype.js drops Z when converting glyph paths; SVG needs closed contours. */
+  function closeOpenSubpaths(commands) {
+    var out = [];
+    var open = false;
+    for (var i = 0; i < commands.length; i++) {
+      var cmd = commands[i];
+      if (cmd.type === "M") {
+        if (open) out.push({ type: "Z" });
+        open = true;
+        out.push(cmd);
+      } else if (cmd.type === "Z") {
+        out.push(cmd);
+        open = false;
+      } else {
+        out.push(cmd);
+        open = true;
+      }
+    }
+    if (open) out.push({ type: "Z" });
+    return out;
+  }
+
   function pathDFromCommands(commands, map) {
     var parts = [];
-    commands.forEach(function (cmd) {
+    closeOpenSubpaths(commands).forEach(function (cmd) {
       if (cmd.type === "M") {
         var m = map(cmd.x, cmd.y);
         parts.push("M" + fmt(m.x) + " " + fmt(m.y));
@@ -700,9 +722,13 @@
     var pathEl = ns("path");
     pathEl.setAttribute("class", "glyph-outline-path");
     pathEl.setAttribute("d", outline.d);
-    pathEl.setAttribute("fill", "none");
+    pathEl.setAttribute("fill", strokeAttr || colors.path);
+    pathEl.setAttribute("fill-opacity", "0.2");
+    pathEl.setAttribute("fill-rule", "evenodd");
     pathEl.setAttribute("stroke", strokeAttr || colors.path);
     pathEl.setAttribute("stroke-width", String(style.strokeW));
+    pathEl.setAttribute("stroke-linejoin", "miter");
+    pathEl.setAttribute("stroke-miterlimit", "2.5");
     g.appendChild(pathEl);
 
     if (style.handleSize > 0) {
