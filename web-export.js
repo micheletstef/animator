@@ -64,6 +64,22 @@ function prefsKey() {
   return "animator:v2:export-prefs";
 }
 
+function qualityFromControl(el) {
+  if (!el) return "max";
+  if (el.tagName === "SELECT") return QUALITY[el.value] ? el.value : "max";
+  var levels = ["draft", "high", "max"];
+  var i = Math.round(Number(el.value));
+  if (i < 0) i = 0;
+  if (i > 2) i = 2;
+  return levels[i];
+}
+
+function qualityIndex(name) {
+  if (name === "draft") return 0;
+  if (name === "high") return 1;
+  return 2;
+}
+
 function readLoops() {
   var input = document.getElementById("exportLoops");
   var n = input ? Number(input.value) : NaN;
@@ -96,7 +112,7 @@ function readExportSettings(stage) {
   var qualityEl = document.getElementById("exportQuality");
   if (fpsEl) prefs.fps = Math.max(12, Math.min(60, Math.round(Number(fpsEl.value) || 30)));
   if (scaleEl) prefs.scale = Number(scaleEl.value) === 1 ? 1 : 2;
-  if (qualityEl && QUALITY[qualityEl.value]) prefs.quality = qualityEl.value;
+  if (qualityEl) prefs.quality = qualityFromControl(qualityEl);
   var art = artboardSize(stage);
   var w = even(art.w * prefs.scale);
   var h = even(art.h * prefs.scale);
@@ -298,8 +314,14 @@ function paintExportSummary(stage) {
 }
 
 function ensureExportUi() {
-  var existing = document.getElementById("downloadBtn");
-  if (existing) return existing;
+  if (!document.getElementById("exportFps")) {
+    var staleBtn = document.getElementById("downloadBtn");
+    var staleGroup = staleBtn && staleBtn.closest(".group");
+    if (staleGroup) staleGroup.remove();
+    else if (staleBtn) staleBtn.remove();
+  } else {
+    return document.getElementById("downloadBtn");
+  }
   var panel = document.querySelector(".panel");
   if (!panel) return null;
 
@@ -308,6 +330,7 @@ function ensureExportUi() {
   var prefs = loadPrefs();
   var group = document.createElement("div");
   group.className = "group";
+  group.id = "exportGroup";
   group.innerHTML =
     '<p class="group-title">export</p>' +
     '<div class="row">' +
@@ -320,28 +343,15 @@ function ensureExportUi() {
     '<input id="exportFps" type="range" min="12" max="60" step="1" value="30" />' +
     '<span class="val" id="exportFpsVal">30</span>' +
     "</div>" +
-    '<div class="row row-span">' +
+    '<div class="row">' +
     '<label for="exportScale">size</label>' +
-    '<select id="exportScale">' +
-    '<option value="1">' +
-    art.w +
-    " × " +
-    art.h +
-    "</option>" +
-    '<option value="2">' +
-    art.w * 2 +
-    " × " +
-    art.h * 2 +
-    "</option>" +
-    "</select>" +
+    '<input id="exportScale" type="range" min="1" max="2" step="1" value="2" />' +
+    '<span class="val" id="exportScaleVal"></span>' +
     "</div>" +
-    '<div class="row row-span">' +
+    '<div class="row">' +
     '<label for="exportQuality">quality</label>' +
-    '<select id="exportQuality">' +
-    '<option value="draft">draft</option>' +
-    '<option value="high">high</option>' +
-    '<option value="max">max</option>' +
-    "</select>" +
+    '<input id="exportQuality" type="range" min="0" max="2" step="1" value="2" />' +
+    '<span class="val" id="exportQualityVal">max</span>' +
     "</div>" +
     '<p class="hint" id="exportSummary"></p>' +
     '<div class="actions">' +
@@ -354,7 +364,9 @@ function ensureExportUi() {
   var fps = document.getElementById("exportFps");
   var fpsVal = document.getElementById("exportFpsVal");
   var scale = document.getElementById("exportScale");
+  var scaleVal = document.getElementById("exportScaleVal");
   var quality = document.getElementById("exportQuality");
+  var qualityVal = document.getElementById("exportQualityVal");
 
   try {
     var savedLoops = localStorage.getItem(loopsKey());
@@ -362,13 +374,13 @@ function ensureExportUi() {
   } catch (err) {}
   fps.value = String(prefs.fps);
   scale.value = String(prefs.scale);
-  quality.value = prefs.quality;
+  quality.value = String(qualityIndex(prefs.quality));
 
   function persistPrefs() {
     savePrefs({
       fps: Number(fps.value) || 30,
       scale: Number(scale.value) === 1 ? 1 : 2,
-      quality: quality.value,
+      quality: qualityFromControl(quality),
     });
     paintExportSummary(stage);
   }
@@ -379,9 +391,18 @@ function ensureExportUi() {
   function paintFps() {
     fpsVal.textContent = String(Math.round(Number(fps.value) || 30));
   }
+  function paintScale() {
+    var n = Number(scale.value) === 1 ? 1 : 2;
+    scaleVal.textContent = art.w * n + "×" + art.h * n;
+  }
+  function paintQuality() {
+    qualityVal.textContent = qualityFromControl(quality);
+  }
 
   paintLoops();
   paintFps();
+  paintScale();
+  paintQuality();
   paintExportSummary(stage);
 
   loops.addEventListener("input", function () {
@@ -394,8 +415,14 @@ function ensureExportUi() {
     paintFps();
     persistPrefs();
   });
-  scale.addEventListener("change", persistPrefs);
-  quality.addEventListener("change", persistPrefs);
+  scale.addEventListener("input", function () {
+    paintScale();
+    persistPrefs();
+  });
+  quality.addEventListener("input", function () {
+    paintQuality();
+    persistPrefs();
+  });
 
   return document.getElementById("downloadBtn");
 }
