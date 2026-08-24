@@ -96,6 +96,16 @@ body {
   display: none;
 }
 
+.saved-billboards-list li {
+  cursor: grab;
+  user-select: none;
+}
+
+.saved-billboards-list li.is-dragging {
+  opacity: 0.35;
+  cursor: grabbing;
+}
+
 .saved-billboard-button {
   display: block;
   width: 100%;
@@ -104,7 +114,7 @@ body {
   background: transparent;
   color: #1f1f1f;
   padding: 1px 0 1px 10px;
-  cursor: pointer;
+  cursor: grab;
   font-family: "Courier New", Courier, monospace;
   font-size: 12px;
   line-height: 1.25;
@@ -113,6 +123,31 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
+}
+
+.saved-billboard-rename {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #1f1f1f;
+  padding: 1px 0 1px 10px;
+  margin: 0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  line-height: 1.25;
+  text-transform: lowercase;
+  text-decoration: underline;
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+  user-select: text;
+  cursor: text;
 }
 
 .saved-billboard-button:hover,

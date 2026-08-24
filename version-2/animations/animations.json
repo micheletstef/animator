@@ -4,61 +4,67 @@
       "id": "alternates-1",
       "label": "alternates 1",
       "url": "animations/alternates-1.html",
-      "mtime": 1787575315
+      "mtime": 1787576400
     },
     {
       "id": "alternates-2",
       "label": "alternates 2",
       "url": "animations/alternates-2.html",
-      "mtime": 1787575315
+      "mtime": 1787576400
     },
     {
       "id": "nine",
-      "label": "9",
+      "label": "Single – 9",
       "url": "animations/glyph-cycle.html?ch=9",
-      "mtime": 1787575718
+      "mtime": 1787576034
     },
     {
       "id": "g",
-      "label": "G",
+      "label": "Single – G",
       "url": "animations/glyph-cycle.html?ch=G",
-      "mtime": 1787575718
+      "mtime": 1787576034
     },
     {
       "id": "s",
-      "label": "S",
+      "label": "Single – S",
       "url": "animations/glyph-cycle.html?ch=S",
-      "mtime": 1787575718
-    },
-    {
-      "id": "focus-stack",
-      "label": "focus stack",
-      "url": "animations/focus-stack.html",
-      "mtime": 1787575315
+      "mtime": 1787576034
     },
     {
       "id": "width-swap",
       "label": "width swap",
       "url": "animations/width-swap.html",
-      "mtime": 1787575315
+      "mtime": 1787576034
     },
     {
       "id": "weight-cascade",
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",
-      "mtime": 1787575315
-    },
-    {
-      "id": "white-circled",
-      "label": "white circled",
-      "url": "animations/white-circled.html",
-      "mtime": 1787575315
+      "mtime": 1787576034
     },
     {
       "id": "psi-count",
       "label": "PSI 0 \u2192 60",
       "url": "animations/psi-count.html",
-      "mtime": 1787575315
+      "mtime": 1787576034
+    },
+    {
+      "id": "matrix-v2",
+      "label": "matrix v2",
+      "url": "animations/matrix-v2.html",
+      "mtime": 1787576344
+    },
+    {
+      "id": "technical-outline",
+      "label": "technical outline v1",
+      "url": "animations/technical-outline.html",
+      "mtime": 1787576344
+    },
+    {
+      "id": "technical-outline-v2",
+      "label": "technical outline v2",
+      "url": "animations/technical-outline-v2.html",
+      "mtime": 1787576344
     }
   ]
 }

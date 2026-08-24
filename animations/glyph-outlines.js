@@ -122,6 +122,15 @@
     return isFinite(z) && z > 0 ? z : 1;
   }
 
+  function stageLayoutSize(stageEl, root) {
+    var w = stageEl && stageEl.offsetWidth;
+    var h = stageEl && stageEl.offsetHeight;
+    if (w > 0 && h > 0) return { w: w, h: h };
+    var zoom = readZoom(root);
+    var sr = stageEl.getBoundingClientRect();
+    return { w: sr.width / zoom, h: sr.height / zoom };
+  }
+
   function fontSizePx(el) {
     return parseFloat(getComputedStyle(el).fontSize) || 72;
   }
@@ -260,10 +269,9 @@
 
   /** Map path coordinates so the anchor sits at the artboard center. */
   function placement(stageEl, root, anchor) {
-    var zoom = readZoom(root);
-    var stageRect = stageEl.getBoundingClientRect();
-    var stageW = stageRect.width / zoom;
-    var stageH = stageRect.height / zoom;
+    var size = stageLayoutSize(stageEl, root);
+    var stageW = size.w;
+    var stageH = size.h;
     var stageCx = stageW / 2;
     var stageCy = stageH / 2;
 
@@ -757,10 +765,9 @@
 
   function renderAll(svg, stageEl, targets, font, root, opts) {
     clearSvg(svg);
-    var zoom = readZoom(root);
-    var sr = stageEl.getBoundingClientRect();
-    var w = sr.width / zoom;
-    var h = sr.height / zoom;
+    var size = stageLayoutSize(stageEl, root);
+    var w = size.w;
+    var h = size.h;
     if (w > 0 && h > 0) {
       svg.setAttribute("viewBox", "0 0 " + w + " " + h);
       svg.setAttribute("width", w);

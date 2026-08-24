@@ -19,7 +19,6 @@
         --ar-h: 1440;
         --bg: #ffffff;
         --fg: #000000;
-        --hl: #ee0000;
         --pad-t: 120;
         --pad-r: 80;
         --pad-b: 120;
@@ -131,7 +130,45 @@
       }
 
       .ch.is-alt {
-        color: var(--hl);
+        position: relative;
+        z-index: 1;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+        background-image:
+          linear-gradient(
+            122deg,
+            rgba(255, 255, 255, 0.82) 0%,
+            rgba(255, 255, 255, 0.18) 12%,
+            rgba(255, 255, 255, 0) 28%
+          ),
+          linear-gradient(
+            180deg,
+            #b7bec6 0%,
+            #f4f6f8 7%,
+            #ffffff 14%,
+            #d8dee5 22%,
+            #8e96a0 32%,
+            #3a414a 40%,
+            #12151a 46%,
+            #050607 50%,
+            #2b323b 55%,
+            #7a8490 63%,
+            #f3f5f8 73%,
+            #c2c8d0 84%,
+            #6a727c 93%,
+            #2e343c 100%
+          );
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-stroke: 0.018em #16191e;
+        paint-order: stroke fill;
+        filter:
+          drop-shadow(0 -0.012em 0 rgba(255, 255, 255, 0.75))
+          drop-shadow(0 0.034em 0 rgba(0, 0, 0, 0.48))
+          drop-shadow(0 0.055em 0.04em rgba(0, 0, 0, 0.28))
+          drop-shadow(0 0.02em 0.11em rgba(96, 140, 184, 0.32));
       }
 
       .ch-run,
@@ -270,7 +307,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=12" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -295,11 +332,6 @@
           <label for="fg">text</label>
           <input id="fg" type="color" value="#000000" />
           <span class="val" id="fgVal">#000000</span>
-        </div>
-        <div class="row">
-          <label for="hl">alt</label>
-          <input id="hl" type="color" value="#ee0000" />
-          <span class="val" id="hlVal">#ee0000</span>
         </div>
       </div>
 
@@ -430,7 +462,6 @@ fisheye,
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
-          hl: "#ee0000",
           tx: DEFAULT_TEXT,
           fs: 176,
           lh: 0.92,
@@ -445,12 +476,11 @@ fisheye,
           hold1: 1200,
         };
 
-        var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
+        var COLOR_KEYS = { bg: 1, fg: 1 };
 
         var els = {
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
-          hl: document.getElementById("hl"),
           tx: document.getElementById("tx"),
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
@@ -468,7 +498,6 @@ fisheye,
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          hl: document.getElementById("hlVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
@@ -654,7 +683,6 @@ fisheye,
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--hl", els.hl.value);
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
           root.style.setProperty("--tracking", String(els.tr.value));

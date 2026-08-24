@@ -213,41 +213,82 @@
         font-variant-numeric: tabular-nums;
       }
 
-      .kf-head,
-      .kf-row {
-        display: grid;
-        grid-template-columns: 44px 1fr 1fr 1fr;
-        gap: 6px;
-        align-items: center;
-        margin-bottom: 6px;
-      }
-
-      .kf-head span {
-        text-align: center;
-        color: #6a6a6a;
-        font-size: 10px;
-        text-transform: lowercase;
-      }
-
-      .kf-head span:first-child {
-        text-align: left;
-      }
-
-      .kf-row label {
-        text-transform: lowercase;
-        color: #cfcfcf;
-      }
-
-      .kf-row input[type="range"] {
-        width: 100%;
-        accent-color: #fff;
-      }
-
       .now {
-        margin: 0 0 10px 0;
+        margin: 0 0 8px 0;
         color: #9a9a9a;
         font-variant-numeric: tabular-nums;
         font-size: 11px;
+      }
+
+      .kf-seq {
+        margin: 0 0 10px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .kf-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .panel .kf-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        flex: none;
+        min-height: 64px;
+        padding: 8px 4px;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+      }
+
+      .kf-tab:hover {
+        border-color: #555;
+        color: #fff;
+      }
+
+      .kf-tab.is-on {
+        border-color: #fff;
+        color: #fff;
+        background: #111;
+      }
+
+      .kf-tab.is-live:not(.is-on) {
+        border-color: #888;
+      }
+
+      .kf-tab-n {
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .kf-tab-v {
+        color: #9a9a9a;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .kf-tab.is-on .kf-tab-v {
+        color: #cfcfcf;
+      }
+
+      .kf-pose {
+        display: none;
+      }
+
+      .kf-pose.is-on {
+        display: block;
       }
 
       .panel .actions {
@@ -273,7 +314,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=12" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=14" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -331,34 +372,88 @@
       </div>
 
       <div class="group">
-        <p class="group-title">keyframes 1 → 2 → 3 → 2 → 1</p>
+        <p class="group-title">keyframes</p>
         <p class="now" id="nowReadout">wght 1000 · wdth 130 · CNTR 0 · slnt 0</p>
-        <div class="kf-head">
-          <span></span><span>1</span><span>2</span><span>3</span>
+        <p class="kf-seq" id="kfSeq">1 → 2 → 3 → 2 → 1 · click a pose to hold</p>
+        <div class="kf-tabs" role="tablist" aria-label="poses">
+          <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
+            <span class="kf-tab-n">1</span>
+            <span class="kf-tab-v" id="kfTab0Val">wght 1000<br />CNTR 0</span>
+          </button>
+          <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
+            <span class="kf-tab-n">2</span>
+            <span class="kf-tab-v" id="kfTab1Val">wght 1000<br />CNTR 100</span>
+          </button>
+          <button type="button" class="kf-tab" id="kfTab2" data-kf="2" role="tab" aria-selected="false">
+            <span class="kf-tab-n">3</span>
+            <span class="kf-tab-v" id="kfTab2Val">wght 200<br />CNTR 100</span>
+          </button>
         </div>
-        <div class="kf-row">
-          <label for="slnt0">slnt</label>
-          <input id="slnt0" type="range" min="-12" max="0" step="0.25" value="0" />
-          <input id="slnt1" type="range" min="-12" max="0" step="0.25" value="0" />
-          <input id="slnt2" type="range" min="-12" max="0" step="0.25" value="0" />
+        <div class="kf-pose is-on" id="kfPose0">
+          <div class="row">
+            <label for="slnt0">slnt</label>
+            <input id="slnt0" type="range" min="-12" max="0" step="0.25" value="0" />
+            <span class="val" id="slnt0Val">0</span>
+          </div>
+          <div class="row">
+            <label for="wdth0">wdth</label>
+            <input id="wdth0" type="range" min="65" max="130" step="1" value="130" />
+            <span class="val" id="wdth0Val">130</span>
+          </div>
+          <div class="row">
+            <label for="wght0">wght</label>
+            <input id="wght0" type="range" min="200" max="1000" step="1" value="1000" />
+            <span class="val" id="wght0Val">1000</span>
+          </div>
+          <div class="row">
+            <label for="cntr0">CNTR</label>
+            <input id="cntr0" type="range" min="0" max="100" step="1" value="0" />
+            <span class="val" id="cntr0Val">0</span>
+          </div>
         </div>
-        <div class="kf-row">
-          <label for="wdth0">wdth</label>
-          <input id="wdth0" type="range" min="65" max="130" step="1" value="130" />
-          <input id="wdth1" type="range" min="65" max="130" step="1" value="130" />
-          <input id="wdth2" type="range" min="65" max="130" step="1" value="130" />
+        <div class="kf-pose" id="kfPose1">
+          <div class="row">
+            <label for="slnt1">slnt</label>
+            <input id="slnt1" type="range" min="-12" max="0" step="0.25" value="0" />
+            <span class="val" id="slnt1Val">0</span>
+          </div>
+          <div class="row">
+            <label for="wdth1">wdth</label>
+            <input id="wdth1" type="range" min="65" max="130" step="1" value="130" />
+            <span class="val" id="wdth1Val">130</span>
+          </div>
+          <div class="row">
+            <label for="wght1">wght</label>
+            <input id="wght1" type="range" min="200" max="1000" step="1" value="1000" />
+            <span class="val" id="wght1Val">1000</span>
+          </div>
+          <div class="row">
+            <label for="cntr1">CNTR</label>
+            <input id="cntr1" type="range" min="0" max="100" step="1" value="100" />
+            <span class="val" id="cntr1Val">100</span>
+          </div>
         </div>
-        <div class="kf-row">
-          <label for="wght0">wght</label>
-          <input id="wght0" type="range" min="200" max="1000" step="1" value="1000" />
-          <input id="wght1" type="range" min="200" max="1000" step="1" value="1000" />
-          <input id="wght2" type="range" min="200" max="1000" step="1" value="200" />
-        </div>
-        <div class="kf-row">
-          <label for="cntr0">CNTR</label>
-          <input id="cntr0" type="range" min="0" max="100" step="1" value="0" />
-          <input id="cntr1" type="range" min="0" max="100" step="1" value="100" />
-          <input id="cntr2" type="range" min="0" max="100" step="1" value="100" />
+        <div class="kf-pose" id="kfPose2">
+          <div class="row">
+            <label for="slnt2">slnt</label>
+            <input id="slnt2" type="range" min="-12" max="0" step="0.25" value="0" />
+            <span class="val" id="slnt2Val">0</span>
+          </div>
+          <div class="row">
+            <label for="wdth2">wdth</label>
+            <input id="wdth2" type="range" min="65" max="130" step="1" value="130" />
+            <span class="val" id="wdth2Val">130</span>
+          </div>
+          <div class="row">
+            <label for="wght2">wght</label>
+            <input id="wght2" type="range" min="200" max="1000" step="1" value="200" />
+            <span class="val" id="wght2Val">200</span>
+          </div>
+          <div class="row">
+            <label for="cntr2">CNTR</label>
+            <input id="cntr2" type="range" min="0" max="100" step="1" value="100" />
+            <span class="val" id="cntr2Val">100</span>
+          </div>
         </div>
       </div>
 
@@ -444,9 +539,35 @@
         });
         if (els.ch) els.ch.value = DEFAULT_CHAR;
 
+        ["slnt", "wdth", "wght", "cntr"].forEach(function (axis) {
+          for (var i = 0; i < 3; i += 1) {
+            vals[axis + i] = document.getElementById(axis + i + "Val");
+          }
+        });
+
+        var kfTabs = [
+          document.getElementById("kfTab0"),
+          document.getElementById("kfTab1"),
+          document.getElementById("kfTab2"),
+        ];
+        var kfTabVals = [
+          document.getElementById("kfTab0Val"),
+          document.getElementById("kfTab1Val"),
+          document.getElementById("kfTab2Val"),
+        ];
+        var kfPoses = [
+          document.getElementById("kfPose0"),
+          document.getElementById("kfPose1"),
+          document.getElementById("kfPose2"),
+        ];
+        var kfSeq = document.getElementById("kfSeq");
+
         var t0 = 0;
         var raf = 0;
         var playing = true;
+        var activeKf = 0;
+        var holdKf = -1;
+        var lastLiveKf = -1;
 
         function easeInOutCubic(t) {
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -483,7 +604,9 @@
           root.style.setProperty("--wdth", String(s.wdth));
           root.style.setProperty("--wght", String(s.wght));
           root.style.setProperty("--cntr", String(s.cntr));
+          var prefix = holdKf >= 0 ? "hold " + (holdKf + 1) + " · " : "";
           nowReadout.textContent =
+            prefix +
             "wght " +
             Math.round(s.wght) +
             " · wdth " +
@@ -494,7 +617,62 @@
             Number(s.slnt).toFixed(2).replace(/\.00$/, "");
         }
 
+        function liveKf(elapsed) {
+          if (holdKf >= 0) return holdKf;
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          var move = Math.max(40, Number(els.move.value) || 1400);
+          var seg = hold + move;
+          var total = SEQUENCE.length * seg;
+          if (total <= 0) total = 1;
+          var t = elapsed % total;
+          if (t < 0) t += total;
+          return SEQUENCE[Math.floor(t / seg) % SEQUENCE.length];
+        }
+
+        function paintLiveTab(elapsed) {
+          var live = liveKf(elapsed);
+          if (live === lastLiveKf) return;
+          lastLiveKf = live;
+          for (var p = 0; p < 3; p += 1) {
+            if (kfTabs[p]) kfTabs[p].classList.toggle("is-live", p === live);
+          }
+        }
+
+        function paintKfTabs() {
+          for (var i = 0; i < 3; i += 1) {
+            var on = i === activeKf;
+            if (kfPoses[i]) kfPoses[i].classList.toggle("is-on", on);
+            if (kfTabs[i]) {
+              kfTabs[i].classList.toggle("is-on", on);
+              kfTabs[i].setAttribute("aria-selected", on ? "true" : "false");
+            }
+            if (kfTabVals[i]) {
+              var pose = keyframe(i);
+              kfTabVals[i].innerHTML =
+                "wght " +
+                Math.round(pose.wght) +
+                "<br>CNTR " +
+                Math.round(pose.cntr);
+            }
+          }
+          if (kfSeq) {
+            kfSeq.textContent =
+              holdKf >= 0
+                ? "holding pose " + (holdKf + 1) + " · replay to play"
+                : "1 → 2 → 3 → 2 → 1 · click a pose to hold";
+          }
+        }
+
+        function setActiveKf(i, hold) {
+          activeKf = i;
+          holdKf = hold ? i : -1;
+          lastLiveKf = -1;
+          paintKfTabs();
+          if (holdKf >= 0) applyState(keyframe(holdKf));
+        }
+
         function sample(elapsed) {
+          if (holdKf >= 0) return keyframe(holdKf);
           var hold = Math.max(0, Number(els.hold.value) || 0);
           var move = Math.max(40, Number(els.move.value) || 1400);
           var seg = hold + move;
@@ -509,7 +687,9 @@
         }
 
         function frame(now) {
-          applyState(sample(now - t0));
+          var elapsed = now - t0;
+          applyState(sample(elapsed));
+          paintLiveTab(elapsed);
           if (playing) raf = requestAnimationFrame(frame);
         }
 
@@ -521,8 +701,11 @@
 
         function stopPlayback() {
           playing = false;
+          holdKf = -1;
+          lastLiveKf = -1;
           cancelAnimationFrame(raf);
           raf = 0;
+          paintKfTabs();
         }
 
         function startPlayback() {
@@ -533,7 +716,10 @@
         }
 
         function restart() {
+          holdKf = -1;
+          lastLiveKf = -1;
           t0 = performance.now();
+          paintKfTabs();
         }
 
         function fmt(key, v) {
@@ -541,6 +727,16 @@
           if (key === "ch") return String(v);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
           if (key === "tr") return Number(v).toFixed(2);
+          if (key.indexOf("slnt") === 0) {
+            return Number(v).toFixed(2).replace(/\.00$/, "");
+          }
+          if (
+            key.indexOf("wdth") === 0 ||
+            key.indexOf("wght") === 0 ||
+            key.indexOf("cntr") === 0
+          ) {
+            return String(Math.round(Number(v)));
+          }
           return Math.round(Number(v)) + "ms";
         }
 
@@ -628,6 +824,7 @@
           });
           applyVars();
           paintVals();
+          setActiveKf(0, false);
           restart();
           if (window.ArtboardView && window.ArtboardView.reset) {
             window.ArtboardView.reset();
@@ -639,7 +836,15 @@
           els[key].addEventListener("input", function () {
             applyVars();
             paintVals();
+            paintKfTabs();
             save();
+          });
+        });
+
+        kfTabs.forEach(function (tab, i) {
+          if (!tab) return;
+          tab.addEventListener("click", function () {
+            setActiveKf(i, true);
           });
         });
 
@@ -652,6 +857,7 @@
             applyShared(JSON.parse(e.newValue));
             applyVars();
             paintVals();
+            paintKfTabs();
           } catch (err) {}
         });
 
@@ -660,6 +866,7 @@
         loadSaved();
         applyVars();
         paintVals();
+        paintKfTabs();
         restart();
         raf = requestAnimationFrame(frame);
 

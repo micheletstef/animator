@@ -1,6 +1,7 @@
 (function () {
   var LAST_KEY = "animator:portal:last";
   var COLLAPSE_KEY = "animator:portal:collapsed";
+  var DIR_KEY = "animator:portal:directory";
   var root = document.body.getAttribute("data-portal-root") || "";
   var defaultVersion = document.body.getAttribute("data-default-version") || "v1";
   if (defaultVersion !== "v1" && defaultVersion !== "v2") defaultVersion = "v1";
@@ -33,6 +34,12 @@
   var viewer = document.getElementById("viewer");
   var viewerHint = document.getElementById("viewerHint");
   var collapsed = { v1: true, v2: true };
+  var directory = { v1: null, v2: null };
+  var current = null;
+  var listsReady = false;
+  var drag = { id: null, key: null, moved: false };
+  var suppressClick = false;
+  var renameCloser = null;
 
   function slugify(stem) {
     return (
@@ -74,6 +81,64 @@
     } catch (e) {}
   }
 
+  function readDirectory() {
+    try {
+      var raw = localStorage.getItem(DIR_KEY);
+      if (!raw) return;
+      var obj = JSON.parse(raw);
+      if (!obj || typeof obj !== "object") return;
+      if (obj.v1) directory.v1 = obj.v1;
+      if (obj.v2) directory.v2 = obj.v2;
+    } catch (e) {}
+  }
+
+  function packDirectory(version) {
+    var order = [];
+    var labels = {};
+    for (var i = 0; i < version.items.length; i++) {
+      var a = version.items[i];
+      order.push(a.id);
+      if (a.label !== a.originalLabel) labels[a.id] = a.label;
+    }
+    return { order: order, labels: labels };
+  }
+
+  function writeDirectory() {
+    directory.v1 = packDirectory(VERSIONS.v1);
+    directory.v2 = packDirectory(VERSIONS.v2);
+    try {
+      localStorage.setItem(DIR_KEY, JSON.stringify(directory));
+    } catch (e) {}
+  }
+
+  function applyDirectory(version) {
+    var saved = directory[version.key];
+    if (!saved) return;
+    var byId = {};
+    for (var i = 0; i < version.items.length; i++) {
+      byId[version.items[i].id] = version.items[i];
+    }
+    var labels = saved.labels || {};
+    Object.keys(labels).forEach(function (id) {
+      if (byId[id] && labels[id]) byId[id].label = String(labels[id]);
+    });
+    var order = saved.order || [];
+    if (!order.length) return;
+    var next = [];
+    var seen = {};
+    for (var j = 0; j < order.length; j++) {
+      var id = order[j];
+      if (byId[id] && !seen[id]) {
+        next.push(byId[id]);
+        seen[id] = true;
+      }
+    }
+    for (var k = 0; k < version.items.length; k++) {
+      if (!seen[version.items[k].id]) next.push(version.items[k]);
+    }
+    version.items = next;
+  }
+
   function setCollapsed(key, isCollapsed) {
     var version = VERSIONS[key];
     if (!version) return;
@@ -89,7 +154,7 @@
   }
 
   function loadManifest(version) {
-        return fetch(version.manifest + (version.manifest.indexOf("?") >= 0 ? "&" : "?") + "v=7", { cache: "no-store" })
+    return fetch(version.manifest + (version.manifest.indexOf("?") >= 0 ? "&" : "?") + "v=10", { cache: "no-store" })
       .then(function (r) {
         if (!r.ok) throw new Error("manifest " + r.status);
         return r.json();
@@ -101,10 +166,12 @@
           return {
             id: a.id || slugify(a.url || a.label || ""),
             label: label,
+            originalLabel: label,
             url: resolveUrl(version, a.url),
             mtime: a.mtime != null ? a.mtime : null,
           };
         });
+        applyDirectory(version);
       })
       .catch(function () {
         version.items = [];
@@ -146,6 +213,48 @@
     }
   }
 
+  function itemEl(list, id) {
+    var nodes = list.querySelectorAll("li[data-id]");
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].getAttribute("data-id") === id) return nodes[i];
+    }
+    return null;
+  }
+
+  function makeLink(version, anim, isActive) {
+    var link = document.createElement("a");
+    link.href = "#" + version.key + "/" + encodeURIComponent(anim.id);
+    link.className = "saved-billboard-button";
+    link.draggable = false;
+    link.textContent = anim.label;
+    if (isActive) {
+      link.classList.add("is-active");
+      link.setAttribute("aria-current", "page");
+    }
+    return link;
+  }
+
+  function activeIdFor(version) {
+    return current && current.version === version.key ? current.id : null;
+  }
+
+  function setActiveClass(active) {
+    ["v1", "v2"].forEach(function (key) {
+      var links = VERSIONS[key].list.querySelectorAll(".saved-billboard-button");
+      for (var i = 0; i < links.length; i++) {
+        var li = links[i].closest("li");
+        var on =
+          active &&
+          li &&
+          active.version === key &&
+          li.getAttribute("data-id") === active.id;
+        links[i].classList.toggle("is-active", !!on);
+        if (on) links[i].setAttribute("aria-current", "page");
+        else links[i].removeAttribute("aria-current");
+      }
+    });
+  }
+
   function renderList(version, activeId) {
     version.list.innerHTML = "";
     if (!version.items.length) {
@@ -157,15 +266,9 @@
     }
     version.items.forEach(function (a) {
       var li = document.createElement("li");
-      var link = document.createElement("a");
-      link.href = "#" + version.key + "/" + encodeURIComponent(a.id);
-      link.className = "saved-billboard-button";
-      link.textContent = a.label;
-      if (a.id === activeId) {
-        link.classList.add("is-active");
-        link.setAttribute("aria-current", "page");
-      }
-      li.appendChild(link);
+      li.setAttribute("data-id", a.id);
+      li.draggable = true;
+      li.appendChild(makeLink(version, a, a.id === activeId));
       version.list.appendChild(li);
     });
   }
@@ -187,10 +290,17 @@
     var anim = findAnim(versionKey, id);
     var forceOpen = opts && opts.forceOpen;
     if (!anim) {
-      render(null);
+      current = null;
+      if (!listsReady) {
+        render(null);
+        listsReady = true;
+      } else {
+        setActiveClass(null);
+      }
       showHint();
       return;
     }
+    current = { version: versionKey, id: anim.id };
     var src = iframeSrc(anim);
     if (frame.getAttribute("data-current") !== src) {
       frame.src = src;
@@ -198,7 +308,12 @@
     }
     viewer.classList.add("has-frame");
     if (viewerHint) viewerHint.hidden = true;
-    render({ version: versionKey, id: anim.id });
+    if (!listsReady) {
+      render(current);
+      listsReady = true;
+    } else {
+      setActiveClass(current);
+    }
     document.title = "animator — " + anim.label;
     if (forceOpen) setCollapsed(versionKey, false);
     try {
@@ -229,6 +344,166 @@
     return null;
   }
 
+  function commitOrder(version) {
+    var nodes = version.list.querySelectorAll("li[data-id]");
+    var byId = {};
+    for (var i = 0; i < version.items.length; i++) {
+      byId[version.items[i].id] = version.items[i];
+    }
+    var next = [];
+    for (var j = 0; j < nodes.length; j++) {
+      var item = byId[nodes[j].getAttribute("data-id")];
+      if (item) next.push(item);
+    }
+    var changed = next.length !== version.items.length;
+    if (!changed) {
+      for (var k = 0; k < next.length; k++) {
+        if (next[k] !== version.items[k]) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (!changed) return;
+    version.items = next;
+    writeDirectory();
+  }
+
+  function startRename(version, li) {
+    if (!li || li.querySelector(".saved-billboard-rename")) return;
+    var id = li.getAttribute("data-id");
+    var anim = findAnim(version.key, id);
+    if (!anim) return;
+    if (renameCloser) renameCloser(true);
+    var link = li.querySelector("a");
+    if (!link) return;
+    var input = document.createElement("input");
+    input.type = "text";
+    input.className = "saved-billboard-rename";
+    input.value = anim.label;
+    input.setAttribute("aria-label", "rename " + anim.label);
+    li.draggable = false;
+    li.replaceChild(input, link);
+    input.focus();
+    input.select();
+
+    var done = false;
+    function finish(save) {
+      if (done) return;
+      done = true;
+      if (renameCloser === finish) renameCloser = null;
+      if (save) {
+        var next = String(input.value || "").replace(/\s+/g, " ").trim();
+        if (next) anim.label = next;
+      }
+      writeDirectory();
+      var active = activeIdFor(version) === anim.id;
+      if (input.parentNode === li) {
+        li.replaceChild(makeLink(version, anim, active), input);
+      }
+      li.draggable = true;
+      if (active) document.title = "animator — " + anim.label;
+    }
+
+    renameCloser = finish;
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        finish(true);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        finish(false);
+      }
+    });
+    input.addEventListener("blur", function () {
+      finish(true);
+    });
+    input.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+  }
+
+  function bindList(key) {
+    var version = VERSIONS[key];
+    var list = version.list;
+    if (!list) return;
+
+    list.addEventListener("dragstart", function (e) {
+      var li = e.target.closest("li");
+      if (!li || !li.getAttribute("data-id") || li.querySelector(".saved-billboard-rename")) {
+        e.preventDefault();
+        return;
+      }
+      drag.id = li.getAttribute("data-id");
+      drag.key = key;
+      drag.moved = false;
+      li.classList.add("is-dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", drag.id);
+    });
+
+    list.addEventListener("dragover", function (e) {
+      if (drag.key !== key || !drag.id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      var dragged = itemEl(list, drag.id);
+      if (!dragged) return;
+      var over = e.target.closest("li");
+      if (!over || !over.getAttribute("data-id") || over === dragged) return;
+      var rect = over.getBoundingClientRect();
+      var before = e.clientY < rect.top + rect.height / 2;
+      if (before) {
+        if (over.previousSibling !== dragged) {
+          list.insertBefore(dragged, over);
+          drag.moved = true;
+        }
+      } else if (over.nextSibling !== dragged) {
+        list.insertBefore(dragged, over.nextSibling);
+        drag.moved = true;
+      }
+    });
+
+    list.addEventListener("drop", function (e) {
+      if (drag.key !== key) return;
+      e.preventDefault();
+      commitOrder(version);
+    });
+
+    list.addEventListener("dragend", function () {
+      var dragged = drag.id ? itemEl(list, drag.id) : null;
+      if (dragged) dragged.classList.remove("is-dragging");
+      if (drag.key === key) commitOrder(version);
+      if (drag.moved) {
+        suppressClick = true;
+        setTimeout(function () {
+          suppressClick = false;
+        }, 100);
+      }
+      drag.id = null;
+      drag.key = null;
+      drag.moved = false;
+    });
+
+    list.addEventListener(
+      "click",
+      function (e) {
+        if (!suppressClick) return;
+        e.preventDefault();
+        e.stopPropagation();
+        suppressClick = false;
+      },
+      true
+    );
+
+    list.addEventListener("dblclick", function (e) {
+      var li = e.target.closest("li");
+      if (!li || !li.getAttribute("data-id")) return;
+      if (e.target.closest(".saved-billboard-rename")) return;
+      e.preventDefault();
+      startRename(version, li);
+    });
+  }
+
   function bindAccordion(key) {
     var version = VERSIONS[key];
     var row = version.toggle && version.toggle.closest(".assets-section-title-row");
@@ -240,6 +515,8 @@
   }
   bindAccordion("v1");
   bindAccordion("v2");
+  bindList("v1");
+  bindList("v2");
 
   window.addEventListener("hashchange", function () {
     var parsed = parseHash();
@@ -249,6 +526,7 @@
   });
 
   readCollapsed();
+  readDirectory();
   Promise.all([loadManifest(VERSIONS.v1), loadManifest(VERSIONS.v2)]).then(
     function () {
       setCollapsed("v1", collapsed.v1);
@@ -265,6 +543,7 @@
         load(start.version, start.id, { forceOpen: true });
       } else {
         render(null);
+        listsReady = true;
         showHint();
       }
     }
