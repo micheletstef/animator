@@ -369,7 +369,6 @@
         handleLines.push([cur, qc]);
         cur = onNode(cmd.x, cmd.y, true);
       } else if (cmd.type === "Z") {
-        if (cur && start && cur !== start) handleLines.push([cur, start]);
         cur = start;
       }
     });
@@ -523,6 +522,99 @@
     return v;
   }
 
+  function samePt(ax, ay, bx, by) {
+    return Math.abs(ax - bx) < 0.05 && Math.abs(ay - by) < 0.05;
+  }
+
+  /**
+   * HarfBuzz drawGlyph commands, placed at (gX, gY) with Y flipped like opentype.js.
+   * Prefer this over Glyph.getPath() — opentype.js gvar interpolation collapses
+   * stems on F/H/L/T (and others) at high CNTR + slnt.
+   */
+  function hbJsonToCommands(json, gX, gY, scale) {
+    var cmds = [];
+    if (!json || !json.length) return cmds;
+    var startX = 0;
+    var startY = 0;
+    var curX = 0;
+    var curY = 0;
+    var open = false;
+
+    function mx(x) {
+      return gX + x * scale;
+    }
+    function my(y) {
+      return gY - y * scale;
+    }
+
+    json.forEach(function (seg) {
+      var v = seg.values || [];
+      if (seg.type === "M") {
+        curX = startX = mx(v[0]);
+        curY = startY = my(v[1]);
+        open = true;
+        cmds.push({ type: "M", x: curX, y: curY });
+      } else if (seg.type === "L") {
+        var lx = mx(v[0]);
+        var ly = my(v[1]);
+        if (samePt(lx, ly, curX, curY)) return;
+        curX = lx;
+        curY = ly;
+        cmds.push({ type: "L", x: lx, y: ly });
+      } else if (seg.type === "Q") {
+        var qx = mx(v[2]);
+        var qy = my(v[3]);
+        cmds.push({
+          type: "Q",
+          x1: mx(v[0]),
+          y1: my(v[1]),
+          x: qx,
+          y: qy,
+        });
+        curX = qx;
+        curY = qy;
+      } else if (seg.type === "C") {
+        var cx = mx(v[4]);
+        var cy = my(v[5]);
+        cmds.push({
+          type: "C",
+          x1: mx(v[0]),
+          y1: my(v[1]),
+          x2: mx(v[2]),
+          y2: my(v[3]),
+          x: cx,
+          y: cy,
+        });
+        curX = cx;
+        curY = cy;
+      } else if (seg.type === "Z") {
+        var last = cmds[cmds.length - 1];
+        if (last && last.type === "L" && open && samePt(last.x, last.y, startX, startY)) {
+          cmds.pop();
+        }
+        cmds.push({ type: "Z" });
+        curX = startX;
+        curY = startY;
+        open = false;
+      }
+    });
+    return cmds;
+  }
+
+  function commandsForGlyph(hbState, otFont, glyphId, gX, gY, fontSize, pathOpts) {
+    var scale = fontSize / ((hbState && hbState.upem) || otFont.unitsPerEm || 1000);
+    if (hbState && hbState.font && typeof hbState.font.glyphToJson === "function") {
+      try {
+        var hbCmds = hbJsonToCommands(hbState.font.glyphToJson(glyphId), gX, gY, scale);
+        if (hbCmds.length) return hbCmds;
+      } catch (err) {}
+    }
+    var glyph = otFont.glyphs.get(glyphId);
+    if (!glyph) return [];
+    var glyphPath = glyph.getPath(gX, gY, fontSize, pathOpts, otFont);
+    return glyphPath && glyphPath.commands ? glyphPath.commands : [];
+  }
+
   /**
    * Shape with HarfBuzz (full GPOS kern, like InDesign / Core Text).
    * Returns { runs, width } for one line at baseline y0, origin x0.
@@ -551,12 +643,10 @@
       var g = glyphs[i];
       var gX = x + (g.xOffset || 0) * scale;
       var gY = y0 + (g.yOffset || 0) * scale;
-      var glyph = otFont.glyphs.get(g.codepoint);
-      if (!glyph) continue;
-      var glyphPath = glyph.getPath(gX, gY, fontSize, pathOpts, otFont);
-      if (glyphPath.commands && glyphPath.commands.length) {
+      var commands = commandsForGlyph(hbState, otFont, g.codepoint, gX, gY, fontSize, pathOpts);
+      if (commands && commands.length) {
         runs.push({
-          commands: glyphPath.commands,
+          commands: commands,
           x: gX,
           advance: g.xAdvance * scale,
         });
@@ -619,7 +709,7 @@
   }
 
   /**
-   * Lay out glyphs via HarfBuzz (GPOS kern) + opentype paths.
+   * Lay out glyphs via HarfBuzz (GPOS kern + gvar outlines).
    * Supports line breaks; lines are center-aligned; opts.tracking adds letter-spacing.
    * opts.leading is a unitless CSS line-height (× font size).
    */
