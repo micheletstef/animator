@@ -225,6 +225,7 @@
         display: block;
         font-size: calc(var(--glyph-size) * 1px);
         line-height: 1;
+        white-space: nowrap;
         font-variation-settings: "wght" 200, "slnt" 0;
       }
 
@@ -673,6 +674,10 @@
         var ROW_COUNT = FAMILIES.length;
         var COL_COUNT = COLS.length;
 
+        function cellText(raw) {
+          return Array.from(String(raw == null ? "" : raw)).slice(0, 2).join("");
+        }
+
         function parseChars(raw) {
           var lines = String(raw == null ? "" : raw).split(/\r?\n/);
           var nonempty = [];
@@ -683,10 +688,27 @@
             if (compact) nonempty.push(compact);
           }
           if (nonempty.length <= 1) {
-            chars = Array.from(nonempty.join("")).slice(0, ROW_COUNT);
+            var parts = String(raw == null ? "" : raw)
+              .trim()
+              .split(/[\s,]+/)
+              .filter(Boolean);
+            if (parts.length > 1) {
+              for (i = 0; i < parts.length && chars.length < ROW_COUNT; i++) {
+                chars.push(cellText(parts[i].replace(/[\s,]+/g, "")));
+              }
+            } else {
+              var units = Array.from(nonempty.join(""));
+              if (units.length > ROW_COUNT) {
+                for (i = 0; i < ROW_COUNT && i * 2 < units.length; i++) {
+                  chars.push(units.slice(i * 2, i * 2 + 2).join(""));
+                }
+              } else {
+                chars = units.slice(0, ROW_COUNT);
+              }
+            }
           } else {
             for (i = 0; i < nonempty.length && chars.length < ROW_COUNT; i++) {
-              chars.push(Array.from(nonempty[i])[0]);
+              chars.push(cellText(nonempty[i]));
             }
           }
           if (!chars.length) chars = ["a"];
