@@ -1073,7 +1073,6 @@
               var prevBottom = rowStats[c.row - 1].glyphBottom;
               if (isFinite(prevBottom)) clipTop = Math.max(clipTop, prevBottom);
             }
-            clipBottom -= c.row < ROW_COUNT - 1 ? 2 * zoom : 0;
 
             var lineHeight = (clipBottom - clipTop) / zoom;
             if (lineHeight < 1) {
