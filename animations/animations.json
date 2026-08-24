@@ -4,61 +4,61 @@
       "id": "ghost",
       "label": "ghost",
       "url": "animations/ghost.html",
-      "mtime": 1779007785
+      "mtime": 1787571278
     },
     {
       "id": "ghost-plus-variable",
-      "label": "ghost · plus variable",
+      "label": "ghost \u00b7 plus variable",
       "url": "animations/ghost-plus-variable.html",
-      "mtime": 1779007823
+      "mtime": 1787571278
     },
     {
       "id": "ghost-slant",
-      "label": "ghost · slant",
+      "label": "ghost \u00b7 slant",
       "url": "animations/ghost-slant.html",
-      "mtime": 1779007842
+      "mtime": 1787571278
     },
     {
       "id": "matrix",
       "label": "matrix",
       "url": "animations/matrix.html",
-      "mtime": 1778857488
+      "mtime": 1787571278
     },
     {
       "id": "matrix-v2",
       "label": "matrix v2",
       "url": "animations/matrix-v2.html",
-      "mtime": 1778857492
+      "mtime": 1787571278
     },
     {
       "id": "marquee",
       "label": "names marquee",
       "url": "animations/marquee.html",
-      "mtime": 1779028298
+      "mtime": 1787571278
     },
     {
       "id": "psi",
-      "label": "PSI 5 → 60",
+      "label": "PSI 5 \u2192 60",
       "url": "animations/psi.html",
-      "mtime": 1780261173
+      "mtime": 1787571278
     },
     {
       "id": "technical-outline",
       "label": "technical outline v1",
       "url": "animations/technical-outline.html",
-      "mtime": 1781204200
+      "mtime": 1787571278
     },
     {
       "id": "technical-outline-v2",
       "label": "technical outline v2",
       "url": "animations/technical-outline-v2.html",
-      "mtime": 1781205176
+      "mtime": 1787571278
     },
     {
       "id": "wave",
       "label": "wave",
       "url": "animations/wave.html",
-      "mtime": 1778855129
+      "mtime": 1787571278
     }
   ]
 }

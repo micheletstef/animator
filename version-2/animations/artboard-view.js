@@ -3,7 +3,8 @@
   var DEFAULT_H = 1440;
   var MIN_USER = 0.1;
   var MAX_USER = 8;
-  var FIT_PAD = 24;
+  var FIT_PAD_MIN = 48;
+  var FIT_PAD_FRAC = 0.08;
 
   function clamp(n, lo, hi) {
     return Math.max(lo, Math.min(hi, n));
@@ -38,12 +39,18 @@
     var lastY = 0;
     var pointerId = null;
 
+    function fitPad(rect) {
+      var m = Math.min(rect.width, rect.height);
+      return Math.max(FIT_PAD_MIN, Math.round(m * FIT_PAD_FRAC));
+    }
+
     function fitScale() {
       var size = readSize(root);
       var rect = wrap.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return 1;
-      var w = Math.max(1, rect.width - FIT_PAD * 2);
-      var h = Math.max(1, rect.height - FIT_PAD * 2);
+      var pad = fitPad(rect);
+      var w = Math.max(1, rect.width - pad * 2);
+      var h = Math.max(1, rect.height - pad * 2);
       return Math.min(w / size.w, h / size.h);
     }
 
