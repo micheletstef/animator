@@ -722,9 +722,7 @@
     var pathEl = ns("path");
     pathEl.setAttribute("class", "glyph-outline-path");
     pathEl.setAttribute("d", outline.d);
-    pathEl.setAttribute("fill", strokeAttr || colors.path);
-    pathEl.setAttribute("fill-opacity", "0.2");
-    pathEl.setAttribute("fill-rule", "evenodd");
+    pathEl.setAttribute("fill", "none");
     pathEl.setAttribute("stroke", strokeAttr || colors.path);
     pathEl.setAttribute("stroke-width", String(style.strokeW));
     pathEl.setAttribute("stroke-linejoin", "miter");

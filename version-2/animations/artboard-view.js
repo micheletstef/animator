@@ -325,6 +325,43 @@
     return stage.querySelector(".stage-caption");
   }
 
+  function makeCaptionPair() {
+    var label = global.document.createElement("span");
+    label.className = "caption-label";
+    var value = global.document.createElement("span");
+    value.className = "caption-value";
+    var sizer = global.document.createElement("span");
+    sizer.className = "caption-value-sizer";
+    sizer.setAttribute("aria-hidden", "true");
+    var text = global.document.createElement("span");
+    text.className = "caption-value-text";
+    value.appendChild(sizer);
+    value.appendChild(text);
+    return { label: label, value: value };
+  }
+
+  function writeCaptionPair(labelEl, valueEl, label, value) {
+    var labelText = label == null ? "" : String(label);
+    var valueText = value == null ? "" : String(value);
+    if (labelEl) labelEl.textContent = labelText;
+    if (!valueEl) return;
+    var sizer = valueEl.querySelector(".caption-value-sizer");
+    var text = valueEl.querySelector(".caption-value-text");
+    if (!sizer || !text) {
+      valueEl.textContent = "";
+      sizer = global.document.createElement("span");
+      sizer.className = "caption-value-sizer";
+      sizer.setAttribute("aria-hidden", "true");
+      text = global.document.createElement("span");
+      text.className = "caption-value-text";
+      valueEl.appendChild(sizer);
+      valueEl.appendChild(text);
+    }
+    sizer.textContent = labelText;
+    text.textContent = valueText;
+    valueEl.classList.toggle("is-empty", !valueText);
+  }
+
   function setCaption(text) {
     var el = captionEl();
     if (!el) return;
@@ -346,15 +383,13 @@
     var value = el.querySelector(":scope > .caption-value");
     if (!label || !value) {
       el.textContent = "";
-      label = global.document.createElement("span");
-      label.className = "caption-label";
-      value = global.document.createElement("span");
-      value.className = "caption-value";
+      var pair = makeCaptionPair();
+      label = pair.label;
+      value = pair.value;
       el.appendChild(label);
       el.appendChild(value);
     }
-    label.textContent = parts.label;
-    value.textContent = parts.value;
+    writeCaptionPair(label, value, parts.label, parts.value);
   }
 
   function setStackedCaption(el, rows) {
@@ -366,12 +401,9 @@
       for (i = 0; i < rows.length; i++) {
         var row = global.document.createElement("span");
         row.className = "caption-row";
-        var label = global.document.createElement("span");
-        label.className = "caption-label";
-        var value = global.document.createElement("span");
-        value.className = "caption-value";
-        row.appendChild(label);
-        row.appendChild(value);
+        var pair = makeCaptionPair();
+        row.appendChild(pair.label);
+        row.appendChild(pair.value);
         el.appendChild(row);
       }
       nodes = el.querySelectorAll(".caption-row");
@@ -379,10 +411,12 @@
     for (i = 0; i < rows.length; i++) {
       var r = rows[i] || {};
       var node = nodes[i];
-      var lab = node.querySelector(".caption-label");
-      var val = node.querySelector(".caption-value");
-      if (lab) lab.textContent = r.label == null ? "" : String(r.label);
-      if (val) val.textContent = r.value == null ? "" : String(r.value);
+      writeCaptionPair(
+        node.querySelector(".caption-label"),
+        node.querySelector(".caption-value"),
+        r.label,
+        r.value
+      );
       node.classList.toggle("is-inactive", r.active === false);
     }
   }
