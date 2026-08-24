@@ -47,14 +47,9 @@
     return z;
   }
 
-  /** Prefer global zoom; migrate a per-animation saved value once. */
+  /** Always open at the default fit scale; ignore stored / legacy zoom. */
   function resolve(legacyZm) {
-    var current = read();
-    if (current != null) return apply(current);
-    if (legacyZm != null && legacyZm !== DEFAULT) {
-      return write(legacyZm);
-    }
-    return apply(DEFAULT);
+    return write(DEFAULT);
   }
 
   function onChange(cb) {
@@ -101,7 +96,7 @@
   }
 
   function init() {
-    apply(read() != null ? read() : DEFAULT);
+    write(DEFAULT);
     bindWheel();
   }
 

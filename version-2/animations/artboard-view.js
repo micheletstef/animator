@@ -148,6 +148,9 @@
     }
 
     apply();
+    global.requestAnimationFrame(function () {
+      apply();
+    });
 
     var api = {
       reset: reset,
