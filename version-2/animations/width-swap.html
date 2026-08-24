@@ -116,10 +116,10 @@
 
       .lockup {
         position: absolute;
-        top: calc(var(--pad-t) * 1px);
-        right: calc(var(--pad-r) * 1px);
-        bottom: calc(var(--pad-b) * 1px);
-        left: calc(var(--pad-l) * 1px);
+        top: var(--guide-t, calc(var(--pad-t) * 1px));
+        right: var(--guide-r, calc(var(--pad-r) * 1px));
+        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        left: var(--guide-l, calc(var(--pad-l) * 1px));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -199,6 +199,16 @@
         font-synthesis: none;
         font-feature-settings: "liga" 1, "kern" 1;
         font-kerning: none;
+      }
+
+      .probe-svg {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: 4000px;
+        height: 2000px;
+        overflow: visible;
+        pointer-events: none;
       }
 
       .panel {
@@ -474,6 +484,10 @@
     </aside>
 
     <span class="probe" id="probe" aria-hidden="true"></span>
+    <svg class="probe-svg" id="inkSvg" aria-hidden="true">
+      <text id="inkText"></text>
+    </svg>
+    <canvas id="inkCanvas" hidden></canvas>
 
     <script src="artboard-view.js?v=10"></script>
     <script>
@@ -488,6 +502,8 @@
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
         var probe = document.getElementById("probe");
+        var inkText = document.getElementById("inkText");
+        var inkCanvas = document.getElementById("inkCanvas");
         var nowReadout = document.getElementById("nowReadout");
         var lines = [];
         var sampleCache = {};
@@ -587,8 +603,10 @@
 
         function targetWidth() {
           var cs = getComputedStyle(root);
-          var padL = Number(cs.getPropertyValue("--pad-l")) || 56;
-          var padR = Number(cs.getPropertyValue("--pad-r")) || 56;
+          var padL = parseFloat(cs.getPropertyValue("--guide-l"));
+          var padR = parseFloat(cs.getPropertyValue("--guide-r"));
+          if (!isFinite(padL)) padL = Number(cs.getPropertyValue("--pad-l")) || 56;
+          if (!isFinite(padR)) padR = Number(cs.getPropertyValue("--pad-r")) || 56;
           var target = STAGE_W - padL - padR;
           return target < 40 ? 40 : target;
         }
@@ -623,25 +641,7 @@
           return lerp(base, base + TRACK_EXT_DELTA, u);
         }
 
-        function inkRect(el) {
-          var range = document.createRange();
-          range.selectNodeContents(el);
-          var rects = range.getClientRects();
-          var i;
-          var left = Infinity;
-          var right = -Infinity;
-          for (i = 0; i < rects.length; i++) {
-            if (rects[i].left < left) left = rects[i].left;
-            if (rects[i].right > right) right = rects[i].right;
-          }
-          if (!isFinite(left) || right - left < 0.5) {
-            var fallback = el.getBoundingClientRect();
-            return fallback;
-          }
-          return { left: left, right: right, width: right - left };
-        }
-
-        function measureMetrics(text, fs, vf, track) {
+        function measureWidth(text, fs, vf, track) {
           if (track == null) track = baseTrack();
           probe.style.fontFamily = '"IkarusPlusVariable", sans-serif';
           probe.style.fontSize = fs + "px";
@@ -650,13 +650,7 @@
           probe.style.fontVariationSettings = vf;
           probe.textContent = text || "";
           probe.offsetWidth;
-          var box = probe.getBoundingClientRect();
-          var ink = inkRect(probe);
-          return {
-            width: box.width,
-            left: ink.left - box.left,
-            right: box.right - ink.right,
-          };
+          return probe.getBoundingClientRect().width;
         }
 
         function getSamples(unit, wght, cntr, slnt, fs) {
@@ -683,49 +677,46 @@
           if (sampleCache[key]) return sampleCache[key];
           var wdths = [];
           var widths = [];
-          var lefts = [];
-          var rights = [];
-          function pushSample(w) {
-            var m = measureMetrics(
-              text,
-              fs,
-              vfString(wght, w, cntr, slnt),
-              trackAtWdth(unit, w)
-            );
+          for (var w = range.lo; w <= range.hi; w += WDTH_STEP) {
             wdths.push(w);
-            widths.push(m.width);
-            lefts.push(m.left);
-            rights.push(m.right);
+            widths.push(
+              measureWidth(
+                text,
+                fs,
+                vfString(wght, w, cntr, slnt),
+                trackAtWdth(unit, w)
+              )
+            );
           }
-          for (var w = range.lo; w <= range.hi; w += WDTH_STEP) pushSample(w);
-          if (wdths[wdths.length - 1] !== range.hi) pushSample(range.hi);
-          sampleCache[key] = {
-            wdths: wdths,
-            widths: widths,
-            lefts: lefts,
-            rights: rights,
-          };
+          if (wdths[wdths.length - 1] !== range.hi) {
+            wdths.push(range.hi);
+            widths.push(
+              measureWidth(
+                text,
+                fs,
+                vfString(wght, range.hi, cntr, slnt),
+                trackAtWdth(unit, range.hi)
+              )
+            );
+          }
+          sampleCache[key] = { wdths: wdths, widths: widths };
           return sampleCache[key];
         }
 
-        function sampleAt(samples, wdth, prop) {
+        function widthAt(samples, wdth) {
           var wdths = samples.wdths;
-          var values = samples[prop];
+          var widths = samples.widths;
           if (!wdths.length) return 0;
-          if (wdth <= wdths[0]) return values[0];
-          if (wdth >= wdths[wdths.length - 1]) return values[values.length - 1];
+          if (wdth <= wdths[0]) return widths[0];
+          if (wdth >= wdths[wdths.length - 1]) return widths[widths.length - 1];
           for (var i = 0; i < wdths.length - 1; i++) {
             if (wdth <= wdths[i + 1]) {
               var span = wdths[i + 1] - wdths[i];
               var u = span <= 0 ? 0 : (wdth - wdths[i]) / span;
-              return lerp(values[i], values[i + 1], u);
+              return lerp(widths[i], widths[i + 1], u);
             }
           }
-          return values[values.length - 1];
-        }
-
-        function widthAt(samples, wdth) {
-          return sampleAt(samples, wdth, "widths");
+          return widths[widths.length - 1];
         }
 
         function unitWdthRange(unit) {
@@ -788,7 +779,6 @@
 
         function applyUnit(unit, line, wdth, boxW) {
           var track = trackAtWdth(unit, wdth);
-          var k = line.k || 1;
           unit.el.style.width = "max-content";
           unit.el.style.flex = "none";
           unit.el.style.maxWidth = "none";
@@ -796,12 +786,10 @@
           unit.inner.style.marginRight = -track + "em";
           if (unit.align === "end") {
             unit.el.style.left = "auto";
-            unit.el.style.right =
-              -sampleAt(unit.samples, wdth, "rights") * k + "px";
+            unit.el.style.right = "0px";
           } else {
             unit.el.style.right = "auto";
-            unit.el.style.left =
-              -sampleAt(unit.samples, wdth, "lefts") * k + "px";
+            unit.el.style.left = "0px";
           }
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
@@ -811,6 +799,147 @@
           );
           unit.inner.style.transform = "none";
           return { wdth: wdth, box: boxW };
+        }
+
+        function stageScale() {
+          var stage = document.getElementById("stage");
+          if (!stage) return 1;
+          var w = stage.getBoundingClientRect().width;
+          return w > 1 ? w / STAGE_W : 1;
+        }
+
+        function guideRect() {
+          var g = document.querySelector(".guide-margin");
+          if (g && g.getClientRects().length) return g.getBoundingClientRect();
+          var lockup = document.getElementById("lockup");
+          return lockup ? lockup.getBoundingClientRect() : null;
+        }
+
+        function syncInkText(el) {
+          var cs = getComputedStyle(el);
+          inkText.textContent = el.textContent || "";
+          inkText.setAttribute("x", "0");
+          inkText.setAttribute("y", "0");
+          inkText.setAttribute("font-family", "IkarusPlusVariable");
+          inkText.setAttribute("font-size", cs.fontSize);
+          inkText.setAttribute("font-weight", cs.fontWeight);
+          inkText.style.fontFamily = cs.fontFamily;
+          inkText.style.fontSize = cs.fontSize;
+          inkText.style.fontWeight = cs.fontWeight;
+          inkText.style.fontStyle = cs.fontStyle;
+          inkText.style.fontVariationSettings = cs.fontVariationSettings;
+          inkText.style.letterSpacing = cs.letterSpacing;
+          inkText.style.fontKerning = "none";
+          inkText.style.fontSynthesis = "none";
+          inkText.style.fontFeatureSettings = cs.fontFeatureSettings;
+          inkText.style.whiteSpace = "nowrap";
+        }
+
+        function outlineInk(el) {
+          syncInkText(el);
+          var bb = inkText.getBBox();
+          var painted = paintInk(el);
+          var left = bb.x;
+          var right = bb.x + bb.width;
+          if (painted) {
+            if (painted.left < left) left = painted.left;
+            if (painted.right > right) right = painted.right;
+          }
+          return { x: left, w: Math.max(0, right - left) };
+        }
+
+        function paintInk(el) {
+          if (!inkCanvas) return null;
+          var cs = getComputedStyle(el);
+          var fs = parseFloat(cs.fontSize);
+          if (!isFinite(fs) || fs < 2) return null;
+          var text = el.textContent || "";
+          if (!text) return null;
+          var pad = Math.ceil(fs * 0.35);
+          var w = Math.max(32, Math.ceil(fs * (text.length + 2) + pad * 2));
+          var h = Math.max(32, Math.ceil(fs * 1.8 + pad * 2));
+          inkCanvas.hidden = false;
+          inkCanvas.width = w;
+          inkCanvas.height = h;
+          inkCanvas.style.position = "absolute";
+          inkCanvas.style.left = "-9999px";
+          inkCanvas.style.top = "0";
+          inkCanvas.style.fontFamily = cs.fontFamily;
+          inkCanvas.style.fontSize = cs.fontSize;
+          inkCanvas.style.fontWeight = cs.fontWeight;
+          inkCanvas.style.fontVariationSettings = cs.fontVariationSettings;
+          inkCanvas.style.letterSpacing = cs.letterSpacing;
+          inkCanvas.style.fontKerning = "none";
+          inkCanvas.style.fontFeatureSettings = cs.fontFeatureSettings;
+          inkCanvas.style.fontSynthesis = "none";
+          var ctx = inkCanvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) return null;
+          ctx.clearRect(0, 0, w, h);
+          ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+          if (ctx.letterSpacing != null) ctx.letterSpacing = cs.letterSpacing;
+          if (ctx.fontKerning != null) ctx.fontKerning = "none";
+          if (ctx.fontStretch != null) ctx.fontStretch = cs.fontStretch;
+          ctx.textBaseline = "alphabetic";
+          ctx.textAlign = "left";
+          ctx.fillStyle = "#000";
+          ctx.fillText(text, pad, pad + fs * 0.8);
+          var img = ctx.getImageData(0, 0, w, h);
+          var data = img.data;
+          var minX = w;
+          var maxX = -1;
+          var cut = 12;
+          for (var y = 0; y < h; y++) {
+            var row = y * w * 4;
+            for (var x = 0; x < w; x++) {
+              if (data[row + x * 4 + 3] > cut) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+              }
+            }
+          }
+          inkCanvas.hidden = true;
+          if (maxX < 0) return null;
+          return { left: minX - pad, right: maxX + 1 - pad };
+        }
+
+        function flushInk() {
+          var box = guideRect();
+          if (!box || !inkText) return;
+          var sc = stageScale();
+          if (sc < 0.001) return;
+          var i;
+          var j;
+          var unit;
+          for (i = 0; i < lines.length; i++) {
+            for (j = 0; j < lines[i].units.length; j++) {
+              unit = lines[i].units[j];
+              if (unit.align === "end") {
+                unit.el.style.left = "auto";
+                unit.el.style.right = "0px";
+              } else {
+                unit.el.style.right = "auto";
+                unit.el.style.left = "0px";
+              }
+            }
+          }
+          var lockup = document.getElementById("lockup");
+          if (lockup) lockup.offsetWidth;
+          box = guideRect();
+          if (!box) return;
+          for (i = 0; i < lines.length; i++) {
+            for (j = 0; j < lines[i].units.length; j++) {
+              unit = lines[i].units[j];
+              var ink = outlineInk(unit.inner);
+              var elBox = unit.inner.getBoundingClientRect();
+              var inkLeft = elBox.left + ink.x * sc;
+              var inkRight = elBox.left + (ink.x + ink.w) * sc;
+              if (unit.align === "end") {
+                unit.el.style.right = (inkRight - box.right) / sc + "px";
+              } else {
+                unit.el.style.left = (box.left - inkLeft) / sc + "px";
+              }
+            }
+          }
         }
 
         function applyLine(line, t) {
@@ -848,6 +977,7 @@
             }
           }
           nowReadout.textContent = bits.length ? bits.join(" · ") : "—";
+          flushInk();
         }
 
         function sample(elapsed) {
