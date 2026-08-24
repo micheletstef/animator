@@ -3,6 +3,7 @@
   var DEFAULT_H = 1440;
   var MIN_USER = 0.1;
   var MAX_USER = 8;
+  var FIT_PAD = 24;
 
   function clamp(n, lo, hi) {
     return Math.max(lo, Math.min(hi, n));
@@ -41,7 +42,9 @@
       var size = readSize(root);
       var rect = wrap.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return 1;
-      return Math.min(rect.width / size.w, rect.height / size.h);
+      var w = Math.max(1, rect.width - FIT_PAD * 2);
+      var h = Math.max(1, rect.height - FIT_PAD * 2);
+      return Math.min(w / size.w, h / size.h);
     }
 
     function apply() {
