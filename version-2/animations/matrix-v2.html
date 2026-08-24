@@ -682,14 +682,14 @@
             if (compact) nonempty.push(compact);
           }
           if (nonempty.length <= 1) {
-            chars = Array.from(nonempty.join("")).slice(0, ROW_COUNT);
+            chars = Array.from(nonempty.join("")).slice(0, COL_COUNT);
           } else {
-            for (i = 0; i < nonempty.length && chars.length < ROW_COUNT; i++) {
+            for (i = 0; i < nonempty.length && chars.length < COL_COUNT; i++) {
               chars.push(Array.from(nonempty[i])[0]);
             }
           }
           if (!chars.length) chars = ["a"];
-          while (chars.length < ROW_COUNT) chars.push(chars[0]);
+          while (chars.length < COL_COUNT) chars.push(chars[0]);
           return chars;
         }
 
@@ -753,14 +753,14 @@
         }
 
         function buildMatrix(chars) {
-          chars = chars && chars.length === ROW_COUNT ? chars : parseChars("");
+          chars = chars && chars.length === COL_COUNT ? chars : parseChars("");
           matrix.innerHTML = "";
           cells = [];
           for (r = 0; r < ROW_COUNT; r++) {
             var rowEl = document.createElement("div");
             rowEl.className = "matrix-row";
             for (var c = 0; c < COL_COUNT; c++) {
-              var item = createCell(r, c, chars[r]);
+              var item = createCell(r, c, chars[c]);
               rowEl.appendChild(item.cell);
               cells.push(item);
             }
@@ -774,7 +774,7 @@
             buildMatrix(chars);
           } else {
             for (var i = 0; i < cells.length; i++) {
-              cells[i].glyph.textContent = chars[cells[i].row];
+              cells[i].glyph.textContent = chars[cells[i].col];
             }
           }
         }
