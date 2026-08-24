@@ -82,6 +82,30 @@ body,
   color: #000;
 }
 
+.panel button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.panel .row.row-span {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.panel .row.row-span input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid rgba(31, 31, 31, 0.28);
+  border-radius: 4px;
+  background: #fff;
+  color: #1f1f1f;
+  font: inherit;
+}
+
+.panel .row.row-span input[type="text"]:focus {
+  outline: 1px solid #1f1f1f;
+}
+
 .bezier-preview {
   background: #fff;
   border-color: rgba(31, 31, 31, 0.28);
@@ -143,4 +167,8 @@ body,
   font-feature-settings: "kern" 1, "liga" 1;
   font-kerning: normal;
   pointer-events: none;
+}
+
+.stage .stage-caption:empty {
+  display: none;
 }

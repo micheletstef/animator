@@ -272,7 +272,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=4" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=5" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -377,7 +377,7 @@
       </div>
     </aside>
 
-    <script src="artboard-view.js?v=7"></script>
+    <script src="artboard-view.js?v=8"></script>
     <script>
       (function () {
         function queryChar() {
@@ -439,6 +439,8 @@
         });
 
         var t0 = 0;
+        var raf = 0;
+        var playing = true;
 
         function easeInOutCubic(t) {
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -498,7 +500,26 @@
 
         function frame(now) {
           applyState(sample(now - t0));
-          requestAnimationFrame(frame);
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function durationMs() {
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          var move = Math.max(40, Number(els.move.value) || 1400);
+          return Math.max(1, SEQUENCE.length * (hold + move));
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
         }
 
         function restart() {
@@ -629,8 +650,22 @@
         applyVars();
         paintVals();
         restart();
-        requestAnimationFrame(frame);
+        raf = requestAnimationFrame(frame);
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: function () {
+            return "glyph-cycle-" + (els.ch.value || DEFAULT_CHAR) + ".mp4";
+          },
+          durationMs: durationMs,
+          seek: function (ms) {
+            applyState(sample(ms));
+          },
+          stop: stopPlayback,
+          start: startPlayback,
+        };
       })();
     </script>
+    <script type="module" src="../../web-export.js?v=2"></script>
   </body>
 </html>

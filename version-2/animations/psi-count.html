@@ -254,7 +254,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=4" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=5" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -453,7 +453,7 @@
       </div>
     </aside>
 
-    <script src="artboard-view.js?v=7"></script>
+    <script src="artboard-view.js?v=8"></script>
     <script>
       (function () {
         var LS_KEY = "animator:v2:psi-count:settings:v5";
@@ -540,6 +540,7 @@
 
         var t0 = 0;
         var raf = 0;
+        var playing = true;
         var lastValue = -1;
 
         function lerp(a, b, t) {
@@ -636,6 +637,25 @@
 
         function frame(now) {
           paint(sampleProgress(now - t0));
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function durationMs() {
+          var move = Math.max(80, numVal("move", 3200));
+          var hold = Math.max(0, numVal("hold", 700));
+          return hold + move + hold + move;
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
           raf = requestAnimationFrame(frame);
         }
 
@@ -774,7 +794,19 @@
         } else {
           start();
         }
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "psi-count.mp4",
+          durationMs: durationMs,
+          seek: function (ms) {
+            paint(sampleProgress(ms));
+          },
+          stop: stopPlayback,
+          start: startPlayback,
+        };
       })();
     </script>
+    <script type="module" src="../../web-export.js?v=2"></script>
   </body>
 </html>

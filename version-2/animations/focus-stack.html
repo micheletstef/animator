@@ -274,7 +274,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=4" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=5" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -405,7 +405,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
 
     <span class="probe" id="probe" aria-hidden="true"></span>
 
-    <script src="artboard-view.js?v=7"></script>
+    <script src="artboard-view.js?v=8"></script>
     <script>
       (function () {
         var LS_KEY = "animator:v2:focus-stack:settings:v4";
@@ -429,6 +429,8 @@ HEAVY-BODIED / 1.0 mm+</textarea>
         var lineFits = [];
         var measureKey = "";
         var t0 = 0;
+        var raf = 0;
+        var playing = true;
 
         var DEFAULTS = {
           bg: "#ffffff",
@@ -751,7 +753,27 @@ HEAVY-BODIED / 1.0 mm+</textarea>
         function frame(now) {
           ensureMeasures();
           applyFocus(sampleFocus(now - t0));
-          requestAnimationFrame(frame);
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function durationMs() {
+          var n = items.length;
+          var move = Math.max(80, Number(els.move.value) || 780);
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          return Math.max(1, pingPongStops(n).length * (move + hold));
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
         }
 
         function restart() {
@@ -892,7 +914,7 @@ HEAVY-BODIED / 1.0 mm+</textarea>
           applyVars();
           paintVals();
           restart();
-          requestAnimationFrame(frame);
+          raf = requestAnimationFrame(frame);
         }
 
         if (document.fonts && document.fonts.ready) {
@@ -900,7 +922,20 @@ HEAVY-BODIED / 1.0 mm+</textarea>
         } else {
           start();
         }
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "focus-stack.mp4",
+          durationMs: durationMs,
+          seek: function (ms) {
+            ensureMeasures();
+            applyFocus(sampleFocus(ms));
+          },
+          stop: stopPlayback,
+          start: startPlayback,
+        };
       })();
     </script>
+    <script type="module" src="../../web-export.js?v=2"></script>
   </body>
 </html>

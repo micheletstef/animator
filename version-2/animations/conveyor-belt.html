@@ -233,7 +233,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=4" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=5" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -351,7 +351,7 @@
       </div>
     </aside>
 
-    <script src="artboard-view.js?v=7"></script>
+    <script src="artboard-view.js?v=8"></script>
     <script>
       (function () {
         var LS_KEY = "animator:v2:conveyor-belt:settings:v6";
@@ -426,6 +426,7 @@
         var scrollY = 0;
         var t0 = 0;
         var raf = 0;
+        var playing = true;
         var fitKey = "";
 
         function lerp(a, b, t) {
@@ -696,15 +697,37 @@
           nowReadout.textContent = "CNTR " + Math.round(cntr);
         }
 
-        function frame(now) {
+        function applyElapsed(elapsed) {
           var loop = Number(els.loop.value);
           if (!isFinite(loop) || loop < 1) loop = 28;
-          var elapsed = now - t0;
           scrollY = tileH ? (((elapsed / 1000) % loop) / loop) * tileH : 0;
           var oy = Number(els.oy.value) || 0;
           belt.style.transform = "translateY(" + -scrollY + "px)";
           belt.style.top = oy + "px";
           applyContrast(sampleCntr(elapsed));
+        }
+
+        function frame(now) {
+          applyElapsed(now - t0);
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function durationMs() {
+          var loop = Number(els.loop.value);
+          if (!isFinite(loop) || loop < 1) loop = 28;
+          return loop * 1000;
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
           raf = requestAnimationFrame(frame);
         }
 
@@ -836,7 +859,17 @@
         } else {
           start();
         }
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "conveyor-belt.mp4",
+          durationMs: durationMs,
+          seek: applyElapsed,
+          stop: stopPlayback,
+          start: startPlayback,
+        };
       })();
     </script>
+    <script type="module" src="../../web-export.js?v=2"></script>
   </body>
 </html>

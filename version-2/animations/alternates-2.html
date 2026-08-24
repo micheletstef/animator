@@ -269,12 +269,12 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=4" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=5" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="alternates 2 animation" data-no-caption>
+        <div class="stage" id="stage" aria-label="alternates 2 animation">
           <div class="lockup" id="lockup"></div>
         </div>
       </div>
@@ -382,7 +382,7 @@ Apart</textarea>
       </div>
     </aside>
 
-    <script src="artboard-view.js?v=7"></script>
+    <script src="artboard-view.js?v=8"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = "Gradual\nRecoats\n15 min.\nApart";
@@ -476,6 +476,7 @@ Apart</textarea>
         var altNodes = [];
         var t0 = 0;
         var raf = 0;
+        var playing = true;
 
         function isDigit(ch) {
           return ch >= "0" && ch <= "9";
@@ -558,13 +559,13 @@ Apart</textarea>
           return hold0 + n * step + hold1;
         }
 
-        function frame(now) {
+        function applyElapsed(elapsed) {
           var n = altNodes.length;
           var step = Math.max(40, Number(els.step.value) || 280);
           var hold0 = Math.max(0, Number(els.hold0.value) || 0);
           var total = cycleMs();
           if (total <= 0) total = 1;
-          var elapsed = (now - t0) % total;
+          elapsed = elapsed % total;
           var count;
           if (elapsed < hold0) {
             count = 0;
@@ -574,6 +575,27 @@ Apart</textarea>
             count = n;
           }
           setAltCount(count);
+        }
+
+        function frame(now) {
+          applyElapsed(now - t0);
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function durationMs() {
+          return Math.max(1, cycleMs());
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
           raf = requestAnimationFrame(frame);
         }
 
@@ -681,7 +703,17 @@ Apart</textarea>
         paintVals();
         restart();
         raf = requestAnimationFrame(frame);
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "alternates-2.mp4",
+          durationMs: durationMs,
+          seek: applyElapsed,
+          stop: stopPlayback,
+          start: startPlayback,
+        };
       })();
     </script>
+    <script type="module" src="../../web-export.js?v=2"></script>
   </body>
 </html>

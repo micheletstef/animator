@@ -65,6 +65,23 @@ function setStatus(btn, text) {
   btn.textContent = text;
 }
 
+function loopsKey() {
+  return "animator:v2:export-loops:" + location.pathname + location.search;
+}
+
+function readLoops() {
+  var input = document.getElementById("exportLoops");
+  var n = input ? Number(input.value) : NaN;
+  if (!isFinite(n)) n = 1;
+  return Math.max(1, Math.min(12, Math.round(n)));
+}
+
+function readSecondsOverride() {
+  var raw = new URLSearchParams(location.search).get("exportSeconds");
+  var n = raw == null ? NaN : Number(raw);
+  return n > 0 ? n * 1000 : null;
+}
+
 async function exportAnimation(api, btn) {
   var stage = api.stage || document.getElementById("stage");
   if (!stage) throw new Error("no stage");
@@ -82,8 +99,12 @@ async function exportAnimation(api, btn) {
         ? api.durationMs()
         : api.durationMs;
   durationMs = Math.max(1, Number(durationMs) || 3000);
+  if (overrideMs == null) durationMs *= readLoops();
   var frameCount = Math.max(1, Math.round((durationMs / 1000) * FPS));
-  var filename = api.filename || "animation.mp4";
+  var filename =
+    typeof api.filename === "function"
+      ? api.filename()
+      : api.filename || "animation.mp4";
 
   document.documentElement.classList.add("is-exporting");
   if (api.stop) api.stop();
@@ -133,9 +154,6 @@ async function exportAnimation(api, btn) {
         canvasHeight: size.h,
         pixelRatio: 1,
         fontEmbedCSS: fontEmbedCSS,
-        filter: function (node) {
-          return !(node.classList && node.classList.contains("stage-caption"));
-        },
         style: {
           boxShadow: "none",
           transform: "none",
@@ -174,10 +192,43 @@ async function exportAnimation(api, btn) {
   }
 }
 
-function readSecondsOverride() {
-  var raw = new URLSearchParams(location.search).get("exportSeconds");
-  var n = raw == null ? NaN : Number(raw);
-  return n > 0 ? n * 1000 : null;
+function ensureExportUi() {
+  var existing = document.getElementById("downloadBtn");
+  if (existing) return existing;
+  var panel = document.querySelector(".panel");
+  if (!panel) return null;
+
+  var group = document.createElement("div");
+  group.className = "group";
+  group.innerHTML =
+    '<p class="group-title">export</p>' +
+    '<div class="row">' +
+    '<label for="exportLoops">loops</label>' +
+    '<input id="exportLoops" type="range" min="1" max="12" step="1" value="1" />' +
+    '<span class="val" id="exportLoopsVal">1</span>' +
+    "</div>" +
+    '<div class="actions">' +
+    '<button type="button" id="downloadBtn">download mp4</button>' +
+    "</div>";
+  panel.appendChild(group);
+
+  var input = document.getElementById("exportLoops");
+  var readout = document.getElementById("exportLoopsVal");
+  try {
+    var saved = localStorage.getItem(loopsKey());
+    if (saved != null) input.value = String(saved);
+  } catch (err) {}
+  function paintLoops() {
+    readout.textContent = String(readLoops());
+  }
+  paintLoops();
+  input.addEventListener("input", function () {
+    paintLoops();
+    try {
+      localStorage.setItem(loopsKey(), String(readLoops()));
+    } catch (err) {}
+  });
+  return document.getElementById("downloadBtn");
 }
 
 function bind() {
@@ -185,12 +236,13 @@ function bind() {
     var style = document.createElement("style");
     style.id = "web-export-style";
     style.textContent =
-      ".is-exporting .stage-caption,.is-exporting .artboard-scale{display:none!important}";
+      ".is-exporting .artboard-scale{display:none!important}";
     document.head.appendChild(style);
   }
-  var btn = document.getElementById("downloadBtn");
   var api = window.AnimatorExport;
-  if (!btn || !api) return;
+  if (!api) return;
+  var btn = ensureExportUi();
+  if (!btn) return;
   btn.dataset.bound = "1";
   btn.addEventListener("click", function () {
     if (btn.disabled) return;

@@ -197,27 +197,84 @@
     wrap._artboardView = api;
     global.ArtboardView.current = api;
     ensureCaption();
+    ensureCaptionUi();
     return api;
+  }
+
+  var DEFAULT_CAPTION = "ABC Placeholder Caption";
+
+  function captionKey() {
+    return (
+      "animator:v2:caption:" +
+      global.location.pathname +
+      global.location.search
+    );
+  }
+
+  function readCaption() {
+    try {
+      var raw = global.localStorage.getItem(captionKey());
+      if (raw != null) return raw;
+    } catch (err) {}
+    return DEFAULT_CAPTION;
+  }
+
+  function writeCaption(text) {
+    try {
+      global.localStorage.setItem(captionKey(), text);
+    } catch (err) {}
+  }
+
+  function captionEl() {
+    var stage =
+      global.document.getElementById("stage") ||
+      global.document.querySelector(".stage");
+    if (!stage) return null;
+    return stage.querySelector(".stage-caption");
+  }
+
+  function setCaption(text) {
+    var el = captionEl();
+    if (!el) return;
+    el.textContent = text == null ? "" : String(text);
   }
 
   function ensureCaption() {
     var stage =
       global.document.getElementById("stage") ||
       global.document.querySelector(".stage");
-    if (
-      !stage ||
-      stage.hasAttribute("data-no-caption") ||
-      stage.querySelector(".stage-caption")
-    ) {
-      return;
+    if (!stage) return;
+    var el = stage.querySelector(".stage-caption");
+    if (!el) {
+      el = global.document.createElement("p");
+      el.className = "stage-caption";
+      stage.appendChild(el);
     }
-    var el = global.document.createElement("p");
-    el.className = "stage-caption";
-    el.textContent = "ABC Placeholder Caption";
-    stage.appendChild(el);
+    el.textContent = readCaption();
+  }
+
+  function ensureCaptionUi() {
+    var panel = global.document.querySelector(".panel");
+    if (!panel || global.document.getElementById("stageCaption")) return;
+    var group = global.document.createElement("div");
+    group.className = "group";
+    group.innerHTML =
+      '<p class="group-title">caption</p>' +
+      '<div class="row row-span">' +
+      '<label for="stageCaption">text</label>' +
+      '<input id="stageCaption" type="text" autocomplete="off" spellcheck="false" />' +
+      "</div>";
+    panel.appendChild(group);
+    var input = global.document.getElementById("stageCaption");
+    input.value = readCaption();
+    input.addEventListener("input", function () {
+      setCaption(input.value);
+      writeCaption(input.value);
+    });
   }
 
   function boot() {
+    if (global.ArtboardView.current) return;
     if (global.document.querySelector(".stage-wrap") && global.document.querySelector(".stage-outer")) {
       init();
     }
@@ -228,11 +285,15 @@
     reset: function () {
       if (global.ArtboardView.current) global.ArtboardView.current.reset();
     },
+    setCaption: setCaption,
+    readCaption: readCaption,
     MIN: MIN_USER,
     MAX: MAX_USER,
   };
 
-  if (global.document.readyState === "loading") {
+  if (global.document.querySelector(".stage-wrap")) {
+    boot();
+  } else if (global.document.readyState === "loading") {
     global.document.addEventListener("DOMContentLoaded", boot);
   } else {
     boot();
