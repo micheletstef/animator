@@ -126,50 +126,45 @@
 
       .ch {
         color: var(--fg);
-        font-feature-settings: "kern" 1;
+        font-feature-settings: "liga" 0, "calt" 0, "kern" 1;
+        font-variant-ligatures: none;
         font-kerning: none;
       }
 
       .ch.is-alt {
-        position: relative;
-        z-index: 1;
         color: transparent;
         -webkit-text-fill-color: transparent;
+        -webkit-text-stroke: 0;
         background-image:
-          linear-gradient(
-            122deg,
-            rgba(255, 255, 255, 0.82) 0%,
-            rgba(255, 255, 255, 0.18) 12%,
-            rgba(255, 255, 255, 0) 28%
+          radial-gradient(
+            ellipse 72% 48% at 28% 18%,
+            rgba(255, 255, 255, 0.96) 0%,
+            rgba(255, 255, 255, 0.42) 26%,
+            rgba(255, 255, 255, 0) 58%
+          ),
+          radial-gradient(
+            ellipse 64% 42% at 78% 86%,
+            rgba(210, 224, 238, 0.38) 0%,
+            rgba(210, 224, 238, 0) 62%
           ),
           linear-gradient(
-            180deg,
-            #b7bec6 0%,
-            #f4f6f8 7%,
-            #ffffff 14%,
-            #d8dee5 22%,
-            #8e96a0 32%,
-            #3a414a 40%,
-            #12151a 46%,
-            #050607 50%,
-            #2b323b 55%,
-            #7a8490 63%,
-            #f3f5f8 73%,
-            #c2c8d0 84%,
-            #6a727c 93%,
-            #2e343c 100%
+            148deg,
+            #e4eaef 0%,
+            #fbfcfd 10%,
+            #c5ced8 22%,
+            #8b97a4 34%,
+            #4e5966 46%,
+            #f4f7fa 54%,
+            #ffffff 58%,
+            #7d8a98 70%,
+            #3a434e 82%,
+            #cfd6de 94%,
+            #8a93a0 100%
           );
         background-repeat: no-repeat;
         background-size: 100% 100%;
         -webkit-background-clip: text;
         background-clip: text;
-        -webkit-text-stroke: 0.018em #16191e;
-        paint-order: stroke fill;
-        filter:
-          drop-shadow(0 -0.012em 0 rgba(255, 255, 255, 0.75))
-          drop-shadow(0 0.034em 0 rgba(0, 0, 0, 0.48))
-          drop-shadow(0 0.055em 0.04em rgba(0, 0, 0, 0.28))
-          drop-shadow(0 0.02em 0.11em rgba(96, 140, 184, 0.32));
       }
 
       .ch-run {
@@ -541,10 +536,11 @@ Apart</textarea>
 
         function applyFeature(el, feat) {
           if (!feat) {
-            el.style.fontFeatureSettings = '"kern" 1';
+            el.style.fontFeatureSettings = '"liga" 0, "calt" 0, "kern" 1';
             return;
           }
-          el.style.fontFeatureSettings = '"' + feat + '" 1, "kern" 1';
+          el.style.fontFeatureSettings =
+            '"' + feat + '" 1, "liga" 0, "calt" 0, "kern" 1';
         }
 
         function buildLockup(text) {
