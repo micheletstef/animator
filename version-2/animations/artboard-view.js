@@ -324,16 +324,22 @@
   function setCaption(text) {
     var el = captionEl();
     if (!el) return;
+    if (Array.isArray(text)) {
+      setStackedCaption(el, text);
+      return;
+    }
     text = text == null ? "" : String(text);
+    el.classList.remove("is-stack");
     if (!splitCaptionEnabled()) {
       el.classList.remove("is-split");
       el.textContent = text;
       return;
     }
     el.classList.add("is-split");
+    if (el.querySelector(".caption-row")) el.textContent = "";
     var parts = parseCaptionParts(text);
-    var label = el.querySelector(".caption-label");
-    var value = el.querySelector(".caption-value");
+    var label = el.querySelector(":scope > .caption-label");
+    var value = el.querySelector(":scope > .caption-value");
     if (!label || !value) {
       el.textContent = "";
       label = global.document.createElement("span");
@@ -345,6 +351,36 @@
     }
     label.textContent = parts.label;
     value.textContent = parts.value;
+  }
+
+  function setStackedCaption(el, rows) {
+    el.classList.add("is-split", "is-stack");
+    var nodes = el.querySelectorAll(".caption-row");
+    var i;
+    if (nodes.length !== rows.length) {
+      el.textContent = "";
+      for (i = 0; i < rows.length; i++) {
+        var row = global.document.createElement("span");
+        row.className = "caption-row";
+        var label = global.document.createElement("span");
+        label.className = "caption-label";
+        var value = global.document.createElement("span");
+        value.className = "caption-value";
+        row.appendChild(label);
+        row.appendChild(value);
+        el.appendChild(row);
+      }
+      nodes = el.querySelectorAll(".caption-row");
+    }
+    for (i = 0; i < rows.length; i++) {
+      var r = rows[i] || {};
+      var node = nodes[i];
+      var lab = node.querySelector(".caption-label");
+      var val = node.querySelector(".caption-value");
+      if (lab) lab.textContent = r.label == null ? "" : String(r.label);
+      if (val) val.textContent = r.value == null ? "" : String(r.value);
+      node.classList.toggle("is-inactive", r.active === false);
+    }
   }
 
   function setCaptionColor(color) {

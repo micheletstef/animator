@@ -99,6 +99,7 @@
         --bg: #b8b8b8;
         --fg: #000000;
         --glyph-size: 180;
+        --lh: 1;
         --metric-size: 26;
         --pad-t: 80;
         --pad-r: 80;
@@ -599,6 +600,11 @@
           <span class="val" id="fs-val">180px</span>
         </div>
         <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.5" max="3" step="0.01" value="1" />
+          <span class="val" id="lh-val">1.00</span>
+        </div>
+        <div class="row">
           <label for="ms">values</label>
           <input id="ms" type="range" min="8" max="72" step="1" value="26" />
           <span class="val" id="ms-val">26px</span>
@@ -762,7 +768,7 @@
           }
         }
 
-        var LS_KEY = "animator:v2:matrix-v2:settings:v2";
+        var LS_KEY = "animator:v2:matrix-v2:settings:v3";
         var t0 = 0;
         var raf = 0;
         var playing = true;
@@ -772,6 +778,7 @@
           fg: "#000000",
           ch: "a",
           fs: 180,
+          lh: 1,
           ms: 26,
           w0: W_MIN,
           w1: W_MAX,
@@ -787,6 +794,7 @@
           fg: document.getElementById("fg"),
           ch: document.getElementById("ch"),
           fs: document.getElementById("fs"),
+          lh: document.getElementById("lh"),
           ms: document.getElementById("ms"),
           w0: document.getElementById("w0"),
           w1: document.getElementById("w1"),
@@ -804,6 +812,7 @@
           bg: document.getElementById("bg-val"),
           fg: document.getElementById("fg-val"),
           fs: document.getElementById("fs-val"),
+          lh: document.getElementById("lh-val"),
           ms: document.getElementById("ms-val"),
           cy: document.getElementById("cy-val"),
           hd: document.getElementById("hd-val"),
@@ -884,6 +893,7 @@
         function formatVal(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "ch") return String(v);
+          if (key === "lh") return Number(v).toFixed(2);
           if (key === "fs" || key === "ms") {
             return Math.round(Number(v)) + "px";
           }
@@ -901,6 +911,7 @@
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
+          root.style.setProperty("--lh", String(parseFloat(els.lh.value)));
           root.style.setProperty("--metric-size", parseFloat(els.ms.value));
           layoutGuides();
         }
@@ -912,7 +923,13 @@
             applyChars(v);
             if (t0) applyElapsed(performance.now() - t0);
             else layoutGuides();
-          } else if (key === "bg" || key === "fg" || key === "fs" || key === "ms") {
+          } else if (
+            key === "bg" ||
+            key === "fg" ||
+            key === "fs" ||
+            key === "lh" ||
+            key === "ms"
+          ) {
             applyAppearance();
           } else if (key === "w0" || key === "w1") {
             updateDualUI();
@@ -1006,18 +1023,23 @@
 
               var leftX = (g.left - m.left) / zoom;
               var rightX = (g.right - m.left) / zoom;
-              var lineTop = (rowTop - m.top) / zoom;
-              var lineHeight = rowHeight;
+              var glyphSize = parseFloat(els.fs.value);
+              if (!isFinite(glyphSize)) glyphSize = 180;
+              var leading = parseFloat(els.lh.value);
+              if (!isFinite(leading)) leading = 1;
+              var lineHeight = Math.min(
+                rowHeight,
+                Math.max(0, glyphSize * leading)
+              );
+              var lineTop =
+                (rowTop - m.top) / zoom + (rowHeight - lineHeight) / 2;
 
-              var showLeft = c.col === 0;
-              c.lineLeft.style.display = showLeft ? "block" : "none";
+              c.lineLeft.style.display = "block";
               c.lineRight.style.display = "block";
 
-              if (showLeft) {
-                c.lineLeft.style.left = leftX + "px";
-                c.lineLeft.style.top = lineTop + "px";
-                c.lineLeft.style.height = lineHeight + "px";
-              }
+              c.lineLeft.style.left = leftX + "px";
+              c.lineLeft.style.top = lineTop + "px";
+              c.lineLeft.style.height = lineHeight + "px";
 
               c.lineRight.style.left = rightX - 2 + "px";
               c.lineRight.style.top = lineTop + "px";

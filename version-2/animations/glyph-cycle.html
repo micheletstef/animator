@@ -314,7 +314,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=20" />
   </head>
   <body data-split-caption>
     <div class="stage-wrap" id="stageWrap">
@@ -473,7 +473,7 @@
 
     </aside>
 
-    <script src="artboard-view.js?v=20"></script>
+    <script src="artboard-view.js?v=21"></script>
     <script>
       (function () {
         function queryChar() {
@@ -621,30 +621,58 @@
             dw = Math.abs(s.wght - start.wght);
             dc = Math.abs(s.cntr - start.cntr);
           }
-          if (dw > dc) return "weight " + Math.round(s.wght);
-          return "contour " + Math.round(s.cntr);
+          var weightActive = dw > dc;
+          return [
+            {
+              label: "Contour",
+              value: String(Math.round(s.cntr)),
+              active: !weightActive,
+            },
+            {
+              label: "Weight",
+              value: String(Math.round(s.wght)),
+              active: weightActive,
+            },
+          ];
         }
 
         var lastCaption = "";
-        function setLiveCaption(text) {
-          if (text === lastCaption) return;
-          lastCaption = text;
+        function setLiveCaption(rows) {
+          var key = rows
+            .map(function (r) {
+              return r.label + "\t" + r.value + "\t" + (r.active ? "1" : "0");
+            })
+            .join("\n");
+          if (key === lastCaption) return;
+          lastCaption = key;
           if (window.ArtboardView && window.ArtboardView.setCaption) {
-            window.ArtboardView.setCaption(text);
+            window.ArtboardView.setCaption(rows);
           } else {
             var el = document.querySelector(".stage-caption");
-            if (el) el.textContent = text;
+            if (el) {
+              el.textContent = rows
+                .map(function (r) {
+                  return r.label + " " + r.value;
+                })
+                .join("\n");
+            }
           }
           var input = document.getElementById("stageCaption");
-          if (input) input.value = text;
+          if (input) {
+            input.value = rows
+              .map(function (r) {
+                return r.label + " " + r.value;
+              })
+              .join(" / ");
+          }
         }
 
         function lockLiveCaption() {
           var input = document.getElementById("stageCaption");
           if (!input) return;
           input.readOnly = true;
-          input.placeholder = "live: contour / weight";
-          input.title = "follows contour, then weight";
+          input.placeholder = "live: Contour / Weight";
+          input.title = "stacked Contour and Weight; inactive axis is dimmed";
         }
 
         function segmentAt(elapsed) {

@@ -656,6 +656,10 @@
     var strokeW = opts && opts.strokeWidth != null ? Number(opts.strokeWidth) : 1.25;
     var nodeStrokeW =
       opts && opts.nodeStrokeWidth != null ? Number(opts.nodeStrokeWidth) : 1;
+    var handleStrokeW =
+      opts && opts.handleStrokeWidth != null
+        ? Number(opts.handleStrokeWidth)
+        : nodeStrokeW;
     var nodeSize = opts && opts.nodeSize != null ? Number(opts.nodeSize) : 9;
     var handleSize = opts && opts.handleSize != null ? Number(opts.handleSize) : 8;
     var nodeFill = fillFlag(opts && opts.nodeFill, false);
@@ -664,12 +668,14 @@
     var scale = opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
     if (!isFinite(strokeW) || strokeW < 0) strokeW = 1.25;
     if (!isFinite(nodeStrokeW) || nodeStrokeW < 0) nodeStrokeW = 1;
+    if (!isFinite(handleStrokeW) || handleStrokeW < 0) handleStrokeW = nodeStrokeW;
     if (!isFinite(nodeSize) || nodeSize < 0) nodeSize = 9;
     if (!isFinite(handleSize) || handleSize < 0) handleSize = 8;
     if (!isFinite(scale) || scale <= 0) scale = 1;
     return {
       strokeW: strokeW * scale,
       nodeStrokeW: nodeStrokeW * scale,
+      handleStrokeW: handleStrokeW * scale,
       nodeSize: nodeSize * scale,
       handleSize: handleSize * scale,
       nodeFill: nodeFill,
@@ -683,10 +689,10 @@
     return !!fallback;
   }
 
-  function paintPoint(el, color, filled, style) {
+  function paintPoint(el, color, filled, strokeW) {
     el.setAttribute("fill", filled ? color : "none");
     el.setAttribute("stroke", color);
-    el.setAttribute("stroke-width", String(style.nodeStrokeW));
+    el.setAttribute("stroke-width", String(strokeW));
   }
 
   function appendOutlineToGroup(g, outline, map, colors, strokeAttr, style) {
@@ -710,7 +716,7 @@
         line.setAttribute("x2", b.x);
         line.setAttribute("y2", b.y);
         line.setAttribute("stroke", strokeAttr || colors.handleLine);
-        line.setAttribute("stroke-width", String(style.nodeStrokeW));
+        line.setAttribute("stroke-width", String(style.handleStrokeW));
         g.appendChild(line);
       });
 
@@ -722,7 +728,12 @@
         c.setAttribute("cx", p.x);
         c.setAttribute("cy", p.y);
         c.setAttribute("r", String(handleR));
-        paintPoint(c, strokeAttr || colors.offCurve, style.handleFill, style);
+        paintPoint(
+          c,
+          strokeAttr || colors.offCurve,
+          style.handleFill,
+          style.handleStrokeW
+        );
         g.appendChild(c);
       });
     }
@@ -738,7 +749,7 @@
           c.setAttribute("cx", p.x);
           c.setAttribute("cy", p.y);
           c.setAttribute("r", String(nodeR));
-          paintPoint(c, stroke, style.nodeFill, style);
+          paintPoint(c, stroke, style.nodeFill, style.nodeStrokeW);
           g.appendChild(c);
         } else {
           var half = style.nodeSize / 2;
@@ -748,7 +759,7 @@
           r.setAttribute("y", fmt(p.y - half));
           r.setAttribute("width", String(style.nodeSize));
           r.setAttribute("height", String(style.nodeSize));
-          paintPoint(r, stroke, style.nodeFill, style);
+          paintPoint(r, stroke, style.nodeFill, style.nodeStrokeW);
           g.appendChild(r);
         }
       });

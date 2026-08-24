@@ -446,6 +446,11 @@
           <span class="val" id="nsVal">9.0</span>
         </div>
         <div class="row">
+          <label for="nsw">node stroke</label>
+          <input id="nsw" type="range" min="0" max="8" step="0.25" value="1" />
+          <span class="val" id="nswVal">1.00</span>
+        </div>
+        <div class="row">
           <label for="nf">node fill</label>
           <select id="nf">
             <option value="outline" selected>outline</option>
@@ -456,6 +461,11 @@
           <label for="hs">handles</label>
           <input id="hs" type="range" min="0" max="24" step="0.5" value="8" />
           <span class="val" id="hsVal">8.0</span>
+        </div>
+        <div class="row">
+          <label for="hsw">handle stroke</label>
+          <input id="hsw" type="range" min="0" max="8" step="0.25" value="1" />
+          <span class="val" id="hswVal">1.00</span>
         </div>
         <div class="row">
           <label for="hf">handle fill</label>
@@ -501,6 +511,11 @@
             <input id="kn0" class="is-start" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking start" />
             <input id="kn1" class="is-end" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking end" />
           </div>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
         </div>
       </div>
 
@@ -565,7 +580,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=3"></script>
+    <script src="../../animations/glyph-outlines.js?v=4"></script>
     <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
@@ -676,6 +691,8 @@
             strokeWidth: parseFloat(els.sw.value),
             nodeSize: parseFloat(els.ns.value),
             handleSize: parseFloat(els.hs.value),
+            nodeStrokeWidth: parseFloat(els.nsw.value),
+            handleStrokeWidth: parseFloat(els.hsw.value),
             nodeFill: els.nf && els.nf.value === "filled",
             handleFill: els.hf && els.hf.value === "filled",
           };
@@ -795,6 +812,7 @@
             outlineScale: outlineScale(),
             tracking: kerningPxAt(t),
             leading: parseFloat(els.lh.value),
+            offsetY: parseFloat(els.oy.value) || 0,
             stableAnchor: true,
           };
           Object.assign(opts, outlineStyleOpts());
@@ -918,9 +936,12 @@
           lh: 1.3,
           kn0: 0,
           kn1: 0,
+          oy: 0,
           sw: 1.25,
           ns: 9,
           hs: 8,
+          nsw: 1,
+          hsw: 1,
           nf: "outline",
           hf: "outline",
           wMin: 200,
@@ -947,9 +968,12 @@
           lh: document.getElementById("lh"),
           kn0: document.getElementById("kn0"),
           kn1: document.getElementById("kn1"),
+          oy: document.getElementById("oy"),
           sw: document.getElementById("sw"),
           ns: document.getElementById("ns"),
           hs: document.getElementById("hs"),
+          nsw: document.getElementById("nsw"),
+          hsw: document.getElementById("hsw"),
           nf: document.getElementById("nf"),
           hf: document.getElementById("hf"),
           wMin: document.getElementById("wMin"),
@@ -969,9 +993,12 @@
           ln: document.getElementById("lnVal"),
           os: document.getElementById("osVal"),
           lh: document.getElementById("lhVal"),
+          oy: document.getElementById("oyVal"),
           sw: document.getElementById("swVal"),
           ns: document.getElementById("nsVal"),
           hs: document.getElementById("hsVal"),
+          nsw: document.getElementById("nswVal"),
+          hsw: document.getElementById("hswVal"),
           cy: document.getElementById("cyVal"),
           hd: document.getElementById("hdVal"),
         };
@@ -987,7 +1014,8 @@
           if (key === "bg" || key === "ln") return String(v).toLowerCase();
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
           if (key === "lh") return Number(v).toFixed(2);
-          if (key === "sw") return Number(v).toFixed(2);
+          if (key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "sw" || key === "nsw" || key === "hsw") return Number(v).toFixed(2);
           if (key === "ns" || key === "hs") return Number(v).toFixed(1);
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
           if (key === "hd") return Math.round(Number(v)) + "ms";
@@ -1026,12 +1054,15 @@
             key === "sw" ||
             key === "ns" ||
             key === "hs" ||
+            key === "nsw" ||
+            key === "hsw" ||
             key === "nf" ||
             key === "hf" ||
             key === "kn0" ||
             key === "kn1" ||
             key === "fs0" ||
-            key === "fs1"
+            key === "fs1" ||
+            key === "oy"
           ) {
             var previewEased =
               key === "kn1" || key === "fs1" ? 1 : key === "kn0" || key === "fs0" ? 0 : 0;

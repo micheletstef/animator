@@ -313,6 +313,24 @@ body,
   text-align: unset;
 }
 
+.stage .stage-caption.is-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.4em;
+}
+
+.stage .stage-caption.is-stack .caption-row {
+  position: relative;
+  display: block;
+  height: 1em;
+  transition: opacity 180ms ease;
+}
+
+.stage .stage-caption.is-stack .caption-row.is-inactive {
+  opacity: 0.35;
+}
+
 .stage .stage-caption.is-split .caption-label,
 .stage .stage-caption.is-split .caption-value {
   position: absolute;

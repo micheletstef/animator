@@ -113,14 +113,21 @@
 
       .line-row {
         display: flex;
+        flex-direction: column;
         align-items: stretch;
         width: 100%;
-        height: calc(var(--fs) * var(--lh) * 1px);
-        gap: 20px;
+        height: auto;
+        gap: 4px;
+        margin-bottom: 12px;
+      }
+
+      .line-row:last-child {
+        margin-bottom: 0;
       }
 
       .line-fill {
-        flex: 1;
+        flex: none;
+        width: 100%;
         min-width: 0;
         overflow: visible;
       }
@@ -140,16 +147,14 @@
       }
 
       .line-wdth {
-        flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        min-width: 3ch;
+        flex: none;
+        display: block;
+        min-width: 0;
         margin: 0;
         padding: 0;
         color: var(--fg);
         font-family: "IkarusPlusVariable", sans-serif;
-        font-size: 26px;
+        font-size: 13px;
         font-weight: 700;
         font-stretch: 100%;
         font-synthesis: none;
@@ -157,7 +162,7 @@
         line-height: 1;
         letter-spacing: 0;
         white-space: nowrap;
-        text-align: right;
+        text-align: left;
         font-variant-numeric: tabular-nums;
         font-variation-settings: "wght" 700, "wdth" 100, "CNTR" 0, "slnt" 0;
         font-feature-settings: "kern" 1, "tnum" 1;

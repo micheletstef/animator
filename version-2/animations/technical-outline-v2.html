@@ -464,7 +464,6 @@
       </div>
     </div>
     <input type="hidden" id="tx" value="0" />
-    <input type="hidden" id="ty" value="0" />
 
     <aside class="panel" aria-label="Settings">
       <h2>settings</h2>
@@ -497,6 +496,11 @@
           <span class="val" id="nsVal">9.0</span>
         </div>
         <div class="row">
+          <label for="nsw">node stroke</label>
+          <input id="nsw" type="range" min="0" max="8" step="0.25" value="1" />
+          <span class="val" id="nswVal">1.00</span>
+        </div>
+        <div class="row">
           <label for="nf">node fill</label>
           <select id="nf">
             <option value="outline" selected>outline</option>
@@ -507,6 +511,11 @@
           <label for="hs">handles</label>
           <input id="hs" type="range" min="0" max="24" step="0.5" value="8" />
           <span class="val" id="hsVal">8.0</span>
+        </div>
+        <div class="row">
+          <label for="hsw">handle stroke</label>
+          <input id="hsw" type="range" min="0" max="8" step="0.25" value="1" />
+          <span class="val" id="hswVal">1.00</span>
         </div>
         <div class="row">
           <label for="hf">handle fill</label>
@@ -552,6 +561,11 @@
             <input id="kn0" class="is-start" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking start" />
             <input id="kn1" class="is-end" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking end" />
           </div>
+        </div>
+        <div class="row">
+          <label for="ty">y</label>
+          <input id="ty" type="range" min="-720" max="720" step="1" value="0" />
+          <span class="val" id="tyVal">0px</span>
         </div>
       </div>
 
@@ -661,7 +675,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=3"></script>
+    <script src="../../animations/glyph-outlines.js?v=4"></script>
     <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
@@ -1062,6 +1076,8 @@
             strokeWidth: parseFloat(els.sw.value),
             nodeSize: parseFloat(els.ns.value),
             handleSize: parseFloat(els.hs.value),
+            nodeStrokeWidth: parseFloat(els.nsw.value),
+            handleStrokeWidth: parseFloat(els.hsw.value),
             nodeFill: els.nf && els.nf.value === "filled",
             handleFill: els.hf && els.hf.value === "filled",
           };
@@ -1305,6 +1321,8 @@
           sw: 1.25,
           ns: 9,
           hs: 8,
+          nsw: 1,
+          hsw: 1,
           nf: "outline",
           hf: "outline",
           tx: 0,
@@ -1343,6 +1361,8 @@
           sw: document.getElementById("sw"),
           ns: document.getElementById("ns"),
           hs: document.getElementById("hs"),
+          nsw: document.getElementById("nsw"),
+          hsw: document.getElementById("hsw"),
           nf: document.getElementById("nf"),
           hf: document.getElementById("hf"),
           wMin: document.getElementById("wMin"),
@@ -1367,9 +1387,12 @@
           ln: document.getElementById("lnVal"),
           os: document.getElementById("osVal"),
           lh: document.getElementById("lhVal"),
+          ty: document.getElementById("tyVal"),
           sw: document.getElementById("swVal"),
           ns: document.getElementById("nsVal"),
           hs: document.getElementById("hsVal"),
+          nsw: document.getElementById("nswVal"),
+          hsw: document.getElementById("hswVal"),
           cy: document.getElementById("cyVal"),
           sp: document.getElementById("spVal"),
         };
@@ -1385,7 +1408,8 @@
           if (key === "bg" || key === "ln") return String(v).toLowerCase();
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
           if (key === "lh") return Number(v).toFixed(2);
-          if (key === "sw") return Number(v).toFixed(2);
+          if (key === "ty") return Math.round(Number(v)) + "px";
+          if (key === "sw" || key === "nsw" || key === "hsw") return Number(v).toFixed(2);
           if (key === "ns" || key === "hs") return Number(v).toFixed(1);
           if (key === "cy") return (Number(v) / 1000).toFixed(1) + "s";
           if (key === "sp") return Math.round(Number(v)) + "ms";
@@ -1421,6 +1445,11 @@
             updateBezierUI();
           }
           if (key === "ch") applyChar();
+          if (key === "tx") textOffset.x = Number(v) || 0;
+          if (key === "ty") {
+            var tyNow = parseFloat(els.ty.value);
+            textOffset.y = isFinite(tyNow) ? tyNow : 0;
+          }
           applyVar(key, v);
           if (
             key === "ln" ||
@@ -1430,6 +1459,8 @@
             key === "sw" ||
             key === "ns" ||
             key === "hs" ||
+            key === "nsw" ||
+            key === "hsw" ||
             key === "nf" ||
             key === "hf" ||
             key === "ch" ||
@@ -1508,9 +1539,22 @@
           textOffset.y = els.ty != null ? parseFloat(els.ty.value) : DEFAULTS.ty;
         }
 
+        function clampTy(y) {
+          var min = els.ty ? parseFloat(els.ty.min) : -720;
+          var max = els.ty ? parseFloat(els.ty.max) : 720;
+          if (!isFinite(y)) y = 0;
+          return Math.max(min, Math.min(max, Math.round(y)));
+        }
+
+        function syncTyControl() {
+          textOffset.y = clampTy(textOffset.y);
+          if (els.ty) els.ty.value = textOffset.y;
+          if (vals.ty) vals.ty.textContent = fmt("ty", textOffset.y);
+        }
+
         function persistTextOffset() {
           els.tx.value = textOffset.x;
-          els.ty.value = textOffset.y;
+          syncTyControl();
           save();
         }
 
@@ -1535,6 +1579,7 @@
             var z = viewScale();
             textOffset.x = textDrag.ox + (e.clientX - textDrag.x) / z;
             textOffset.y = textDrag.oy + (e.clientY - textDrag.y) / z;
+            syncTyControl();
             refreshDraggedOutlines();
           }
 
