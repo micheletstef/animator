@@ -224,7 +224,7 @@
   }
 
   function guidesKey() {
-    return pageKey("animator:v2:guides:");
+    return "animator:v2:guides";
   }
 
   function cssVarNumber(name, fallback) {
@@ -326,37 +326,86 @@
     setCaptionColor(readCaptionColor());
   }
 
+  function findPanelGroup(name) {
+    var panel = global.document.querySelector(".panel");
+    if (!panel) return null;
+    var titles = panel.querySelectorAll(".group-title");
+    var want = String(name || "").toLowerCase();
+    var i;
+    for (i = 0; i < titles.length; i++) {
+      var text = ((titles[i].textContent) || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (text === want || text.indexOf(want + " ") === 0) {
+        return titles[i].closest(".group");
+      }
+    }
+    return null;
+  }
+
+  function groupBody(group) {
+    if (!group) return null;
+    return group.querySelector(".group-body") || group;
+  }
+
   function ensureCaptionUi() {
     var panel = global.document.querySelector(".panel");
     if (!panel || global.document.getElementById("stageCaption")) return;
-    var group = global.document.createElement("div");
-    group.className = "group";
-    group.innerHTML =
-      '<p class="group-title">caption</p>' +
-      '<div class="row row-span">' +
-      '<label for="stageCaption">text</label>' +
-      '<input id="stageCaption" type="text" autocomplete="off" spellcheck="false" />' +
-      "</div>" +
-      '<div class="row">' +
-      '<label for="stageCaptionColor">color</label>' +
-      '<input id="stageCaptionColor" type="color" />' +
-      '<span class="val" id="stageCaptionColorVal"></span>' +
-      "</div>";
-    panel.appendChild(group);
+
+    var colorGroup = findPanelGroup("color");
+    if (colorGroup) {
+      var colorRow = global.document.createElement("div");
+      colorRow.className = "row";
+      colorRow.innerHTML =
+        '<label for="stageCaptionColor">caption</label>' +
+        '<input id="stageCaptionColor" type="color" />' +
+        '<span class="val" id="stageCaptionColorVal"></span>';
+      groupBody(colorGroup).appendChild(colorRow);
+    }
+
+    var contentGroup = findPanelGroup("content") || findPanelGroup("copy");
+    if (!contentGroup) {
+      contentGroup = global.document.createElement("div");
+      contentGroup.className = "group";
+      contentGroup.innerHTML = '<p class="group-title">content</p>';
+      if (colorGroup && colorGroup.nextSibling) {
+        panel.insertBefore(contentGroup, colorGroup.nextSibling);
+      } else if (colorGroup) {
+        panel.appendChild(contentGroup);
+      } else {
+        panel.insertBefore(contentGroup, panel.querySelector(".group"));
+      }
+    } else {
+      var title = contentGroup.querySelector(".group-title");
+      if (title) title.textContent = "content";
+    }
+
+    var textRow = global.document.createElement("div");
+    textRow.className = "row row-span";
+    textRow.innerHTML =
+      '<label for="stageCaption">caption</label>' +
+      '<input id="stageCaption" type="text" autocomplete="off" spellcheck="false" />';
+    var contentTitle = contentGroup.querySelector(".group-title");
+    if (contentTitle && contentTitle.nextSibling) {
+      contentGroup.insertBefore(textRow, contentTitle.nextSibling);
+    } else {
+      groupBody(contentGroup).appendChild(textRow);
+    }
+
     var input = global.document.getElementById("stageCaption");
     var color = global.document.getElementById("stageCaptionColor");
     var colorVal = global.document.getElementById("stageCaptionColorVal");
     input.value = readCaption();
-    color.value = readCaptionColor();
-    colorVal.textContent = color.value;
+    if (color && colorVal) {
+      color.value = readCaptionColor();
+      colorVal.textContent = color.value;
+      color.addEventListener("input", function () {
+        var hex = setCaptionColor(color.value);
+        colorVal.textContent = hex;
+        writeCaptionColor(hex);
+      });
+    }
     input.addEventListener("input", function () {
       setCaption(input.value);
       writeCaption(input.value);
-    });
-    color.addEventListener("input", function () {
-      var hex = setCaptionColor(color.value);
-      colorVal.textContent = hex;
-      writeCaptionColor(hex);
     });
   }
 
@@ -415,6 +464,10 @@
     root.style.setProperty("--guide-b", g.b + "px");
     root.style.setProperty("--guide-l", g.l + "px");
     root.style.setProperty("--guide-gutter", g.gutter + "px");
+    root.style.setProperty("--pad-t", String(g.t));
+    root.style.setProperty("--pad-r", String(g.r));
+    root.style.setProperty("--pad-b", String(g.b));
+    root.style.setProperty("--pad-l", String(g.l));
     var overlay = global.document.querySelector(".stage-guides");
     if (!overlay) return;
     overlay.hidden = !g.on;
@@ -438,8 +491,18 @@
     if (!overlay) {
       overlay = global.document.createElement("div");
       overlay.className = "stage-guides";
-      overlay.innerHTML = '<div class="guide-margin"></div><div class="guide-cols"></div>';
       stage.appendChild(overlay);
+    }
+    if (!overlay.querySelector(".guide-matte")) {
+      overlay.innerHTML =
+        '<div class="guide-matte">' +
+        '<span class="guide-matte-t"></span>' +
+        '<span class="guide-matte-r"></span>' +
+        '<span class="guide-matte-b"></span>' +
+        '<span class="guide-matte-l"></span>' +
+        "</div>" +
+        '<div class="guide-margin"></div>' +
+        '<div class="guide-cols"></div>';
     }
     applyGuides();
   }

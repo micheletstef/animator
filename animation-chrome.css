@@ -264,6 +264,42 @@ body,
   pointer-events: none;
 }
 
+.guide-matte-t,
+.guide-matte-r,
+.guide-matte-b,
+.guide-matte-l {
+  position: absolute;
+  background: #ff00ff;
+}
+
+.guide-matte-t {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--guide-t, 64px);
+}
+
+.guide-matte-b {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--guide-b, 64px);
+}
+
+.guide-matte-l {
+  top: var(--guide-t, 64px);
+  bottom: var(--guide-b, 64px);
+  left: 0;
+  width: var(--guide-l, 64px);
+}
+
+.guide-matte-r {
+  top: var(--guide-t, 64px);
+  bottom: var(--guide-b, 64px);
+  right: 0;
+  width: var(--guide-r, 64px);
+}
+
 .guide-margin {
   position: absolute;
   top: var(--guide-t, 88px);
@@ -271,9 +307,7 @@ body,
   bottom: var(--guide-b, 88px);
   left: var(--guide-l, 64px);
   border: 0;
-  box-shadow:
-    0 0 0 1px rgba(0, 170, 255, 0.9),
-    0 0 0 2px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 
 .guide-cols {
@@ -289,8 +323,8 @@ body,
 
 .guide-cols span {
   min-width: 0;
-  background: rgba(0, 170, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(0, 170, 255, 0.55);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
 
 .is-exporting .stage-guides,

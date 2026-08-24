@@ -302,6 +302,91 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .row.row-wide-val {
+        grid-template-columns: 40px 1fr 72px;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 22px;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 50%;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track,
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb,
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
       .now {
         margin: 0 0 10px 0;
         color: #9a9a9a;
@@ -332,7 +417,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=9" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=10" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -370,7 +455,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">copy · first glyph vs rest</p>
+        <p class="group-title">content</p>
         <div class="row">
           <label for="l1">line 1</label>
           <input id="l1" type="text" value="R41" spellcheck="false" autocomplete="off" />
@@ -406,16 +491,42 @@
       </div>
 
       <div class="group">
-        <p class="group-title">width · accordion range</p>
-        <div class="row">
-          <label for="cwd">min</label>
-          <input id="cwd" type="range" min="65" max="130" step="1" value="65" />
-          <span class="val" id="cwdVal">65</span>
+        <p class="group-title">width · start → end</p>
+        <div class="row row-wide-val">
+          <label id="wALab" for="wA0">R</label>
+          <div class="dual-range">
+            <div class="dual-track"><div class="dual-fill" id="wAFill"></div></div>
+            <input id="wA0" class="is-start" type="range" min="65" max="130" step="1" value="65" aria-label="R start width" />
+            <input id="wA1" class="is-end" type="range" min="65" max="130" step="1" value="130" aria-label="R end width" />
+          </div>
+          <span class="val" id="wAVal">65 / 130</span>
         </div>
-        <div class="row">
-          <label for="ewd">max</label>
-          <input id="ewd" type="range" min="65" max="130" step="1" value="130" />
-          <span class="val" id="ewdVal">130</span>
+        <div class="row row-wide-val">
+          <label id="wBLab" for="wB0">41</label>
+          <div class="dual-range">
+            <div class="dual-track"><div class="dual-fill" id="wBFill"></div></div>
+            <input id="wB0" class="is-start" type="range" min="65" max="130" step="1" value="130" aria-label="41 start width" />
+            <input id="wB1" class="is-end" type="range" min="65" max="130" step="1" value="65" aria-label="41 end width" />
+          </div>
+          <span class="val" id="wBVal">130 / 65</span>
+        </div>
+        <div class="row row-wide-val">
+          <label id="wCLab" for="wC0">X</label>
+          <div class="dual-range">
+            <div class="dual-track"><div class="dual-fill" id="wCFill"></div></div>
+            <input id="wC0" class="is-start" type="range" min="65" max="130" step="1" value="130" aria-label="X start width" />
+            <input id="wC1" class="is-end" type="range" min="65" max="130" step="1" value="65" aria-label="X end width" />
+          </div>
+          <span class="val" id="wCVal">130 / 65</span>
+        </div>
+        <div class="row row-wide-val">
+          <label id="wDLab" for="wD0">8</label>
+          <div class="dual-range">
+            <div class="dual-track"><div class="dual-fill" id="wDFill"></div></div>
+            <input id="wD0" class="is-start" type="range" min="65" max="130" step="1" value="65" aria-label="8 start width" />
+            <input id="wD1" class="is-end" type="range" min="65" max="130" step="1" value="130" aria-label="8 end width" />
+          </div>
+          <span class="val" id="wDVal">65 / 130</span>
         </div>
       </div>
 
@@ -475,7 +586,7 @@
 
     <span class="probe" id="probe" aria-hidden="true"></span>
 
-    <script src="artboard-view.js?v=11"></script>
+    <script src="artboard-view.js?v=14"></script>
     <script>
       (function () {
         var GRADIENT =
