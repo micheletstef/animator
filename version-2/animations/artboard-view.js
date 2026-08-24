@@ -361,15 +361,21 @@
   }
 
   function defaultGuides() {
+    var m = Math.round(cssVarNumber("--pad-l", cssVarNumber("--pad-t", 64)));
     return {
       on: true,
-      t: Math.round(cssVarNumber("--pad-t", 88)),
-      r: Math.round(cssVarNumber("--pad-r", 64)),
-      b: Math.round(cssVarNumber("--pad-b", 88)),
-      l: Math.round(cssVarNumber("--pad-l", 64)),
+      margin: m,
+      t: m,
+      r: m,
+      b: m,
+      l: m,
       cols: 1,
       gutter: 24,
     };
+  }
+
+  function clampMargin(n) {
+    return Math.max(0, Math.min(480, Math.round(Number(n) || 0)));
   }
 
   function readGuides() {
@@ -386,10 +392,10 @@
       }
     } catch (err) {}
     data.on = !!data.on;
-    data.t = Math.max(0, Math.min(480, Math.round(Number(data.t) || 0)));
-    data.r = Math.max(0, Math.min(480, Math.round(Number(data.r) || 0)));
-    data.b = Math.max(0, Math.min(480, Math.round(Number(data.b) || 0)));
-    data.l = Math.max(0, Math.min(480, Math.round(Number(data.l) || 0)));
+    var m = data.margin;
+    if (m == null) m = data.l != null ? data.l : data.t;
+    m = clampMargin(m);
+    data.margin = data.t = data.r = data.b = data.l = m;
     data.cols = Math.max(1, Math.min(12, Math.round(Number(data.cols) || 1)));
     data.gutter = Math.max(0, Math.min(160, Math.round(Number(data.gutter) || 0)));
     return data;
@@ -452,20 +458,8 @@
       '<span class="val" id="guideOnVal">on</span>' +
       "</div>" +
       '<div class="row row-span">' +
-      '<label for="guideT">top</label>' +
-      '<input id="guideT" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
-      "</div>" +
-      '<div class="row row-span">' +
-      '<label for="guideB">bottom</label>' +
-      '<input id="guideB" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
-      "</div>" +
-      '<div class="row row-span">' +
-      '<label for="guideL">left</label>' +
-      '<input id="guideL" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
-      "</div>" +
-      '<div class="row row-span">' +
-      '<label for="guideR">right</label>' +
-      '<input id="guideR" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
+      '<label for="guideMargin">margin</label>' +
+      '<input id="guideMargin" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
       "</div>" +
       '<div class="row row-span">' +
       '<label for="guideCols">columns</label>' +
@@ -482,19 +476,13 @@
 
     var els = {
       on: global.document.getElementById("guideOn"),
-      t: global.document.getElementById("guideT"),
-      b: global.document.getElementById("guideB"),
-      l: global.document.getElementById("guideL"),
-      r: global.document.getElementById("guideR"),
+      margin: global.document.getElementById("guideMargin"),
       cols: global.document.getElementById("guideCols"),
       gutter: global.document.getElementById("guideGutter"),
     };
     var onVal = global.document.getElementById("guideOnVal");
     var limits = {
-      t: [0, 480],
-      b: [0, 480],
-      l: [0, 480],
-      r: [0, 480],
+      margin: [0, 480],
       cols: [1, 12],
       gutter: [0, 160],
     };
@@ -506,14 +494,16 @@
       return Math.max(lim[0], Math.min(lim[1], Math.round(n)));
     }
 
+    function setMargin(n) {
+      n = clampGuide("margin", n);
+      g.margin = g.t = g.r = g.b = g.l = n;
+    }
+
     function paint(syncFields) {
       els.on.checked = g.on;
       onVal.textContent = g.on ? "on" : "off";
       if (syncFields !== false) {
-        els.t.value = String(g.t);
-        els.b.value = String(g.b);
-        els.l.value = String(g.l);
-        els.r.value = String(g.r);
+        els.margin.value = String(g.margin);
         els.cols.value = String(g.cols);
         els.gutter.value = String(g.gutter);
       }
@@ -525,16 +515,18 @@
       g.on = !!els.on.checked;
       paint(false);
     });
-    ["t", "b", "l", "r", "cols", "gutter"].forEach(function (key) {
+    ["margin", "cols", "gutter"].forEach(function (key) {
       els[key].addEventListener("input", function () {
         var raw = String(els[key].value).trim();
         if (raw === "" || raw === "-") return;
         if (!/^-?\d+$/.test(raw)) return;
-        g[key] = clampGuide(key, raw);
+        if (key === "margin") setMargin(raw);
+        else g[key] = clampGuide(key, raw);
         paint(false);
       });
       els[key].addEventListener("change", function () {
-        g[key] = clampGuide(key, els[key].value);
+        if (key === "margin") setMargin(els[key].value);
+        else g[key] = clampGuide(key, els[key].value);
         paint(true);
       });
     });
