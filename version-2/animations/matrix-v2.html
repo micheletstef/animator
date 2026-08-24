@@ -190,9 +190,8 @@
 
       .matrix-row {
         display: grid;
-        grid-template-columns: max-content minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         align-items: start;
-        justify-content: start;
         justify-items: start;
         gap: var(--guide-gutter, 24px);
         flex: 0 0 auto;
@@ -207,7 +206,7 @@
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
-        width: auto;
+        width: 100%;
         min-width: 0;
         user-select: none;
         height: 100%;
