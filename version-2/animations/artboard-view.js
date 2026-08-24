@@ -10,6 +10,31 @@
     return Math.max(lo, Math.min(hi, n));
   }
 
+  function formatScale(scale) {
+    var pct = scale * 100;
+    if (!isFinite(pct)) return "";
+    return Math.round(pct) + "%";
+  }
+
+  function ensureScaleStyle() {
+    if (global.document.getElementById("artboard-scale-style")) return;
+    var s = global.document.createElement("style");
+    s.id = "artboard-scale-style";
+    s.textContent =
+      ".stage-wrap{position:relative}.artboard-scale{position:absolute;left:0;right:0;bottom:10px;z-index:6;margin:0;text-align:center;pointer-events:none;font-family:\"Courier New\",Courier,monospace;font-size:12px;line-height:1;color:#555;letter-spacing:0.02em}";
+    global.document.head.appendChild(s);
+  }
+
+  function ensureScaleReadout(wrap) {
+    var el = wrap.querySelector(".artboard-scale");
+    if (el) return el;
+    el = global.document.createElement("div");
+    el.className = "artboard-scale";
+    el.setAttribute("aria-live", "polite");
+    wrap.appendChild(el);
+    return el;
+  }
+
   function readSize(root) {
     var cs = getComputedStyle(root);
     var w = parseFloat(cs.getPropertyValue("--ar-w"));
@@ -38,6 +63,10 @@
     var lastX = 0;
     var lastY = 0;
     var pointerId = null;
+    var scaleEl = null;
+
+    ensureScaleStyle();
+    scaleEl = ensureScaleReadout(wrap);
 
     function fitPad(rect) {
       var m = Math.min(rect.width, rect.height);
@@ -63,6 +92,7 @@
       var y = (rect.height - size.h * scale) / 2 + panY;
       outer.style.transform =
         "translate(" + x + "px, " + y + "px) scale(" + scale + ")";
+      if (scaleEl) scaleEl.textContent = formatScale(scale);
       return { fit: fit, scale: scale, x: x, y: y, w: size.w, h: size.h };
     }
 

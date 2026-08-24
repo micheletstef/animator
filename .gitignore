@@ -3,3 +3,7 @@ deploy.php
 deploy.log
 
 .venv-fonts/
+
+render/node_modules/
+render/frames/
+render/out/

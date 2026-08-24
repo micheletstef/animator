@@ -1,0 +1,11 @@
+{
+  "name": "animator-render",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export": "node export.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.55.0"
+  }
+}

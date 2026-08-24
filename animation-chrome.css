@@ -9,6 +9,26 @@ body,
   color: #1f1f1f;
 }
 
+.stage-wrap {
+  position: relative;
+}
+
+.artboard-scale {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  z-index: 6;
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  line-height: 1;
+  color: #555;
+  letter-spacing: 0.02em;
+}
+
 .stage {
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
 }

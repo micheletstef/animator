@@ -234,8 +234,13 @@
         border-color: #555;
         color: #fff;
       }
+
+      .panel button:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=3" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=4" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -342,9 +347,12 @@
         <button type="button" id="resetBtn">reset</button>
         <button type="button" id="replayBtn">replay</button>
       </div>
+      <div class="actions">
+        <button type="button" id="downloadBtn">download mp4</button>
+      </div>
     </aside>
 
-    <script src="artboard-view.js?v=6"></script>
+    <script src="artboard-view.js?v=7"></script>
     <script>
       (function () {
         var W_MIN = 200;
@@ -408,6 +416,8 @@
         });
 
         var t0 = 0;
+        var raf = 0;
+        var playing = true;
 
         function lerp(a, b, t) {
           return a + (b - a) * t;
@@ -474,11 +484,32 @@
 
         function frame(now) {
           applyWeights(sample(now - t0));
-          requestAnimationFrame(frame);
+          if (playing) raf = requestAnimationFrame(frame);
         }
 
         function restart() {
           t0 = performance.now();
+        }
+
+        function durationMs() {
+          var n = WORDS.length;
+          var move = Math.max(80, Number(els.move.value) || 1200);
+          var lag = Math.max(10, Number(els.lag.value) || 180);
+          var hold = Math.max(0, Number(els.hold.value) || 0);
+          return (n - 1) * lag + move + hold;
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          t0 = performance.now();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
         }
 
         function fmt(key, v) {
@@ -586,8 +617,20 @@
         applyVars();
         paintVals();
         restart();
-        requestAnimationFrame(frame);
+        raf = requestAnimationFrame(frame);
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "weight-cascade.mp4",
+          durationMs: durationMs,
+          seek: function (ms) {
+            applyWeights(sample(ms));
+          },
+          stop: stopPlayback,
+          start: startPlayback,
+        };
       })();
     </script>
+    <script type="module" src="../../web-export.js"></script>
   </body>
 </html>
