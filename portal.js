@@ -154,7 +154,7 @@
   }
 
   function loadManifest(version) {
-    return fetch(version.manifest + (version.manifest.indexOf("?") >= 0 ? "&" : "?") + "v=11", { cache: "no-store" })
+    return fetch(version.manifest + (version.manifest.indexOf("?") >= 0 ? "&" : "?") + "v=13", { cache: "no-store" })
       .then(function (r) {
         if (!r.ok) throw new Error("manifest " + r.status);
         return r.json();
