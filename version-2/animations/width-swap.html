@@ -107,7 +107,7 @@
         background-size: 100% 100%;
         color: var(--fg);
         overflow: hidden;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        box-shadow: none;
         font-family: "IkarusPlusVariable", sans-serif;
         font-synthesis: none;
         font-feature-settings: "liga" 1, "kern" 1;
@@ -168,10 +168,6 @@
         right: auto;
       }
 
-      .unit.is-x {
-        left: 0.06em;
-      }
-
       .unit.is-end {
         left: auto;
         right: 0;
@@ -196,7 +192,7 @@
         position: absolute;
         left: -9999px;
         top: 0;
-        visibility: hidden;
+        opacity: 0;
         pointer-events: none;
         white-space: nowrap;
         font-family: "IkarusPlusVariable", sans-serif;
@@ -336,7 +332,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=7" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=8" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -479,7 +475,7 @@
 
     <span class="probe" id="probe" aria-hidden="true"></span>
 
-    <script src="artboard-view.js?v=9"></script>
+    <script src="artboard-view.js?v=10"></script>
     <script>
       (function () {
         var GRADIENT =
@@ -488,7 +484,6 @@
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var TRACK_EXT_DELTA = -0.085;
-        var R_EXT_NUDGE_EM = -0.05;
 
         var root = document.documentElement;
         var fitEl = document.getElementById("fit");
@@ -628,7 +623,25 @@
           return lerp(base, base + TRACK_EXT_DELTA, u);
         }
 
-        function measureWidth(text, fs, vf, track) {
+        function inkRect(el) {
+          var range = document.createRange();
+          range.selectNodeContents(el);
+          var rects = range.getClientRects();
+          var i;
+          var left = Infinity;
+          var right = -Infinity;
+          for (i = 0; i < rects.length; i++) {
+            if (rects[i].left < left) left = rects[i].left;
+            if (rects[i].right > right) right = rects[i].right;
+          }
+          if (!isFinite(left) || right - left < 0.5) {
+            var fallback = el.getBoundingClientRect();
+            return fallback;
+          }
+          return { left: left, right: right, width: right - left };
+        }
+
+        function measureMetrics(text, fs, vf, track) {
           if (track == null) track = baseTrack();
           probe.style.fontFamily = '"IkarusPlusVariable", sans-serif';
           probe.style.fontSize = fs + "px";
@@ -637,7 +650,13 @@
           probe.style.fontVariationSettings = vf;
           probe.textContent = text || "";
           probe.offsetWidth;
-          return probe.getBoundingClientRect().width;
+          var box = probe.getBoundingClientRect();
+          var ink = inkRect(probe);
+          return {
+            width: box.width,
+            left: ink.left - box.left,
+            right: box.right - ink.right,
+          };
         }
 
         function getSamples(unit, wght, cntr, slnt, fs) {
@@ -664,46 +683,49 @@
           if (sampleCache[key]) return sampleCache[key];
           var wdths = [];
           var widths = [];
-          for (var w = range.lo; w <= range.hi; w += WDTH_STEP) {
+          var lefts = [];
+          var rights = [];
+          function pushSample(w) {
+            var m = measureMetrics(
+              text,
+              fs,
+              vfString(wght, w, cntr, slnt),
+              trackAtWdth(unit, w)
+            );
             wdths.push(w);
-            widths.push(
-              measureWidth(
-                text,
-                fs,
-                vfString(wght, w, cntr, slnt),
-                trackAtWdth(unit, w)
-              )
-            );
+            widths.push(m.width);
+            lefts.push(m.left);
+            rights.push(m.right);
           }
-          if (wdths[wdths.length - 1] !== range.hi) {
-            wdths.push(range.hi);
-            widths.push(
-              measureWidth(
-                text,
-                fs,
-                vfString(wght, range.hi, cntr, slnt),
-                trackAtWdth(unit, range.hi)
-              )
-            );
-          }
-          sampleCache[key] = { wdths: wdths, widths: widths };
+          for (var w = range.lo; w <= range.hi; w += WDTH_STEP) pushSample(w);
+          if (wdths[wdths.length - 1] !== range.hi) pushSample(range.hi);
+          sampleCache[key] = {
+            wdths: wdths,
+            widths: widths,
+            lefts: lefts,
+            rights: rights,
+          };
           return sampleCache[key];
         }
 
-        function widthAt(samples, wdth) {
+        function sampleAt(samples, wdth, prop) {
           var wdths = samples.wdths;
-          var widths = samples.widths;
+          var values = samples[prop];
           if (!wdths.length) return 0;
-          if (wdth <= wdths[0]) return widths[0];
-          if (wdth >= wdths[wdths.length - 1]) return widths[widths.length - 1];
+          if (wdth <= wdths[0]) return values[0];
+          if (wdth >= wdths[wdths.length - 1]) return values[values.length - 1];
           for (var i = 0; i < wdths.length - 1; i++) {
             if (wdth <= wdths[i + 1]) {
               var span = wdths[i + 1] - wdths[i];
               var u = span <= 0 ? 0 : (wdth - wdths[i]) / span;
-              return lerp(widths[i], widths[i + 1], u);
+              return lerp(values[i], values[i + 1], u);
             }
           }
-          return widths[widths.length - 1];
+          return values[values.length - 1];
+        }
+
+        function widthAt(samples, wdth) {
+          return sampleAt(samples, wdth, "widths");
         }
 
         function unitWdthRange(unit) {
@@ -766,22 +788,20 @@
 
         function applyUnit(unit, line, wdth, boxW) {
           var track = trackAtWdth(unit, wdth);
+          var k = line.k || 1;
           unit.el.style.width = "max-content";
           unit.el.style.flex = "none";
           unit.el.style.maxWidth = "none";
           unit.inner.style.letterSpacing = track + "em";
+          unit.inner.style.marginRight = -track + "em";
           if (unit.align === "end") {
-            unit.inner.style.marginRight = "0";
+            unit.el.style.left = "auto";
+            unit.el.style.right =
+              -sampleAt(unit.samples, wdth, "rights") * k + "px";
           } else {
-            unit.inner.style.marginRight = -track + "em";
-          }
-          if (line.index === 0 && unit.align === "start") {
-            var range = unitWdthRange(unit);
-            var span = range.hi - range.lo;
-            var u = span <= 0 ? 1 : (wdth - range.lo) / span;
-            if (u < 0) u = 0;
-            if (u > 1) u = 1;
-            unit.el.style.left = R_EXT_NUDGE_EM * u + "em";
+            unit.el.style.right = "auto";
+            unit.el.style.left =
+              -sampleAt(unit.samples, wdth, "lefts") * k + "px";
           }
           unit.inner.style.fontVariationSettings = vfString(
             line.wght,
@@ -963,10 +983,7 @@
             parts.forEach(function (text, i) {
               if (!text) return;
               var unitEl = document.createElement("span");
-              unitEl.className =
-                "unit " +
-                (i === 0 ? "is-start" : "is-end") +
-                (rowIndex === 1 && i === 0 ? " is-x" : "");
+              unitEl.className = "unit " + (i === 0 ? "is-start" : "is-end");
               var inner = document.createElement("span");
               inner.className = "inner";
               inner.textContent = text;

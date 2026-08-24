@@ -451,35 +451,29 @@
       '<input id="guideOn" type="checkbox" />' +
       '<span class="val" id="guideOnVal">on</span>' +
       "</div>" +
-      '<div class="row">' +
+      '<div class="row row-span">' +
       '<label for="guideT">top</label>' +
-      '<input id="guideT" type="range" min="0" max="400" step="1" />' +
-      '<span class="val" id="guideTVal"></span>' +
+      '<input id="guideT" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
       "</div>" +
-      '<div class="row">' +
+      '<div class="row row-span">' +
       '<label for="guideB">bottom</label>' +
-      '<input id="guideB" type="range" min="0" max="400" step="1" />' +
-      '<span class="val" id="guideBVal"></span>' +
+      '<input id="guideB" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
       "</div>" +
-      '<div class="row">' +
+      '<div class="row row-span">' +
       '<label for="guideL">left</label>' +
-      '<input id="guideL" type="range" min="0" max="400" step="1" />' +
-      '<span class="val" id="guideLVal"></span>' +
+      '<input id="guideL" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
       "</div>" +
-      '<div class="row">' +
+      '<div class="row row-span">' +
       '<label for="guideR">right</label>' +
-      '<input id="guideR" type="range" min="0" max="400" step="1" />' +
-      '<span class="val" id="guideRVal"></span>' +
+      '<input id="guideR" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
       "</div>" +
-      '<div class="row">' +
+      '<div class="row row-span">' +
       '<label for="guideCols">columns</label>' +
-      '<input id="guideCols" type="range" min="1" max="12" step="1" />' +
-      '<span class="val" id="guideColsVal"></span>' +
+      '<input id="guideCols" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
       "</div>" +
-      '<div class="row">' +
+      '<div class="row row-span">' +
       '<label for="guideGutter">gutter</label>' +
-      '<input id="guideGutter" type="range" min="0" max="120" step="1" />' +
-      '<span class="val" id="guideGutterVal"></span>' +
+      '<input id="guideGutter" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
       "</div>";
     var captionGroup = global.document.getElementById("stageCaption");
     captionGroup = captionGroup && captionGroup.closest(".group");
@@ -495,43 +489,53 @@
       cols: global.document.getElementById("guideCols"),
       gutter: global.document.getElementById("guideGutter"),
     };
-    var vals = {
-      on: global.document.getElementById("guideOnVal"),
-      t: global.document.getElementById("guideTVal"),
-      b: global.document.getElementById("guideBVal"),
-      l: global.document.getElementById("guideLVal"),
-      r: global.document.getElementById("guideRVal"),
-      cols: global.document.getElementById("guideColsVal"),
-      gutter: global.document.getElementById("guideGutterVal"),
+    var onVal = global.document.getElementById("guideOnVal");
+    var limits = {
+      t: [0, 480],
+      b: [0, 480],
+      l: [0, 480],
+      r: [0, 480],
+      cols: [1, 12],
+      gutter: [0, 160],
     };
 
-    function paint() {
+    function clampGuide(key, raw) {
+      var n = Number(raw);
+      if (!isFinite(n)) n = key === "cols" ? 1 : 0;
+      var lim = limits[key];
+      return Math.max(lim[0], Math.min(lim[1], Math.round(n)));
+    }
+
+    function paint(syncFields) {
       els.on.checked = g.on;
-      vals.on.textContent = g.on ? "on" : "off";
-      els.t.value = String(g.t);
-      els.b.value = String(g.b);
-      els.l.value = String(g.l);
-      els.r.value = String(g.r);
-      els.cols.value = String(g.cols);
-      els.gutter.value = String(g.gutter);
-      vals.t.textContent = g.t + "px";
-      vals.b.textContent = g.b + "px";
-      vals.l.textContent = g.l + "px";
-      vals.r.textContent = g.r + "px";
-      vals.cols.textContent = String(g.cols);
-      vals.gutter.textContent = g.gutter + "px";
+      onVal.textContent = g.on ? "on" : "off";
+      if (syncFields !== false) {
+        els.t.value = String(g.t);
+        els.b.value = String(g.b);
+        els.l.value = String(g.l);
+        els.r.value = String(g.r);
+        els.cols.value = String(g.cols);
+        els.gutter.value = String(g.gutter);
+      }
       applyGuides(g);
       writeGuides(g);
     }
 
     els.on.addEventListener("input", function () {
       g.on = !!els.on.checked;
-      paint();
+      paint(false);
     });
     ["t", "b", "l", "r", "cols", "gutter"].forEach(function (key) {
       els[key].addEventListener("input", function () {
-        g[key] = Number(els[key].value);
-        paint();
+        var raw = String(els[key].value).trim();
+        if (raw === "" || raw === "-") return;
+        if (!/^-?\d+$/.test(raw)) return;
+        g[key] = clampGuide(key, raw);
+        paint(false);
+      });
+      els[key].addEventListener("change", function () {
+        g[key] = clampGuide(key, els[key].value);
+        paint(true);
       });
     });
     paint();
