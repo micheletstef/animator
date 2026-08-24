@@ -432,7 +432,7 @@ function bind() {
     var style = document.createElement("style");
     style.id = "web-export-style";
     style.textContent =
-      ".is-exporting .artboard-scale{display:none!important}";
+      ".is-exporting .artboard-scale,.is-exporting .stage-guides{display:none!important}";
     document.head.appendChild(style);
   }
   var api = window.AnimatorExport;
