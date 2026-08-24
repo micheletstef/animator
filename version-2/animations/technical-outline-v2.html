@@ -117,7 +117,14 @@
         pointer-events: none !important;
       }
 
-      .outline-layer .glyph-outline-path,
+      .outline-layer .glyph-outline-path {
+        stroke: currentColor;
+        fill: var(--bg);
+        fill-opacity: 1;
+        fill-rule: nonzero;
+        paint-order: stroke fill;
+      }
+
       .outline-layer .glyph-outline-handle-line {
         stroke: currentColor;
         fill: none;
@@ -437,7 +444,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=25" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -675,7 +682,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=8"></script>
+    <script src="../../animations/glyph-outlines.js?v=10"></script>
     <script src="artboard-view.js?v=20"></script>
     <script>
       (function () {
@@ -1106,7 +1113,7 @@
         function fontSizeAt(eased) {
           var start = parseFloat(els.fs0.value);
           var end = parseFloat(els.fs1.value);
-          return Math.round(start + (end - start) * eased);
+          return start + (end - start) * eased;
         }
 
         function applyFontSize(eased) {
@@ -1213,6 +1220,7 @@
             root: root,
             color: color,
             outlineScale: outlineScale(),
+            fontSize: fontSizeAt(motionT),
             tracking: kerningPxAt(motionT),
             leading: parseFloat(els.lh.value),
             offsetX: textOffset.x,

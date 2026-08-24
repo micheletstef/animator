@@ -131,7 +131,10 @@
     return { w: sr.width / zoom, h: sr.height / zoom };
   }
 
-  function fontSizePx(el) {
+  function fontSizePx(el, opts) {
+    if (opts && opts.fontSize != null && isFinite(Number(opts.fontSize))) {
+      return Number(opts.fontSize);
+    }
     return parseFloat(getComputedStyle(el).fontSize) || 72;
   }
 
@@ -366,7 +369,9 @@
       } else if (cmd.type === "Q") {
         if (!cur) beginContour(cmd.x, cmd.y);
         var qc = offNode(cmd.x1, cmd.y1);
+        var qEnd = { x: cmd.x, y: cmd.y };
         handleLines.push([cur, qc]);
+        handleLines.push([qc, qEnd]);
         cur = onNode(cmd.x, cmd.y, true);
       } else if (cmd.type === "Z") {
         cur = start;
@@ -455,7 +460,7 @@
 
   function fmt(n) {
     if (!isFinite(n)) return "0";
-    return String(Math.round(n * 100) / 100);
+    return String(Math.round(n * 1000) / 1000);
   }
 
   function clearSvg(svg) {
@@ -464,6 +469,27 @@
 
   function ns(tag) {
     return document.createElementNS("http://www.w3.org/2000/svg", tag);
+  }
+
+  function ensureChild(parent, index, tag, className) {
+    var el = parent.children[index];
+    if (
+      el &&
+      el.tagName &&
+      el.tagName.toLowerCase() === tag &&
+      el.getAttribute("class") === className
+    ) {
+      return el;
+    }
+    var neu = ns(tag);
+    neu.setAttribute("class", className);
+    if (el) parent.replaceChild(neu, el);
+    else parent.appendChild(neu);
+    return neu;
+  }
+
+  function trimTo(parent, n) {
+    while (parent.children.length > n) parent.removeChild(parent.lastElementChild);
   }
 
   function unionBBox(boxes) {
@@ -509,11 +535,20 @@
 
   function setHbVariations(hbState, otFont, variation) {
     var v = mergedVariation(otFont, variation);
-    var vars = [];
     var fvar = otFont.tables && otFont.tables.fvar;
+    if (!hbState._vars) hbState._vars = [];
+    if (!hbState._varByTag) hbState._varByTag = {};
+    var vars = hbState._vars;
+    vars.length = 0;
     if (fvar && fvar.axes) {
       fvar.axes.forEach(function (axis) {
-        vars.push(new hbState.Variation(axis.tag, v[axis.tag]));
+        var item = hbState._varByTag[axis.tag];
+        if (!item) {
+          item = hbState._varByTag[axis.tag] = new hbState.Variation(axis.tag, v[axis.tag]);
+        } else {
+          item.value = v[axis.tag];
+        }
+        vars.push(item);
       });
     }
     hbState.font.setVariations(vars);
@@ -522,8 +557,9 @@
     return v;
   }
 
-  function samePt(ax, ay, bx, by) {
-    return Math.abs(ax - bx) < 0.05 && Math.abs(ay - by) < 0.05;
+  function samePt(ax, ay, bx, by, eps) {
+    var e = eps != null ? eps : 0.5;
+    return Math.abs(ax - bx) < e && Math.abs(ay - by) < e;
   }
 
   /**
@@ -589,7 +625,12 @@
         curY = cy;
       } else if (seg.type === "Z") {
         var last = cmds[cmds.length - 1];
-        if (last && last.type === "L" && open && samePt(last.x, last.y, startX, startY)) {
+        if (
+          last &&
+          last.type === "L" &&
+          open &&
+          samePt(last.x, last.y, startX, startY, 1)
+        ) {
           cmds.pop();
         }
         cmds.push({ type: "Z" });
@@ -615,25 +656,38 @@
     return glyphPath && glyphPath.commands ? glyphPath.commands : [];
   }
 
+  function hbBuffer(hbState) {
+    if (!hbState._buffer) hbState._buffer = new hbState.Buffer();
+    else hbState._buffer.clearContents();
+    return hbState._buffer;
+  }
+
+  function hbFeatures(hbState) {
+    if (!hbState._features) {
+      hbState._features = [
+        new hbState.Feature("kern", 1),
+        new hbState.Feature("liga", 1),
+        new hbState.Feature("rlig", 1),
+      ];
+    }
+    return hbState._features;
+  }
+
   /**
    * Shape with HarfBuzz (full GPOS kern, like InDesign / Core Text).
    * Returns { runs, width } for one line at baseline y0, origin x0.
+   * Variations must already be set on hbState.font.
    */
   function shapeLine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal) {
     if (!line) return { runs: [], width: 0 };
-    var v = setHbVariations(hbState, otFont, variation);
-    var pathOpts = pathOptsForGlyph(v);
+    var pathOpts = pathOptsForGlyph(variation);
     var scale = fontSize / hbState.upem;
     var trackExtra = trackingPxVal ? trackingPxVal / fontSize : 0;
 
-    var buffer = new hbState.Buffer();
+    var buffer = hbBuffer(hbState);
     buffer.addText(line);
     buffer.guessSegmentProperties();
-    hbState.shape(hbState.font, buffer, [
-      new hbState.Feature("kern", 1),
-      new hbState.Feature("liga", 1),
-      new hbState.Feature("rlig", 1),
-    ]);
+    hbState.shape(hbState.font, buffer, hbFeatures(hbState));
 
     var glyphs = buffer.getGlyphInfosAndPositions();
     var runs = [];
@@ -708,6 +762,33 @@
     return shapeLineOpentype(otFont, line, x0, y0, fontSize, variation, trackingPxVal);
   }
 
+  function translateCommands(commands, dx, dy) {
+    if (!dx && !dy) return commands;
+    var out = new Array(commands.length);
+    for (var i = 0; i < commands.length; i++) {
+      var cmd = commands[i];
+      if (cmd.type === "Z" || (cmd.x == null && cmd.x1 == null)) {
+        out[i] = cmd;
+        continue;
+      }
+      var c = { type: cmd.type };
+      if (cmd.x != null) {
+        c.x = cmd.x + dx;
+        c.y = cmd.y + dy;
+      }
+      if (cmd.x1 != null) {
+        c.x1 = cmd.x1 + dx;
+        c.y1 = cmd.y1 + dy;
+      }
+      if (cmd.x2 != null) {
+        c.x2 = cmd.x2 + dx;
+        c.y2 = cmd.y2 + dy;
+      }
+      out[i] = c;
+    }
+    return out;
+  }
+
   /**
    * Lay out glyphs via HarfBuzz (GPOS kern + gvar outlines).
    * Supports line breaks; lines are center-aligned; opts.tracking adds letter-spacing.
@@ -715,33 +796,29 @@
    */
   function glyphRunsForText(font, text, fontSize, variation, opts) {
     if (!text) return [];
+    if (cachedHbState) setHbVariations(cachedHbState, font, variation);
     var lines = splitLines(text);
     var lineHeight = leadingPx(font, fontSize, opts);
     var track = trackingPx(opts);
-    var lineWidths = lines.map(function (line) {
-      return shapeLineWithEngine(cachedHbState, font, line, 0, 0, fontSize, variation, track).width;
+    var shapedLines = lines.map(function (line) {
+      return shapeLineWithEngine(cachedHbState, font, line, 0, 0, fontSize, variation, track);
     });
     var maxLineWidth = 0;
-    lineWidths.forEach(function (w) {
-      maxLineWidth = Math.max(maxLineWidth, w);
+    shapedLines.forEach(function (s) {
+      maxLineWidth = Math.max(maxLineWidth, s.width);
     });
 
     var runs = [];
-
     for (var li = 0; li < lines.length; li++) {
       var y = li * lineHeight;
-      var x0 = (maxLineWidth - lineWidths[li]) / 2;
-      var shaped = shapeLineWithEngine(
-        cachedHbState,
-        font,
-        lines[li],
-        x0,
-        y,
-        fontSize,
-        variation,
-        track
-      );
-      runs.push.apply(runs, shaped.runs);
+      var x0 = (maxLineWidth - shapedLines[li].width) / 2;
+      shapedLines[li].runs.forEach(function (r) {
+        runs.push({
+          commands: translateCommands(r.commands, x0, y),
+          x: r.x + x0,
+          advance: r.advance,
+        });
+      });
     }
 
     return runs;
@@ -777,6 +854,13 @@
     var nodeFill = fillFlag(opts && opts.nodeFill, false);
     var handleFill =
       opts && opts.handleFill != null ? fillFlag(opts.handleFill, false) : nodeFill;
+    var pathFill = "var(--bg)";
+    if (opts && opts.pathFill != null && opts.pathFill !== "") {
+      pathFill =
+        opts.pathFill === false || opts.pathFill === "none"
+          ? "none"
+          : String(opts.pathFill);
+    }
     var scale = opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;
     if (!isFinite(strokeW) || strokeW < 0) strokeW = 1.25;
     if (!isFinite(nodeStrokeW) || nodeStrokeW < 0) nodeStrokeW = 1;
@@ -792,6 +876,7 @@
       handleSize: handleSize * scale,
       nodeFill: nodeFill,
       handleFill: handleFill,
+      pathFill: pathFill,
     };
   }
 
@@ -807,39 +892,30 @@
     el.setAttribute("stroke-width", String(strokeW));
   }
 
-  function appendOutlineToGroup(g, outline, map, colors, strokeAttr, style) {
+  function patchOutlineToGroup(g, outline, map, colors, strokeAttr, style, idx) {
     var geom = outline.geom;
-    var pathEl = ns("path");
-    pathEl.setAttribute("class", "glyph-outline-path");
-    pathEl.setAttribute("d", outline.d);
-    pathEl.setAttribute("fill", "none");
-    pathEl.setAttribute("fill-opacity", "0");
-    pathEl.setAttribute("stroke", strokeAttr || colors.path);
-    pathEl.setAttribute("stroke-width", String(style.strokeW));
-    pathEl.setAttribute("stroke-linejoin", "miter");
-    pathEl.setAttribute("stroke-miterlimit", "2.5");
-    g.appendChild(pathEl);
+    var pathFill = style.pathFill != null ? style.pathFill : "var(--bg)";
+    var filled = pathFill && pathFill !== "none";
+    var i = idx;
 
     if (style.handleSize > 0) {
       geom.handleLines.forEach(function (seg) {
         var a = mapPoint(map, seg[0]);
         var b = mapPoint(map, seg[1]);
-        var line = ns("line");
-        line.setAttribute("class", "glyph-outline-handle-line");
+        var line = ensureChild(g, i, "line", "glyph-outline-handle-line");
         line.setAttribute("x1", a.x);
         line.setAttribute("y1", a.y);
         line.setAttribute("x2", b.x);
         line.setAttribute("y2", b.y);
         line.setAttribute("stroke", strokeAttr || colors.handleLine);
         line.setAttribute("stroke-width", String(style.handleStrokeW));
-        g.appendChild(line);
+        i++;
       });
 
       var handleR = style.handleSize / 2;
       geom.handles.forEach(function (h) {
         var p = mapPoint(map, h);
-        var c = ns("circle");
-        c.setAttribute("class", "glyph-outline-handle");
+        var c = ensureChild(g, i, "circle", "glyph-outline-handle");
         c.setAttribute("cx", p.x);
         c.setAttribute("cy", p.y);
         c.setAttribute("r", String(handleR));
@@ -849,9 +925,21 @@
           style.handleFill,
           style.handleStrokeW
         );
-        g.appendChild(c);
+        i++;
       });
     }
+
+    var pathEl = ensureChild(g, i, "path", "glyph-outline-path");
+    pathEl.setAttribute("d", outline.d);
+    pathEl.setAttribute("fill", filled ? pathFill : "none");
+    pathEl.setAttribute("fill-opacity", filled ? "1" : "0");
+    pathEl.setAttribute("fill-rule", "nonzero");
+    pathEl.setAttribute("paint-order", "stroke fill");
+    pathEl.setAttribute("stroke", strokeAttr || colors.path);
+    pathEl.setAttribute("stroke-width", String(style.strokeW));
+    pathEl.setAttribute("stroke-linejoin", "miter");
+    pathEl.setAttribute("stroke-miterlimit", "2.5");
+    i++;
 
     if (style.nodeSize > 0) {
       var nodeR = style.nodeSize / 2;
@@ -859,29 +947,28 @@
         var p = mapPoint(map, n);
         var stroke = strokeAttr || (n.smooth ? colors.onCurveSmooth : colors.onCurve);
         if (n.smooth) {
-          var c = ns("circle");
-          c.setAttribute("class", "glyph-outline-node glyph-outline-node-smooth");
+          var c = ensureChild(g, i, "circle", "glyph-outline-node glyph-outline-node-smooth");
           c.setAttribute("cx", p.x);
           c.setAttribute("cy", p.y);
           c.setAttribute("r", String(nodeR));
           paintPoint(c, stroke, style.nodeFill, style.nodeStrokeW);
-          g.appendChild(c);
         } else {
           var half = style.nodeSize / 2;
-          var r = ns("rect");
-          r.setAttribute("class", "glyph-outline-node glyph-outline-node-corner");
+          var r = ensureChild(g, i, "rect", "glyph-outline-node glyph-outline-node-corner");
           r.setAttribute("x", fmt(p.x - half));
           r.setAttribute("y", fmt(p.y - half));
           r.setAttribute("width", String(style.nodeSize));
           r.setAttribute("height", String(style.nodeSize));
           paintPoint(r, stroke, style.nodeFill, style.nodeStrokeW);
-          g.appendChild(r);
         }
+        i++;
       });
     }
+
+    return i;
   }
 
-  function renderTarget(svg, font, target, stageEl, root, opacity, opts) {
+  function renderTarget(svg, font, target, stageEl, root, opacity, opts, groupEl) {
     var el = target.el;
     var text =
       target.text != null
@@ -889,15 +976,21 @@
         : target.char != null
           ? target.char
           : el.textContent || "";
-    var fontSize = fontSizePx(el);
+    var fontSize = fontSizePx(el, opts);
     var variation =
       target.variation != null ? target.variation : parseVariationFromElement(el);
 
     var runs = glyphRunsForText(font, text, fontSize, variation, opts);
-    if (!runs.length) return;
+    if (!runs.length) {
+      trimTo(groupEl, 0);
+      return;
+    }
 
     var anchor = resolvePlacementAnchor(font, fontSize, text, runs, opts);
-    if (!anchor) return;
+    if (!anchor) {
+      trimTo(groupEl, 0);
+      return;
+    }
 
     var place = placement(stageEl, root, anchor);
     var map = place.map;
@@ -917,22 +1010,24 @@
     var strokeAttr = singleColor ? "currentColor" : null;
     var style = outlineDrawStyle(opts);
 
-    var g = ns("g");
-    g.setAttribute("class", "glyph-outline-group");
-    if (target.kind) g.setAttribute("data-kind", target.kind);
-    if (opacity < 1) g.setAttribute("opacity", String(opacity));
-    if (singleColor) g.style.color = singleColor;
+    groupEl.setAttribute("class", "glyph-outline-group");
+    if (target.kind) groupEl.setAttribute("data-kind", target.kind);
+    else groupEl.removeAttribute("data-kind");
+    if (opacity < 1) groupEl.setAttribute("opacity", String(opacity));
+    else groupEl.removeAttribute("opacity");
+    if (singleColor) groupEl.style.color = singleColor;
 
+    var idx = 0;
     runs.forEach(function (run) {
       var outline = buildOutline(run.commands, map);
-      if (outline) appendOutlineToGroup(g, outline, map, colors, strokeAttr, style);
+      if (outline) {
+        idx = patchOutlineToGroup(groupEl, outline, map, colors, strokeAttr, style, idx);
+      }
     });
-
-    svg.appendChild(g);
+    trimTo(groupEl, idx);
   }
 
   function renderAll(svg, stageEl, targets, font, root, opts) {
-    clearSvg(svg);
     var size = stageLayoutSize(stageEl, root);
     var w = size.w;
     var h = size.h;
@@ -941,10 +1036,25 @@
       svg.setAttribute("width", w);
       svg.setAttribute("height", h);
     }
+    var next = 0;
     targets.forEach(function (t) {
+      var g = svg.children[next];
+      if (
+        !g ||
+        !g.tagName ||
+        g.tagName.toLowerCase() !== "g" ||
+        g.getAttribute("class") !== "glyph-outline-group"
+      ) {
+        g = ns("g");
+        g.setAttribute("class", "glyph-outline-group");
+        if (svg.children[next]) svg.insertBefore(g, svg.children[next]);
+        else svg.appendChild(g);
+      }
       var opacity = t.kind === "ghost" ? 0.35 : 1;
-      renderTarget(svg, font, t, stageEl, root, opacity, opts);
+      renderTarget(svg, font, t, stageEl, root, opacity, opts, g);
+      next++;
     });
+    trimTo(svg, next);
   }
 
   global.GlyphOutlines = {

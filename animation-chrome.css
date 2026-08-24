@@ -496,6 +496,8 @@ body,
 }
 
 .outline-layer .glyph-outline-path {
-  fill: none !important;
-  fill-opacity: 0 !important;
+  fill: var(--bg);
+  fill-opacity: 1;
+  fill-rule: nonzero;
+  paint-order: stroke fill;
 }
