@@ -184,6 +184,7 @@
         gap: 0;
         width: 100%;
         height: 100%;
+        overflow: visible;
       }
 
       .matrix-row {
@@ -196,6 +197,7 @@
         width: 100%;
         height: calc(var(--glyph-size) * var(--lh) * 1px);
         min-height: 0;
+        overflow: visible;
       }
 
       .cell {
@@ -207,6 +209,7 @@
         min-width: 0;
         user-select: none;
         height: 100%;
+        overflow: visible;
       }
 
       .measure {
@@ -214,6 +217,7 @@
         display: inline-flex;
         align-items: flex-start;
         height: 100%;
+        overflow: visible;
       }
 
       .glyph {
@@ -267,6 +271,7 @@
         background: var(--fg);
         opacity: 0.5;
         pointer-events: none;
+        z-index: 2;
       }
 
       .metric {
@@ -290,6 +295,7 @@
         font-feature-settings: "kern" 1, "liga" 1;
         font-kerning: normal;
         pointer-events: none;
+        z-index: 3;
       }
 
       .metric-font {
@@ -537,10 +543,6 @@
     </style>
     <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
     <style>
-      .stage .stage-caption {
-        display: none !important;
-      }
-
       .stage .guide-margin {
         box-shadow: 0 0 0 2px #ff00ff;
       }
@@ -559,7 +561,6 @@
     </style>
   </head>
   <body
-    data-no-caption
     data-guide-cols="3"
     data-guide-gutter="14"
     data-guide-margin="0"
@@ -860,8 +861,13 @@
           };
         }
 
-        function weightForRow(row, p) {
+        function weightForCol(col, elapsed, cycle, hold) {
           var range = weightRange();
+          var total = Math.max(1, cycle + 2 * hold);
+          var shift = COL_COUNT > 0 ? (col / COL_COUNT) * total : 0;
+          var t = (elapsed + shift) % total;
+          if (t < 0) t += total;
+          var p = phaseFromElapsed(t, cycle / 2, hold);
           return lerp(range.start, range.end, easeInOutCubic(p));
         }
 
@@ -984,10 +990,10 @@
           });
         });
 
-        function setRowWeights(p) {
+        function setColWeights(elapsed, cycle, hold) {
           for (var i = 0; i < cells.length; i++) {
             var c = cells[i];
-            var w = weightForRow(c.row, p);
+            var w = weightForCol(c.col, elapsed, cycle, hold);
             c.weight = w;
             c.glyph.style.fontVariationSettings =
               '"wght" ' + w.toFixed(1) + ', "slnt" 0';
@@ -1005,56 +1011,86 @@
 
         function layoutGuides() {
           var zoom = viewScale();
+          var stage = document.getElementById("stage");
+          var stageRect = stage && stage.getBoundingClientRect();
+          var guideB = parseFloat(
+            getComputedStyle(root).getPropertyValue("--guide-b")
+          );
+          if (!isFinite(guideB)) guideB = 0;
+          var metricSize = parseFloat(els.ms.value);
+          if (!isFinite(metricSize)) metricSize = 26;
+          var captionEl = stage && stage.querySelector(".stage-caption");
+          var captionH = 26;
+          if (captionEl && captionEl.getBoundingClientRect().height) {
+            captionH = captionEl.getBoundingClientRect().height / zoom;
+          }
+          var gap = 12;
+          var labelBottomAbs = stageRect
+            ? stageRect.bottom - (guideB + captionH + gap) * zoom
+            : Infinity;
+          var colTop = Infinity;
+          var cols = [];
+          var i;
+          var c;
 
-          for (var r = 0; r < ROW_COUNT; r++) {
-            var rowTop = Infinity;
-            var rowBottom = -Infinity;
+          for (i = 0; i < COL_COUNT; i++) {
+            cols.push({
+              left: Infinity,
+              right: -Infinity,
+              weight: W_MIN,
+            });
+          }
 
-            for (var i = 0; i < cells.length; i++) {
-              if (cells[i].row !== r) continue;
-              var cellRect = cells[i].cell.getBoundingClientRect();
-              rowTop = Math.min(rowTop, cellRect.top);
-              rowBottom = Math.max(rowBottom, cellRect.bottom);
-            }
+          for (i = 0; i < cells.length; i++) {
+            c = cells[i];
+            var cellRect = c.cell.getBoundingClientRect();
+            colTop = Math.min(colTop, cellRect.top);
+            var g = c.glyph.getBoundingClientRect();
+            if (!g.width) continue;
+            cols[c.col].left = Math.min(cols[c.col].left, g.left);
+            cols[c.col].right = Math.max(cols[c.col].right, g.right);
+            cols[c.col].weight = c.weight;
+          }
 
-            if (!isFinite(rowTop)) continue;
-            var rowHeight = (rowBottom - rowTop) / zoom;
+          if (!isFinite(colTop) || !stageRect) return;
+          var colBottom = isFinite(labelBottomAbs) ? labelBottomAbs : colTop;
+          if (colBottom < colTop + metricSize * zoom) {
+            colBottom = colTop + metricSize * zoom;
+          }
+          var colHeight = (colBottom - colTop) / zoom;
 
-            for (var j = 0; j < cells.length; j++) {
-              var c = cells[j];
-              if (c.row !== r) continue;
+          for (i = 0; i < cells.length; i++) {
+            c = cells[i];
+            var col = cols[c.col];
+            var showLines = c.row === 0 && isFinite(col.left);
+            var m = c.measure.getBoundingClientRect();
 
-              var glyph = c.glyph;
-              var measure = c.measure;
-              var g = glyph.getBoundingClientRect();
-              var m = measure.getBoundingClientRect();
-
-              if (!g.width) continue;
-
-              var leftX = (g.left - m.left) / zoom;
-              var rightX = (g.right - m.left) / zoom;
-              var lineHeight = rowHeight;
-              var lineTop = (rowTop - m.top) / zoom;
+            if (showLines) {
+              var leftX = (col.left - m.left) / zoom;
+              var rightX = (col.right - m.left) / zoom;
+              var lineTop = (colTop - m.top) / zoom;
 
               c.lineLeft.style.display = "block";
               c.lineRight.style.display = "block";
-
               c.lineLeft.style.left = leftX + "px";
               c.lineLeft.style.top = lineTop + "px";
-              c.lineLeft.style.height = lineHeight + "px";
-
+              c.lineLeft.style.height = colHeight + "px";
               c.lineRight.style.left = rightX - 2 + "px";
               c.lineRight.style.top = lineTop + "px";
-              c.lineRight.style.height = lineHeight + "px";
+              c.lineRight.style.height = colHeight + "px";
+            } else {
+              c.lineLeft.style.display = "none";
+              c.lineRight.style.display = "none";
+            }
 
-              if (c.metric && c.metricWeight) {
-                var metricSize = parseFloat(els.ms.value);
-                if (!isFinite(metricSize)) metricSize = 26;
-                c.metricWeight.textContent = String(Math.round(c.weight));
-                c.metric.style.left = leftX + "px";
-                c.metric.style.width = rightX - leftX + "px";
-                c.metric.style.top = lineTop + lineHeight - metricSize + "px";
-              }
+            if (c.metric && c.metricWeight && isFinite(col.left)) {
+              var metricLeft = (col.left - m.left) / zoom;
+              var metricRight = (col.right - m.left) / zoom;
+              var metricTop = (colBottom - m.top) / zoom - metricSize;
+              c.metricWeight.textContent = String(Math.round(col.weight));
+              c.metric.style.left = metricLeft + "px";
+              c.metric.style.width = Math.max(0, metricRight - metricLeft) + "px";
+              c.metric.style.top = metricTop + "px";
             }
           }
         }
@@ -1062,13 +1098,7 @@
         function applyElapsed(elapsed) {
           var cycle = Math.max(200, parseFloat(els.cy.value));
           var hold = Math.max(0, parseFloat(els.hd.value));
-          var halfCycle = cycle / 2;
-          var total = cycle + 2 * hold;
-          if (total <= 0) total = 1;
-          var t = elapsed % total;
-          if (t < 0) t += total;
-          var p = phaseFromElapsed(t, halfCycle, hold);
-          setRowWeights(p);
+          setColWeights(elapsed, cycle, hold);
           layoutGuides();
         }
 

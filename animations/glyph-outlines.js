@@ -723,6 +723,7 @@
     pathEl.setAttribute("class", "glyph-outline-path");
     pathEl.setAttribute("d", outline.d);
     pathEl.setAttribute("fill", "none");
+    pathEl.setAttribute("fill-opacity", "0");
     pathEl.setAttribute("stroke", strokeAttr || colors.path);
     pathEl.setAttribute("stroke-width", String(style.strokeW));
     pathEl.setAttribute("stroke-linejoin", "miter");

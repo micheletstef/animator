@@ -86,7 +86,12 @@
         shape-rendering: geometricPrecision;
       }
 
-      .outline-layer .glyph-outline-path,
+      .outline-layer .glyph-outline-path {
+        stroke: currentColor;
+        fill: none !important;
+        fill-opacity: 0 !important;
+      }
+
       .outline-layer .glyph-outline-handle-line,
       .outline-layer .glyph-outline-handle,
       .outline-layer .glyph-outline-node {
@@ -365,7 +370,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../animation-chrome.css?v=8" />
+    <link rel="stylesheet" href="../animation-chrome.css?v=24" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -504,7 +509,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="glyph-outlines.js?v=6"></script>
+    <script src="glyph-outlines.js?v=7"></script>
     <script src="artboard-zoom.js?v=3"></script>
     <script>
       (function () {

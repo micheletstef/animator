@@ -494,3 +494,8 @@ body,
 .kf-tab.is-on .kf-tab-v {
   color: #bdbdbd;
 }
+
+.outline-layer .glyph-outline-path {
+  fill: none !important;
+  fill-opacity: 0 !important;
+}
