@@ -683,14 +683,14 @@
             if (compact) nonempty.push(compact);
           }
           if (nonempty.length <= 1) {
-            chars = Array.from(nonempty.join("")).slice(0, COL_COUNT);
+            chars = Array.from(nonempty.join("")).slice(0, ROW_COUNT);
           } else {
-            for (i = 0; i < nonempty.length && chars.length < COL_COUNT; i++) {
+            for (i = 0; i < nonempty.length && chars.length < ROW_COUNT; i++) {
               chars.push(Array.from(nonempty[i])[0]);
             }
           }
           if (!chars.length) chars = ["a"];
-          while (chars.length < COL_COUNT) chars.push(chars[0]);
+          while (chars.length < ROW_COUNT) chars.push(chars[0]);
           return chars;
         }
 
@@ -754,14 +754,14 @@
         }
 
         function buildMatrix(chars) {
-          chars = chars && chars.length === COL_COUNT ? chars : parseChars("");
+          chars = chars && chars.length === ROW_COUNT ? chars : parseChars("");
           matrix.innerHTML = "";
           cells = [];
           for (r = 0; r < ROW_COUNT; r++) {
             var rowEl = document.createElement("div");
             rowEl.className = "matrix-row";
             for (var c = 0; c < COL_COUNT; c++) {
-              var item = createCell(r, c, chars[c]);
+              var item = createCell(r, c, chars[r]);
               rowEl.appendChild(item.cell);
               cells.push(item);
             }
@@ -775,7 +775,7 @@
             buildMatrix(chars);
           } else {
             for (var i = 0; i < cells.length; i++) {
-              cells[i].glyph.textContent = chars[cells[i].col];
+              cells[i].glyph.textContent = chars[cells[i].row];
             }
           }
         }
@@ -862,13 +862,8 @@
           };
         }
 
-        function weightForCol(col, elapsed, cycle, hold) {
+        function weightForRow(row, p) {
           var range = weightRange();
-          var total = Math.max(1, cycle + 2 * hold);
-          var shift = COL_COUNT > 0 ? (col / COL_COUNT) * total : 0;
-          var t = (elapsed + shift) % total;
-          if (t < 0) t += total;
-          var p = phaseFromElapsed(t, cycle / 2, hold);
           return lerp(range.start, range.end, easeInOutCubic(p));
         }
 
@@ -991,10 +986,10 @@
           });
         });
 
-        function setColWeights(elapsed, cycle, hold) {
+        function setRowWeights(p) {
           for (var i = 0; i < cells.length; i++) {
             var c = cells[i];
-            var w = weightForCol(c.col, elapsed, cycle, hold);
+            var w = weightForRow(c.row, p);
             c.weight = w;
             c.glyph.style.fontVariationSettings =
               '"wght" ' + w.toFixed(1) + ', "slnt" 0';
@@ -1012,86 +1007,56 @@
 
         function layoutGuides() {
           var zoom = viewScale();
-          var stage = document.getElementById("stage");
-          var stageRect = stage && stage.getBoundingClientRect();
-          var guideB = parseFloat(
-            getComputedStyle(root).getPropertyValue("--guide-b")
-          );
-          if (!isFinite(guideB)) guideB = 0;
-          var metricSize = parseFloat(els.ms.value);
-          if (!isFinite(metricSize)) metricSize = 26;
-          var captionEl = stage && stage.querySelector(".stage-caption");
-          var captionH = 26;
-          if (captionEl && captionEl.getBoundingClientRect().height) {
-            captionH = captionEl.getBoundingClientRect().height / zoom;
-          }
-          var gap = 12;
-          var labelBottomAbs = stageRect
-            ? stageRect.bottom - (guideB + captionH + gap) * zoom
-            : Infinity;
-          var colTop = Infinity;
-          var cols = [];
-          var i;
-          var c;
 
-          for (i = 0; i < COL_COUNT; i++) {
-            cols.push({
-              left: Infinity,
-              right: -Infinity,
-              weight: W_MIN,
-            });
-          }
+          for (var r = 0; r < ROW_COUNT; r++) {
+            var rowTop = Infinity;
+            var rowBottom = -Infinity;
 
-          for (i = 0; i < cells.length; i++) {
-            c = cells[i];
-            var cellRect = c.cell.getBoundingClientRect();
-            colTop = Math.min(colTop, cellRect.top);
-            var g = c.glyph.getBoundingClientRect();
-            if (!g.width) continue;
-            cols[c.col].left = Math.min(cols[c.col].left, g.left);
-            cols[c.col].right = Math.max(cols[c.col].right, g.right);
-            cols[c.col].weight = c.weight;
-          }
+            for (var i = 0; i < cells.length; i++) {
+              if (cells[i].row !== r) continue;
+              var cellRect = cells[i].cell.getBoundingClientRect();
+              rowTop = Math.min(rowTop, cellRect.top);
+              rowBottom = Math.max(rowBottom, cellRect.bottom);
+            }
 
-          if (!isFinite(colTop) || !stageRect) return;
-          var colBottom = isFinite(labelBottomAbs) ? labelBottomAbs : colTop;
-          if (colBottom < colTop + metricSize * zoom) {
-            colBottom = colTop + metricSize * zoom;
-          }
-          var colHeight = (colBottom - colTop) / zoom;
+            if (!isFinite(rowTop)) continue;
+            var rowHeight = (rowBottom - rowTop) / zoom;
 
-          for (i = 0; i < cells.length; i++) {
-            c = cells[i];
-            var col = cols[c.col];
-            var showLines = c.row === 0 && isFinite(col.left);
-            var m = c.measure.getBoundingClientRect();
+            for (var j = 0; j < cells.length; j++) {
+              var c = cells[j];
+              if (c.row !== r) continue;
 
-            if (showLines) {
-              var leftX = (col.left - m.left) / zoom;
-              var rightX = (col.right - m.left) / zoom;
-              var lineTop = (colTop - m.top) / zoom;
+              var glyph = c.glyph;
+              var measure = c.measure;
+              var g = glyph.getBoundingClientRect();
+              var m = measure.getBoundingClientRect();
+
+              if (!g.width) continue;
+
+              var leftX = (g.left - m.left) / zoom;
+              var rightX = (g.right - m.left) / zoom;
+              var lineHeight = rowHeight;
+              var lineTop = (rowTop - m.top) / zoom;
 
               c.lineLeft.style.display = "block";
               c.lineRight.style.display = "block";
+
               c.lineLeft.style.left = leftX + "px";
               c.lineLeft.style.top = lineTop + "px";
-              c.lineLeft.style.height = colHeight + "px";
+              c.lineLeft.style.height = lineHeight + "px";
+
               c.lineRight.style.left = rightX - 2 + "px";
               c.lineRight.style.top = lineTop + "px";
-              c.lineRight.style.height = colHeight + "px";
-            } else {
-              c.lineLeft.style.display = "none";
-              c.lineRight.style.display = "none";
-            }
+              c.lineRight.style.height = lineHeight + "px";
 
-            if (c.metric && c.metricWeight && isFinite(col.left)) {
-              var metricLeft = (col.left - m.left) / zoom;
-              var metricRight = (col.right - m.left) / zoom;
-              var metricTop = (colBottom - m.top) / zoom - metricSize;
-              c.metricWeight.textContent = String(Math.round(col.weight));
-              c.metric.style.left = metricLeft + "px";
-              c.metric.style.width = Math.max(0, metricRight - metricLeft) + "px";
-              c.metric.style.top = metricTop + "px";
+              if (c.metric && c.metricWeight) {
+                var metricSize = parseFloat(els.ms.value);
+                if (!isFinite(metricSize)) metricSize = 26;
+                c.metricWeight.textContent = String(Math.round(c.weight));
+                c.metric.style.left = leftX + "px";
+                c.metric.style.width = rightX - leftX + "px";
+                c.metric.style.top = lineTop + lineHeight - metricSize + "px";
+              }
             }
           }
         }
@@ -1099,7 +1064,13 @@
         function applyElapsed(elapsed) {
           var cycle = Math.max(200, parseFloat(els.cy.value));
           var hold = Math.max(0, parseFloat(els.hd.value));
-          setColWeights(elapsed, cycle, hold);
+          var halfCycle = cycle / 2;
+          var total = cycle + 2 * hold;
+          if (total <= 0) total = 1;
+          var t = elapsed % total;
+          if (t < 0) t += total;
+          var p = phaseFromElapsed(t, halfCycle, hold);
+          setRowWeights(p);
           layoutGuides();
         }
 
