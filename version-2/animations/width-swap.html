@@ -417,7 +417,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=10" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=11" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -457,12 +457,20 @@
       <div class="group">
         <p class="group-title">content</p>
         <div class="row">
-          <label for="l1">line 1</label>
-          <input id="l1" type="text" value="R41" spellcheck="false" autocomplete="off" />
+          <label for="tA">1 start</label>
+          <input id="tA" type="text" value="R" spellcheck="false" autocomplete="off" />
         </div>
         <div class="row">
-          <label for="l2">line 2</label>
-          <input id="l2" type="text" value="X8" spellcheck="false" autocomplete="off" />
+          <label for="tB">1 rest</label>
+          <input id="tB" type="text" value="41" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row">
+          <label for="tC">2 start</label>
+          <input id="tC" type="text" value="X" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="row">
+          <label for="tD">2 rest</label>
+          <input id="tD" type="text" value="8" spellcheck="false" autocomplete="off" />
         </div>
       </div>
 
@@ -531,7 +539,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">line 1 · R41 held</p>
+        <p class="group-title" id="l1HeldTitle">line 1 · R41 held</p>
         <div class="row">
           <label for="l1w">wght</label>
           <input id="l1w" type="range" min="200" max="1000" step="1" value="700" />
@@ -545,7 +553,7 @@
       </div>
 
       <div class="group">
-        <p class="group-title">line 2 · X8 held</p>
+        <p class="group-title" id="l2HeldTitle">line 2 · X8 held</p>
         <div class="row">
           <label for="l2w">wght</label>
           <input id="l2w" type="range" min="200" max="1000" step="1" value="1000" />
@@ -591,7 +599,8 @@
       (function () {
         var GRADIENT =
           "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 20%, #1f4166 25%, #144a76 30%, #085488 35%, #01609a 40%, #0178b0 52%, #0091c4 60%, #16a9d5 68%, #58bdd9 74%, #a1d2e1 80%, #dbe5e7 86%, #eaeceb 92%, #e7e8e3 100%)";
-        var LS_KEY = "animator:v2:width-swap:settings:v4";
+        var LS_KEY = "animator:v2:width-swap:settings:v5";
+        var LS_KEY_PREV = "animator:v2:width-swap:settings:v4";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
         var TRACK_EXT_DELTA = -0.085;
@@ -610,14 +619,22 @@
           bg: "#ffffff",
           grad: "1",
           fg: "#000000",
-          l1: "R41",
-          l2: "X8",
+          tA: "R",
+          tB: "41",
+          tC: "X",
+          tD: "8",
           fs: 720,
           lh: 0.86,
           tr: -0.04,
           oy: 0,
-          cwd: 65,
-          ewd: 130,
+          wA0: 65,
+          wA1: 130,
+          wB0: 130,
+          wB1: 65,
+          wC0: 130,
+          wC1: 65,
+          wD0: 65,
+          wD1: 130,
           l1w: 700,
           l1c: 0,
           l2w: 1000,
@@ -628,8 +645,14 @@
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
-        var TEXT_KEYS = { l1: 1, l2: 1 };
+        var TEXT_KEYS = { tA: 1, tB: 1, tC: 1, tD: 1 };
         var CHECK_KEYS = { grad: 1 };
+        var DUALS = [
+          { id: "wA", text: "tA", fallback: "a", fill: "wAFill", lab: "wALab" },
+          { id: "wB", text: "tB", fallback: "b", fill: "wBFill", lab: "wBLab" },
+          { id: "wC", text: "tC", fallback: "c", fill: "wCFill", lab: "wCLab" },
+          { id: "wD", text: "tD", fallback: "d", fill: "wDFill", lab: "wDLab" },
+        ];
 
         var els = {};
         var vals = {
@@ -640,8 +663,6 @@
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
           oy: document.getElementById("oyVal"),
-          cwd: document.getElementById("cwdVal"),
-          ewd: document.getElementById("ewdVal"),
           l1w: document.getElementById("l1wVal"),
           l1c: document.getElementById("l1cVal"),
           l2w: document.getElementById("l2wVal"),
@@ -684,17 +705,66 @@
           return [text.charAt(0), text.slice(1)];
         }
 
-        function wdthRange() {
-          var lo = Number(els.cwd.value);
-          var hi = Number(els.ewd.value);
-          if (!isFinite(lo)) lo = 65;
-          if (!isFinite(hi)) hi = 130;
-          if (lo > hi) {
-            var tmp = lo;
-            lo = hi;
-            hi = tmp;
+        function numOr(v, fallback) {
+          var n = Number(v);
+          return isFinite(n) ? n : fallback;
+        }
+
+        function unitWdthRange(unit) {
+          var a = numOr(unit.fromW, 65);
+          var b = numOr(unit.toW, 130);
+          return { lo: Math.min(a, b), hi: Math.max(a, b) };
+        }
+
+        function mixWdth(unit, t) {
+          return lerp(numOr(unit.fromW, 65), numOr(unit.toW, 130), t);
+        }
+
+        function paintDual(dual) {
+          var aEl = els[dual.id + "0"];
+          var bEl = els[dual.id + "1"];
+          var fill = document.getElementById(dual.fill);
+          var val = document.getElementById(dual.id + "Val");
+          if (!aEl || !bEl) return;
+          var a = numOr(aEl.value, 65);
+          var b = numOr(bEl.value, 130);
+          var min = numOr(aEl.min, 65);
+          var max = numOr(aEl.max, 130);
+          var span = max - min || 1;
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          if (fill) {
+            fill.style.left = ((lo - min) / span) * 100 + "%";
+            fill.style.width = Math.max(0, ((hi - lo) / span) * 100) + "%";
           }
-          return { lo: lo, hi: hi };
+          if (val) val.textContent = Math.round(a) + " / " + Math.round(b);
+        }
+
+        function paintDuals() {
+          DUALS.forEach(paintDual);
+        }
+
+        function unitText(key, fallback) {
+          var t = els[key] ? String(els[key].value || "") : "";
+          return t || fallback || "";
+        }
+
+        function syncLabels() {
+          DUALS.forEach(function (dual) {
+            var lab = document.getElementById(dual.lab);
+            var text = unitText(dual.text, dual.fallback);
+            if (lab) lab.textContent = text;
+            var start = els[dual.id + "0"];
+            var end = els[dual.id + "1"];
+            if (start) start.setAttribute("aria-label", text + " start width");
+            if (end) end.setAttribute("aria-label", text + " end width");
+          });
+          var l1 = unitText("tA", "") + unitText("tB", "");
+          var l2 = unitText("tC", "") + unitText("tD", "");
+          var t1 = document.getElementById("l1HeldTitle");
+          var t2 = document.getElementById("l2HeldTitle");
+          if (t1) t1.textContent = "line 1 · " + (l1 || "—") + " held";
+          if (t2) t2.textContent = "line 2 · " + (l2 || "—") + " held";
         }
 
         function targetWidth() {
@@ -751,7 +821,7 @@
 
         function getSamples(unit, wght, cntr, slnt, fs) {
           var text = unit.text;
-          var range = wdthRange();
+          var range = unitWdthRange(unit);
           var key =
             text +
             "|" +
@@ -815,32 +885,26 @@
           return widths[widths.length - 1];
         }
 
-        function unitWdthRange(unit) {
-          return wdthRange();
-        }
-
-        function mixWdth(unit, t) {
-          var range = unitWdthRange(unit);
-          return unit.from === "condensed"
-            ? lerp(range.lo, range.hi, t)
-            : lerp(range.hi, range.lo, t);
-        }
-
         function lineExtreme(line) {
           if (!line.units.length) return 0;
-          if (line.units.length === 1) return line.units[0].maxW || 0;
+          function at(unit, w) {
+            return widthAt(unit.samples, w) || 0;
+          }
+          if (line.units.length === 1) {
+            var only = line.units[0];
+            return Math.max(at(only, only.fromW), at(only, only.toW));
+          }
           var a = line.units[0];
           var b = line.units[1];
           return Math.max(
-            (a.minW || 0) + (b.maxW || 0),
-            (a.maxW || 0) + (b.minW || 0)
+            at(a, a.fromW) + at(b, b.fromW),
+            at(a, a.toW) + at(b, b.toW)
           );
         }
 
         function prepareUnits() {
           var slnt = Number(els.slnt.value) || 0;
           var fs = Number(els.fs.value) || 720;
-          var range = wdthRange();
           var target = targetWidth();
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
@@ -855,8 +919,8 @@
                 slnt,
                 fs
               );
-              unit.minW = widthAt(unit.samples, unitWdthRange(unit).lo);
-              unit.maxW = widthAt(unit.samples, unitWdthRange(unit).hi);
+              unit.minW = widthAt(unit.samples, unit.fromW);
+              unit.maxW = widthAt(unit.samples, unit.toW);
               unit.inner.style.fontWeight = String(Math.round(line.wght));
               unit.inner.style.transform = "none";
             }
@@ -1028,6 +1092,8 @@
             if (!vals[key] || !els[key]) return;
             vals[key].textContent = fmt(key, readVal(key));
           });
+          paintDuals();
+          syncLabels();
         }
 
         function save() {
@@ -1044,7 +1110,7 @@
         function loadSaved() {
           var raw = null;
           try {
-            raw = localStorage.getItem(LS_KEY);
+            raw = localStorage.getItem(LS_KEY) || localStorage.getItem(LS_KEY_PREV);
           } catch (e) {}
           if (!raw) return;
           var data;
@@ -1053,11 +1119,32 @@
           } catch (e) {
             return;
           }
+          if (data.tA == null && data.l1 != null) {
+            var line1 = splitLine(data.l1);
+            data.tA = line1[0];
+            data.tB = line1[1];
+          }
+          if (data.tC == null && data.l2 != null) {
+            var line2 = splitLine(data.l2);
+            data.tC = line2[0];
+            data.tD = line2[1];
+          }
+          if (data.wA0 == null && data.cwd != null) data.wA0 = data.cwd;
+          if (data.wA1 == null && data.ewd != null) data.wA1 = data.ewd;
+          if (data.wB0 == null && data.ewd != null) data.wB0 = data.ewd;
+          if (data.wB1 == null && data.cwd != null) data.wB1 = data.cwd;
+          if (data.wC0 == null && data.ewd != null) data.wC0 = data.ewd;
+          if (data.wC1 == null && data.cwd != null) data.wC1 = data.cwd;
+          if (data.wD0 == null && data.cwd != null) data.wD0 = data.cwd;
+          if (data.wD1 == null && data.ewd != null) data.wD1 = data.ewd;
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
             writeVal(key, data[key]);
           });
-          if (Number(els.ewd.value) === 118) writeVal("ewd", 130);
+        }
+
+        function readWidth(id) {
+          return numOr(els[id] && els[id].value, DEFAULTS[id]);
         }
 
         function buildLockup() {
@@ -1065,35 +1152,37 @@
           lines = [];
           sampleCache = {};
           var rows = [
-            { text: els.l1.value, firstFrom: "condensed" },
-            { text: els.l2.value, firstFrom: "extended" },
+            [
+              { text: unitText("tA", ""), fromW: readWidth("wA0"), toW: readWidth("wA1"), align: "start", dualId: "wA" },
+              { text: unitText("tB", ""), fromW: readWidth("wB0"), toW: readWidth("wB1"), align: "end", dualId: "wB" },
+            ],
+            [
+              { text: unitText("tC", ""), fromW: readWidth("wC0"), toW: readWidth("wC1"), align: "start", dualId: "wC" },
+              { text: unitText("tD", ""), fromW: readWidth("wD0"), toW: readWidth("wD1"), align: "end", dualId: "wD" },
+            ],
           ];
-          rows.forEach(function (row, rowIndex) {
-            var parts = splitLine(row.text);
+          rows.forEach(function (parts, rowIndex) {
             var lineEl = document.createElement("div");
             lineEl.className = "line";
             var units = [];
-            parts.forEach(function (text, i) {
-              if (!text) return;
+            parts.forEach(function (part) {
+              if (!part.text) return;
               var unitEl = document.createElement("span");
-              unitEl.className = "unit " + (i === 0 ? "is-start" : "is-end");
+              unitEl.className = "unit " + (part.align === "end" ? "is-end" : "is-start");
               var inner = document.createElement("span");
               inner.className = "inner";
-              inner.textContent = text;
+              inner.textContent = part.text;
               unitEl.appendChild(inner);
               lineEl.appendChild(unitEl);
               units.push({
                 el: unitEl,
                 inner: inner,
-                text: text,
-                align: i === 0 ? "start" : "end",
-                from:
-                  i === 0
-                    ? row.firstFrom
-                    : row.firstFrom === "condensed"
-                      ? "extended"
-                      : "condensed",
-                label: text,
+                text: part.text,
+                align: part.align,
+                fromW: part.fromW,
+                toW: part.toW,
+                dualId: part.dualId,
+                label: part.text,
               });
             });
             if (!units.length) return;
@@ -1106,6 +1195,7 @@
               cntr: lineContrast(rowIndex),
             });
           });
+          syncLabels();
           prepareUnits();
         }
 
@@ -1131,10 +1221,16 @@
           els[key].addEventListener("input", function () {
             applyVars();
             paintVals();
-            if (key === "l1" || key === "l2") buildLockup();
+            if (key === "tA" || key === "tB" || key === "tC" || key === "tD") buildLockup();
             else if (
-              key === "cwd" ||
-              key === "ewd" ||
+              key === "wA0" ||
+              key === "wA1" ||
+              key === "wB0" ||
+              key === "wB1" ||
+              key === "wC0" ||
+              key === "wC1" ||
+              key === "wD0" ||
+              key === "wD1" ||
               key === "l1w" ||
               key === "l2w" ||
               key === "l1c" ||
@@ -1143,6 +1239,24 @@
               key === "tr" ||
               key === "fs"
             ) {
+              if (
+                key === "wA0" ||
+                key === "wA1" ||
+                key === "wB0" ||
+                key === "wB1" ||
+                key === "wC0" ||
+                key === "wC1" ||
+                key === "wD0" ||
+                key === "wD1"
+              ) {
+                lines.forEach(function (line) {
+                  line.units.forEach(function (unit) {
+                    if (!unit.dualId) return;
+                    unit.fromW = readWidth(unit.dualId + "0");
+                    unit.toW = readWidth(unit.dualId + "1");
+                  });
+                });
+              }
               sampleCache = {};
               prepareUnits();
             }

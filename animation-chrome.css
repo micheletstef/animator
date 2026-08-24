@@ -269,7 +269,7 @@ body,
 .guide-matte-b,
 .guide-matte-l {
   position: absolute;
-  background: #ff00ff;
+  background: rgba(255, 0, 255, 0.2);
 }
 
 .guide-matte-t {
