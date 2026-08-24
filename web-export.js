@@ -66,18 +66,12 @@ function prefsKey() {
 
 function qualityFromControl(el) {
   if (!el) return "max";
-  if (el.tagName === "SELECT") return QUALITY[el.value] ? el.value : "max";
+  if (QUALITY[el.value]) return el.value;
   var levels = ["draft", "high", "max"];
   var i = Math.round(Number(el.value));
   if (i < 0) i = 0;
   if (i > 2) i = 2;
   return levels[i];
-}
-
-function qualityIndex(name) {
-  if (name === "draft") return 0;
-  if (name === "high") return 1;
-  return 2;
 }
 
 function readLoops() {
@@ -333,25 +327,36 @@ function ensureExportUi() {
   group.id = "exportGroup";
   group.innerHTML =
     '<p class="group-title">export</p>' +
-    '<div class="row">' +
+    '<div class="row row-span">' +
     '<label for="exportLoops">loops</label>' +
-    '<input id="exportLoops" type="range" min="1" max="12" step="1" value="1" />' +
-    '<span class="val" id="exportLoopsVal">1</span>' +
+    '<input id="exportLoops" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
     "</div>" +
-    '<div class="row">' +
+    '<div class="row row-span">' +
     '<label for="exportFps">fps</label>' +
-    '<input id="exportFps" type="range" min="12" max="60" step="1" value="30" />' +
-    '<span class="val" id="exportFpsVal">30</span>' +
+    '<input id="exportFps" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />' +
     "</div>" +
-    '<div class="row">' +
+    '<div class="row row-span">' +
     '<label for="exportScale">size</label>' +
-    '<input id="exportScale" type="range" min="1" max="2" step="1" value="2" />' +
-    '<span class="val" id="exportScaleVal"></span>' +
+    '<select id="exportScale">' +
+    '<option value="1">' +
+    art.w +
+    " × " +
+    art.h +
+    "</option>" +
+    '<option value="2">' +
+    art.w * 2 +
+    " × " +
+    art.h * 2 +
+    "</option>" +
+    "</select>" +
     "</div>" +
-    '<div class="row">' +
+    '<div class="row row-span">' +
     '<label for="exportQuality">quality</label>' +
-    '<input id="exportQuality" type="range" min="0" max="2" step="1" value="2" />' +
-    '<span class="val" id="exportQualityVal">max</span>' +
+    '<select id="exportQuality">' +
+    '<option value="draft">draft</option>' +
+    '<option value="high">high</option>' +
+    '<option value="max">max</option>' +
+    "</select>" +
     "</div>" +
     '<p class="hint" id="exportSummary"></p>' +
     '<div class="actions">' +
@@ -360,69 +365,57 @@ function ensureExportUi() {
   panel.appendChild(group);
 
   var loops = document.getElementById("exportLoops");
-  var loopsVal = document.getElementById("exportLoopsVal");
   var fps = document.getElementById("exportFps");
-  var fpsVal = document.getElementById("exportFpsVal");
   var scale = document.getElementById("exportScale");
-  var scaleVal = document.getElementById("exportScaleVal");
   var quality = document.getElementById("exportQuality");
-  var qualityVal = document.getElementById("exportQualityVal");
 
   try {
     var savedLoops = localStorage.getItem(loopsKey());
-    if (savedLoops != null) loops.value = String(savedLoops);
-  } catch (err) {}
+    var n = savedLoops == null ? 1 : Number(savedLoops);
+    if (!isFinite(n)) n = 1;
+    loops.value = String(Math.max(1, Math.min(12, Math.round(n))));
+  } catch (err) {
+    loops.value = "1";
+  }
   fps.value = String(prefs.fps);
   scale.value = String(prefs.scale);
-  quality.value = String(qualityIndex(prefs.quality));
+  quality.value = QUALITY[prefs.quality] ? prefs.quality : "max";
 
   function persistPrefs() {
     savePrefs({
-      fps: Number(fps.value) || 30,
+      fps: Math.max(12, Math.min(60, Math.round(Number(fps.value) || 30))),
       scale: Number(scale.value) === 1 ? 1 : 2,
       quality: qualityFromControl(quality),
     });
     paintExportSummary(stage);
   }
 
-  function paintLoops() {
-    loopsVal.textContent = String(readLoops());
-  }
-  function paintFps() {
-    fpsVal.textContent = String(Math.round(Number(fps.value) || 30));
-  }
-  function paintScale() {
-    var n = Number(scale.value) === 1 ? 1 : 2;
-    scaleVal.textContent = art.w * n + "×" + art.h * n;
-  }
-  function paintQuality() {
-    qualityVal.textContent = qualityFromControl(quality);
+  function bindInt(el, min, max, fallback, onValid) {
+    el.addEventListener("input", function () {
+      var raw = String(el.value).trim();
+      if (raw === "" || raw === "-") return;
+      if (!/^-?\d+$/.test(raw)) return;
+      onValid(Math.max(min, Math.min(max, Math.round(Number(raw)))));
+    });
+    el.addEventListener("change", function () {
+      var n = Number(el.value);
+      if (!isFinite(n)) n = fallback;
+      n = Math.max(min, Math.min(max, Math.round(n)));
+      el.value = String(n);
+      onValid(n);
+    });
   }
 
-  paintLoops();
-  paintFps();
-  paintScale();
-  paintQuality();
-  paintExportSummary(stage);
-
-  loops.addEventListener("input", function () {
-    paintLoops();
+  bindInt(loops, 1, 12, 1, function () {
     try {
       localStorage.setItem(loopsKey(), String(readLoops()));
     } catch (err) {}
+    paintExportSummary(stage);
   });
-  fps.addEventListener("input", function () {
-    paintFps();
-    persistPrefs();
-  });
-  scale.addEventListener("input", function () {
-    paintScale();
-    persistPrefs();
-  });
-  quality.addEventListener("input", function () {
-    paintQuality();
-    persistPrefs();
-  });
+  bindInt(fps, 12, 60, 30, persistPrefs);
+  scale.addEventListener("change", persistPrefs);
+  quality.addEventListener("change", persistPrefs);
+  paintExportSummary(stage);
 
   return document.getElementById("downloadBtn");
 }
