@@ -131,12 +131,12 @@
         position: absolute;
         left: var(--guide-l, calc(var(--pad-l) * 1px));
         right: var(--guide-r, calc(var(--pad-r) * 1px));
-        top: var(--guide-t, calc(var(--pad-t) * 1px));
-        bottom: auto;
+        top: auto;
+        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
         z-index: 3;
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
         min-height: 0;
         padding: 0;
         font-size: 26px;
@@ -148,8 +148,9 @@
 
       .var-readout-item {
         display: flex;
+        flex: 0 0 auto;
         align-items: baseline;
-        justify-content: center;
+        justify-content: flex-start;
         gap: 8px;
         white-space: nowrap;
       }
@@ -398,9 +399,9 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=26" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=27" />
   </head>
-  <body>
+  <body data-no-caption>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="technical outline">
@@ -592,8 +593,8 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=11"></script>
-    <script src="artboard-view.js?v=20"></script>
+    <script src="../../animations/glyph-outlines.js?v=12"></script>
+    <script src="artboard-view.js?v=23"></script>
     <script>
       (function () {
         var outlineSvg = document.getElementById("outlines");

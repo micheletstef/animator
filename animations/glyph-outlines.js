@@ -298,9 +298,6 @@
       var extra = 0;
       if (opts && opts.alignYOffset != null && isFinite(Number(opts.alignYOffset))) {
         extra = Number(opts.alignYOffset);
-      } else {
-        var readout = stageEl && stageEl.querySelector(".var-readout");
-        if (readout) extra = (readout.offsetHeight || 26) + 12;
       }
       stageCy = padT + extra;
     } else {

@@ -196,10 +196,11 @@
     };
     wrap._artboardView = api;
     global.ArtboardView.current = api;
+    setCaptionColor(readCaptionColor());
     if (captionsEnabled()) {
       ensureCaption();
-      ensureCaptionUi();
     }
+    ensureCaptionUi();
     ensureGuides();
     ensureGuidesUi();
     bindGuideHotkey();
@@ -466,10 +467,11 @@
 
   function ensureCaptionUi() {
     var panel = global.document.querySelector(".panel");
-    if (!panel || global.document.getElementById("stageCaption")) return;
+    if (!panel || panel.getAttribute("data-caption-ui") === "1") return;
+    panel.setAttribute("data-caption-ui", "1");
 
     var colorGroup = findPanelGroup("color");
-    if (colorGroup) {
+    if (colorGroup && !global.document.getElementById("stageCaptionColor")) {
       var colorRow = global.document.createElement("div");
       colorRow.className = "row";
       colorRow.innerHTML =
@@ -479,39 +481,47 @@
       groupBody(colorGroup).appendChild(colorRow);
     }
 
-    var contentGroup = findPanelGroup("content") || findPanelGroup("copy");
-    if (!contentGroup) {
-      contentGroup = global.document.createElement("div");
-      contentGroup.className = "group";
-      contentGroup.innerHTML = '<p class="group-title">content</p>';
-      if (colorGroup && colorGroup.nextSibling) {
-        panel.insertBefore(contentGroup, colorGroup.nextSibling);
-      } else if (colorGroup) {
-        panel.appendChild(contentGroup);
+    if (captionsEnabled()) {
+      var contentGroup = findPanelGroup("content") || findPanelGroup("copy");
+      if (!contentGroup) {
+        contentGroup = global.document.createElement("div");
+        contentGroup.className = "group";
+        contentGroup.innerHTML = '<p class="group-title">content</p>';
+        if (colorGroup && colorGroup.nextSibling) {
+          panel.insertBefore(contentGroup, colorGroup.nextSibling);
+        } else if (colorGroup) {
+          panel.appendChild(contentGroup);
+        } else {
+          panel.insertBefore(contentGroup, panel.querySelector(".group"));
+        }
       } else {
-        panel.insertBefore(contentGroup, panel.querySelector(".group"));
+        var title = contentGroup.querySelector(".group-title");
+        if (title) title.textContent = "content";
       }
-    } else {
-      var title = contentGroup.querySelector(".group-title");
-      if (title) title.textContent = "content";
-    }
 
-    var textRow = global.document.createElement("div");
-    textRow.className = "row row-span";
-    textRow.innerHTML =
-      '<label for="stageCaption">caption</label>' +
-      '<input id="stageCaption" type="text" autocomplete="off" spellcheck="false" />';
-    var contentTitle = contentGroup.querySelector(".group-title");
-    if (contentTitle && contentTitle.nextSibling) {
-      contentGroup.insertBefore(textRow, contentTitle.nextSibling);
-    } else {
-      groupBody(contentGroup).appendChild(textRow);
+      var textRow = global.document.createElement("div");
+      textRow.className = "row row-span";
+      textRow.innerHTML =
+        '<label for="stageCaption">caption</label>' +
+        '<input id="stageCaption" type="text" autocomplete="off" spellcheck="false" />';
+      var contentTitle = contentGroup.querySelector(".group-title");
+      if (contentTitle && contentTitle.nextSibling) {
+        contentGroup.insertBefore(textRow, contentTitle.nextSibling);
+      } else {
+        groupBody(contentGroup).appendChild(textRow);
+      }
     }
 
     var input = global.document.getElementById("stageCaption");
     var color = global.document.getElementById("stageCaptionColor");
     var colorVal = global.document.getElementById("stageCaptionColorVal");
-    input.value = readCaption();
+    if (input) {
+      input.value = readCaption();
+      input.addEventListener("input", function () {
+        setCaption(input.value);
+        writeCaption(input.value);
+      });
+    }
     if (color && colorVal) {
       color.value = readCaptionColor();
       colorVal.textContent = color.value;
@@ -521,10 +531,6 @@
         writeCaptionColor(hex);
       });
     }
-    input.addEventListener("input", function () {
-      setCaption(input.value);
-      writeCaption(input.value);
-    });
   }
 
   var CASE_MODES = ["none", "lower", "upper"];

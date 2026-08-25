@@ -311,14 +311,14 @@ body,
 
 .stage .var-readout {
   position: absolute;
-  top: var(--guide-t, 56px);
+  top: auto;
   right: var(--guide-r, 56px);
-  bottom: auto;
+  bottom: var(--guide-b, 56px);
   left: var(--guide-l, 56px);
   z-index: 6;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   min-height: 0;
   margin: 0;
   padding: 0;
@@ -341,8 +341,9 @@ body,
 
 .stage .var-readout-item {
   display: flex;
+  flex: 0 0 auto;
   align-items: baseline;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
   white-space: nowrap;
 }
