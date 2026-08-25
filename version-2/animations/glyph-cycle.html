@@ -369,6 +369,11 @@
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="80" max="1400" step="1" value="860" />
+          <span class="val" id="fsVal">860px</span>
+        </div>
+        <div class="row">
           <label for="oy">y</label>
           <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
           <span class="val" id="oyVal">0px</span>
@@ -617,8 +622,9 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v11:" + PRESET_NAME;
+        var LS_KEY = "animator:v2:glyph-cycle:v12:" + PRESET_NAME;
         var OLD_LS_KEYS = [
+          "animator:v2:glyph-cycle:v11:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v10:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v9:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v8:" + PRESET_NAME,
@@ -637,6 +643,7 @@
           bg: "#d3d3d3",
           fg: "#000000",
           ch: DEFAULT_CHAR,
+          fs: 860,
           oy: 0,
           move: 1400,
           hold: 350,
@@ -646,34 +653,17 @@
           DEFAULTS["wdth" + i] = pose.wdth;
           DEFAULTS["wght" + i] = pose.wght;
           DEFAULTS["cntr" + i] = pose.cntr;
-          DEFAULTS["fs" + i] = pose.fs;
           DEFAULTS["tr" + i] = pose.tr;
         });
 
         function injectPoseTypeControls() {
           for (var i = 0; i < MAX_KF; i += 1) {
             var poseEl = document.getElementById("kfPose" + i);
-            if (!poseEl || document.getElementById("fs" + i)) continue;
-            var fs = DEFAULTS["fs" + i] != null ? DEFAULTS["fs" + i] : REST.fs;
+            if (!poseEl || document.getElementById("tr" + i)) continue;
             var tr = DEFAULTS["tr" + i] != null ? DEFAULTS["tr" + i] : REST.tr;
             poseEl.insertAdjacentHTML(
               "afterbegin",
               '<div class="row">' +
-                '<label for="fs' +
-                i +
-                '">size</label>' +
-                '<input id="fs' +
-                i +
-                '" type="range" min="80" max="1400" step="1" value="' +
-                fs +
-                '" />' +
-                '<span class="val" id="fs' +
-                i +
-                'Val">' +
-                Math.round(fs) +
-                "px</span>" +
-                "</div>" +
-                '<div class="row">' +
                 '<label for="tr' +
                 i +
                 '">track</label>' +
@@ -699,6 +689,7 @@
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
+          fs: document.getElementById("fsVal"),
           oy: document.getElementById("oyVal"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
@@ -708,7 +699,7 @@
           els[key] = document.getElementById(key);
         });
 
-        ["slnt", "wdth", "wght", "cntr", "fs", "tr"].forEach(function (axis) {
+        ["slnt", "wdth", "wght", "cntr", "tr"].forEach(function (axis) {
           for (var i = 0; i < MAX_KF; i += 1) {
             vals[axis + i] = document.getElementById(axis + i + "Val");
           }
@@ -751,7 +742,7 @@
             wdth: numOr(els["wdth" + i], 130),
             wght: numOr(els["wght" + i], 1000),
             cntr: numOr(els["cntr" + i], 0),
-            fs: numOr(els["fs" + i], 860),
+            fs: numOr(els.fs, 860),
             tr: numOr(els["tr" + i], 0),
           };
         }
@@ -1042,7 +1033,7 @@
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "ch") return String(v);
-          if (key === "oy" || /^fs\d+$/.test(key)) return Math.round(Number(v)) + "px";
+          if (key === "oy" || key === "fs") return Math.round(Number(v)) + "px";
           if (/^tr\d+$/.test(key)) return Number(v).toFixed(2);
           if (key.indexOf("slnt") === 0) {
             return Number(v).toFixed(2).replace(/\.00$/, "");
@@ -1125,22 +1116,24 @@
                 if (layout[key] != null) local[key] = layout[key];
               });
               for (var i = 0; i < KF_COUNT; i += 1) {
-                if (layout.fs != null && local["fs" + i] == null) {
-                  local["fs" + i] = layout.fs;
-                }
                 if (layout.tr != null && local["tr" + i] == null) {
                   local["tr" + i] = layout.tr;
                 }
               }
+              if (layout.fs != null && local.fs == null) local.fs = layout.fs;
               hasLocal = true;
             }
           }
-          if (hasLocal) delete local.oy;
+          if (hasLocal) {
+            delete local.oy;
+            if (local.fs == null && local.fs0 != null) local.fs = local.fs0;
+          }
           return hasLocal ? local : null;
         }
 
         function loadSaved() {
           var local = readJson(LS_KEY) || migrateLegacy();
+          if (local && local.fs == null && local.fs0 != null) local.fs = local.fs0;
           applyLocal(local);
           if (!local || local.ch == null) {
             if (els.ch) els.ch.value = DEFAULT_CHAR;
