@@ -160,13 +160,16 @@
         white-space: nowrap;
       }
 
+      .var-readout-item:last-child {
+        justify-content: flex-end;
+      }
+
       .var-readout-label {
         opacity: 1;
         letter-spacing: 0;
       }
 
       .var-readout-value {
-        min-width: 4ch;
         font-variant-numeric: tabular-nums;
       }
 
@@ -427,7 +430,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../animation-chrome.css?v=27" />
+    <link rel="stylesheet" href="../animation-chrome.css?v=28" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -660,7 +663,7 @@
         }
 
         function fmtReadout(tag, v) {
-          if (tag === "slnt") return String(Math.round(Number(v)));
+          if (tag === "slnt") return String(Math.abs(Math.round(Number(v))));
           return String(Math.ceil(Number(v)));
         }
 

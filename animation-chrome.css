@@ -325,14 +325,14 @@ body,
   color: var(--caption, var(--fg));
   font-family: "IkarusPlusVariable", sans-serif;
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 500;
   font-style: normal;
   font-synthesis: none;
   line-height: 1;
   letter-spacing: 0;
   white-space: nowrap;
   text-transform: none;
-  font-variation-settings: "wght" 700, "wdth" 100, "CNTR" 0, "slnt" 0;
+  font-variation-settings: "wght" 500, "wdth" 100, "CNTR" 0, "slnt" 0;
   font-feature-settings: "kern" 1, "liga" 1;
   font-kerning: normal;
   background: transparent;
@@ -348,13 +348,16 @@ body,
   white-space: nowrap;
 }
 
+.stage .var-readout-item:last-child {
+  justify-content: flex-end;
+}
+
 .stage .var-readout-label {
   opacity: 1;
   letter-spacing: 0;
 }
 
 .stage .var-readout-value {
-  min-width: 4ch;
   font-variant-numeric: tabular-nums;
 }
 
