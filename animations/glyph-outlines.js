@@ -227,15 +227,19 @@
 
     var cx = (bb.x1 + bb.x2) / 2;
     var cy = (bb.y1 + bb.y2) / 2;
+    var yTop = bb.y1;
 
     if (runs.length === 1) {
       var subs = splitSubpaths(runs[0].commands);
       if (subs.length > 1) {
         var outer = outerContourBBox(runs[0].commands);
-        if (outer) cy = (outer.y1 + outer.y2) / 2;
+        if (outer) {
+          cy = (outer.y1 + outer.y2) / 2;
+          yTop = outer.y1;
+        }
       }
     }
-    return { cx: cx, cy: cy };
+    return { cx: cx, cy: cy, yTop: yTop };
   }
 
   /** Layout anchor from advances + font metrics — stable while ink bounds shift during animation. */
@@ -260,6 +264,7 @@
     return {
       cx: (minX + maxX) / 2,
       cy: emMid + ((lines.length - 1) * lineHeight) / 2,
+      yTop: -asc,
     };
   }
 
@@ -270,16 +275,40 @@
     return placementAnchorForRuns(runs);
   }
 
-  /** Map path coordinates so the anchor sits at the artboard center. */
-  function placement(stageEl, root, anchor) {
+  function cssVarPx(root, name) {
+    if (!root) return NaN;
+    var raw = getComputedStyle(root).getPropertyValue(name).trim();
+    if (!raw) return NaN;
+    var n = parseFloat(raw);
+    return isFinite(n) ? n : NaN;
+  }
+
+  /** Map path coordinates so the anchor sits at the artboard center, or the live-area top. */
+  function placement(stageEl, root, anchor, opts) {
     var size = stageLayoutSize(stageEl, root);
     var stageW = size.w;
     var stageH = size.h;
     var stageCx = stageW / 2;
-    var stageCy = stageH / 2;
+    var alignY = opts && opts.alignY === "top" ? "top" : "center";
+    var stageCy;
+    if (alignY === "top") {
+      var padT = cssVarPx(root, "--guide-t");
+      if (!isFinite(padT)) padT = cssVarPx(root, "--pad-t");
+      if (!isFinite(padT)) padT = 0;
+      var extra = 0;
+      if (opts && opts.alignYOffset != null && isFinite(Number(opts.alignYOffset))) {
+        extra = Number(opts.alignYOffset);
+      } else {
+        var readout = stageEl && stageEl.querySelector(".var-readout");
+        if (readout) extra = (readout.offsetHeight || 26) + 12;
+      }
+      stageCy = padT + extra;
+    } else {
+      stageCy = stageH / 2;
+    }
 
     var pathCx = anchor.cx;
-    var pathCy = anchor.cy;
+    var pathCy = alignY === "top" && anchor.yTop != null ? anchor.yTop : anchor.cy;
 
     var map = function (ox, oy) {
       return {
@@ -992,7 +1021,7 @@
       return;
     }
 
-    var place = placement(stageEl, root, anchor);
+    var place = placement(stageEl, root, anchor, opts);
     var map = place.map;
     var scale =
       opts && opts.outlineScale != null ? Number(opts.outlineScale) : 1;

@@ -114,19 +114,20 @@
 
       .var-readout {
         position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        left: var(--guide-l, 56px);
+        right: var(--guide-r, 56px);
+        top: var(--guide-t, 56px);
+        bottom: auto;
         z-index: 2;
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         align-items: center;
-        min-height: 64px;
-        padding: 12px 28px 48px;
-        font-size: 20px;
+        min-height: 0;
+        padding: 0;
+        font-size: 26px;
         line-height: 1;
-        color: var(--line);
-        background: var(--bg);
+        color: var(--caption, var(--fg));
+        background: transparent;
         pointer-events: none;
       }
 
@@ -139,8 +140,8 @@
       }
 
       .var-readout-label {
-        opacity: 0.5;
-        letter-spacing: 0.02em;
+        opacity: 1;
+        letter-spacing: 0;
       }
 
       .var-readout-value {
@@ -372,7 +373,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../animation-chrome.css?v=25" />
+    <link rel="stylesheet" href="../animation-chrome.css?v=26" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -392,6 +393,10 @@
             <span class="var-readout-item">
               <span class="var-readout-label">Width</span>
               <span class="var-readout-value" id="readoutWdth">100</span>
+            </span>
+            <span class="var-readout-item">
+              <span class="var-readout-label">Slant</span>
+              <span class="var-readout-value" id="readoutSlnt">0</span>
             </span>
           </div>
         </div>
@@ -511,7 +516,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="glyph-outlines.js?v=10"></script>
+    <script src="glyph-outlines.js?v=11"></script>
     <script src="artboard-zoom.js?v=3"></script>
     <script>
       (function () {
@@ -549,6 +554,7 @@
         }
 
         function fmtReadout(tag, v) {
+          if (tag === "slnt") return String(Math.round(Number(v)));
           return String(Math.ceil(Number(v)));
         }
 
@@ -592,12 +598,14 @@
           wght: document.getElementById("readoutWght"),
           CNTR: document.getElementById("readoutCntr"),
           wdth: document.getElementById("readoutWdth"),
+          slnt: document.getElementById("readoutSlnt"),
         };
 
         function updateVarReadout(v) {
           readoutEls.wght.textContent = fmtReadout("wght", v.wght);
           readoutEls.CNTR.textContent = fmtReadout("CNTR", v.CNTR);
           readoutEls.wdth.textContent = fmtReadout("wdth", v.wdth);
+          readoutEls.slnt.textContent = fmtReadout("slnt", v.slnt);
         }
 
         function getText() {
@@ -729,6 +737,7 @@
             fontSize: fontSizeAt(t),
             tracking: kerningPxAt(t),
             stableAnchor: true,
+            alignY: "top",
           };
           if (extra) Object.assign(opts, extra);
           GlyphOutlines.sync(
