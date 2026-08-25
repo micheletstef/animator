@@ -309,6 +309,18 @@ body,
   display: none;
 }
 
+.stage .metric,
+.stage .metric-label,
+.stage .metric-weight {
+  font-family: "IkarusPlusVariable", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-synthesis: none;
+  font-variation-settings: "wght" 500, "wdth" 100, "CNTR" 0, "slnt" 0;
+  font-feature-settings: "kern" 1, "liga" 1;
+  font-kerning: normal;
+}
+
 .stage .var-readout {
   position: absolute;
   top: auto;

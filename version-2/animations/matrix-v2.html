@@ -218,20 +218,6 @@
         transform: translateX(-28px);
       }
 
-      .matrix-metrics {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        display: block;
-        width: 100%;
-        height: calc(var(--metric-size) * 1px);
-        margin: 0;
-        overflow: visible;
-        pointer-events: none;
-        z-index: 4;
-      }
-
       .measure {
         position: relative;
         display: inline-flex;
@@ -297,13 +283,10 @@
 
       .metric {
         position: absolute;
-        top: 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 8px;
-        min-width: 0;
+        display: block;
+        margin: 0;
         padding: 0;
+        text-align: center;
         font-family: "IkarusPlusVariable", sans-serif;
         font-size: calc(var(--metric-size) * 1px);
         font-weight: 500;
@@ -321,14 +304,7 @@
         z-index: 3;
       }
 
-      .metric-font {
-        flex: 0 1 auto;
-        text-align: left;
-      }
-
       .metric-weight {
-        flex: 0 0 auto;
-        text-align: right;
         font-variant-numeric: tabular-nums;
       }
 
@@ -564,7 +540,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=36" />
     <style>
       .stage .guide-margin {
         box-shadow: 0 0 0 2px #ff00ff;
@@ -683,7 +659,7 @@
         };
         var COL_LABELS = {
           condensed: "Condensed",
-          default: "Standard",
+          default: "Default",
           extended: "Extended",
         };
 
@@ -691,7 +667,6 @@
         var matrix = document.getElementById("matrix");
         var cells = [];
         var colMetrics = [];
-        var colMetricEls = [];
         var W_MIN = 200;
         var W_MAX = 1000;
         var ROW_COUNT = FAMILIES.length;
@@ -739,6 +714,16 @@
           return chars;
         }
 
+        function createMetric(className, text) {
+          var el = document.createElement("span");
+          el.className = "metric " + className;
+          el.textContent = text;
+          el.style.fontWeight = "500";
+          el.style.fontVariationSettings =
+            '"wght" 500, "wdth" 100, "CNTR" 0, "slnt" 0';
+          return el;
+        }
+
         function createCell(row, col, ch) {
           var cell = document.createElement("div");
           cell.className = "cell";
@@ -759,9 +744,20 @@
           lineRight.className = "line line-right";
           lineRight.setAttribute("aria-hidden", "true");
 
+          var metricLabel = null;
+          var metricWeight = null;
+          if (row === 0) {
+            metricLabel = createMetric("metric-label", COL_LABELS[COLS[col]]);
+          }
+          if (row === ROW_COUNT - 1) {
+            metricWeight = createMetric("metric-weight", "200");
+          }
+
           measure.appendChild(lineLeft);
           measure.appendChild(glyph);
           measure.appendChild(lineRight);
+          if (metricLabel) measure.appendChild(metricLabel);
+          if (metricWeight) measure.appendChild(metricWeight);
           cell.appendChild(measure);
 
           return {
@@ -772,40 +768,17 @@
             glyph: glyph,
             lineLeft: lineLeft,
             lineRight: lineRight,
+            metricLabel: metricLabel,
+            metricWeight: metricWeight,
             weight: W_MIN,
           };
-        }
-
-        function createMetricsRow() {
-          var rowEl = document.createElement("div");
-          rowEl.className = "matrix-metrics";
-          colMetrics = [];
-          colMetricEls = [];
-          for (var c = 0; c < COL_COUNT; c++) {
-            var metric = document.createElement("div");
-            metric.className = "metric";
-
-            var metricFont = document.createElement("span");
-            metricFont.className = "metric-font";
-            metricFont.textContent = COL_LABELS[COLS[c]];
-
-            var metricWeight = document.createElement("span");
-            metricWeight.className = "metric-weight";
-            metricWeight.textContent = "200";
-
-            metric.appendChild(metricFont);
-            metric.appendChild(metricWeight);
-            rowEl.appendChild(metric);
-            colMetricEls.push(metric);
-            colMetrics.push(metricWeight);
-          }
-          return rowEl;
         }
 
         function buildMatrix(chars) {
           chars = chars && chars.length === ROW_COUNT ? chars : parseChars("");
           matrix.innerHTML = "";
           cells = [];
+          colMetrics = [];
           for (r = 0; r < ROW_COUNT; r++) {
             var rowEl = document.createElement("div");
             rowEl.className = "matrix-row";
@@ -813,10 +786,10 @@
               var item = createCell(r, c, chars[r]);
               rowEl.appendChild(item.cell);
               cells.push(item);
+              if (item.metricWeight) colMetrics.push(item.metricWeight);
             }
             matrix.appendChild(rowEl);
           }
-          matrix.appendChild(createMetricsRow());
         }
 
         function applyChars(raw) {
@@ -1105,12 +1078,15 @@
             if (lineHeight < 1) {
               c.lineLeft.style.display = "none";
               c.lineRight.style.display = "none";
+              if (c.metricLabel) c.metricLabel.style.display = "none";
+              if (c.metricWeight) c.metricWeight.style.display = "none";
               continue;
             }
 
             var leftX = (g.left - m.left) / zoom;
             var rightX = (g.right - m.left) / zoom;
             var lineTop = (clipTop - m.top) / zoom;
+            var span = Math.max(0, rightX - leftX);
 
             c.lineLeft.style.display = "block";
             c.lineRight.style.display = "block";
@@ -1120,33 +1096,22 @@
             c.lineRight.style.left = rightX - 2 + "px";
             c.lineRight.style.top = lineTop + "px";
             c.lineRight.style.height = lineHeight + "px";
-          }
 
-          var metricsRow = matrix.querySelector(".matrix-metrics");
-          var lastRow = rowStats[ROW_COUNT - 1];
-          var matrixRect = matrix.getBoundingClientRect();
-          if (
-            metricsRow &&
-            colMetricEls.length &&
-            lastRow &&
-            isFinite(lastRow.glyphBottom)
-          ) {
             var metricSize = parseFloat(els.ms.value);
             if (!isFinite(metricSize)) metricSize = 26;
-            var gap = metricSize;
-            metricsRow.style.top =
-              (lastRow.glyphBottom - matrixRect.top) / zoom + gap + "px";
-            var metricsRect = metricsRow.getBoundingClientRect();
-            for (i = 0; i < cells.length; i++) {
-              c = cells[i];
-              if (c.row !== ROW_COUNT - 1) continue;
-              var metricEl = colMetricEls[c.col];
-              var glyphBox = c.glyph.getBoundingClientRect();
-              if (!metricEl || !glyphBox.width) continue;
-              metricEl.style.left =
-                (glyphBox.left - metricsRect.left) / zoom + "px";
-              metricEl.style.width =
-                Math.max(0, glyphBox.width / zoom) + "px";
+
+            if (c.metricLabel) {
+              c.metricLabel.style.display = "block";
+              c.metricLabel.style.left = leftX + "px";
+              c.metricLabel.style.width = span + "px";
+              c.metricLabel.style.top = lineTop + "px";
+            }
+            if (c.metricWeight) {
+              c.metricWeight.style.display = "block";
+              c.metricWeight.style.left = leftX + "px";
+              c.metricWeight.style.width = span + "px";
+              c.metricWeight.style.top =
+                lineTop + lineHeight - metricSize + "px";
             }
           }
 
