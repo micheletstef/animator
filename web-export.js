@@ -1,4 +1,4 @@
-import { snapdom, preCache } from "https://cdn.jsdelivr.net/npm/@zumer/snapdom@2.24.10/dist/snapdom.mjs";
+import { toCanvas, getFontEmbedCSS } from "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm";
 import { Muxer, ArrayBufferTarget } from "https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/+esm";
 
 const CODEC_CANDIDATES = [
@@ -18,6 +18,14 @@ const QUALITY = {
 };
 
 const DEFAULT_PREFS = { fps: 30, scale: 2, quality: "max" };
+
+function waitPaint() {
+  return new Promise(function (resolve) {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(resolve);
+    });
+  });
+}
 
 function saveBlob(blob, name) {
   var url = URL.createObjectURL(blob);
@@ -192,42 +200,16 @@ async function pickEncoder(width, height, fps, bitrate) {
   return null;
 }
 
-function makeDest(w, h) {
+function fitCanvas(source, w, h) {
+  if (source.width === w && source.height === h) return source;
   var canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  var ctx = canvas.getContext("2d", { alpha: false });
+  var ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  return { canvas: canvas, ctx: ctx };
-}
-
-function fitCanvas(source, dest, w, h) {
-  if (source.width === w && source.height === h) return source;
-  dest.ctx.drawImage(source, 0, 0, w, h);
-  return dest.canvas;
-}
-
-function captureOptions(settings) {
-  return {
-    fast: true,
-    embedFonts: true,
-    cache: "full",
-    dpr: settings.scale,
-    outerTransforms: false,
-    outerShadows: false,
-    exclude: [".artboard-scale", ".stage-guides"],
-    excludeMode: "remove",
-  };
-}
-
-function waitEncoder(encoder) {
-  if (encoder.encodeQueueSize <= 12) return Promise.resolve();
-  return new Promise(function (resolve) {
-    encoder.ondequeue = function () {
-      if (encoder.encodeQueueSize <= 8) resolve();
-    };
-  });
+  ctx.drawImage(source, 0, 0, w, h);
+  return canvas;
 }
 
 function setStatus(btn, text) {
@@ -276,59 +258,60 @@ async function exportAnimation(api, btn) {
   document.documentElement.classList.add("is-exporting");
   if (api.stop) api.stop();
 
-  var outer = document.querySelector(".stage-outer");
-  var prevTransform = outer ? outer.style.transform : "";
-  if (outer) outer.style.transform = "none";
+  var fontEmbedCSS = await getFontEmbedCSS(stage);
+  var muxer = new Muxer({
+    target: new ArrayBufferTarget(),
+    video: {
+      codec: "avc",
+      width: settings.w,
+      height: settings.h,
+      frameRate: settings.fps,
+    },
+    fastStart: "in-memory",
+  });
 
-  var encoder = null;
+  var encoderError = null;
+  var encoder = new VideoEncoder({
+    output: function (chunk, meta) {
+      muxer.addVideoChunk(chunk, meta);
+    },
+    error: function (err) {
+      encoderError = err;
+    },
+  });
+  encoder.configure(encoderConfig);
+
   try {
-    var snapOpts = captureOptions(settings);
-    try {
-      await preCache(stage, { embedFonts: true, cache: "full" });
-    } catch (err) {}
-
-    var muxer = new Muxer({
-      target: new ArrayBufferTarget(),
-      video: {
-        codec: "avc",
-        width: settings.w,
-        height: settings.h,
-        frameRate: settings.fps,
-      },
-      fastStart: "in-memory",
-    });
-
-    var encoderError = null;
-    encoder = new VideoEncoder({
-      output: function (chunk, meta) {
-        muxer.addVideoChunk(chunk, meta);
-      },
-      error: function (err) {
-        encoderError = err;
-      },
-    });
-    encoder.configure(encoderConfig);
-
-    var dest = makeDest(settings.w, settings.h);
-    var frameDuration = Math.round(1e6 / settings.fps);
-    var statusEvery = Math.max(1, Math.round(settings.fps / 6));
-
     for (var i = 0; i < frameCount; i++) {
       if (encoderError) throw encoderError;
-      api.seek((i / settings.fps) * 1000);
-      void stage.offsetWidth;
+      var t = (i / settings.fps) * 1000;
+      api.seek(t);
+      await waitPaint();
+      setStatus(btn, i + 1 + " / " + frameCount);
 
-      if (i === 0 || i + 1 === frameCount || i % statusEvery === 0) {
-        setStatus(btn, i + 1 + " / " + frameCount);
+      var captured = await toCanvas(stage, {
+        width: settings.art.w,
+        height: settings.art.h,
+        pixelRatio: settings.scale,
+        fontEmbedCSS: fontEmbedCSS,
+        style: {
+          boxShadow: "none",
+          transform: "none",
+          width: settings.art.w + "px",
+          height: settings.art.h + "px",
+        },
+      });
+      var canvas = fitCanvas(captured, settings.w, settings.h);
+
+      if (encoder.encodeQueueSize > 8) {
+        await new Promise(function (resolve) {
+          encoder.ondequeue = resolve;
+        });
       }
-
-      var captured = await snapdom.toCanvas(stage, snapOpts);
-      var canvas = fitCanvas(captured, dest, settings.w, settings.h);
-      await waitEncoder(encoder);
 
       var frame = new VideoFrame(canvas, {
         timestamp: Math.round((i * 1e6) / settings.fps),
-        duration: frameDuration,
+        duration: Math.round(1e6 / settings.fps),
       });
       encoder.encode(frame, { keyFrame: i % keyEvery === 0 });
       frame.close();
@@ -343,9 +326,8 @@ async function exportAnimation(api, btn) {
     );
   } finally {
     try {
-      if (encoder && encoder.state !== "closed") encoder.close();
+      if (encoder.state !== "closed") encoder.close();
     } catch (err) {}
-    if (outer) outer.style.transform = prevTransform;
     document.documentElement.classList.remove("is-exporting");
     if (api.start) api.start();
   }
@@ -485,8 +467,7 @@ function bind() {
     var style = document.createElement("style");
     style.id = "web-export-style";
     style.textContent =
-      ".is-exporting .artboard-scale,.is-exporting .stage-guides{display:none!important}" +
-      ".is-exporting .stage-outer{opacity:0!important}";
+      ".is-exporting .artboard-scale,.is-exporting .stage-guides{display:none!important}";
     document.head.appendChild(style);
   }
   var api = window.AnimatorExport;

@@ -434,9 +434,9 @@ Layering</textarea>
 
         var LS_KEY = "animator:v2:weight-cascade:settings:v6";
         var FAMILIES = [
-          { id: "standard", cntr: 0 },
-          { id: "contrast", cntr: 100 },
-          { id: "flair", cntr: 50 },
+          { id: "standard", label: "Standard", cntr: 0 },
+          { id: "contrast", label: "Contrast", cntr: 100 },
+          { id: "flair", label: "Flair", cntr: 50 },
         ];
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
@@ -570,6 +570,59 @@ Layering</textarea>
           return Math.max(0, Number(els.blend.value) || 0);
         }
 
+        function familyById(id) {
+          for (var i = 0; i < FAMILIES.length; i++) {
+            if (FAMILIES[i].id === id) return FAMILIES[i];
+          }
+          return null;
+        }
+
+        function nearestFamily(cntr) {
+          var best = FAMILIES[0];
+          var bestD = Infinity;
+          var i;
+          var d;
+          for (i = 0; i < FAMILIES.length; i++) {
+            d = Math.abs(FAMILIES[i].cntr - cntr);
+            if (d < bestD) {
+              bestD = d;
+              best = FAMILIES[i];
+            }
+          }
+          return best;
+        }
+
+        function familyLabel(id) {
+          var fam = familyById(id);
+          if (fam) return fam.label;
+          if (!id) return "";
+          return id.charAt(0).toUpperCase() + id.slice(1);
+        }
+
+        function captionBase() {
+          var input = document.getElementById("stageCaption");
+          if (input) return String(input.value || "");
+          if (window.ArtboardView && window.ArtboardView.readCaption) {
+            return String(window.ArtboardView.readCaption() || "");
+          }
+          return "";
+        }
+
+        var lastLiveCaption = null;
+        function applyLiveCaption(familyId) {
+          var name = familyLabel(familyId);
+          var base = captionBase().replace(/^\s+|\s+$/g, "");
+          var text = name && base ? name + " · " + base : name || base;
+          if (text === lastLiveCaption) return;
+          lastLiveCaption = text;
+          if (window.ArtboardView && window.ArtboardView.setCaption) {
+            window.ArtboardView.setCaption(text);
+          } else {
+            var el = document.querySelector(".stage-caption");
+            if (el) el.textContent = text;
+          }
+        }
+
         function stepMs(n) {
           var w = waveTiming(n);
           return Math.max(1, w.travel + w.hold + blendMs());
@@ -583,6 +636,7 @@ Layering</textarea>
           var weights = new Array(n);
           var cntrs = new Array(n);
           var family = "";
+          var activeFamily = "";
           var staticCntr = Number(els.cntr.value) || 0;
           var i;
           var p;
@@ -594,7 +648,13 @@ Layering</textarea>
               weights[i] = lerp(WORDS[i].start, peak, bump(p));
               cntrs[i] = staticCntr;
             }
-            return { weights: weights, cntrs: cntrs, family: family };
+            activeFamily = nearestFamily(staticCntr).id;
+            return {
+              weights: weights,
+              cntrs: cntrs,
+              family: family,
+              activeFamily: activeFamily,
+            };
           }
 
           var after = blendWhen() === "after";
@@ -620,8 +680,10 @@ Layering</textarea>
               morph = 1;
             }
             family = morph > 0 && morph < 1 ? from.id + " → " + to.id : morph >= 1 ? to.id : from.id;
+            activeFamily = morph >= 1 ? to.id : from.id;
           } else {
             family = t >= w.travel ? to.id : from.id + " → " + to.id;
+            activeFamily = t >= w.travel ? to.id : from.id;
           }
 
           for (i = 0; i < n; i++) {
@@ -638,7 +700,12 @@ Layering</textarea>
             }
           }
 
-          return { weights: weights, cntrs: cntrs, family: family };
+          return {
+            weights: weights,
+            cntrs: cntrs,
+            family: family,
+            activeFamily: activeFamily,
+          };
         }
 
         function applyState(state) {
@@ -681,6 +748,7 @@ Layering</textarea>
                 return Math.round(wt);
               })
               .join(" ");
+          applyLiveCaption(state.activeFamily);
         }
 
         function frame(now) {
@@ -859,6 +927,14 @@ Layering</textarea>
           });
         });
 
+        var captionInput = document.getElementById("stageCaption");
+        if (captionInput) {
+          captionInput.addEventListener("input", function () {
+            lastLiveCaption = null;
+            applyLiveCaption(sample(playing ? performance.now() - t0 : 0).activeFamily);
+          });
+        }
+
         loadSaved();
         applyVars();
         paintVals();
@@ -878,6 +954,6 @@ Layering</textarea>
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=8"></script>
+    <script type="module" src="../../web-export.js?v=9"></script>
   </body>
 </html>
