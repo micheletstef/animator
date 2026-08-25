@@ -151,7 +151,7 @@
         left: var(--guide-l, calc(var(--pad-l) * 1px));
         right: var(--guide-r, calc(var(--pad-r) * 1px));
         top: auto;
-        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        bottom: calc(var(--guide-b, calc(var(--pad-b) * 1px)) - 8px);
         z-index: 3;
         display: flex;
         justify-content: space-between;
@@ -468,7 +468,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=30" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=31" />
   </head>
   <body data-no-caption>
     <div class="stage-wrap" id="stageWrap">

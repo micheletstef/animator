@@ -313,7 +313,7 @@ body,
   position: absolute;
   top: auto;
   right: var(--guide-r, 56px);
-  bottom: var(--guide-b, 56px);
+  bottom: calc(var(--guide-b, 56px) - 8px);
   left: var(--guide-l, 56px);
   z-index: 6;
   display: flex;
