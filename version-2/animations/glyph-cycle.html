@@ -355,16 +355,6 @@
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
-          <label for="fs">size</label>
-          <input id="fs" type="range" min="80" max="1400" step="1" value="860" />
-          <span class="val" id="fsVal">860px</span>
-        </div>
-        <div class="row">
-          <label for="tr">track</label>
-          <input id="tr" type="range" min="-1" max="1" step="0.005" value="0" />
-          <span class="val" id="trVal">0.00</span>
-        </div>
-        <div class="row">
           <label for="oy">y</label>
           <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
           <span class="val" id="oyVal">0px</span>
@@ -562,13 +552,15 @@
           return fallback;
         }
 
-        var REST = { slnt: 0, wdth: 130, wght: 1000, cntr: 0 };
+        var REST = { slnt: 0, wdth: 130, wght: 1000, cntr: 0, fs: 860, tr: 0 };
         function mixPose(over) {
           return {
             slnt: over.slnt != null ? over.slnt : REST.slnt,
             wdth: over.wdth != null ? over.wdth : REST.wdth,
             wght: over.wght != null ? over.wght : REST.wght,
             cntr: over.cntr != null ? over.cntr : REST.cntr,
+            fs: over.fs != null ? over.fs : REST.fs,
+            tr: over.tr != null ? over.tr : REST.tr,
           };
         }
 
@@ -612,12 +604,16 @@
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
         var LS_KEY =
+          "animator:v2:glyph-cycle:v7:" +
+          PRESET_NAME +
+          ":" +
+          encodeURIComponent(DEFAULT_CHAR);
+        var OLD_LS_KEY =
           "animator:v2:glyph-cycle:v6:" +
           PRESET_NAME +
           ":" +
           encodeURIComponent(DEFAULT_CHAR);
-        var LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
-        var SHARED_KEYS = { fs: 1, tr: 1, oy: 1, bg: 1, fg: 1 };
+        var OLD_LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
 
         var MAX_KF = 6;
         var KF_COUNT = preset.poses.length;
@@ -629,8 +625,6 @@
           bg: "#d3d3d3",
           fg: "#000000",
           ch: DEFAULT_CHAR,
-          fs: 860,
-          tr: 0,
           oy: 0,
           move: 1400,
           hold: 350,
@@ -640,7 +634,52 @@
           DEFAULTS["wdth" + i] = pose.wdth;
           DEFAULTS["wght" + i] = pose.wght;
           DEFAULTS["cntr" + i] = pose.cntr;
+          DEFAULTS["fs" + i] = pose.fs;
+          DEFAULTS["tr" + i] = pose.tr;
         });
+
+        function injectPoseTypeControls() {
+          for (var i = 0; i < MAX_KF; i += 1) {
+            var poseEl = document.getElementById("kfPose" + i);
+            if (!poseEl || document.getElementById("fs" + i)) continue;
+            var fs = DEFAULTS["fs" + i] != null ? DEFAULTS["fs" + i] : REST.fs;
+            var tr = DEFAULTS["tr" + i] != null ? DEFAULTS["tr" + i] : REST.tr;
+            poseEl.insertAdjacentHTML(
+              "afterbegin",
+              '<div class="row">' +
+                '<label for="fs' +
+                i +
+                '">size</label>' +
+                '<input id="fs' +
+                i +
+                '" type="range" min="80" max="1400" step="1" value="' +
+                fs +
+                '" />' +
+                '<span class="val" id="fs' +
+                i +
+                'Val">' +
+                Math.round(fs) +
+                "px</span>" +
+                "</div>" +
+                '<div class="row">' +
+                '<label for="tr' +
+                i +
+                '">track</label>' +
+                '<input id="tr' +
+                i +
+                '" type="range" min="-1" max="1" step="0.005" value="' +
+                tr +
+                '" />' +
+                '<span class="val" id="tr' +
+                i +
+                'Val">' +
+                Number(tr).toFixed(2) +
+                "</span>" +
+                "</div>"
+            );
+          }
+        }
+        injectPoseTypeControls();
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
 
@@ -648,8 +687,6 @@
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          fs: document.getElementById("fsVal"),
-          tr: document.getElementById("trVal"),
           oy: document.getElementById("oyVal"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
@@ -660,7 +697,7 @@
         });
         if (els.ch) els.ch.value = DEFAULT_CHAR;
 
-        ["slnt", "wdth", "wght", "cntr"].forEach(function (axis) {
+        ["slnt", "wdth", "wght", "cntr", "fs", "tr"].forEach(function (axis) {
           for (var i = 0; i < MAX_KF; i += 1) {
             vals[axis + i] = document.getElementById(axis + i + "Val");
           }
@@ -691,16 +728,20 @@
           return a + (b - a) * t;
         }
 
+        function numOr(el, fallback) {
+          if (!el) return fallback;
+          var n = parseFloat(el.value);
+          return isFinite(n) ? n : fallback;
+        }
+
         function keyframe(i) {
-          var slnt = els["slnt" + i];
-          var wdth = els["wdth" + i];
-          var wght = els["wght" + i];
-          var cntr = els["cntr" + i];
           return {
-            slnt: parseFloat(slnt && slnt.value) || 0,
-            wdth: parseFloat(wdth && wdth.value) || 130,
-            wght: parseFloat(wght && wght.value) || 1000,
-            cntr: parseFloat(cntr && cntr.value) || 0,
+            slnt: numOr(els["slnt" + i], 0),
+            wdth: numOr(els["wdth" + i], 130),
+            wght: numOr(els["wght" + i], 1000),
+            cntr: numOr(els["cntr" + i], 0),
+            fs: numOr(els["fs" + i], 860),
+            tr: numOr(els["tr" + i], 0),
           };
         }
 
@@ -710,6 +751,8 @@
             wdth: lerp(a.wdth, b.wdth, t),
             wght: lerp(a.wght, b.wght, t),
             cntr: lerp(a.cntr, b.cntr, t),
+            fs: lerp(a.fs, b.fs, t),
+            tr: lerp(a.tr, b.tr, t),
           };
         }
 
@@ -718,10 +761,16 @@
           root.style.setProperty("--wdth", String(s.wdth));
           root.style.setProperty("--wght", String(s.wght));
           root.style.setProperty("--cntr", String(s.cntr));
+          root.style.setProperty("--fs", String(s.fs));
+          root.style.setProperty("--tracking", String(s.tr));
           var prefix = holdKf >= 0 ? "hold " + (holdKf + 1) + " · " : "";
           nowReadout.textContent =
             prefix +
-            "wght " +
+            "size " +
+            Math.round(s.fs) +
+            " · track " +
+            Number(s.tr).toFixed(2) +
+            " · wght " +
             Math.round(s.wght) +
             " · wdth " +
             Math.round(s.wdth) +
@@ -953,8 +1002,8 @@
         function fmt(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "ch") return String(v);
-          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
-          if (key === "tr") return Number(v).toFixed(2);
+          if (key === "oy" || /^fs\d+$/.test(key)) return Math.round(Number(v)) + "px";
+          if (/^tr\d+$/.test(key)) return Number(v).toFixed(2);
           if (key.indexOf("slnt") === 0) {
             return Number(v).toFixed(2).replace(/\.00$/, "");
           }
@@ -971,8 +1020,6 @@
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--fs", String(els.fs.value));
-          root.style.setProperty("--tracking", String(els.tr.value));
           root.style.setProperty("--oy", String(els.oy.value));
           glyph.textContent = els.ch.value || DEFAULT_CHAR;
           document.title = glyph.textContent;
@@ -1002,36 +1049,50 @@
           } catch (e) {}
         }
 
-        function applyShared(data) {
-          if (!data) return;
-          Object.keys(SHARED_KEYS).forEach(function (key) {
-            if (!els[key] || data[key] == null) return;
-            els[key].value = data[key];
+        function save() {
+          var local = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || key === "ch") return;
+            local[key] = els[key].value;
+          });
+          writeJson(LS_KEY, local);
+        }
+
+        function applyLocal(local) {
+          if (!local) return;
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (key === "ch") return;
+            if (!els[key] || local[key] == null) return;
+            els[key].value = local[key];
           });
         }
 
-        function save() {
-          var local = {};
-          var shared = {};
-          Object.keys(DEFAULTS).forEach(function (key) {
-            if (!els[key]) return;
-            if (SHARED_KEYS[key]) shared[key] = els[key].value;
-            else if (key !== "ch") local[key] = els[key].value;
-          });
-          writeJson(LS_KEY, local);
-          writeJson(LAYOUT_KEY, shared);
+        function migrateLegacy() {
+          var local = readJson(OLD_LS_KEY) || {};
+          var hasLocal = !!readJson(OLD_LS_KEY);
+          if (PRESET_NAME === "full") {
+            var layout = readJson(OLD_LAYOUT_KEY);
+            if (layout) {
+              ["oy", "bg", "fg"].forEach(function (key) {
+                if (layout[key] != null) local[key] = layout[key];
+              });
+              for (var i = 0; i < KF_COUNT; i += 1) {
+                if (layout.fs != null && local["fs" + i] == null) {
+                  local["fs" + i] = layout.fs;
+                }
+                if (layout.tr != null && local["tr" + i] == null) {
+                  local["tr" + i] = layout.tr;
+                }
+              }
+              hasLocal = true;
+            }
+          }
+          return hasLocal ? local : null;
         }
 
         function loadSaved() {
-          var local = readJson(LS_KEY);
-          if (local) {
-            Object.keys(DEFAULTS).forEach(function (key) {
-              if (SHARED_KEYS[key] || key === "ch") return;
-              if (!els[key] || local[key] == null) return;
-              els[key].value = local[key];
-            });
-          }
-          applyShared(readJson(LAYOUT_KEY));
+          var local = readJson(LS_KEY) || migrateLegacy();
+          applyLocal(local);
           if (els.ch) els.ch.value = DEFAULT_CHAR;
         }
 
@@ -1043,13 +1104,6 @@
           try {
             localStorage.removeItem(LS_KEY);
           } catch (e) {}
-          writeJson(LAYOUT_KEY, {
-            fs: String(DEFAULTS.fs),
-            tr: String(DEFAULTS.tr),
-            oy: String(DEFAULTS.oy),
-            bg: DEFAULTS.bg,
-            fg: DEFAULTS.fg,
-          });
           applyVars();
           paintVals();
           setActiveKf(0, false);
@@ -1065,6 +1119,7 @@
             applyVars();
             paintVals();
             paintKfTabs();
+            applySegment(segmentAt(playing ? performance.now() - t0 : 0));
             save();
           });
         });
@@ -1075,16 +1130,6 @@
             if (holdKf === i) restart();
             else setActiveKf(i, true);
           });
-        });
-
-        window.addEventListener("storage", function (e) {
-          if (e.key !== LAYOUT_KEY || !e.newValue) return;
-          try {
-            applyShared(JSON.parse(e.newValue));
-            applyVars();
-            paintVals();
-            paintKfTabs();
-          } catch (err) {}
         });
 
         glyph.textContent = DEFAULT_CHAR;
