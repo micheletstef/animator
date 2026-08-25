@@ -532,10 +532,15 @@
           <input id="os" type="range" min="25" max="200" step="1" value="100" />
           <span class="val" id="osVal">1.00×</span>
         </div>
-        <div class="row">
-          <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.5" max="1.6" step="0.01" value="1.3" />
-          <span class="val" id="lhVal">1.30</span>
+        <div class="axis-row">
+          <label for="lh0">leading</label>
+          <div class="dual-range" id="lhDual">
+            <span class="dual-val" id="lh0Val">1.30</span>
+            <span class="dual-val" id="lh1Val">1.30</span>
+            <div class="dual-track"><div class="dual-fill" id="lhFill"></div></div>
+            <input id="lh0" class="is-start" type="range" min="0.5" max="1.6" step="0.01" value="1.3" aria-label="leading start" />
+            <input id="lh1" class="is-end" type="range" min="0.5" max="1.6" step="0.01" value="1.3" aria-label="leading end" />
+          </div>
         </div>
         <div class="axis-row">
           <label for="kn0">track</label>
@@ -543,8 +548,8 @@
             <span class="dual-val" id="kn0Val">0%</span>
             <span class="dual-val" id="kn1Val">0%</span>
             <div class="dual-track"><div class="dual-fill" id="knFill"></div></div>
-            <input id="kn0" class="is-start" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking start" />
-            <input id="kn1" class="is-end" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking end" />
+            <input id="kn0" class="is-start" type="range" min="-40" max="40" step="1" value="0" aria-label="tracking start" />
+            <input id="kn1" class="is-end" type="range" min="-40" max="40" step="1" value="0" aria-label="tracking end" />
           </div>
         </div>
         <div class="row">
@@ -736,12 +741,24 @@
           };
         }
 
+        var KERN = { min: -40, max: 40, step: 1, default: 0 };
+
         var KERN_DUAL = {
           minKey: "kn0",
           maxKey: "kn1",
           fill: "knFill",
           minVal: "kn0Val",
           maxVal: "kn1Val",
+        };
+
+        var LH = { min: 0.5, max: 1.6, step: 0.01, default: 1.3 };
+
+        var LH_DUAL = {
+          minKey: "lh0",
+          maxKey: "lh1",
+          fill: "lhFill",
+          minVal: "lh0Val",
+          maxVal: "lh1Val",
         };
 
         var FS_DUAL = {
@@ -794,6 +811,10 @@
           document.getElementById(FS_DUAL.maxVal).style.left = thumbPct(els.fs1) + "%";
         }
 
+        function clampKern(v) {
+          return Math.min(KERN.max, Math.max(KERN.min, v));
+        }
+
         function fmtKernPct(v) {
           var n = Math.round(Number(v));
           return (n > 0 ? "+" : "") + n + "%";
@@ -808,6 +829,28 @@
 
         function kernDualForKey(key) {
           return key === KERN_DUAL.minKey || key === KERN_DUAL.maxKey ? KERN_DUAL : null;
+        }
+
+        function clampLh(v) {
+          return Math.min(LH.max, Math.max(LH.min, v));
+        }
+
+        function fmtLh(v) {
+          return Number(v).toFixed(2);
+        }
+
+        function leadingAt(eased) {
+          var start = parseFloat(els.lh0.value);
+          var end = parseFloat(els.lh1.value);
+          return start + (end - start) * eased;
+        }
+
+        function applyLeading(eased) {
+          root.style.setProperty("--lh", String(leadingAt(eased)));
+        }
+
+        function lhDualForKey(key) {
+          return key === LH_DUAL.minKey || key === LH_DUAL.maxKey ? LH_DUAL : null;
         }
 
         function updateKernDualUI() {
@@ -830,6 +873,26 @@
           document.getElementById(KERN_DUAL.maxVal).style.left = thumbPct(els.kn1) + "%";
         }
 
+        function updateLhDualUI() {
+          var minEl = els.lh0;
+          var maxEl = els.lh1;
+          var fill = document.getElementById(LH_DUAL.fill);
+          var a = parseFloat(minEl.value);
+          var b = parseFloat(maxEl.value);
+          var min = parseFloat(minEl.min);
+          var max = parseFloat(minEl.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          fill.style.left = loPct + "%";
+          fill.style.width = Math.max(0, hiPct - loPct) + "%";
+          document.getElementById(LH_DUAL.minVal).textContent = fmtLh(a);
+          document.getElementById(LH_DUAL.maxVal).textContent = fmtLh(b);
+          document.getElementById(LH_DUAL.minVal).style.left = thumbPct(els.lh0) + "%";
+          document.getElementById(LH_DUAL.maxVal).style.left = thumbPct(els.lh1) + "%";
+        }
+
         function outlineColor() {
           return els.ln && els.ln.value
             ? els.ln.value
@@ -840,6 +903,7 @@
           if (!window.GlyphOutlines) return;
           var t = eased != null && isFinite(eased) ? eased : 0;
           applyFontSize(t);
+          applyLeading(t);
           var variation = v || variationAt(t);
           var color = outlineColor();
           outlineSvg.style.color = color;
@@ -850,7 +914,7 @@
             outlineScale: outlineScale(),
             fontSize: fontSizeAt(t),
             tracking: kerningPxAt(t),
-            leading: parseFloat(els.lh.value),
+            leading: leadingAt(t),
             offsetY: parseFloat(els.oy.value) || 0,
             stableAnchor: true,
             alignY: "top",
@@ -931,6 +995,7 @@
           var eased = easeInOutCubic(p);
           var v = variationAt(eased);
           applyFontSize(eased);
+          applyLeading(eased);
           applyVariation(v);
           updateVarReadout(v);
           syncOutlines(v, null, eased);
@@ -973,7 +1038,8 @@
           fs0: 900,
           fs1: 900,
           os: 100,
-          lh: 1.3,
+          lh0: 1.3,
+          lh1: 1.3,
           kn0: 0,
           kn1: 0,
           oy: 0,
@@ -1005,7 +1071,8 @@
           fs0: document.getElementById("fs0"),
           fs1: document.getElementById("fs1"),
           os: document.getElementById("os"),
-          lh: document.getElementById("lh"),
+          lh0: document.getElementById("lh0"),
+          lh1: document.getElementById("lh1"),
           kn0: document.getElementById("kn0"),
           kn1: document.getElementById("kn1"),
           oy: document.getElementById("oy"),
@@ -1032,7 +1099,6 @@
           bg: document.getElementById("bgVal"),
           ln: document.getElementById("lnVal"),
           os: document.getElementById("osVal"),
-          lh: document.getElementById("lhVal"),
           oy: document.getElementById("oyVal"),
           sw: document.getElementById("swVal"),
           ns: document.getElementById("nsVal"),
@@ -1053,7 +1119,6 @@
         function fmt(key, v) {
           if (key === "bg" || key === "ln") return String(v).toLowerCase();
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
-          if (key === "lh") return Number(v).toFixed(2);
           if (key === "oy") return Math.round(Number(v)) + "px";
           if (key === "sw" || key === "nsw" || key === "hsw") return Number(v).toFixed(2);
           if (key === "ns" || key === "hs") return Number(v).toFixed(1);
@@ -1067,8 +1132,6 @@
           else if (key === "ln") {
             root.style.setProperty("--line", v);
             outlineSvg.style.color = v;
-          } else if (key === "lh") {
-            root.style.setProperty("--lh", String(v));
           }
         }
 
@@ -1076,12 +1139,16 @@
           var spec = dualSpecForKey(key);
           var kernSpec = kernDualForKey(key);
           var fsSpec = fsDualForKey(key);
+          var lhSpec = lhDualForKey(key);
           if (spec) v = clampAxis(spec.tag, v);
           else if (fsSpec) v = clampFs(v);
+          else if (kernSpec) v = clampKern(v);
+          else if (lhSpec) v = clampLh(v);
           els[key].value = v;
           if (spec) updateDualUI(spec);
           else if (kernSpec) updateKernDualUI();
           else if (fsSpec) updateFsDualUI();
+          else if (lhSpec) updateLhDualUI();
           else if (vals[key]) vals[key].textContent = fmt(key, v);
           if (key === "ch") applyChar();
           applyVar(key, v);
@@ -1089,7 +1156,6 @@
             key === "ln" ||
             key === "bg" ||
             key === "os" ||
-            key === "lh" ||
             key === "ch" ||
             key === "sw" ||
             key === "ns" ||
@@ -1100,12 +1166,18 @@
             key === "hf" ||
             key === "kn0" ||
             key === "kn1" ||
+            key === "lh0" ||
+            key === "lh1" ||
             key === "fs0" ||
             key === "fs1" ||
             key === "oy"
           ) {
             var previewEased =
-              key === "kn1" || key === "fs1" ? 1 : key === "kn0" || key === "fs0" ? 0 : 0;
+              key === "kn1" || key === "lh1" || key === "fs1"
+                ? 1
+                : key === "kn0" || key === "lh0" || key === "fs0"
+                  ? 0
+                  : 0;
             syncOutlines(variationAt(previewEased), null, previewEased);
           }
           if (persist !== false) save();
@@ -1143,6 +1215,10 @@
                 data.fs0 = data.fs;
                 data.fs1 = data.fs;
               }
+              if (data.lh != null && data.lh0 == null) {
+                data.lh0 = data.lh;
+                data.lh1 = data.lh;
+              }
             } catch (e) {}
           }
           if (!raw) {
@@ -1171,11 +1247,13 @@
         applyChar();
         updateAllDualUI();
         updateKernDualUI();
+        updateLhDualUI();
         updateFsDualUI();
 
         function start() {
           var v0 = variationAt(0);
           applyFontSize(0);
+          applyLeading(0);
           applyVariation(v0);
           updateVarReadout(v0);
           if (document.fonts && document.fonts.ready) {
