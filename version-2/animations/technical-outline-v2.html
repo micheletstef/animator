@@ -202,7 +202,7 @@
         font-variant-numeric: tabular-nums;
         font-feature-settings: "tnum" 1, "kern" 1, "liga" 1;
         text-align: left;
-        opacity: 0.4;
+        opacity: 0.16;
       }
 
       #varReadout .var-readout-value.is-current {
@@ -471,7 +471,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=34" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=35" />
   </head>
   <body data-no-caption>
     <div class="stage-wrap" id="stageWrap">
@@ -486,12 +486,12 @@
               <span class="var-readout-values" id="readoutWght"></span>
             </div>
             <div class="var-readout-item">
-              <span class="var-readout-label">Contrast</span>
-              <span class="var-readout-values" id="readoutCntr"></span>
-            </div>
-            <div class="var-readout-item">
               <span class="var-readout-label">Width</span>
               <span class="var-readout-values" id="readoutWdth"></span>
+            </div>
+            <div class="var-readout-item">
+              <span class="var-readout-label">Contrast</span>
+              <span class="var-readout-values" id="readoutCntr"></span>
             </div>
           </div>
         </div>
@@ -621,16 +621,6 @@
           </div>
         </div>
         <div class="axis-row">
-          <label for="cMin">CNTR</label>
-          <div class="dual-range" id="cDual">
-            <span class="dual-val" id="cMinVal">0.0</span>
-            <span class="dual-val" id="cMaxVal">100.0</span>
-            <div class="dual-track"><div class="dual-fill" id="cFill"></div></div>
-            <input id="cMin" class="is-start" type="range" min="0" max="100" step="0.1" value="0" aria-label="CNTR start" />
-            <input id="cMax" class="is-end" type="range" min="0" max="100" step="0.1" value="100" aria-label="CNTR end" />
-          </div>
-        </div>
-        <div class="axis-row">
           <label for="dMin">wdth</label>
           <div class="dual-range" id="dDual">
             <span class="dual-val" id="dMinVal">65</span>
@@ -638,6 +628,16 @@
             <div class="dual-track"><div class="dual-fill" id="dFill"></div></div>
             <input id="dMin" class="is-start" type="range" min="65" max="130" step="1" value="65" aria-label="wdth start" />
             <input id="dMax" class="is-end" type="range" min="65" max="130" step="1" value="130" aria-label="wdth end" />
+          </div>
+        </div>
+        <div class="axis-row">
+          <label for="cMin">CNTR</label>
+          <div class="dual-range" id="cDual">
+            <span class="dual-val" id="cMinVal">0.0</span>
+            <span class="dual-val" id="cMaxVal">100.0</span>
+            <div class="dual-track"><div class="dual-fill" id="cFill"></div></div>
+            <input id="cMin" class="is-start" type="range" min="0" max="100" step="0.1" value="0" aria-label="CNTR start" />
+            <input id="cMax" class="is-end" type="range" min="0" max="100" step="0.1" value="100" aria-label="CNTR end" />
           </div>
         </div>
         <div class="axis-row">
@@ -741,8 +741,8 @@
 
         var DUAL_AXES = [
           { tag: "wght", minKey: "wMin", maxKey: "wMax", fill: "wFill", minVal: "wMinVal", maxVal: "wMaxVal" },
-          { tag: "CNTR", minKey: "cMin", maxKey: "cMax", fill: "cFill", minVal: "cMinVal", maxVal: "cMaxVal" },
           { tag: "wdth", minKey: "dMin", maxKey: "dMax", fill: "dFill", minVal: "dMinVal", maxVal: "dMaxVal" },
+          { tag: "CNTR", minKey: "cMin", maxKey: "cMax", fill: "cFill", minVal: "cMinVal", maxVal: "cMaxVal" },
           { tag: "slnt", minKey: "sMin", maxKey: "sMax", fill: "sFill", minVal: "sMinVal", maxVal: "sMaxVal" },
         ];
 
@@ -980,7 +980,7 @@
             stepDur: stepDur,
             pause: pause,
             overlap: overlap,
-            total: 5 * stepDur + 5 * pause - 4 * overlap,
+            total: 6 * stepDur + 6 * pause - 5 * overlap,
           };
         }
 
@@ -1005,7 +1005,7 @@
             kf.push({ t: time, w: w, d: d, c: c });
           }
 
-          // 1 → 2 → 3 → 2 → 1 with soft crossfades into each pause
+          // Weight → Width → Contrast → Width → Weight → Contrast, one axis at a time
           add(0, 0, 0, 0);
           add(s, 1, 0, 0);
           add(s + Math.max(0, p - o), 1, 0, 0);
@@ -1015,8 +1015,10 @@
           add(3 * s + 3 * p - 3 * o, 1, 1, 1);
           add(4 * s + 3 * p - 3 * o, 1, 0, 1);
           add(4 * s + 4 * p - 4 * o, 1, 0, 1);
-          add(5 * s + 4 * p - 4 * o, 0, 0, 0);
-          add(5 * s + 5 * p - 4 * o, 0, 0, 0);
+          add(5 * s + 4 * p - 4 * o, 0, 0, 1);
+          add(5 * s + 5 * p - 5 * o, 0, 0, 1);
+          add(6 * s + 5 * p - 5 * o, 0, 0, 0);
+          add(6 * s + 6 * p - 5 * o, 0, 0, 0);
 
           return kf;
         }
@@ -1886,6 +1888,6 @@
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=7"></script>
+    <script type="module" src="../../web-export.js?v=8"></script>
   </body>
 </html>

@@ -410,7 +410,7 @@ body,
 .stage .var-readout.is-stacked .var-readout-value {
   min-width: 4ch;
   text-align: left;
-  opacity: 0.4;
+  opacity: 0.16;
 }
 
 .stage .var-readout.is-stacked .var-readout-value.is-current {
