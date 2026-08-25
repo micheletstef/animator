@@ -178,6 +178,7 @@
       }
 
       .matrix {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: stretch;
@@ -218,13 +219,17 @@
       }
 
       .matrix-metrics {
-        position: relative;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
         display: block;
-        flex: 0 0 auto;
         width: 100%;
         height: calc(var(--metric-size) * 1px);
-        margin-top: calc(var(--metric-size) * 0.55 * 1px);
+        margin: 0;
         overflow: visible;
+        pointer-events: none;
+        z-index: 4;
       }
 
       .measure {
@@ -1092,6 +1097,9 @@
               var prevBottom = rowStats[c.row - 1].glyphBottom;
               if (isFinite(prevBottom)) clipTop = Math.max(clipTop, prevBottom);
             }
+            if (c.row === ROW_COUNT - 1 && isFinite(row.glyphBottom)) {
+              clipBottom = row.glyphBottom;
+            }
 
             var lineHeight = (clipBottom - clipTop) / zoom;
             if (lineHeight < 1) {
@@ -1115,7 +1123,19 @@
           }
 
           var metricsRow = matrix.querySelector(".matrix-metrics");
-          if (metricsRow && colMetricEls.length) {
+          var lastRow = rowStats[ROW_COUNT - 1];
+          var matrixRect = matrix.getBoundingClientRect();
+          if (
+            metricsRow &&
+            colMetricEls.length &&
+            lastRow &&
+            isFinite(lastRow.glyphBottom)
+          ) {
+            var metricSize = parseFloat(els.ms.value);
+            if (!isFinite(metricSize)) metricSize = 26;
+            var gap = metricSize;
+            metricsRow.style.top =
+              (lastRow.glyphBottom - matrixRect.top) / zoom + gap + "px";
             var metricsRect = metricsRow.getBoundingClientRect();
             for (i = 0; i < cells.length; i++) {
               c = cells[i];

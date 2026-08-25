@@ -378,15 +378,15 @@
         <div class="kf-tabs" role="tablist" aria-label="poses">
           <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
             <span class="kf-tab-n">1</span>
-            <span class="kf-tab-v" id="kfTab0Val">wght 1000<br />CNTR 0</span>
+            <span class="kf-tab-v" id="kfTab0Val">wdth 130<br />CNTR 0</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
             <span class="kf-tab-n">2</span>
-            <span class="kf-tab-v" id="kfTab1Val">wght 1000<br />CNTR 100</span>
+            <span class="kf-tab-v" id="kfTab1Val">wdth 130<br />CNTR 100</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab2" data-kf="2" role="tab" aria-selected="false">
             <span class="kf-tab-n">3</span>
-            <span class="kf-tab-v" id="kfTab2Val">wght 200<br />CNTR 100</span>
+            <span class="kf-tab-v" id="kfTab2Val">wdth 65<br />CNTR 100</span>
           </button>
         </div>
         <div class="kf-pose is-on" id="kfPose0">
@@ -441,13 +441,13 @@
           </div>
           <div class="row">
             <label for="wdth2">wdth</label>
-            <input id="wdth2" type="range" min="65" max="130" step="1" value="130" />
-            <span class="val" id="wdth2Val">130</span>
+            <input id="wdth2" type="range" min="65" max="130" step="1" value="65" />
+            <span class="val" id="wdth2Val">65</span>
           </div>
           <div class="row">
             <label for="wght2">wght</label>
-            <input id="wght2" type="range" min="200" max="1000" step="1" value="200" />
-            <span class="val" id="wght2Val">200</span>
+            <input id="wght2" type="range" min="200" max="1000" step="1" value="1000" />
+            <span class="val" id="wght2Val">1000</span>
           </div>
           <div class="row">
             <label for="cntr2">CNTR</label>
@@ -488,7 +488,7 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:" + encodeURIComponent(DEFAULT_CHAR);
+        var LS_KEY = "animator:v2:glyph-cycle:v3:" + encodeURIComponent(DEFAULT_CHAR);
         var LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
         var SHARED_KEYS = { fs: 1, tr: 1, oy: 1, bg: 1, fg: 1 };
 
@@ -506,10 +506,10 @@
           slnt2: 0,
           wdth0: 130,
           wdth1: 130,
-          wdth2: 130,
+          wdth2: 65,
           wght0: 1000,
           wght1: 1000,
-          wght2: 200,
+          wght2: 1000,
           cntr0: 0,
           cntr1: 100,
           cntr2: 100,
@@ -614,24 +614,24 @@
         }
 
         function liveCaption(from, to, s) {
-          var dw = Math.abs(to.wght - from.wght);
+          var dd = Math.abs(to.wdth - from.wdth);
           var dc = Math.abs(to.cntr - from.cntr);
-          if (dw < 0.5 && dc < 0.5) {
+          if (dd < 0.5 && dc < 0.5) {
             var start = keyframe(0);
-            dw = Math.abs(s.wght - start.wght);
+            dd = Math.abs(s.wdth - start.wdth);
             dc = Math.abs(s.cntr - start.cntr);
           }
-          var weightActive = dw > dc;
+          var widthActive = dd > dc;
           return [
             {
               label: "Contrast",
               value: String(Math.round(s.cntr)),
-              active: !weightActive,
+              active: !widthActive,
             },
             {
-              label: "Weight",
-              value: String(Math.round(s.wght)),
-              active: weightActive,
+              label: "Width",
+              value: String(Math.round(s.wdth)),
+              active: widthActive,
             },
           ];
         }
@@ -671,8 +671,8 @@
           var input = document.getElementById("stageCaption");
           if (!input) return;
           input.readOnly = true;
-          input.placeholder = "live: Contrast / Weight";
-          input.title = "stacked Contrast and Weight; inactive axis is dimmed";
+          input.placeholder = "live: Contrast / Width";
+          input.title = "stacked Contrast and Width; inactive axis is dimmed";
         }
 
         function segmentAt(elapsed) {
@@ -735,8 +735,8 @@
             if (kfTabVals[i]) {
               var pose = keyframe(i);
               kfTabVals[i].innerHTML =
-                "wght " +
-                Math.round(pose.wght) +
+                "wdth " +
+                Math.round(pose.wdth) +
                 "<br>CNTR " +
                 Math.round(pose.cntr);
             }

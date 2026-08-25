@@ -22,19 +22,19 @@
       "id": "nine",
       "label": "Single – 9",
       "url": "animations/glyph-cycle.html?ch=9",
-      "mtime": 1787616000
+      "mtime": 1787674364
     },
     {
       "id": "g",
       "label": "Single – G",
       "url": "animations/glyph-cycle.html?ch=G",
-      "mtime": 1787616000
+      "mtime": 1787674364
     },
     {
       "id": "s",
       "label": "Single – S",
       "url": "animations/glyph-cycle.html?ch=S",
-      "mtime": 1787616000
+      "mtime": 1787674364
     },
     {
       "id": "width-swap",
@@ -58,7 +58,7 @@
       "id": "matrix-v2",
       "label": "matrix v2",
       "url": "animations/matrix-v2.html",
-      "mtime": 1787598000
+      "mtime": 1787679200
     },
     {
       "id": "technical-outline",
