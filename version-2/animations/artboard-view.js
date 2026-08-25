@@ -456,6 +456,7 @@
     var valueText = value == null ? "" : String(value);
     labelEl.textContent = labelText;
     valueEl.textContent = valueText;
+    labelEl.style.paddingRight = labelText && valueText ? "var(--guide-gutter, 24px)" : "0";
     valueEl.classList.toggle("is-empty", !valueText);
     if (!labelText && !valueText) el.classList.remove("is-pair");
   }
