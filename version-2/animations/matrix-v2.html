@@ -540,7 +540,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=36" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=37" />
     <style>
       .stage .guide-margin {
         box-shadow: 0 0 0 2px #ff00ff;
@@ -662,6 +662,11 @@
           default: "Default",
           extended: "Extended",
         };
+        var FAM_LABELS = {
+          standard: "Standard",
+          flair: "Flair",
+          contrast: "Contrast",
+        };
 
         var root = document.documentElement;
         var matrix = document.getElementById("matrix");
@@ -745,10 +750,12 @@
           lineRight.setAttribute("aria-hidden", "true");
 
           var metricLabel = null;
+          var metricFamily = null;
           var metricWeight = null;
           if (row === 0) {
             metricLabel = createMetric("metric-label", COL_LABELS[COLS[col]]);
           }
+          metricFamily = createMetric("metric-family", FAM_LABELS[FAMILIES[row]]);
           if (row === ROW_COUNT - 1) {
             metricWeight = createMetric("metric-weight", "200");
           }
@@ -757,6 +764,7 @@
           measure.appendChild(glyph);
           measure.appendChild(lineRight);
           if (metricLabel) measure.appendChild(metricLabel);
+          measure.appendChild(metricFamily);
           if (metricWeight) measure.appendChild(metricWeight);
           cell.appendChild(measure);
 
@@ -769,6 +777,7 @@
             lineLeft: lineLeft,
             lineRight: lineRight,
             metricLabel: metricLabel,
+            metricFamily: metricFamily,
             metricWeight: metricWeight,
             weight: W_MIN,
           };
@@ -1079,6 +1088,7 @@
               c.lineLeft.style.display = "none";
               c.lineRight.style.display = "none";
               if (c.metricLabel) c.metricLabel.style.display = "none";
+              if (c.metricFamily) c.metricFamily.style.display = "none";
               if (c.metricWeight) c.metricWeight.style.display = "none";
               continue;
             }
@@ -1105,6 +1115,13 @@
               c.metricLabel.style.left = leftX + "px";
               c.metricLabel.style.width = span + "px";
               c.metricLabel.style.top = lineTop + "px";
+            }
+            if (c.metricFamily) {
+              c.metricFamily.style.display = "block";
+              c.metricFamily.style.left = leftX + "px";
+              c.metricFamily.style.width = span + "px";
+              c.metricFamily.style.top =
+                (c.metricLabel ? lineTop + metricSize : lineTop) + "px";
             }
             if (c.metricWeight) {
               c.metricWeight.style.display = "block";

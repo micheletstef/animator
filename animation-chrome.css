@@ -311,6 +311,7 @@ body,
 
 .stage .metric,
 .stage .metric-label,
+.stage .metric-family,
 .stage .metric-weight {
   font-family: "IkarusPlusVariable", sans-serif;
   font-weight: 500;
