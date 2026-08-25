@@ -30,6 +30,7 @@
         --wdth: 130;
         --cntr: 0;
         --slnt: 0;
+        --ascent: 0;
       }
 
       * {
@@ -116,20 +117,19 @@
         right: 0;
         top: 50%;
         height: 0;
-        line-height: 0;
-        font-size: 0;
-        text-align: center;
         overflow: visible;
       }
 
       .glyph {
-        display: inline;
+        position: absolute;
+        left: 50%;
+        top: 0;
         font-size: calc(var(--fs) * 1px);
         line-height: 1;
         letter-spacing: calc(var(--tracking) * 1em);
         white-space: nowrap;
         font-variation-settings: inherit;
-        vertical-align: baseline;
+        transform: translate(-50%, calc(var(--ascent) * -1px));
       }
 
       .panel {
@@ -617,8 +617,9 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v10:" + PRESET_NAME;
+        var LS_KEY = "animator:v2:glyph-cycle:v11:" + PRESET_NAME;
         var OLD_LS_KEYS = [
+          "animator:v2:glyph-cycle:v10:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v9:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v8:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v7:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
@@ -766,6 +767,31 @@
           };
         }
 
+        var measureCtx = null;
+        function alphabeticAscent(s, text) {
+          if (!measureCtx) {
+            var canvas = document.createElement("canvas");
+            measureCtx = canvas.getContext && canvas.getContext("2d");
+          }
+          if (!measureCtx) return s.fs * 0.8;
+          measureCtx.font = s.fs + 'px "IkarusPlusVariable"';
+          try {
+            measureCtx.fontVariationSettings =
+              '"wght" ' +
+              s.wght +
+              ', "wdth" ' +
+              s.wdth +
+              ', "CNTR" ' +
+              s.cntr +
+              ', "slnt" ' +
+              s.slnt;
+          } catch (e) {}
+          var m = measureCtx.measureText(text || "H");
+          var asc = m.fontBoundingBoxAscent;
+          if (!(asc > 0)) asc = m.actualBoundingBoxAscent;
+          return asc > 0 ? asc : s.fs * 0.8;
+        }
+
         function applyState(s) {
           root.style.setProperty("--slnt", String(s.slnt));
           root.style.setProperty("--wdth", String(s.wdth));
@@ -773,6 +799,10 @@
           root.style.setProperty("--cntr", String(s.cntr));
           root.style.setProperty("--fs", String(s.fs));
           root.style.setProperty("--tracking", String(s.tr));
+          root.style.setProperty(
+            "--ascent",
+            String(alphabeticAscent(s, glyph.textContent))
+          );
           var prefix = holdKf >= 0 ? "hold " + (holdKf + 1) + " · " : "";
           nowReadout.textContent =
             prefix +
@@ -1174,6 +1204,11 @@
         bindSettings();
         save();
         window.addEventListener("pagehide", save);
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(function () {
+            applySegment(segmentAt(playing ? performance.now() - t0 : 0));
+          });
+        }
         raf = requestAnimationFrame(frame);
 
         window.AnimatorExport = {
