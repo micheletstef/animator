@@ -102,6 +102,8 @@
         --glyph-size: 357;
         --lh: 1.47;
         --metric-size: 26;
+        --col-gap-1: 40;
+        --col-gap-2: 40;
         --pad-t: 0;
         --pad-r: 0;
         --pad-b: 0;
@@ -190,11 +192,10 @@
       }
 
       .matrix-row {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        display: flex;
         align-items: start;
-        justify-items: start;
-        gap: var(--guide-gutter, 24px);
+        justify-content: flex-start;
+        gap: 0;
         flex: 0 0 auto;
         width: 100%;
         height: calc(var(--glyph-size) * var(--lh) * 1px);
@@ -207,15 +208,20 @@
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
-        width: 100%;
+        flex: 0 0 auto;
+        width: auto;
         min-width: 0;
         user-select: none;
         height: 100%;
         overflow: visible;
       }
 
+      .matrix-row > .cell:nth-child(1) {
+        margin-right: calc(var(--col-gap-1) * 1px);
+      }
+
       .matrix-row > .cell:nth-child(2) {
-        transform: translateX(-28px);
+        margin-right: calc(var(--col-gap-2) * 1px);
       }
 
       .measure {
@@ -306,6 +312,10 @@
 
       .metric-weight {
         font-variant-numeric: tabular-nums;
+      }
+
+      .metric-family {
+        transform-origin: center center;
       }
 
       .panel {
@@ -619,6 +629,16 @@
           <input id="ms" type="range" min="8" max="72" step="1" value="26" />
           <span class="val" id="ms-val">26px</span>
         </div>
+        <div class="row">
+          <label for="g0">gap 1</label>
+          <input id="g0" type="range" min="-80" max="240" step="1" value="40" />
+          <span class="val" id="g0-val">40px</span>
+        </div>
+        <div class="row">
+          <label for="g1">gap 2</label>
+          <input id="g1" type="range" min="-80" max="240" step="1" value="40" />
+          <span class="val" id="g1-val">40px</span>
+        </div>
         <div class="row row-dual">
           <label for="w0">wght</label>
           <div class="dual-range">
@@ -755,7 +775,9 @@
           if (row === 0) {
             metricLabel = createMetric("metric-label", COL_LABELS[COLS[col]]);
           }
-          metricFamily = createMetric("metric-family", FAM_LABELS[FAMILIES[row]]);
+          if (col === 0) {
+            metricFamily = createMetric("metric-family", FAM_LABELS[FAMILIES[row]]);
+          }
           if (row === ROW_COUNT - 1) {
             metricWeight = createMetric("metric-weight", "200");
           }
@@ -764,7 +786,7 @@
           measure.appendChild(glyph);
           measure.appendChild(lineRight);
           if (metricLabel) measure.appendChild(metricLabel);
-          measure.appendChild(metricFamily);
+          if (metricFamily) measure.appendChild(metricFamily);
           if (metricWeight) measure.appendChild(metricWeight);
           cell.appendChild(measure);
 
@@ -812,7 +834,7 @@
           }
         }
 
-        var LS_KEY = "animator:v2:matrix-v2:settings:v4";
+        var LS_KEY = "animator:v2:matrix-v2:settings:v5";
         var t0 = 0;
         var raf = 0;
         var playing = true;
@@ -824,6 +846,8 @@
           fs: 357,
           lh: 1.47,
           ms: 26,
+          g0: 40,
+          g1: 40,
           w0: W_MIN,
           w1: W_MAX,
           cy: 4000,
@@ -840,6 +864,8 @@
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
           ms: document.getElementById("ms"),
+          g0: document.getElementById("g0"),
+          g1: document.getElementById("g1"),
           w0: document.getElementById("w0"),
           w1: document.getElementById("w1"),
           cy: document.getElementById("cy"),
@@ -858,6 +884,8 @@
           fs: document.getElementById("fs-val"),
           lh: document.getElementById("lh-val"),
           ms: document.getElementById("ms-val"),
+          g0: document.getElementById("g0-val"),
+          g1: document.getElementById("g1-val"),
           cy: document.getElementById("cy-val"),
           hd: document.getElementById("hd-val"),
         };
@@ -938,7 +966,7 @@
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "ch") return String(v);
           if (key === "lh") return Number(v).toFixed(2);
-          if (key === "fs" || key === "ms") {
+          if (key === "fs" || key === "ms" || key === "g0" || key === "g1") {
             return Math.round(Number(v)) + "px";
           }
           if (key === "cy") return formatMs(Number(v));
@@ -957,6 +985,8 @@
           root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
           root.style.setProperty("--lh", String(parseFloat(els.lh.value)));
           root.style.setProperty("--metric-size", parseFloat(els.ms.value));
+          root.style.setProperty("--col-gap-1", parseFloat(els.g0.value));
+          root.style.setProperty("--col-gap-2", parseFloat(els.g1.value));
           layoutGuides();
         }
 
@@ -972,7 +1002,9 @@
             key === "fg" ||
             key === "fs" ||
             key === "lh" ||
-            key === "ms"
+            key === "ms" ||
+            key === "g0" ||
+            key === "g1"
           ) {
             applyAppearance();
           } else if (key === "w0" || key === "w1") {
@@ -1118,10 +1150,12 @@
             }
             if (c.metricFamily) {
               c.metricFamily.style.display = "block";
-              c.metricFamily.style.left = leftX + "px";
-              c.metricFamily.style.width = span + "px";
-              c.metricFamily.style.top =
-                (c.metricLabel ? lineTop + metricSize : lineTop) + "px";
+              c.metricFamily.style.left =
+                leftX - metricSize / 2 - 8 + "px";
+              c.metricFamily.style.width = "auto";
+              c.metricFamily.style.top = lineTop + lineHeight / 2 + "px";
+              c.metricFamily.style.transform =
+                "translate(-50%, -50%) rotate(90deg)";
             }
             if (c.metricWeight) {
               c.metricWeight.style.display = "block";
