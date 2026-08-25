@@ -1145,15 +1145,15 @@
 
             var clipTop = row.top;
             var clipBottom = row.bottom;
-            if (c.row > 0) {
-              var prevBottom = rowStats[c.row - 1].glyphBottom;
-              if (isFinite(prevBottom)) clipTop = Math.max(clipTop, prevBottom);
-            }
-            if (c.row === ROW_COUNT - 1 && isFinite(row.glyphBottom)) {
+            if (c.row < ROW_COUNT - 1) {
+              var nextTop = rowStats[c.row + 1].top;
+              if (isFinite(nextTop)) clipBottom = nextTop;
+            } else if (isFinite(row.glyphBottom)) {
               clipBottom = row.glyphBottom;
             }
 
             var lineHeight = (clipBottom - clipTop) / zoom;
+            if (c.row < ROW_COUNT - 1) lineHeight += 1;
             if (lineHeight < 1) {
               c.lineLeft.style.display = "none";
               c.lineRight.style.display = "none";
