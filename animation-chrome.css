@@ -421,6 +421,26 @@ body,
   text-align: left;
 }
 
+.stage .stage-caption.is-pair {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 1.25em;
+  text-align: center;
+}
+
+.stage .stage-caption.is-pair .caption-label,
+.stage .stage-caption.is-pair .caption-value {
+  position: static;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.stage .stage-caption.is-pair .caption-value:empty,
+.stage .stage-caption.is-pair .caption-value.is-empty {
+  display: none;
+}
+
 .stage .stage-caption.is-split {
   text-align: unset;
 }

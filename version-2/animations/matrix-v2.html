@@ -217,6 +217,16 @@
         transform: translateX(-28px);
       }
 
+      .matrix-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: start;
+        gap: var(--guide-gutter, 24px);
+        flex: 0 0 auto;
+        width: 100%;
+        margin-top: 0;
+      }
+
       .measure {
         position: relative;
         display: inline-flex;
@@ -281,12 +291,13 @@
       }
 
       .metric {
-        position: absolute;
         display: flex;
         justify-content: space-between;
-        align-items: flex-end;
+        align-items: flex-start;
         gap: 8px;
-        padding: 0 24px;
+        width: 100%;
+        min-width: 0;
+        padding: 0;
         font-family: "IkarusPlusVariable", sans-serif;
         font-size: calc(var(--metric-size) * 1px);
         font-weight: 700;
@@ -673,6 +684,7 @@
         var root = document.documentElement;
         var matrix = document.getElementById("matrix");
         var cells = [];
+        var colMetrics = [];
         var W_MIN = 200;
         var W_MAX = 1000;
         var ROW_COUNT = FAMILIES.length;
@@ -727,25 +739,6 @@
           var measure = document.createElement("div");
           measure.className = "measure";
 
-          var showMetric = row === ROW_COUNT - 1;
-          var metric = null;
-          var metricWeight = null;
-          if (showMetric) {
-            metric = document.createElement("span");
-            metric.className = "metric";
-
-            var metricFont = document.createElement("span");
-            metricFont.className = "metric-font";
-            metricFont.textContent = COL_LABELS[COLS[col]];
-
-            metricWeight = document.createElement("span");
-            metricWeight.className = "metric-weight";
-            metricWeight.textContent = "200";
-
-            metric.appendChild(metricFont);
-            metric.appendChild(metricWeight);
-          }
-
           var lineLeft = document.createElement("span");
           lineLeft.className = "line line-left";
           lineLeft.setAttribute("aria-hidden", "true");
@@ -759,7 +752,6 @@
           lineRight.className = "line line-right";
           lineRight.setAttribute("aria-hidden", "true");
 
-          if (metric) measure.appendChild(metric);
           measure.appendChild(lineLeft);
           measure.appendChild(glyph);
           measure.appendChild(lineRight);
@@ -773,10 +765,32 @@
             glyph: glyph,
             lineLeft: lineLeft,
             lineRight: lineRight,
-            metric: metric,
-            metricWeight: metricWeight,
             weight: W_MIN,
           };
+        }
+
+        function createMetricsRow() {
+          var rowEl = document.createElement("div");
+          rowEl.className = "matrix-metrics";
+          colMetrics = [];
+          for (var c = 0; c < COL_COUNT; c++) {
+            var metric = document.createElement("div");
+            metric.className = "metric";
+
+            var metricFont = document.createElement("span");
+            metricFont.className = "metric-font";
+            metricFont.textContent = COL_LABELS[COLS[c]];
+
+            var metricWeight = document.createElement("span");
+            metricWeight.className = "metric-weight";
+            metricWeight.textContent = "200";
+
+            metric.appendChild(metricFont);
+            metric.appendChild(metricWeight);
+            rowEl.appendChild(metric);
+            colMetrics.push(metricWeight);
+          }
+          return rowEl;
         }
 
         function buildMatrix(chars) {
@@ -793,6 +807,7 @@
             }
             matrix.appendChild(rowEl);
           }
+          matrix.appendChild(createMetricsRow());
         }
 
         function applyChars(raw) {
@@ -1093,15 +1108,11 @@
             c.lineRight.style.left = rightX - 2 + "px";
             c.lineRight.style.top = lineTop + "px";
             c.lineRight.style.height = lineHeight + "px";
+          }
 
-            if (c.metric && c.metricWeight) {
-              var metricSize = parseFloat(els.ms.value);
-              if (!isFinite(metricSize)) metricSize = 26;
-              c.metricWeight.textContent = String(Math.round(c.weight));
-              c.metric.style.left = leftX + "px";
-              c.metric.style.width = rightX - leftX + "px";
-              c.metric.style.top = lineTop + lineHeight - metricSize + "px";
-            }
+          var weightLabel = cells.length ? String(Math.round(cells[0].weight)) : "200";
+          for (i = 0; i < colMetrics.length; i++) {
+            colMetrics[i].textContent = weightLabel;
           }
         }
 

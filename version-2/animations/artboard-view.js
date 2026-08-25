@@ -223,6 +223,11 @@
     return !!(root && root.hasAttribute("data-split-caption"));
   }
 
+  function pairCaptionEnabled() {
+    var root = global.document.body || global.document.documentElement;
+    return !!(root && root.hasAttribute("data-pair-caption"));
+  }
+
   function parseCaptionParts(text) {
     text = String(text == null ? "" : text);
     var i = text.lastIndexOf(" ");
@@ -397,11 +402,16 @@
     var el = captionEl();
     if (!el) return;
     if (Array.isArray(text)) {
+      if (pairCaptionEnabled() && text.length <= 1) {
+        var row = text[0] || {};
+        setPairedCaption(el, row.label, row.value);
+        return;
+      }
       setStackedCaption(el, text);
       return;
     }
     text = text == null ? "" : String(text);
-    el.classList.remove("is-stack");
+    el.classList.remove("is-stack", "is-pair");
     if (!splitCaptionEnabled()) {
       el.classList.remove("is-split");
       el.textContent = text;
@@ -423,7 +433,35 @@
     writeCaptionPair(label, value, parts.label, parts.value);
   }
 
+  function setPairedCaption(el, label, value) {
+    el.classList.remove("is-split", "is-stack");
+    el.classList.add("is-pair");
+    var labelEl = el.querySelector(":scope > .caption-label");
+    var valueEl = el.querySelector(":scope > .caption-value");
+    if (
+      !labelEl ||
+      !valueEl ||
+      el.querySelector(".caption-row") ||
+      el.querySelector(".caption-value-sizer")
+    ) {
+      el.textContent = "";
+      labelEl = global.document.createElement("span");
+      labelEl.className = "caption-label";
+      valueEl = global.document.createElement("span");
+      valueEl.className = "caption-value";
+      el.appendChild(labelEl);
+      el.appendChild(valueEl);
+    }
+    var labelText = label == null ? "" : String(label);
+    var valueText = value == null ? "" : String(value);
+    labelEl.textContent = labelText;
+    valueEl.textContent = valueText;
+    valueEl.classList.toggle("is-empty", !valueText);
+    if (!labelText && !valueText) el.classList.remove("is-pair");
+  }
+
   function setStackedCaption(el, rows) {
+    el.classList.remove("is-pair");
     el.classList.add("is-split", "is-stack");
     var nodes = el.querySelectorAll(".caption-row");
     var i;
