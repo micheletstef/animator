@@ -378,27 +378,27 @@
         <div class="kf-tabs" role="tablist" aria-label="poses">
           <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
             <span class="kf-tab-n">1</span>
-            <span class="kf-tab-v" id="kfTab0Val">wght 1000<br />wdth 130<br />CNTR 0</span>
+            <span class="kf-tab-v" id="kfTab0Val">wdth 130<br />CNTR 0<br />wght 1000</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
             <span class="kf-tab-n">2</span>
-            <span class="kf-tab-v" id="kfTab1Val">wght 1000<br />wdth 130<br />CNTR 100</span>
+            <span class="kf-tab-v" id="kfTab1Val">wdth 65<br />CNTR 0<br />wght 1000</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab2" data-kf="2" role="tab" aria-selected="false">
             <span class="kf-tab-n">3</span>
-            <span class="kf-tab-v" id="kfTab2Val">wght 1000<br />wdth 65<br />CNTR 100</span>
+            <span class="kf-tab-v" id="kfTab2Val">wdth 65<br />CNTR 100<br />wght 1000</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab3" data-kf="3" role="tab" aria-selected="false">
             <span class="kf-tab-n">4</span>
-            <span class="kf-tab-v" id="kfTab3Val">wght 200<br />wdth 65<br />CNTR 100</span>
+            <span class="kf-tab-v" id="kfTab3Val">wdth 65<br />CNTR 100<br />wght 200</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab4" data-kf="4" role="tab" aria-selected="false">
             <span class="kf-tab-n">5</span>
-            <span class="kf-tab-v" id="kfTab4Val">wght 200<br />wdth 65<br />CNTR 0</span>
+            <span class="kf-tab-v" id="kfTab4Val">wdth 130<br />CNTR 100<br />wght 200</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab5" data-kf="5" role="tab" aria-selected="false">
             <span class="kf-tab-n">6</span>
-            <span class="kf-tab-v" id="kfTab5Val">wght 200<br />wdth 130<br />CNTR 0</span>
+            <span class="kf-tab-v" id="kfTab5Val">wdth 130<br />CNTR 0<br />wght 200</span>
           </button>
         </div>
         <div class="kf-pose is-on" id="kfPose0">
@@ -431,8 +431,8 @@
           </div>
           <div class="row">
             <label for="wdth1">wdth</label>
-            <input id="wdth1" type="range" min="65" max="130" step="1" value="130" />
-            <span class="val" id="wdth1Val">130</span>
+            <input id="wdth1" type="range" min="65" max="130" step="1" value="65" />
+            <span class="val" id="wdth1Val">65</span>
           </div>
           <div class="row">
             <label for="wght1">wght</label>
@@ -441,8 +441,8 @@
           </div>
           <div class="row">
             <label for="cntr1">CNTR</label>
-            <input id="cntr1" type="range" min="0" max="100" step="1" value="100" />
-            <span class="val" id="cntr1Val">100</span>
+            <input id="cntr1" type="range" min="0" max="100" step="1" value="0" />
+            <span class="val" id="cntr1Val">0</span>
           </div>
         </div>
         <div class="kf-pose" id="kfPose2">
@@ -497,8 +497,8 @@
           </div>
           <div class="row">
             <label for="wdth4">wdth</label>
-            <input id="wdth4" type="range" min="65" max="130" step="1" value="65" />
-            <span class="val" id="wdth4Val">65</span>
+            <input id="wdth4" type="range" min="65" max="130" step="1" value="130" />
+            <span class="val" id="wdth4Val">130</span>
           </div>
           <div class="row">
             <label for="wght4">wght</label>
@@ -507,8 +507,8 @@
           </div>
           <div class="row">
             <label for="cntr4">CNTR</label>
-            <input id="cntr4" type="range" min="0" max="100" step="1" value="0" />
-            <span class="val" id="cntr4Val">0</span>
+            <input id="cntr4" type="range" min="0" max="100" step="1" value="100" />
+            <span class="val" id="cntr4Val">100</span>
           </div>
         </div>
         <div class="kf-pose" id="kfPose5">
@@ -566,7 +566,7 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v5:" + encodeURIComponent(DEFAULT_CHAR);
+        var LS_KEY = "animator:v2:glyph-cycle:v6:" + encodeURIComponent(DEFAULT_CHAR);
         var LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
         var SHARED_KEYS = { fs: 1, tr: 1, oy: 1, bg: 1, fg: 1 };
 
@@ -587,10 +587,10 @@
           slnt4: 0,
           slnt5: 0,
           wdth0: 130,
-          wdth1: 130,
+          wdth1: 65,
           wdth2: 65,
           wdth3: 65,
-          wdth4: 65,
+          wdth4: 130,
           wdth5: 130,
           wght0: 1000,
           wght1: 1000,
@@ -599,10 +599,10 @@
           wght4: 200,
           wght5: 200,
           cntr0: 0,
-          cntr1: 100,
+          cntr1: 0,
           cntr2: 100,
           cntr3: 100,
-          cntr4: 0,
+          cntr4: 100,
           cntr5: 0,
           move: 1400,
           hold: 350,
@@ -710,19 +710,19 @@
           if (d.cntr < 0.01 && d.wdth < 0.01 && d.wght < 0.01) {
             d = axisDelta(keyframe(0), s);
           }
-          var active = "cntr";
-          if (d.wdth > d[active]) active = "wdth";
+          var active = "wdth";
+          if (d.cntr > d[active]) active = "cntr";
           if (d.wght > d[active]) active = "wght";
           return [
-            {
-              label: "Contrast",
-              value: String(Math.round(s.cntr)),
-              active: active === "cntr",
-            },
             {
               label: "Width",
               value: String(Math.round(s.wdth)),
               active: active === "wdth",
+            },
+            {
+              label: "Contrast",
+              value: String(Math.round(s.cntr)),
+              active: active === "cntr",
             },
             {
               label: "Weight",
@@ -767,8 +767,8 @@
           var input = document.getElementById("stageCaption");
           if (!input) return;
           input.readOnly = true;
-          input.placeholder = "live: Contrast / Width / Weight";
-          input.title = "stacked Contrast, Width, and Weight; inactive axes are dimmed";
+          input.placeholder = "live: Width / Contrast / Weight";
+          input.title = "stacked Width, Contrast, and Weight; inactive axes are dimmed";
         }
 
         function segmentAt(elapsed) {
@@ -831,12 +831,12 @@
             if (kfTabVals[i]) {
               var pose = keyframe(i);
               kfTabVals[i].innerHTML =
-                "wght " +
-                Math.round(pose.wght) +
-                "<br>wdth " +
+                "wdth " +
                 Math.round(pose.wdth) +
                 "<br>CNTR " +
-                Math.round(pose.cntr);
+                Math.round(pose.cntr) +
+                "<br>wght " +
+                Math.round(pose.wght);
             }
           }
           if (kfSeq) {
