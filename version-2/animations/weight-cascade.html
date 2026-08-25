@@ -96,15 +96,15 @@
 
       .lockup {
         position: absolute;
-        top: calc(var(--pad-t) * 1px);
-        right: calc(var(--pad-r) * 1px);
-        bottom: calc(var(--pad-b) * 1px);
-        left: calc(var(--pad-l) * 1px);
+        top: var(--guide-t, calc(var(--pad-t) * 1px));
+        right: var(--guide-r, calc(var(--pad-r) * 1px));
+        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        left: var(--guide-l, calc(var(--pad-l) * 1px));
         display: flex;
         flex-direction: column;
         justify-content: center;
-        align-items: center;
-        text-align: center;
+        align-items: var(--lock-align, center);
+        text-align: var(--lock-text, center);
         transform: translateY(calc(var(--oy) * 1px));
       }
 
@@ -178,6 +178,19 @@
       .row input[type="range"] {
         width: 100%;
         accent-color: #fff;
+      }
+
+      .row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        justify-self: start;
+        accent-color: #fff;
+        cursor: pointer;
+      }
+
+      .row input:disabled {
+        opacity: 0.4;
+        cursor: default;
       }
 
       .row input[type="color"] {
@@ -308,6 +321,14 @@ Layering</textarea>
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
+          <label for="align">align</label>
+          <select id="align">
+            <option value="left">left</option>
+            <option value="center" selected>center</option>
+            <option value="right">right</option>
+          </select>
+        </div>
+        <div class="row">
           <label for="fs">size</label>
           <input id="fs" type="range" min="48" max="240" step="1" value="167" />
           <span class="val" id="fsVal">167px</span>
@@ -378,9 +399,30 @@ Layering</textarea>
         </div>
       </div>
 
+      <div class="group">
+        <p class="group-title">families · standard → contrast → flair</p>
+        <div class="row">
+          <label for="cycle">cycle</label>
+          <input id="cycle" type="checkbox" checked />
+          <span class="val" id="cycleVal">on</span>
+        </div>
+        <div class="row" id="whenRow">
+          <label for="when">when</label>
+          <select id="when">
+            <option value="during" selected>during wave</option>
+            <option value="after">after wave</option>
+          </select>
+        </div>
+        <div class="row" id="blendRow">
+          <label for="blend">blend</label>
+          <input id="blend" type="range" min="100" max="2400" step="20" value="800" />
+          <span class="val" id="blendVal">800ms</span>
+        </div>
+      </div>
+
     </aside>
 
-    <script src="artboard-view.js?v=20"></script>
+    <script src="artboard-view.js?v=24"></script>
     <script>
       (function () {
         var W_MIN = 200;
@@ -390,16 +432,24 @@ Layering</textarea>
         var START_WEIGHTS = [200, 280, 360, 450, 540, 630, 720, 810];
         var WORDS = [];
 
-        var LS_KEY = "animator:v2:weight-cascade:settings:v5";
+        var LS_KEY = "animator:v2:weight-cascade:settings:v6";
+        var FAMILIES = [
+          { id: "standard", cntr: 0 },
+          { id: "contrast", cntr: 100 },
+          { id: "flair", cntr: 50 },
+        ];
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var nowReadout = document.getElementById("nowReadout");
+        var whenRow = document.getElementById("whenRow");
+        var blendRow = document.getElementById("blendRow");
         var lines = [];
 
         var DEFAULTS = {
           bg: "#000000",
           fg: "#ffffff",
           tx: DEFAULT_TEXT,
+          align: "center",
           fs: 167,
           lh: 0.88,
           tn: -0.06,
@@ -412,10 +462,14 @@ Layering</textarea>
           move: 1200,
           lag: 180,
           hold: 500,
+          cycle: "1",
+          when: "during",
+          blend: 800,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
-        var TEXT_KEYS = { tx: 1 };
+        var TEXT_KEYS = { tx: 1, align: 1, when: 1 };
+        var CHECK_KEYS = { cycle: 1 };
 
         var els = {};
         var vals = {
@@ -433,6 +487,8 @@ Layering</textarea>
           move: document.getElementById("moveVal"),
           lag: document.getElementById("lagVal"),
           hold: document.getElementById("holdVal"),
+          cycle: document.getElementById("cycleVal"),
+          blend: document.getElementById("blendVal"),
         };
 
         Object.keys(DEFAULTS).forEach(function (key) {
@@ -445,6 +501,46 @@ Layering</textarea>
 
         function lerp(a, b, t) {
           return a + (b - a) * t;
+        }
+
+        function ease(t) {
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return 0.5 * (1 - Math.cos(Math.PI * t));
+        }
+
+        function readCheck(key) {
+          return !!(els[key] && els[key].checked);
+        }
+
+        function cycleOn() {
+          return readCheck("cycle");
+        }
+
+        function blendWhen() {
+          return els.when && els.when.value === "after" ? "after" : "during";
+        }
+
+        function applyAlign() {
+          var a = (els.align && els.align.value) || "center";
+          if (a === "left") {
+            root.style.setProperty("--lock-align", "flex-start");
+            root.style.setProperty("--lock-text", "left");
+          } else if (a === "right") {
+            root.style.setProperty("--lock-align", "flex-end");
+            root.style.setProperty("--lock-text", "right");
+          } else {
+            root.style.setProperty("--lock-align", "center");
+            root.style.setProperty("--lock-text", "center");
+          }
+        }
+
+        function syncFamilyUi() {
+          var on = cycleOn();
+          var after = blendWhen() === "after";
+          if (whenRow) whenRow.style.display = on ? "" : "none";
+          if (blendRow) blendRow.style.display = on && after ? "" : "none";
+          if (els.cntr) els.cntr.disabled = on;
         }
 
         function trackingForWeight(w) {
@@ -461,54 +557,134 @@ Layering</textarea>
           return 0.5 * (1 - Math.cos(2 * Math.PI * p));
         }
 
-        function sample(elapsed) {
-          var n = WORDS.length;
+        function waveTiming(n) {
           var move = Math.max(80, Number(els.move.value) || 1200);
           var lag = Math.max(10, Number(els.lag.value) || 180);
           var hold = Math.max(0, Number(els.hold.value) || 0);
-          var peak = Number(els.pk.value);
-          if (!isFinite(peak)) peak = 990;
-          var travel = (n - 1) * lag + move;
-          var total = Math.max(1, travel + hold);
-          var local = elapsed % total;
-          var weights = new Array(n);
-
-          for (var i = 0; i < n; i++) {
-            var p = (local - i * lag) / move;
-            weights[i] = lerp(WORDS[i].start, peak, bump(p));
-          }
-          return weights;
+          var travel = Math.max(1, (Math.max(1, n) - 1) * lag + move);
+          return { move: move, lag: lag, hold: hold, travel: travel };
         }
 
-        function applyWeights(weights) {
+        function blendMs() {
+          if (!cycleOn() || blendWhen() !== "after") return 0;
+          return Math.max(0, Number(els.blend.value) || 0);
+        }
+
+        function stepMs(n) {
+          var w = waveTiming(n);
+          return Math.max(1, w.travel + w.hold + blendMs());
+        }
+
+        function sample(elapsed) {
+          var n = WORDS.length;
+          var w = waveTiming(n);
+          var peak = Number(els.pk.value);
+          if (!isFinite(peak)) peak = 990;
+          var weights = new Array(n);
+          var cntrs = new Array(n);
+          var family = "";
+          var staticCntr = Number(els.cntr.value) || 0;
+          var i;
+          var p;
+
+          if (!cycleOn()) {
+            var local = elapsed % Math.max(1, w.travel + w.hold);
+            for (i = 0; i < n; i++) {
+              p = (local - i * w.lag) / w.move;
+              weights[i] = lerp(WORDS[i].start, peak, bump(p));
+              cntrs[i] = staticCntr;
+            }
+            return { weights: weights, cntrs: cntrs, family: family };
+          }
+
+          var after = blendWhen() === "after";
+          var blend = blendMs();
+          var stepDur = stepMs(n);
+          var total = stepDur * FAMILIES.length;
+          var clock = elapsed % total;
+          if (clock < 0) clock += total;
+          var step = Math.floor(clock / stepDur);
+          if (step < 0) step = 0;
+          if (step >= FAMILIES.length) step = FAMILIES.length - 1;
+          var t = clock - step * stepDur;
+          var from = FAMILIES[step];
+          var to = FAMILIES[(step + 1) % FAMILIES.length];
+          var fromC = from.cntr;
+          var toC = to.cntr;
+          var morph = 0;
+
+          if (after) {
+            if (t >= w.travel + w.hold && blend > 0) {
+              morph = ease((t - w.travel - w.hold) / blend);
+            } else if (t >= w.travel + w.hold) {
+              morph = 1;
+            }
+            family = morph > 0 && morph < 1 ? from.id + " → " + to.id : morph >= 1 ? to.id : from.id;
+          } else {
+            family = t >= w.travel ? to.id : from.id + " → " + to.id;
+          }
+
+          for (i = 0; i < n; i++) {
+            p = (t - i * w.lag) / w.move;
+            weights[i] = lerp(WORDS[i].start, peak, bump(p));
+            if (after) {
+              cntrs[i] = lerp(fromC, toC, morph);
+            } else if (p <= 0) {
+              cntrs[i] = fromC;
+            } else if (p >= 0.45) {
+              cntrs[i] = toC;
+            } else {
+              cntrs[i] = lerp(fromC, toC, ease(p / 0.45));
+            }
+          }
+
+          return { weights: weights, cntrs: cntrs, family: family };
+        }
+
+        function applyState(state) {
           var slnt = Number(els.slnt.value) || 0;
           var wdth = Number(els.wdth.value) || 95;
-          var cntr = Number(els.cntr.value) || 0;
+          var weights = state.weights;
+          var cntrs = state.cntrs;
           for (var i = 0; i < lines.length; i++) {
-            var w = weights[i];
-            if (!isFinite(w)) continue;
+            var wt = weights[i];
+            var c = cntrs[i];
+            if (!isFinite(wt)) continue;
+            if (!isFinite(c)) c = 0;
             lines[i].style.fontVariationSettings =
               '"wght" ' +
-              w.toFixed(1) +
+              wt.toFixed(1) +
               ', "wdth" ' +
               wdth +
               ', "CNTR" ' +
-              cntr +
+              c.toFixed(1) +
               ', "slnt" ' +
               slnt;
-            lines[i].style.letterSpacing = trackingForWeight(w) + "em";
+            lines[i].style.letterSpacing = trackingForWeight(wt) + "em";
           }
+          var liveIdx = 0;
+          var liveW = -Infinity;
+          for (i = 0; i < weights.length; i++) {
+            if (weights[i] > liveW) {
+              liveW = weights[i];
+              liveIdx = i;
+            }
+          }
+          var live = Math.round(cntrs[liveIdx] || 0);
+          if (!isFinite(live)) live = 0;
+          var prefix = state.family ? state.family + " · CNTR " + live + " · " : "";
           nowReadout.textContent =
+            prefix +
             "wght " +
             weights
-              .map(function (w) {
-                return Math.round(w);
+              .map(function (wt) {
+                return Math.round(wt);
               })
               .join(" ");
         }
 
         function frame(now) {
-          applyWeights(sample(now - t0));
+          applyState(sample(now - t0));
           if (playing) raf = requestAnimationFrame(frame);
         }
 
@@ -517,11 +693,9 @@ Layering</textarea>
         }
 
         function durationMs() {
-          var n = WORDS.length;
-          var move = Math.max(80, Number(els.move.value) || 1200);
-          var lag = Math.max(10, Number(els.lag.value) || 180);
-          var hold = Math.max(0, Number(els.hold.value) || 0);
-          return (n - 1) * lag + move + hold;
+          var n = Math.max(1, WORDS.length);
+          var step = stepMs(n);
+          return cycleOn() ? step * FAMILIES.length : step;
         }
 
         function stopPlayback() {
@@ -537,7 +711,14 @@ Layering</textarea>
           raf = requestAnimationFrame(frame);
         }
 
+        function controlValue(key) {
+          if (!els[key]) return DEFAULTS[key];
+          if (CHECK_KEYS[key]) return els[key].checked ? "1" : "0";
+          return els[key].value;
+        }
+
         function fmt(key, v) {
+          if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (TEXT_KEYS[key]) return String(v);
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
@@ -560,12 +741,14 @@ Layering</textarea>
           root.style.setProperty("--slnt", String(els.slnt.value));
           root.style.setProperty("--wdth", String(els.wdth.value));
           root.style.setProperty("--cntr", String(els.cntr.value));
+          applyAlign();
+          syncFamilyUi();
         }
 
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = fmt(key, els[key].value);
+            vals[key].textContent = fmt(key, controlValue(key));
           });
         }
 
@@ -573,7 +756,7 @@ Layering</textarea>
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            data[key] = els[key].value;
+            data[key] = controlValue(key);
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -594,14 +777,22 @@ Layering</textarea>
           }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
-            els[key].value = data[key];
+            if (CHECK_KEYS[key]) {
+              els[key].checked = data[key] === "1" || data[key] === true;
+            } else {
+              els[key].value = data[key];
+            }
           });
         }
 
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            if (CHECK_KEYS[key]) {
+              els[key].checked = DEFAULTS[key] === "1";
+            } else {
+              els[key].value = DEFAULTS[key];
+            }
           });
           try {
             localStorage.removeItem(LS_KEY);
@@ -654,7 +845,7 @@ Layering</textarea>
             lockup.appendChild(line);
             lines.push(line);
           });
-          applyWeights(sample(playing ? performance.now() - t0 : 0));
+          applyState(sample(playing ? performance.now() - t0 : 0));
         }
 
         Object.keys(els).forEach(function (key) {
@@ -663,6 +854,7 @@ Layering</textarea>
             applyVars();
             paintVals();
             if (key === "tx") buildLockup();
+            if (key === "cycle" || key === "when") restart();
             save();
           });
         });
@@ -679,13 +871,13 @@ Layering</textarea>
           filename: "weight-cascade.mp4",
           durationMs: durationMs,
           seek: function (ms) {
-            applyWeights(sample(ms));
+            applyState(sample(ms));
           },
           stop: stopPlayback,
           start: startPlayback,
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=6"></script>
+    <script type="module" src="../../web-export.js?v=7"></script>
   </body>
 </html>

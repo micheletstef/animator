@@ -206,6 +206,7 @@
     bindGuideHotkey();
     enhancePanel();
     ensureCaseUi();
+    bindPanelPersist();
     watchPanel();
     return api;
   }
@@ -232,28 +233,64 @@
     };
   }
 
-  function pageKey(prefix) {
-    return prefix + global.location.pathname + global.location.search;
-  }
+  var PREFIX_CAPTION = "animator:v2:caption:";
+  var PREFIX_CAPTION_COLOR = "animator:v2:caption-color:";
+  var PREFIX_ACCORDION = "animator:v2:accordion:";
+  var PREFIX_GUIDES = "animator:v2:guides:";
+  var PREFIX_CASE = "animator:v2:case:";
+  var GUIDES_GLOBAL = "animator:v2:guides";
 
-  function captionKey() {
-    return pageKey("animator:v2:caption:");
-  }
-
-  function captionColorKey() {
-    return pageKey("animator:v2:caption-color:");
-  }
-
-  function accordionKey() {
-    return pageKey("animator:v2:accordion:");
-  }
-
-  function guidesKey() {
-    var body = global.document.body;
-    if (body && body.hasAttribute("data-guide-cols")) {
-      return pageKey("animator:v2:guides:");
+  function stableSearch(search) {
+    search = search == null ? global.location.search : search;
+    if (!search) return "";
+    var params;
+    try {
+      params = new URLSearchParams(search.charAt(0) === "?" ? search : "?" + search);
+      params.delete("v");
+      var q = params.toString();
+      return q ? "?" + q : "";
+    } catch (err) {
+      return String(search);
     }
-    return "animator:v2:guides";
+  }
+
+  function pageKey(prefix) {
+    return prefix + global.location.pathname + stableSearch();
+  }
+
+  function storedIdentity(prefix, key) {
+    var base = prefix + global.location.pathname;
+    if (!key || key.indexOf(base) !== 0) return false;
+    var rest = key.slice(base.length);
+    if (rest && rest.charAt(0) !== "?") return false;
+    return stableSearch(rest) === stableSearch();
+  }
+
+  function readStored(prefix) {
+    var primary = pageKey(prefix);
+    try {
+      var raw = global.localStorage.getItem(primary);
+      if (raw != null) return raw;
+      var i;
+      var k;
+      for (i = 0; i < global.localStorage.length; i++) {
+        k = global.localStorage.key(i);
+        if (!k || k === primary || !storedIdentity(prefix, k)) continue;
+        raw = global.localStorage.getItem(k);
+        if (raw == null) continue;
+        try {
+          global.localStorage.setItem(primary, raw);
+        } catch (err) {}
+        return raw;
+      }
+    } catch (err) {}
+    return null;
+  }
+
+  function writeStored(prefix, value) {
+    try {
+      global.localStorage.setItem(pageKey(prefix), value);
+    } catch (err) {}
   }
 
   function cssVarNumber(name, fallback) {
@@ -291,31 +328,24 @@
   }
 
   function readCaption() {
-    try {
-      var raw = global.localStorage.getItem(captionKey());
-      if (raw != null) return raw;
-    } catch (err) {}
+    var raw = readStored(PREFIX_CAPTION);
+    if (raw != null) return raw;
     return DEFAULT_CAPTION;
   }
 
   function writeCaption(text) {
-    try {
-      global.localStorage.setItem(captionKey(), text);
-    } catch (err) {}
+    writeStored(PREFIX_CAPTION, text);
   }
 
   function readCaptionColor() {
-    try {
-      var hex = toHexColor(global.localStorage.getItem(captionColorKey()));
-      if (hex) return hex;
-    } catch (err) {}
+    var hex = toHexColor(readStored(PREFIX_CAPTION_COLOR));
+    if (hex) return hex;
     return defaultCaptionColor();
   }
 
   function writeCaptionColor(color) {
-    try {
-      global.localStorage.setItem(captionColorKey(), color);
-    } catch (err) {}
+    var hex = toHexColor(color);
+    if (hex) writeStored(PREFIX_CAPTION_COLOR, hex);
   }
 
   function captionEl() {
@@ -525,11 +555,13 @@
     if (color && colorVal) {
       color.value = readCaptionColor();
       colorVal.textContent = color.value;
-      color.addEventListener("input", function () {
+      function onCaptionColor() {
         var hex = setCaptionColor(color.value);
         colorVal.textContent = hex;
         writeCaptionColor(hex);
-      });
+      }
+      color.addEventListener("input", onCaptionColor);
+      color.addEventListener("change", onCaptionColor);
     }
   }
 
@@ -565,6 +597,21 @@
     );
   }
 
+  function readCaseMap() {
+    try {
+      var raw = readStored(PREFIX_CASE);
+      if (!raw) return {};
+      var data = JSON.parse(raw);
+      return data && typeof data === "object" ? data : {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function writeCaseMap(map) {
+    writeStored(PREFIX_CASE, JSON.stringify(map));
+  }
+
   function enhanceCaseField(field) {
     if (!isContentTextField(field) || field.dataset.caseToggle === "1") return;
     var row = field.closest(".row");
@@ -573,15 +620,30 @@
     row.classList.add("row-case");
 
     var state = { mode: "none", source: field.value, applying: false };
+    if (field.id) {
+      var saved = readCaseMap()[field.id];
+      if (saved && CASE_MODES.indexOf(saved.mode) >= 0) {
+        state.mode = saved.mode;
+        if (saved.source != null) state.source = String(saved.source);
+      }
+    }
 
     var btn = global.document.createElement("button");
     btn.type = "button";
     btn.className = "case-toggle";
     paintCaseBtn(btn, state.mode);
 
+    function persistCase() {
+      if (!field.id) return;
+      var map = readCaseMap();
+      map[field.id] = { mode: state.mode, source: state.source };
+      writeCaseMap(map);
+    }
+
     function apply() {
       var next = applyCaseText(state.source, state.mode);
       paintCaseBtn(btn, state.mode);
+      persistCase();
       if (field.value === next) return;
       state.applying = true;
       field.value = next;
@@ -606,6 +668,7 @@
       function () {
         if (state.applying) return;
         state.source = field.value;
+        persistCase();
         if (state.mode === "none") return;
         var next = applyCaseText(state.source, state.mode);
         if (next === field.value) return;
@@ -626,6 +689,16 @@
     } else {
       field.parentNode.appendChild(btn);
     }
+
+    global.setTimeout(function () {
+      if (state.mode === "none") {
+        state.source = field.value;
+      } else if (applyCaseText(state.source, state.mode) !== field.value) {
+        state.source = field.value;
+      }
+      paintCaseBtn(btn, state.mode);
+      persistCase();
+    }, 0);
   }
 
   function ensureCaseUi() {
@@ -668,7 +741,13 @@
   function readGuides() {
     var data = defaultGuides();
     try {
-      var raw = global.localStorage.getItem(guidesKey());
+      var raw;
+      var body = global.document.body;
+      if (body && body.hasAttribute("data-guide-cols")) {
+        raw = readStored(PREFIX_GUIDES);
+      } else {
+        raw = global.localStorage.getItem(GUIDES_GLOBAL);
+      }
       if (raw) {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object") {
@@ -689,8 +768,14 @@
   }
 
   function writeGuides(data) {
+    var body = global.document.body;
+    var payload = JSON.stringify(data);
+    if (body && body.hasAttribute("data-guide-cols")) {
+      writeStored(PREFIX_GUIDES, payload);
+      return;
+    }
     try {
-      global.localStorage.setItem(guidesKey(), JSON.stringify(data));
+      global.localStorage.setItem(GUIDES_GLOBAL, payload);
     } catch (err) {}
   }
 
@@ -924,7 +1009,7 @@
 
   function readAccordion() {
     try {
-      var raw = global.localStorage.getItem(accordionKey());
+      var raw = readStored(PREFIX_ACCORDION);
       if (!raw) return {};
       var data = JSON.parse(raw);
       return data && typeof data === "object" ? data : {};
@@ -934,9 +1019,7 @@
   }
 
   function writeAccordion(state) {
-    try {
-      global.localStorage.setItem(accordionKey(), JSON.stringify(state));
-    } catch (err) {}
+    writeStored(PREFIX_ACCORDION, JSON.stringify(state));
   }
 
   function groupName(group) {
@@ -1011,6 +1094,17 @@
       ensureCaseUi();
     });
     mo.observe(panel, { childList: true });
+  }
+
+  function bindPanelPersist() {
+    var panel = global.document.querySelector(".panel");
+    if (!panel || panel.dataset.persistColors === "1") return;
+    panel.dataset.persistColors = "1";
+    panel.addEventListener("change", function (e) {
+      var el = e.target;
+      if (!el || String(el.type || "").toLowerCase() !== "color") return;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
   }
 
   function boot() {

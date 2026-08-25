@@ -324,7 +324,7 @@ body,
   padding: 0;
   color: var(--caption, var(--fg));
   font-family: "IkarusPlusVariable", sans-serif;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 500;
   font-style: normal;
   font-synthesis: none;
@@ -379,6 +379,46 @@ body,
 
 .stage .var-readout-item:last-child .var-readout-value {
   text-align: right;
+}
+
+.stage .var-readout.is-stacked {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 0.42em;
+}
+
+.stage .var-readout.is-stacked .var-readout-item,
+.stage .var-readout.is-stacked .var-readout-item:last-child {
+  justify-content: flex-start;
+  width: auto;
+}
+
+.stage .var-readout.is-stacked .var-readout-label {
+  flex: 0 0 7.4em;
+  text-align: left;
+}
+
+.stage .var-readout.is-stacked .var-readout-values {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 20px;
+}
+
+.stage .var-readout.is-stacked .var-readout-value {
+  min-width: 4ch;
+  text-align: left;
+  opacity: 0.4;
+}
+
+.stage .var-readout.is-stacked .var-readout-value.is-current {
+  opacity: 1;
+}
+
+.stage .var-readout.is-stacked .var-readout-item:last-child .var-readout-value {
+  text-align: left;
 }
 
 .stage .stage-caption.is-split {

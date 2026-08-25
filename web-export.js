@@ -56,8 +56,50 @@ function artboardSize(stage) {
   };
 }
 
+function stableSearch(search) {
+  search = search == null ? location.search : search;
+  if (!search) return "";
+  try {
+    var params = new URLSearchParams(search.charAt(0) === "?" ? search : "?" + search);
+    params.delete("v");
+    var q = params.toString();
+    return q ? "?" + q : "";
+  } catch (e) {
+    return String(search);
+  }
+}
+
+function loopsPrefix() {
+  return "animator:v2:export-loops:" + location.pathname;
+}
+
 function loopsKey() {
-  return "animator:v2:export-loops:" + location.pathname + location.search;
+  return loopsPrefix() + stableSearch();
+}
+
+function readLoopsStored() {
+  var primary = loopsKey();
+  try {
+    var raw = localStorage.getItem(primary);
+    if (raw != null) return raw;
+    var i;
+    var k;
+    var base = loopsPrefix();
+    for (i = 0; i < localStorage.length; i++) {
+      k = localStorage.key(i);
+      if (!k || k === primary || k.indexOf(base) !== 0) continue;
+      var rest = k.slice(base.length);
+      if (rest && rest.charAt(0) !== "?") continue;
+      if (stableSearch(rest) !== stableSearch()) continue;
+      raw = localStorage.getItem(k);
+      if (raw == null) continue;
+      try {
+        localStorage.setItem(primary, raw);
+      } catch (err) {}
+      return raw;
+    }
+  } catch (err) {}
+  return null;
 }
 
 function prefsKey() {
@@ -370,7 +412,7 @@ function ensureExportUi() {
   var quality = document.getElementById("exportQuality");
 
   try {
-    var savedLoops = localStorage.getItem(loopsKey());
+    var savedLoops = readLoopsStored();
     var n = savedLoops == null ? 1 : Number(savedLoops);
     if (!isFinite(n)) n = 1;
     loops.value = String(Math.max(1, Math.min(12, Math.round(n))));

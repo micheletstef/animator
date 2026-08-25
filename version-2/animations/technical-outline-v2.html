@@ -146,7 +146,7 @@
         text-align: center;
       }
 
-      .var-readout {
+      #varReadout {
         position: absolute;
         left: var(--guide-l, calc(var(--pad-l) * 1px));
         right: var(--guide-r, calc(var(--pad-r) * 1px));
@@ -154,56 +154,59 @@
         bottom: calc(var(--guide-b, calc(var(--pad-b) * 1px)) - 4px);
         z-index: 3;
         display: flex;
-        justify-content: space-between;
-        align-items: baseline;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 0.42em;
         min-height: 0;
         padding: 0;
-        font-size: 22px;
+        font-size: 24px;
         line-height: 1;
         color: var(--caption, var(--fg));
         background: transparent;
         pointer-events: none;
+        white-space: nowrap;
       }
 
-      .var-readout-item {
+      #varReadout .var-readout-item {
         display: flex;
         flex: 0 0 auto;
         align-items: baseline;
         justify-content: flex-start;
-        gap: 8px;
+        gap: 28px;
+        width: auto;
         white-space: nowrap;
       }
 
-      .var-readout-item:last-child {
-        justify-content: flex-end;
+      #varReadout .var-readout-item:last-child {
+        justify-content: flex-start;
       }
 
-      .var-readout-label {
+      #varReadout .var-readout-label {
+        flex: 0 0 7.4em;
         opacity: 1;
         letter-spacing: 0;
-      }
-
-      .var-readout-value {
-        display: inline-block;
-        font-variant-numeric: tabular-nums;
         text-align: left;
       }
 
-      #readoutWght {
+      #varReadout .var-readout-values {
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-start;
+        gap: 20px;
+      }
+
+      #varReadout .var-readout-value {
+        display: inline-block;
         min-width: 4ch;
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum" 1, "kern" 1, "liga" 1;
+        text-align: left;
+        opacity: 0.4;
       }
 
-      #readoutCntr,
-      #readoutWdth {
-        min-width: 3ch;
-      }
-
-      #readoutSlnt {
-        min-width: 2ch;
-      }
-
-      .var-readout-item:last-child .var-readout-value {
-        text-align: right;
+      #varReadout .var-readout-value.is-current {
+        opacity: 1;
       }
 
       .panel {
@@ -468,7 +471,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=32" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=34" />
   </head>
   <body data-no-caption>
     <div class="stage-wrap" id="stageWrap">
@@ -477,23 +480,19 @@
           <svg class="outline-layer" id="outlines" aria-hidden="true"></svg>
           <div class="drag-surface" id="dragSurface" aria-hidden="true"></div>
           <span class="probe" id="probe">A</span>
-          <div class="var-readout" id="varReadout" aria-live="polite">
-            <span class="var-readout-item">
+          <div class="var-readout is-stacked" id="varReadout" aria-live="polite">
+            <div class="var-readout-item">
               <span class="var-readout-label">Weight</span>
-              <span class="var-readout-value" id="readoutWght">500</span>
-            </span>
-            <span class="var-readout-item">
-              <span class="var-readout-label">Contour</span>
-              <span class="var-readout-value" id="readoutCntr">0</span>
-            </span>
-            <span class="var-readout-item">
+              <span class="var-readout-values" id="readoutWght"></span>
+            </div>
+            <div class="var-readout-item">
+              <span class="var-readout-label">Contrast</span>
+              <span class="var-readout-values" id="readoutCntr"></span>
+            </div>
+            <div class="var-readout-item">
               <span class="var-readout-label">Width</span>
-              <span class="var-readout-value" id="readoutWdth">100</span>
-            </span>
-            <span class="var-readout-item">
-              <span class="var-readout-label">Slant</span>
-              <span class="var-readout-value" id="readoutSlnt">0</span>
-            </span>
+              <span class="var-readout-values" id="readoutWdth"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -582,10 +581,15 @@
           <input id="os" type="range" min="25" max="200" step="1" value="100" />
           <span class="val" id="osVal">1.00×</span>
         </div>
-        <div class="row">
-          <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.5" max="1.6" step="0.01" value="1.3" />
-          <span class="val" id="lhVal">1.30</span>
+        <div class="axis-row">
+          <label for="lh0">leading</label>
+          <div class="dual-range" id="lhDual">
+            <span class="dual-val" id="lh0Val">1.30</span>
+            <span class="dual-val" id="lh1Val">1.30</span>
+            <div class="dual-track"><div class="dual-fill" id="lhFill"></div></div>
+            <input id="lh0" class="is-start" type="range" min="0.5" max="1.6" step="0.01" value="1.3" aria-label="leading start" />
+            <input id="lh1" class="is-end" type="range" min="0.5" max="1.6" step="0.01" value="1.3" aria-label="leading end" />
+          </div>
         </div>
         <div class="axis-row">
           <label for="kn0">track</label>
@@ -593,8 +597,8 @@
             <span class="dual-val" id="kn0Val">0%</span>
             <span class="dual-val" id="kn1Val">0%</span>
             <div class="dual-track"><div class="dual-fill" id="knFill"></div></div>
-            <input id="kn0" class="is-start" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking start" />
-            <input id="kn1" class="is-end" type="range" min="-100" max="100" step="1" value="0" aria-label="tracking end" />
+            <input id="kn0" class="is-start" type="range" min="-40" max="40" step="1" value="0" aria-label="tracking start" />
+            <input id="kn1" class="is-end" type="range" min="-40" max="40" step="1" value="0" aria-label="tracking end" />
           </div>
         </div>
         <div class="row">
@@ -711,7 +715,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
     <script src="../../animations/glyph-outlines.js?v=12"></script>
-    <script src="artboard-view.js?v=23"></script>
+    <script src="artboard-view.js?v=24"></script>
     <script>
       (function () {
         var outlineSvg = document.getElementById("outlines");
@@ -754,8 +758,53 @@
         }
 
         function fmtReadout(tag, v) {
-          if (tag === "slnt") return String(Math.abs(Math.round(Number(v))));
-          return String(Math.ceil(Number(v)));
+          return String(Math.round(Number(v)));
+        }
+
+        function weightReadoutSteps() {
+          var start = Math.round(parseFloat(els.wMin.value));
+          var end = Math.round(parseFloat(els.wMax.value));
+          if (start === end) return [start];
+          var steps = [start];
+          var dir = end > start ? 1 : -1;
+          var n;
+          if (dir > 0) {
+            n = Math.ceil((start + 0.51) / 100) * 100;
+            while (n < end - 0.5) {
+              steps.push(n);
+              n += 100;
+            }
+          } else {
+            n = Math.floor((start - 0.51) / 100) * 100;
+            while (n > end + 0.5) {
+              steps.push(n);
+              n -= 100;
+            }
+          }
+          steps.push(end);
+          return steps;
+        }
+
+        function relatedVariationAtWeight(w, wStart, wEnd) {
+          var t = wEnd === wStart ? 0 : (w - wStart) / (wEnd - wStart);
+          return {
+            wght: w,
+            CNTR: lerpFromRange(els.cMin, els.cMax, t),
+            wdth: lerpFromRange(els.dMin, els.dMax, t),
+          };
+        }
+
+        function closestReadoutIndex(values, current) {
+          var best = 0;
+          var bestDist = Infinity;
+          for (var i = 0; i < values.length; i++) {
+            var dist = Math.abs(values[i] - current);
+            if (dist < bestDist) {
+              bestDist = dist;
+              best = i;
+            }
+          }
+          return best;
         }
 
         function fvarSettings(v) {
@@ -1085,14 +1134,82 @@
           wght: document.getElementById("readoutWght"),
           CNTR: document.getElementById("readoutCntr"),
           wdth: document.getElementById("readoutWdth"),
-          slnt: document.getElementById("readoutSlnt"),
         };
 
+        var readoutScale = {
+          key: "",
+          values: { wght: [], CNTR: [], wdth: [] },
+          cells: { wght: [], CNTR: [], wdth: [] },
+          current: { wght: -1, CNTR: -1, wdth: -1 },
+        };
+
+        function readoutScaleKey() {
+          return [
+            els.wMin.value,
+            els.wMax.value,
+            els.cMin.value,
+            els.cMax.value,
+            els.dMin.value,
+            els.dMax.value,
+          ].join("|");
+        }
+
+        function fillReadoutRow(el, tag, values) {
+          el.textContent = "";
+          var cells = [];
+          for (var i = 0; i < values.length; i++) {
+            var cell = document.createElement("span");
+            cell.className = "var-readout-value";
+            cell.textContent = fmtReadout(tag, values[i]);
+            el.appendChild(cell);
+            cells.push(cell);
+          }
+          return cells;
+        }
+
+        function ensureReadoutScale() {
+          var key = readoutScaleKey();
+          if (key === readoutScale.key) return;
+          readoutScale.key = key;
+          var wStart = parseFloat(els.wMin.value);
+          var wEnd = parseFloat(els.wMax.value);
+          var weights = weightReadoutSteps();
+          var wghtVals = [];
+          var cntrVals = [];
+          var wdthVals = [];
+          for (var i = 0; i < weights.length; i++) {
+            var related = relatedVariationAtWeight(weights[i], wStart, wEnd);
+            wghtVals.push(related.wght);
+            cntrVals.push(related.CNTR);
+            wdthVals.push(related.wdth);
+          }
+          readoutScale.values.wght = wghtVals;
+          readoutScale.values.CNTR = cntrVals;
+          readoutScale.values.wdth = wdthVals;
+          readoutScale.cells.wght = fillReadoutRow(readoutEls.wght, "wght", wghtVals);
+          readoutScale.cells.CNTR = fillReadoutRow(readoutEls.CNTR, "CNTR", cntrVals);
+          readoutScale.cells.wdth = fillReadoutRow(readoutEls.wdth, "wdth", wdthVals);
+          readoutScale.current.wght = -1;
+          readoutScale.current.CNTR = -1;
+          readoutScale.current.wdth = -1;
+        }
+
+        function syncReadoutCurrent(tag, currentValue) {
+          var cells = readoutScale.cells[tag];
+          if (!cells.length) return;
+          var idx = closestReadoutIndex(readoutScale.values[tag], currentValue);
+          var prev = readoutScale.current[tag];
+          if (prev === idx) return;
+          if (prev >= 0 && cells[prev]) cells[prev].classList.remove("is-current");
+          if (cells[idx]) cells[idx].classList.add("is-current");
+          readoutScale.current[tag] = idx;
+        }
+
         function updateVarReadout(v) {
-          readoutEls.wght.textContent = fmtReadout("wght", v.wght);
-          readoutEls.CNTR.textContent = fmtReadout("CNTR", v.CNTR);
-          readoutEls.wdth.textContent = fmtReadout("wdth", v.wdth);
-          readoutEls.slnt.textContent = fmtReadout("slnt", v.slnt);
+          ensureReadoutScale();
+          syncReadoutCurrent("wght", v.wght);
+          syncReadoutCurrent("CNTR", v.CNTR);
+          syncReadoutCurrent("wdth", v.wdth);
         }
 
         function getText() {
@@ -1121,12 +1238,24 @@
           };
         }
 
+        var KERN = { min: -40, max: 40, step: 1, default: 0 };
+
         var KERN_DUAL = {
           minKey: "kn0",
           maxKey: "kn1",
           fill: "knFill",
           minVal: "kn0Val",
           maxVal: "kn1Val",
+        };
+
+        var LH = { min: 0.5, max: 1.6, step: 0.01, default: 1.3 };
+
+        var LH_DUAL = {
+          minKey: "lh0",
+          maxKey: "lh1",
+          fill: "lhFill",
+          minVal: "lh0Val",
+          maxVal: "lh1Val",
         };
 
         var FS_DUAL = {
@@ -1179,6 +1308,10 @@
           document.getElementById(FS_DUAL.maxVal).style.left = thumbPct(els.fs1) + "%";
         }
 
+        function clampKern(v) {
+          return Math.min(KERN.max, Math.max(KERN.min, v));
+        }
+
         function fmtKernPct(v) {
           var n = Math.round(Number(v));
           return (n > 0 ? "+" : "") + n + "%";
@@ -1193,6 +1326,28 @@
 
         function kernDualForKey(key) {
           return key === KERN_DUAL.minKey || key === KERN_DUAL.maxKey ? KERN_DUAL : null;
+        }
+
+        function clampLh(v) {
+          return Math.min(LH.max, Math.max(LH.min, v));
+        }
+
+        function fmtLh(v) {
+          return Number(v).toFixed(2);
+        }
+
+        function leadingAt(eased) {
+          var start = parseFloat(els.lh0.value);
+          var end = parseFloat(els.lh1.value);
+          return start + (end - start) * eased;
+        }
+
+        function applyLeading(eased) {
+          root.style.setProperty("--lh", String(leadingAt(eased)));
+        }
+
+        function lhDualForKey(key) {
+          return key === LH_DUAL.minKey || key === LH_DUAL.maxKey ? LH_DUAL : null;
         }
 
         function updateKernDualUI() {
@@ -1213,6 +1368,26 @@
           document.getElementById(KERN_DUAL.maxVal).textContent = fmtKernPct(b);
           document.getElementById(KERN_DUAL.minVal).style.left = thumbPct(els.kn0) + "%";
           document.getElementById(KERN_DUAL.maxVal).style.left = thumbPct(els.kn1) + "%";
+        }
+
+        function updateLhDualUI() {
+          var minEl = els.lh0;
+          var maxEl = els.lh1;
+          var fill = document.getElementById(LH_DUAL.fill);
+          var a = parseFloat(minEl.value);
+          var b = parseFloat(maxEl.value);
+          var min = parseFloat(minEl.min);
+          var max = parseFloat(minEl.max);
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          var loPct = ((lo - min) / (max - min)) * 100;
+          var hiPct = ((hi - min) / (max - min)) * 100;
+          fill.style.left = loPct + "%";
+          fill.style.width = Math.max(0, hiPct - loPct) + "%";
+          document.getElementById(LH_DUAL.minVal).textContent = fmtLh(a);
+          document.getElementById(LH_DUAL.maxVal).textContent = fmtLh(b);
+          document.getElementById(LH_DUAL.minVal).style.left = thumbPct(els.lh0) + "%";
+          document.getElementById(LH_DUAL.maxVal).style.left = thumbPct(els.lh1) + "%";
         }
 
         function outlineColor() {
@@ -1239,6 +1414,7 @@
                 ? eased
                 : 0;
           applyFontSize(motionT);
+          applyLeading(motionT);
           var variation =
             v ||
             (elapsed != null && isFinite(elapsed)
@@ -1253,7 +1429,7 @@
             outlineScale: outlineScale(),
             fontSize: fontSizeAt(motionT),
             tracking: kerningPxAt(motionT),
-            leading: parseFloat(els.lh.value),
+            leading: leadingAt(motionT),
             offsetX: textOffset.x,
             offsetY: textOffset.y,
             stableAnchor: true,
@@ -1355,7 +1531,8 @@
           fs0: 900,
           fs1: 900,
           os: 100,
-          lh: 1.3,
+          lh0: 1.3,
+          lh1: 1.3,
           kn0: 0,
           kn1: 0,
           sw: 1.25,
@@ -1395,7 +1572,8 @@
           fs0: document.getElementById("fs0"),
           fs1: document.getElementById("fs1"),
           os: document.getElementById("os"),
-          lh: document.getElementById("lh"),
+          lh0: document.getElementById("lh0"),
+          lh1: document.getElementById("lh1"),
           kn0: document.getElementById("kn0"),
           kn1: document.getElementById("kn1"),
           sw: document.getElementById("sw"),
@@ -1426,7 +1604,6 @@
           bg: document.getElementById("bgVal"),
           ln: document.getElementById("lnVal"),
           os: document.getElementById("osVal"),
-          lh: document.getElementById("lhVal"),
           ty: document.getElementById("tyVal"),
           sw: document.getElementById("swVal"),
           ns: document.getElementById("nsVal"),
@@ -1447,7 +1624,6 @@
         function fmt(key, v) {
           if (key === "bg" || key === "ln") return String(v).toLowerCase();
           if (key === "os") return (Number(v) / 100).toFixed(2) + "×";
-          if (key === "lh") return Number(v).toFixed(2);
           if (key === "ty") return Math.round(Number(v)) + "px";
           if (key === "sw" || key === "nsw" || key === "hsw") return Number(v).toFixed(2);
           if (key === "ns" || key === "hs") return Number(v).toFixed(1);
@@ -1461,8 +1637,6 @@
           else if (key === "ln") {
             root.style.setProperty("--line", v);
             outlineSvg.style.color = v;
-          } else if (key === "lh") {
-            root.style.setProperty("--lh", String(v));
           }
         }
 
@@ -1470,12 +1644,16 @@
           var spec = dualSpecForKey(key);
           var kernSpec = kernDualForKey(key);
           var fsSpec = fsDualForKey(key);
+          var lhSpec = lhDualForKey(key);
           if (spec) v = clampAxis(spec.tag, v);
           else if (fsSpec) v = clampFs(v);
+          else if (kernSpec) v = clampKern(v);
+          else if (lhSpec) v = clampLh(v);
           els[key].value = v;
           if (spec) updateDualUI(spec);
           else if (kernSpec) updateKernDualUI();
           else if (fsSpec) updateFsDualUI();
+          else if (lhSpec) updateLhDualUI();
           else if (vals[key]) vals[key].textContent = fmt(key, v);
           if (key === "ep") {
             if (v !== "custom") applyEasingPreset(v);
@@ -1495,7 +1673,6 @@
             key === "ln" ||
             key === "bg" ||
             key === "os" ||
-            key === "lh" ||
             key === "sw" ||
             key === "ns" ||
             key === "hs" ||
@@ -1506,13 +1683,19 @@
             key === "ch" ||
             key === "kn0" ||
             key === "kn1" ||
+            key === "lh0" ||
+            key === "lh1" ||
             key === "fs0" ||
             key === "fs1" ||
             key === "tx" ||
             key === "ty"
           ) {
             var previewEased =
-              key === "kn1" || key === "fs1" ? 1 : key === "kn0" || key === "fs0" ? 0 : 0;
+              key === "kn1" || key === "lh1" || key === "fs1"
+                ? 1
+                : key === "kn0" || key === "lh0" || key === "fs0"
+                  ? 0
+                  : 0;
             syncOutlines(variationAt(previewEased), null, previewEased);
           }
           if (persist !== false) save();
@@ -1549,6 +1732,10 @@
               if (data.fs != null && data.fs0 == null) {
                 data.fs0 = data.fs;
                 data.fs1 = data.fs;
+              }
+              if (data.lh != null && data.lh0 == null) {
+                data.lh0 = data.lh;
+                data.lh1 = data.lh;
               }
               if (data.sp == null && data.hd != null) data.sp = data.hd;
               if (data.ep == null) data.ep = DEFAULTS.ep;
@@ -1665,11 +1852,13 @@
         syncEasingPresetLabel();
         updateAllDualUI();
         updateKernDualUI();
+        updateLhDualUI();
         updateFsDualUI();
 
         function start() {
           var v0 = variationFromElapsed(0);
           applyFontSize(0);
+          applyLeading(0);
           applyVariation(v0);
           updateVarReadout(v0);
           if (document.fonts && document.fonts.ready) {
@@ -1697,6 +1886,6 @@
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=6"></script>
+    <script type="module" src="../../web-export.js?v=7"></script>
   </body>
 </html>

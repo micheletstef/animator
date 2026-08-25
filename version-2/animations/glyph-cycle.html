@@ -473,7 +473,7 @@
 
     </aside>
 
-    <script src="artboard-view.js?v=22"></script>
+    <script src="artboard-view.js?v=24"></script>
     <script>
       (function () {
         function queryChar() {
@@ -624,7 +624,7 @@
           var weightActive = dw > dc;
           return [
             {
-              label: "Contour",
+              label: "Contrast",
               value: String(Math.round(s.cntr)),
               active: !weightActive,
             },
@@ -671,8 +671,8 @@
           var input = document.getElementById("stageCaption");
           if (!input) return;
           input.readOnly = true;
-          input.placeholder = "live: Contour / Weight";
-          input.title = "stacked Contour and Weight; inactive axis is dimmed";
+          input.placeholder = "live: Contrast / Weight";
+          input.title = "stacked Contrast and Weight; inactive axis is dimmed";
         }
 
         function segmentAt(elapsed) {
@@ -955,6 +955,6 @@
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=6"></script>
+    <script type="module" src="../../web-export.js?v=7"></script>
   </body>
 </html>

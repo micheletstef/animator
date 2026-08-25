@@ -22,19 +22,19 @@
       "id": "nine",
       "label": "Single – 9",
       "url": "animations/glyph-cycle.html?ch=9",
-      "mtime": 1787578570
+      "mtime": 1787616000
     },
     {
       "id": "g",
       "label": "Single – G",
       "url": "animations/glyph-cycle.html?ch=G",
-      "mtime": 1787578570
+      "mtime": 1787616000
     },
     {
       "id": "s",
       "label": "Single – S",
       "url": "animations/glyph-cycle.html?ch=S",
-      "mtime": 1787578570
+      "mtime": 1787616000
     },
     {
       "id": "width-swap",
@@ -46,7 +46,7 @@
       "id": "weight-cascade",
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",
-      "mtime": 1787578570
+      "mtime": 1787670000
     },
     {
       "id": "psi-count",
@@ -64,13 +64,13 @@
       "id": "technical-outline",
       "label": "technical outline v1",
       "url": "animations/technical-outline.html",
-      "mtime": 1787614000
+      "mtime": 1787616000
     },
     {
       "id": "technical-outline-v2",
       "label": "technical outline v2",
       "url": "animations/technical-outline-v2.html",
-      "mtime": 1787614000
+      "mtime": 1787670000
     }
   ]
 }
