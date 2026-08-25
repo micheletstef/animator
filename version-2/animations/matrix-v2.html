@@ -218,13 +218,13 @@
       }
 
       .matrix-metrics {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: start;
-        gap: var(--guide-gutter, 24px);
+        position: relative;
+        display: block;
         flex: 0 0 auto;
         width: 100%;
-        margin-top: 0;
+        height: calc(var(--metric-size) * 1px);
+        margin-top: calc(var(--metric-size) * 0.55 * 1px);
+        overflow: visible;
       }
 
       .measure {
@@ -291,11 +291,12 @@
       }
 
       .metric {
+        position: absolute;
+        top: 0;
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         gap: 8px;
-        width: 100%;
         min-width: 0;
         padding: 0;
         font-family: "IkarusPlusVariable", sans-serif;
@@ -685,6 +686,7 @@
         var matrix = document.getElementById("matrix");
         var cells = [];
         var colMetrics = [];
+        var colMetricEls = [];
         var W_MIN = 200;
         var W_MAX = 1000;
         var ROW_COUNT = FAMILIES.length;
@@ -773,6 +775,7 @@
           var rowEl = document.createElement("div");
           rowEl.className = "matrix-metrics";
           colMetrics = [];
+          colMetricEls = [];
           for (var c = 0; c < COL_COUNT; c++) {
             var metric = document.createElement("div");
             metric.className = "metric";
@@ -788,6 +791,7 @@
             metric.appendChild(metricFont);
             metric.appendChild(metricWeight);
             rowEl.appendChild(metric);
+            colMetricEls.push(metric);
             colMetrics.push(metricWeight);
           }
           return rowEl;
@@ -1108,6 +1112,22 @@
             c.lineRight.style.left = rightX - 2 + "px";
             c.lineRight.style.top = lineTop + "px";
             c.lineRight.style.height = lineHeight + "px";
+          }
+
+          var metricsRow = matrix.querySelector(".matrix-metrics");
+          if (metricsRow && colMetricEls.length) {
+            var metricsRect = metricsRow.getBoundingClientRect();
+            for (i = 0; i < cells.length; i++) {
+              c = cells[i];
+              if (c.row !== ROW_COUNT - 1) continue;
+              var metricEl = colMetricEls[c.col];
+              var glyphBox = c.glyph.getBoundingClientRect();
+              if (!metricEl || !glyphBox.width) continue;
+              metricEl.style.left =
+                (glyphBox.left - metricsRect.left) / zoom + "px";
+              metricEl.style.width =
+                Math.max(0, glyphBox.width / zoom) + "px";
+            }
           }
 
           var weightLabel = cells.length ? String(Math.round(cells[0].weight)) : "200";
