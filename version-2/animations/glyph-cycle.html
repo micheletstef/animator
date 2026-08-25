@@ -107,9 +107,16 @@
         left: var(--guide-l, calc(var(--pad-l) * 1px));
         z-index: 3;
         display: flex;
-        align-items: center;
+        align-items: flex-end;
         justify-content: center;
         transform: translateY(calc(var(--oy) * 1px));
+      }
+
+      .glyph-rail {
+        display: flex;
+        align-items: baseline;
+        height: 0;
+        overflow: visible;
       }
 
       .glyph {
@@ -118,6 +125,7 @@
         letter-spacing: calc(var(--tracking) * 1em);
         white-space: nowrap;
         font-variation-settings: inherit;
+        display: block;
       }
 
       .panel {
@@ -321,7 +329,9 @@
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="glyph cycle">
           <div class="lockup">
-            <span class="glyph" id="glyph">9</span>
+            <span class="glyph-rail">
+              <span class="glyph" id="glyph">9</span>
+            </span>
           </div>
         </div>
       </div>
@@ -603,16 +613,11 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY =
-          "animator:v2:glyph-cycle:v7:" +
-          PRESET_NAME +
-          ":" +
-          encodeURIComponent(DEFAULT_CHAR);
-        var OLD_LS_KEY =
-          "animator:v2:glyph-cycle:v6:" +
-          PRESET_NAME +
-          ":" +
-          encodeURIComponent(DEFAULT_CHAR);
+        var LS_KEY = "animator:v2:glyph-cycle:v8:" + PRESET_NAME;
+        var OLD_LS_KEYS = [
+          "animator:v2:glyph-cycle:v7:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
+          "animator:v2:glyph-cycle:v6:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
+        ];
         var OLD_LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
 
         var MAX_KF = 6;
@@ -695,7 +700,6 @@
         Object.keys(DEFAULTS).forEach(function (key) {
           els[key] = document.getElementById(key);
         });
-        if (els.ch) els.ch.value = DEFAULT_CHAR;
 
         ["slnt", "wdth", "wght", "cntr", "fs", "tr"].forEach(function (axis) {
           for (var i = 0; i < MAX_KF; i += 1) {
@@ -1052,7 +1056,7 @@
         function save() {
           var local = {};
           Object.keys(DEFAULTS).forEach(function (key) {
-            if (!els[key] || key === "ch") return;
+            if (!els[key]) return;
             local[key] = els[key].value;
           });
           writeJson(LS_KEY, local);
@@ -1061,15 +1065,23 @@
         function applyLocal(local) {
           if (!local) return;
           Object.keys(DEFAULTS).forEach(function (key) {
-            if (key === "ch") return;
             if (!els[key] || local[key] == null) return;
             els[key].value = local[key];
           });
         }
 
+        function readLegacyLocal() {
+          var i;
+          for (i = 0; i < OLD_LS_KEYS.length; i += 1) {
+            var found = readJson(OLD_LS_KEYS[i]);
+            if (found) return found;
+          }
+          return null;
+        }
+
         function migrateLegacy() {
-          var local = readJson(OLD_LS_KEY) || {};
-          var hasLocal = !!readJson(OLD_LS_KEY);
+          var local = readLegacyLocal() || {};
+          var hasLocal = !!readLegacyLocal();
           if (PRESET_NAME === "full") {
             var layout = readJson(OLD_LAYOUT_KEY);
             if (layout) {
@@ -1093,7 +1105,9 @@
         function loadSaved() {
           var local = readJson(LS_KEY) || migrateLegacy();
           applyLocal(local);
-          if (els.ch) els.ch.value = DEFAULT_CHAR;
+          if (!local || local.ch == null) {
+            if (els.ch) els.ch.value = DEFAULT_CHAR;
+          }
         }
 
         function reset() {
@@ -1113,16 +1127,23 @@
           }
         }
 
-        Object.keys(els).forEach(function (key) {
-          if (!els[key]) return;
-          els[key].addEventListener("input", function () {
-            applyVars();
-            paintVals();
-            paintKfTabs();
+        function onSettingInput() {
+          applyVars();
+          paintVals();
+          paintKfTabs();
+          try {
             applySegment(segmentAt(playing ? performance.now() - t0 : 0));
-            save();
+          } catch (err) {}
+          save();
+        }
+
+        function bindSettings() {
+          Object.keys(els).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].addEventListener("input", onSettingInput);
+            els[key].addEventListener("change", onSettingInput);
           });
-        });
+        }
 
         kfTabs.forEach(function (tab, i) {
           if (!tab || i >= KF_COUNT) return;
@@ -1143,6 +1164,9 @@
         lockLiveCaption();
         restart();
         applySegment(segmentAt(0));
+        bindSettings();
+        save();
+        window.addEventListener("pagehide", save);
         raf = requestAnimationFrame(frame);
 
         window.AnimatorExport = {
