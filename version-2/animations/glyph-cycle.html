@@ -554,24 +554,76 @@
     <script src="artboard-view.js?v=24"></script>
     <script>
       (function () {
-        function queryChar() {
+        function queryParam(name, fallback) {
           try {
-            var q = new URLSearchParams(window.location.search).get("ch");
+            var q = new URLSearchParams(window.location.search).get(name);
             if (q && String(q).length) return String(q);
           } catch (e) {}
-          return "9";
+          return fallback;
         }
 
-        var DEFAULT_CHAR = queryChar();
+        var REST = { slnt: 0, wdth: 130, wght: 1000, cntr: 0 };
+        function mixPose(over) {
+          return {
+            slnt: over.slnt != null ? over.slnt : REST.slnt,
+            wdth: over.wdth != null ? over.wdth : REST.wdth,
+            wght: over.wght != null ? over.wght : REST.wght,
+            cntr: over.cntr != null ? over.cntr : REST.cntr,
+          };
+        }
+
+        var AXIS_META = {
+          wdth: { label: "Width", tag: "wdth" },
+          cntr: { label: "Contrast", tag: "CNTR" },
+          wght: { label: "Weight", tag: "wght" },
+        };
+
+        var PRESETS = {
+          full: {
+            poses: [
+              REST,
+              mixPose({ wdth: 65 }),
+              mixPose({ wdth: 65, cntr: 100 }),
+              mixPose({ wdth: 65, cntr: 100, wght: 200 }),
+              mixPose({ cntr: 100, wght: 200 }),
+              mixPose({ wght: 200 }),
+            ],
+            axes: ["wdth", "cntr", "wght"],
+          },
+          width: {
+            poses: [REST, mixPose({ wdth: 65 })],
+            axes: ["wdth"],
+          },
+          weight: {
+            poses: [REST, mixPose({ wght: 200 })],
+            axes: ["wght"],
+          },
+          contrast: {
+            poses: [REST, mixPose({ cntr: 100 })],
+            axes: ["cntr"],
+          },
+        };
+
+        var DEFAULT_CHAR = queryParam("ch", "9");
+        var PRESET_NAME = queryParam("preset", "full");
+        if (!PRESETS[PRESET_NAME]) PRESET_NAME = "full";
+        var preset = PRESETS[PRESET_NAME];
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v6:" + encodeURIComponent(DEFAULT_CHAR);
+        var LS_KEY =
+          "animator:v2:glyph-cycle:v6:" +
+          PRESET_NAME +
+          ":" +
+          encodeURIComponent(DEFAULT_CHAR);
         var LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
         var SHARED_KEYS = { fs: 1, tr: 1, oy: 1, bg: 1, fg: 1 };
 
-        var KF_COUNT = 6;
-        var SEQUENCE = [0, 1, 2, 3, 4, 5];
+        var MAX_KF = 6;
+        var KF_COUNT = preset.poses.length;
+        var SEQUENCE = [];
+        for (var si = 0; si < KF_COUNT; si += 1) SEQUENCE.push(si);
+        var CAPTION_AXES = preset.axes;
 
         var DEFAULTS = {
           bg: "#d3d3d3",
@@ -580,33 +632,15 @@
           fs: 860,
           tr: 0,
           oy: 0,
-          slnt0: 0,
-          slnt1: 0,
-          slnt2: 0,
-          slnt3: 0,
-          slnt4: 0,
-          slnt5: 0,
-          wdth0: 130,
-          wdth1: 65,
-          wdth2: 65,
-          wdth3: 65,
-          wdth4: 130,
-          wdth5: 130,
-          wght0: 1000,
-          wght1: 1000,
-          wght2: 1000,
-          wght3: 200,
-          wght4: 200,
-          wght5: 200,
-          cntr0: 0,
-          cntr1: 0,
-          cntr2: 100,
-          cntr3: 100,
-          cntr4: 100,
-          cntr5: 0,
           move: 1400,
           hold: 350,
         };
+        preset.poses.forEach(function (pose, i) {
+          DEFAULTS["slnt" + i] = pose.slnt;
+          DEFAULTS["wdth" + i] = pose.wdth;
+          DEFAULTS["wght" + i] = pose.wght;
+          DEFAULTS["cntr" + i] = pose.cntr;
+        });
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
 
@@ -627,7 +661,7 @@
         if (els.ch) els.ch.value = DEFAULT_CHAR;
 
         ["slnt", "wdth", "wght", "cntr"].forEach(function (axis) {
-          for (var i = 0; i < KF_COUNT; i += 1) {
+          for (var i = 0; i < MAX_KF; i += 1) {
             vals[axis + i] = document.getElementById(axis + i + "Val");
           }
         });
@@ -635,7 +669,7 @@
         var kfTabs = [];
         var kfTabVals = [];
         var kfPoses = [];
-        for (var k = 0; k < KF_COUNT; k += 1) {
+        for (var k = 0; k < MAX_KF; k += 1) {
           kfTabs.push(document.getElementById("kfTab" + k));
           kfTabVals.push(document.getElementById("kfTab" + k + "Val"));
           kfPoses.push(document.getElementById("kfPose" + k));
@@ -707,29 +741,21 @@
 
         function liveCaption(from, to, s) {
           var d = axisDelta(from, to);
-          if (d.cntr < 0.01 && d.wdth < 0.01 && d.wght < 0.01) {
-            d = axisDelta(keyframe(0), s);
-          }
-          var active = "wdth";
-          if (d.cntr > d[active]) active = "cntr";
-          if (d.wght > d[active]) active = "wght";
-          return [
-            {
-              label: "Width",
-              value: String(Math.round(s.wdth)),
-              active: active === "wdth",
-            },
-            {
-              label: "Contrast",
-              value: String(Math.round(s.cntr)),
-              active: active === "cntr",
-            },
-            {
-              label: "Weight",
-              value: String(Math.round(s.wght)),
-              active: active === "wght",
-            },
-          ];
+          var idle = CAPTION_AXES.every(function (ax) {
+            return d[ax] < 0.01;
+          });
+          if (idle) d = axisDelta(keyframe(0), s);
+          var active = CAPTION_AXES[0];
+          CAPTION_AXES.forEach(function (ax) {
+            if (d[ax] > d[active]) active = ax;
+          });
+          return CAPTION_AXES.map(function (ax) {
+            return {
+              label: AXIS_META[ax].label,
+              value: String(Math.round(s[ax])),
+              active: ax === active,
+            };
+          });
         }
 
         var lastCaption = "";
@@ -767,8 +793,17 @@
           var input = document.getElementById("stageCaption");
           if (!input) return;
           input.readOnly = true;
-          input.placeholder = "live: Width / Contrast / Weight";
-          input.title = "stacked Width, Contrast, and Weight; inactive axes are dimmed";
+          input.placeholder =
+            "live: " +
+            CAPTION_AXES.map(function (ax) {
+              return AXIS_META[ax].label;
+            }).join(" / ");
+          input.title =
+            "stacked " +
+            CAPTION_AXES.map(function (ax) {
+              return AXIS_META[ax].label;
+            }).join(", ") +
+            "; inactive axes are dimmed";
         }
 
         function segmentAt(elapsed) {
@@ -811,11 +846,39 @@
           return SEQUENCE[Math.floor(t / seg) % SEQUENCE.length];
         }
 
+        function seqLabel() {
+          var parts = [];
+          for (var n = 0; n < KF_COUNT; n += 1) parts.push(String(n + 1));
+          parts.push("1");
+          return parts.join(" → ") + " · click a pose to hold";
+        }
+
+        function syncKfUi() {
+          var tabsEl = document.querySelector(".kf-tabs");
+          if (tabsEl) {
+            tabsEl.style.gridTemplateColumns =
+              KF_COUNT <= 3 ? "repeat(" + KF_COUNT + ", 1fr)" : "1fr 1fr 1fr";
+          }
+          for (var i = 0; i < MAX_KF; i += 1) {
+            var show = i < KF_COUNT;
+            if (kfTabs[i]) kfTabs[i].hidden = !show;
+            if (kfPoses[i] && !show) kfPoses[i].classList.remove("is-on");
+          }
+        }
+
+        function applyDefaults() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || key === "ch") return;
+            els[key].value = DEFAULTS[key];
+          });
+          if (els.ch) els.ch.value = DEFAULT_CHAR;
+        }
+
         function paintLiveTab(elapsed) {
           var live = liveKf(elapsed);
           if (live === lastLiveKf) return;
           lastLiveKf = live;
-          for (var p = 0; p < KF_COUNT; p += 1) {
+          for (var p = 0; p < MAX_KF; p += 1) {
             if (kfTabs[p]) kfTabs[p].classList.toggle("is-live", p === live);
           }
         }
@@ -830,20 +893,16 @@
             }
             if (kfTabVals[i]) {
               var pose = keyframe(i);
-              kfTabVals[i].innerHTML =
-                "wdth " +
-                Math.round(pose.wdth) +
-                "<br>CNTR " +
-                Math.round(pose.cntr) +
-                "<br>wght " +
-                Math.round(pose.wght);
+              kfTabVals[i].innerHTML = CAPTION_AXES.map(function (ax) {
+                return AXIS_META[ax].tag + " " + Math.round(pose[ax]);
+              }).join("<br>");
             }
           }
           if (kfSeq) {
             kfSeq.textContent =
               holdKf >= 0
                 ? "holding pose " + (holdKf + 1) + " · click again to play"
-                : "1 → 2 → 3 → 4 → 5 → 6 → 1 · click a pose to hold";
+                : seqLabel();
           }
         }
 
@@ -1011,7 +1070,7 @@
         });
 
         kfTabs.forEach(function (tab, i) {
-          if (!tab) return;
+          if (!tab || i >= KF_COUNT) return;
           tab.addEventListener("click", function () {
             if (holdKf === i) restart();
             else setActiveKf(i, true);
@@ -1030,7 +1089,9 @@
 
         glyph.textContent = DEFAULT_CHAR;
         document.title = DEFAULT_CHAR;
+        applyDefaults();
         loadSaved();
+        syncKfUi();
         applyVars();
         paintVals();
         paintKfTabs();
@@ -1042,7 +1103,13 @@
         window.AnimatorExport = {
           stage: document.getElementById("stage"),
           filename: function () {
-            return "glyph-cycle-" + (els.ch.value || DEFAULT_CHAR) + ".mp4";
+            return (
+              "glyph-cycle-" +
+              (els.ch.value || DEFAULT_CHAR) +
+              "-" +
+              PRESET_NAME +
+              ".mp4"
+            );
           },
           durationMs: durationMs,
           seek: function (ms) {
