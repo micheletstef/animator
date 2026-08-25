@@ -275,7 +275,7 @@
     </style>
     <link rel="stylesheet" href="../../animation-chrome.css?v=19" />
   </head>
-  <body>
+  <body data-split-caption>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="weight cascade">
@@ -422,7 +422,7 @@ Layering</textarea>
 
     </aside>
 
-    <script src="artboard-view.js?v=24"></script>
+    <script src="artboard-view.js?v=25"></script>
     <script>
       (function () {
         var W_MIN = 200;
@@ -608,19 +608,75 @@ Layering</textarea>
           return "";
         }
 
-        var lastLiveCaption = null;
-        function applyLiveCaption(familyId) {
-          var name = familyLabel(familyId);
-          var base = captionBase().replace(/^\s+|\s+$/g, "");
-          var text = name && base ? name + " · " + base : name || base;
-          if (text === lastLiveCaption) return;
-          lastLiveCaption = text;
-          if (window.ArtboardView && window.ArtboardView.setCaption) {
-            window.ArtboardView.setCaption(text);
-          } else {
-            var el = document.querySelector(".stage-caption");
-            if (el) el.textContent = text;
+        function stripFamilyPrefix(text) {
+          var s = String(text == null ? "" : text).replace(/^\s+|\s+$/g, "");
+          var i;
+          var prefixes;
+          var p;
+          for (i = 0; i < FAMILIES.length; i++) {
+            prefixes = [
+              FAMILIES[i].label + " · ",
+              FAMILIES[i].label + " — ",
+              FAMILIES[i].label + " - ",
+            ];
+            for (p = 0; p < prefixes.length; p++) {
+              if (s.indexOf(prefixes[p]) === 0) return s.slice(prefixes[p].length);
+            }
           }
+          return s;
+        }
+
+        var currentFamilyId = "standard";
+        var origSetCaption = null;
+        var lastPaintKey = "";
+
+        function paintFamilyCaption(raw) {
+          var name = familyLabel(currentFamilyId);
+          var base = stripFamilyPrefix(raw == null ? captionBase() : raw);
+          var key = name + "\t" + base;
+          if (key === lastPaintKey) return;
+          lastPaintKey = key;
+          if (origSetCaption) {
+            if (name) {
+              origSetCaption([{ label: name, value: base, active: true }]);
+            } else {
+              origSetCaption(base);
+            }
+            return;
+          }
+          var el =
+            document.querySelector("#stage > .stage-caption") ||
+            document.querySelector(".stage-caption");
+          if (!el) {
+            var stage = document.getElementById("stage");
+            if (!stage) return;
+            el = document.createElement("p");
+            el.className = "stage-caption";
+            stage.appendChild(el);
+          }
+          el.textContent = name && base ? name + " · " + base : name || base;
+        }
+
+        function installCaptionHook() {
+          if (!window.ArtboardView || typeof window.ArtboardView.setCaption !== "function") {
+            return;
+          }
+          if (window.ArtboardView._cascadeCaption) return;
+          origSetCaption = window.ArtboardView.setCaption;
+          window.ArtboardView._cascadeCaption = true;
+          window.ArtboardView.setCaption = function (text) {
+            if (Array.isArray(text)) {
+              origSetCaption(text);
+              return;
+            }
+            paintFamilyCaption(text);
+          };
+        }
+
+        function applyLiveCaption(familyId) {
+          if (familyId) currentFamilyId = familyId;
+          installCaptionHook();
+          paintFamilyCaption();
         }
 
         function stepMs(n) {
@@ -930,12 +986,12 @@ Layering</textarea>
         var captionInput = document.getElementById("stageCaption");
         if (captionInput) {
           captionInput.addEventListener("input", function () {
-            lastLiveCaption = null;
             applyLiveCaption(sample(playing ? performance.now() - t0 : 0).activeFamily);
           });
         }
 
         loadSaved();
+        installCaptionHook();
         applyVars();
         paintVals();
         buildLockup();
