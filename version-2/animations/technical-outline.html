@@ -139,7 +139,7 @@
         align-items: baseline;
         min-height: 0;
         padding: 0;
-        font-size: 26px;
+        font-size: 22px;
         line-height: 1;
         color: var(--caption, var(--fg));
         background: transparent;
@@ -165,7 +165,26 @@
       }
 
       .var-readout-value {
+        display: inline-block;
         font-variant-numeric: tabular-nums;
+        text-align: left;
+      }
+
+      #readoutWght {
+        min-width: 4ch;
+      }
+
+      #readoutCntr,
+      #readoutWdth {
+        min-width: 3ch;
+      }
+
+      #readoutSlnt {
+        min-width: 2ch;
+      }
+
+      .var-readout-item:last-child .var-readout-value {
+        text-align: right;
       }
 
       .panel {
@@ -402,7 +421,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=28" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=30" />
   </head>
   <body data-no-caption>
     <div class="stage-wrap" id="stageWrap">

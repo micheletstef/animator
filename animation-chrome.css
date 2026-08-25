@@ -324,7 +324,7 @@ body,
   padding: 0;
   color: var(--caption, var(--fg));
   font-family: "IkarusPlusVariable", sans-serif;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 500;
   font-style: normal;
   font-synthesis: none;
@@ -358,7 +358,27 @@ body,
 }
 
 .stage .var-readout-value {
+  display: inline-block;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "kern" 1, "liga" 1;
+  text-align: left;
+}
+
+.stage #readoutWght {
+  min-width: 4ch;
+}
+
+.stage #readoutCntr,
+.stage #readoutWdth {
+  min-width: 3ch;
+}
+
+.stage #readoutSlnt {
+  min-width: 2ch;
+}
+
+.stage .var-readout-item:last-child .var-readout-value {
+  text-align: right;
 }
 
 .stage .stage-caption.is-split {
