@@ -116,19 +116,20 @@
         right: 0;
         top: 50%;
         height: 0;
+        line-height: 0;
+        font-size: 0;
+        text-align: center;
         overflow: visible;
-        display: flex;
-        align-items: baseline;
-        justify-content: center;
       }
 
       .glyph {
+        display: inline;
         font-size: calc(var(--fs) * 1px);
         line-height: 1;
         letter-spacing: calc(var(--tracking) * 1em);
         white-space: nowrap;
         font-variation-settings: inherit;
-        display: block;
+        vertical-align: baseline;
       }
 
       .panel {
@@ -616,8 +617,9 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v9:" + PRESET_NAME;
+        var LS_KEY = "animator:v2:glyph-cycle:v10:" + PRESET_NAME;
         var OLD_LS_KEYS = [
+          "animator:v2:glyph-cycle:v9:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v8:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v7:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
           "animator:v2:glyph-cycle:v6:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
