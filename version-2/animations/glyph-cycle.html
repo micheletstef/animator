@@ -106,17 +106,20 @@
         bottom: var(--guide-b, calc(var(--pad-b) * 1px));
         left: var(--guide-l, calc(var(--pad-l) * 1px));
         z-index: 3;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
+        overflow: visible;
         transform: translateY(calc(var(--oy) * 1px));
       }
 
       .glyph-rail {
-        display: flex;
-        align-items: baseline;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
         height: 0;
         overflow: visible;
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
       }
 
       .glyph {
@@ -613,8 +616,9 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v8:" + PRESET_NAME;
+        var LS_KEY = "animator:v2:glyph-cycle:v9:" + PRESET_NAME;
         var OLD_LS_KEYS = [
+          "animator:v2:glyph-cycle:v8:" + PRESET_NAME,
           "animator:v2:glyph-cycle:v7:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
           "animator:v2:glyph-cycle:v6:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
         ];
@@ -1099,6 +1103,7 @@
               hasLocal = true;
             }
           }
+          if (hasLocal) delete local.oy;
           return hasLocal ? local : null;
         }
 
