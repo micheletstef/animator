@@ -192,10 +192,8 @@
       }
 
       .matrix-row {
-        display: flex;
-        align-items: start;
-        justify-content: flex-start;
-        gap: 0;
+        position: relative;
+        display: block;
         flex: 0 0 auto;
         width: 100%;
         height: calc(var(--glyph-size) * var(--lh) * 1px);
@@ -204,24 +202,17 @@
       }
 
       .cell {
-        position: relative;
+        position: absolute;
+        top: 0;
+        left: 0;
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
-        flex: 0 0 auto;
         width: auto;
         min-width: 0;
         user-select: none;
         height: 100%;
         overflow: visible;
-      }
-
-      .matrix-row > .cell:nth-child(1) {
-        margin-right: calc(var(--col-gap-1) * 1px);
-      }
-
-      .matrix-row > .cell:nth-child(2) {
-        margin-right: calc(var(--col-gap-2) * 1px);
       }
 
       .measure {
@@ -294,7 +285,7 @@
         padding: 0;
         text-align: center;
         font-family: "IkarusPlusVariable", sans-serif;
-        font-size: calc(var(--metric-size) * 1px);
+        font-size: calc(var(--metric-size) * 0.7 * 1px);
         font-weight: 500;
         font-style: normal;
         font-synthesis: none;
@@ -550,8 +541,12 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=37" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
     <style>
+      .stage .stage-caption {
+        font-size: 20px;
+      }
+
       .stage .guide-margin {
         box-shadow: 0 0 0 2px #ff00ff;
       }
@@ -1069,8 +1064,51 @@
           return 1;
         }
 
+        function layoutColumnJustify(zoom) {
+          if (!cells.length) return;
+          var rowEl = cells[0].cell.parentNode;
+          if (!rowEl) return;
+          var avail = rowEl.getBoundingClientRect().width / zoom;
+          if (!isFinite(avail) || avail < 1) return;
+
+          var g1 = parseFloat(els.g0.value);
+          var g2 = parseFloat(els.g1.value);
+          if (!isFinite(g1)) g1 = 40;
+          if (!isFinite(g2)) g2 = 40;
+          var t1 = Math.max(0.001, g1 + 80);
+          var t2 = Math.max(0.001, g2 + 80);
+          var tsum = t1 + t2;
+          var r;
+          var i;
+          var rowCells;
+          var widths;
+          var inner;
+          var space1;
+          var xs;
+
+          for (r = 0; r < ROW_COUNT; r++) {
+            rowCells = [];
+            widths = [];
+            for (i = 0; i < cells.length; i++) {
+              if (cells[i].row !== r) continue;
+              rowCells.push(cells[i]);
+              var gw = cells[i].glyph.getBoundingClientRect().width / zoom;
+              widths.push(gw > 0 ? gw : 0);
+            }
+            if (rowCells.length !== COL_COUNT) continue;
+            inner = avail - widths[0] - widths[1] - widths[2];
+            if (inner < 0) inner = 0;
+            space1 = inner * (t1 / tsum);
+            xs = [0, widths[0] + space1, avail - widths[2]];
+            for (i = 0; i < COL_COUNT; i++) {
+              rowCells[i].cell.style.left = xs[i] + "px";
+            }
+          }
+        }
+
         function layoutGuides() {
           var zoom = viewScale();
+          layoutColumnJustify(zoom);
           var rowStats = [];
           var r;
           var i;
@@ -1141,6 +1179,7 @@
 
             var metricSize = parseFloat(els.ms.value);
             if (!isFinite(metricSize)) metricSize = 26;
+            metricSize *= 0.7;
 
             if (c.metricLabel) {
               c.metricLabel.style.display = "block";
@@ -1155,7 +1194,7 @@
               c.metricFamily.style.width = "auto";
               c.metricFamily.style.top = lineTop + lineHeight / 2 + "px";
               c.metricFamily.style.transform =
-                "translate(-50%, -50%) rotate(90deg)";
+                "translate(-50%, -50%) rotate(-90deg)";
             }
             if (c.metricWeight) {
               c.metricWeight.style.display = "block";
