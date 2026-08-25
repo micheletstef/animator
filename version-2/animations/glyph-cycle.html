@@ -228,7 +228,7 @@
 
       .kf-tabs {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
         gap: 6px;
         margin-bottom: 10px;
       }
@@ -374,7 +374,7 @@
       <div class="group">
         <p class="group-title">keyframes</p>
         <p class="now" id="nowReadout">wght 1000 · wdth 130 · CNTR 0 · slnt 0</p>
-        <p class="kf-seq" id="kfSeq">1 → 2 → 3 → 2 → 1 · click a pose to hold</p>
+        <p class="kf-seq" id="kfSeq">1 → 2 → 3 → 4 → 1 · click a pose to hold</p>
         <div class="kf-tabs" role="tablist" aria-label="poses">
           <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
             <span class="kf-tab-n">1</span>
@@ -387,6 +387,10 @@
           <button type="button" class="kf-tab" id="kfTab2" data-kf="2" role="tab" aria-selected="false">
             <span class="kf-tab-n">3</span>
             <span class="kf-tab-v" id="kfTab2Val">wdth 65<br />CNTR 100</span>
+          </button>
+          <button type="button" class="kf-tab" id="kfTab3" data-kf="3" role="tab" aria-selected="false">
+            <span class="kf-tab-n">4</span>
+            <span class="kf-tab-v" id="kfTab3Val">wdth 65<br />CNTR 0</span>
           </button>
         </div>
         <div class="kf-pose is-on" id="kfPose0">
@@ -455,6 +459,28 @@
             <span class="val" id="cntr2Val">100</span>
           </div>
         </div>
+        <div class="kf-pose" id="kfPose3">
+          <div class="row">
+            <label for="slnt3">slnt</label>
+            <input id="slnt3" type="range" min="-12" max="0" step="0.25" value="0" />
+            <span class="val" id="slnt3Val">0</span>
+          </div>
+          <div class="row">
+            <label for="wdth3">wdth</label>
+            <input id="wdth3" type="range" min="65" max="130" step="1" value="65" />
+            <span class="val" id="wdth3Val">65</span>
+          </div>
+          <div class="row">
+            <label for="wght3">wght</label>
+            <input id="wght3" type="range" min="200" max="1000" step="1" value="1000" />
+            <span class="val" id="wght3Val">1000</span>
+          </div>
+          <div class="row">
+            <label for="cntr3">CNTR</label>
+            <input id="cntr3" type="range" min="0" max="100" step="1" value="0" />
+            <span class="val" id="cntr3Val">0</span>
+          </div>
+        </div>
       </div>
 
       <div class="group">
@@ -488,11 +514,12 @@
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v3:" + encodeURIComponent(DEFAULT_CHAR);
+        var LS_KEY = "animator:v2:glyph-cycle:v4:" + encodeURIComponent(DEFAULT_CHAR);
         var LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
         var SHARED_KEYS = { fs: 1, tr: 1, oy: 1, bg: 1, fg: 1 };
 
-        var SEQUENCE = [0, 1, 2, 1];
+        var KF_COUNT = 4;
+        var SEQUENCE = [0, 1, 2, 3];
 
         var DEFAULTS = {
           bg: "#d3d3d3",
@@ -504,15 +531,19 @@
           slnt0: 0,
           slnt1: 0,
           slnt2: 0,
+          slnt3: 0,
           wdth0: 130,
           wdth1: 130,
           wdth2: 65,
+          wdth3: 65,
           wght0: 1000,
           wght1: 1000,
           wght2: 1000,
+          wght3: 1000,
           cntr0: 0,
           cntr1: 100,
           cntr2: 100,
+          cntr3: 0,
           move: 1400,
           hold: 350,
         };
@@ -536,26 +567,19 @@
         if (els.ch) els.ch.value = DEFAULT_CHAR;
 
         ["slnt", "wdth", "wght", "cntr"].forEach(function (axis) {
-          for (var i = 0; i < 3; i += 1) {
+          for (var i = 0; i < KF_COUNT; i += 1) {
             vals[axis + i] = document.getElementById(axis + i + "Val");
           }
         });
 
-        var kfTabs = [
-          document.getElementById("kfTab0"),
-          document.getElementById("kfTab1"),
-          document.getElementById("kfTab2"),
-        ];
-        var kfTabVals = [
-          document.getElementById("kfTab0Val"),
-          document.getElementById("kfTab1Val"),
-          document.getElementById("kfTab2Val"),
-        ];
-        var kfPoses = [
-          document.getElementById("kfPose0"),
-          document.getElementById("kfPose1"),
-          document.getElementById("kfPose2"),
-        ];
+        var kfTabs = [];
+        var kfTabVals = [];
+        var kfPoses = [];
+        for (var k = 0; k < KF_COUNT; k += 1) {
+          kfTabs.push(document.getElementById("kfTab" + k));
+          kfTabVals.push(document.getElementById("kfTab" + k + "Val"));
+          kfPoses.push(document.getElementById("kfPose" + k));
+        }
         var kfSeq = document.getElementById("kfSeq");
 
         var t0 = 0;
@@ -719,13 +743,13 @@
           var live = liveKf(elapsed);
           if (live === lastLiveKf) return;
           lastLiveKf = live;
-          for (var p = 0; p < 3; p += 1) {
+          for (var p = 0; p < KF_COUNT; p += 1) {
             if (kfTabs[p]) kfTabs[p].classList.toggle("is-live", p === live);
           }
         }
 
         function paintKfTabs() {
-          for (var i = 0; i < 3; i += 1) {
+          for (var i = 0; i < KF_COUNT; i += 1) {
             var on = i === activeKf;
             if (kfPoses[i]) kfPoses[i].classList.toggle("is-on", on);
             if (kfTabs[i]) {
@@ -745,7 +769,7 @@
             kfSeq.textContent =
               holdKf >= 0
                 ? "holding pose " + (holdKf + 1) + " · click again to play"
-                : "1 → 2 → 3 → 2 → 1 · click a pose to hold";
+                : "1 → 2 → 3 → 4 → 1 · click a pose to hold";
           }
         }
 
