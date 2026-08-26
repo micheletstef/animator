@@ -653,5 +653,11 @@ body,
   fill: var(--bg);
   fill-opacity: 1;
   fill-rule: nonzero;
-  paint-order: fill stroke;
+  stroke: none;
+}
+
+.outline-layer .glyph-outline-stroke {
+  fill: none;
+  fill-opacity: 0;
+  stroke: currentColor;
 }

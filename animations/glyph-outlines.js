@@ -924,16 +924,25 @@
     var filled = pathFill && pathFill !== "none";
     var i = idx;
 
-    var pathEl = ensureChild(g, i, "path", "glyph-outline-path");
-    pathEl.setAttribute("d", outline.d);
-    pathEl.setAttribute("fill", filled ? pathFill : "none");
-    pathEl.setAttribute("fill-opacity", filled ? "1" : "0");
-    pathEl.setAttribute("fill-rule", "nonzero");
-    pathEl.setAttribute("paint-order", "fill stroke");
-    pathEl.setAttribute("stroke", strokeAttr || colors.path);
-    pathEl.setAttribute("stroke-width", String(style.strokeW));
-    pathEl.setAttribute("stroke-linejoin", "miter");
-    pathEl.setAttribute("stroke-miterlimit", "2.5");
+    if (filled) {
+      var fillEl = ensureChild(g, i, "path", "glyph-outline-path");
+      fillEl.setAttribute("d", outline.d);
+      fillEl.setAttribute("fill", pathFill);
+      fillEl.setAttribute("fill-opacity", "1");
+      fillEl.setAttribute("fill-rule", "nonzero");
+      fillEl.setAttribute("stroke", "none");
+      fillEl.setAttribute("stroke-width", "0");
+      i++;
+    }
+
+    var strokeEl = ensureChild(g, i, "path", "glyph-outline-stroke");
+    strokeEl.setAttribute("d", outline.d);
+    strokeEl.setAttribute("fill", "none");
+    strokeEl.setAttribute("fill-opacity", "0");
+    strokeEl.setAttribute("stroke", strokeAttr || colors.path);
+    strokeEl.setAttribute("stroke-width", String(style.strokeW));
+    strokeEl.setAttribute("stroke-linejoin", "miter");
+    strokeEl.setAttribute("stroke-miterlimit", "2.5");
     i++;
 
     if (style.handleSize > 0) {

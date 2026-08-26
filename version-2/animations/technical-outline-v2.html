@@ -118,11 +118,16 @@
       }
 
       .outline-layer .glyph-outline-path {
-        stroke: currentColor;
         fill: var(--bg);
         fill-opacity: 1;
         fill-rule: nonzero;
-        paint-order: fill stroke;
+        stroke: none;
+      }
+
+      .outline-layer .glyph-outline-stroke {
+        fill: none;
+        fill-opacity: 0;
+        stroke: currentColor;
       }
 
       .outline-layer .glyph-outline-handle-line {
@@ -471,7 +476,7 @@
         cursor: wait;
       }
     </style>
-    <link rel="stylesheet" href="../../animation-chrome.css?v=36" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=37" />
   </head>
   <body data-no-caption>
     <div class="stage-wrap" id="stageWrap">
@@ -714,7 +719,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=13"></script>
+    <script src="../../animations/glyph-outlines.js?v=14"></script>
     <script src="artboard-view.js?v=24"></script>
     <script>
       (function () {
