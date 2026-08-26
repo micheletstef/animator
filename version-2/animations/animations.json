@@ -19,6 +19,12 @@
       "mtime": 1787578570
     },
     {
+      "id": "alternates-list",
+      "label": "alternates list",
+      "url": "animations/alternates-list.html",
+      "mtime": 1787759000
+    },
+    {
       "id": "nine",
       "label": "Single – 9 (full)",
       "url": "animations/glyph-cycle.html?ch=9&preset=full",
@@ -43,6 +49,12 @@
       "mtime": 1787684400
     },
     {
+      "id": "s-nine-g",
+      "label": "Single – S → 9 → G",
+      "url": "animations/glyph-cycle.html?seq=S:contrast,9:full,G:weight",
+      "mtime": 1787755000
+    },
+    {
       "id": "width-swap",
       "label": "width swap",
       "url": "animations/width-swap.html",
@@ -53,6 +65,18 @@
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",
       "mtime": 1787672500
+    },
+    {
+      "id": "two-state",
+      "label": "two state",
+      "url": "animations/two-state.html",
+      "mtime": 1787748800
+    },
+    {
+      "id": "weight-cascade-left",
+      "label": "weight cascade left",
+      "url": "animations/weight-cascade-left.html",
+      "mtime": 1787748000
     },
     {
       "id": "psi-count",

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>alternates list</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --fg: #000000;
+        --hl: #ee0000;
+        --pad-t: 120;
+        --pad-r: 80;
+        --pad-b: 120;
+        --pad-l: 80;
+        --fs: 92;
+        --lh: 0.94;
+        --tracking: -0.02;
+        --oy: 0;
+        --wght: 745;
+        --wdth: 78;
+        --cntr: 0;
+        --slnt: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: none;
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-variation-settings:
+          "wght" var(--wght),
+          "wdth" var(--wdth),
+          "CNTR" var(--cntr),
+          "slnt" var(--slnt);
+        pointer-events: none;
+      }
+
+      .lockup {
+        position: absolute;
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
+        transform: translateY(calc(var(--oy) * 1px));
+        font-feature-settings: "liga" 0, "calt" 0, "kern" 1;
+      }
+
+      .line {
+        display: block;
+        white-space: nowrap;
+        font-size: calc(var(--fs) * 1px);
+      }
+
+      .ch {
+        color: var(--fg);
+        font-feature-settings: inherit;
+        font-variant-ligatures: none;
+        font-kerning: none;
+      }
+
+      .alt-name.is-on,
+      .alt-name.is-on .ch,
+      .ch.is-hit {
+        color: var(--hl);
+      }
+
+      .ch-run {
+        letter-spacing: 0;
+        font-kerning: auto;
+      }
+
+      .lockup,
+      .line {
+        overflow: visible;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row input[type="text"],
+      .row textarea,
+      .row select {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #1f1f1f;
+        font: inherit;
+      }
+
+      .row textarea {
+        min-height: 168px;
+        resize: vertical;
+        line-height: 1.25;
+        white-space: pre;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 8px 0;
+        color: #9a9a9a;
+        font-size: 11px;
+      }
+
+      .panel .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .panel button {
+        flex: 1;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        padding: 6px 8px;
+        font: inherit;
+        text-transform: lowercase;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .panel button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+    </style>
+    <link rel="stylesheet" href="../../animation-chrome.css?v=23" />
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="alternates list animation">
+          <div class="lockup" id="lockup"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">scroll to zoom · drag to pan · double-click to fit · 1080 × 1440</p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+        <div class="row">
+          <label for="hl">alt</label>
+          <input id="hl" type="color" value="#ee0000" />
+          <span class="val" id="hlVal">#ee0000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">content</p>
+        <div class="row">
+          <label for="tx">text</label>
+          <textarea id="tx" spellcheck="false" autocomplete="off">Schoolbook a
+Doublestorey g
+Alt l, Alt t, Alt y,
+Alt G, Alt G simple,
+Alt M, Alt Q,
+Alt R, Alt J, Alt &amp;,
+Alt comma,
+Alt 1, Alt 3, Alt U,
+White Circled
+Round Punctuation,
+Spurless, Pointed</textarea>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="48" max="320" step="1" value="92" />
+          <span class="val" id="fsVal">92px</span>
+        </div>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.94" />
+          <span class="val" id="lhVal">0.94</span>
+        </div>
+        <div class="row">
+          <label for="tr">track</label>
+          <input id="tr" type="range" min="-1" max="1" step="0.005" value="-0.02" />
+          <span class="val" id="trVal">-0.02</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">variables</p>
+        <div class="row">
+          <label for="slnt">slnt</label>
+          <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slntVal">0</span>
+        </div>
+        <div class="row">
+          <label for="wdth">wdth</label>
+          <input id="wdth" type="range" min="65" max="130" step="1" value="78" />
+          <span class="val" id="wdthVal">78</span>
+        </div>
+        <div class="row">
+          <label for="wght">wght</label>
+          <input id="wght" type="range" min="200" max="1000" step="1" value="745" />
+          <span class="val" id="wghtVal">745</span>
+        </div>
+        <div class="row">
+          <label for="cntr">CNTR</label>
+          <input id="cntr" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="cntrVal">0</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion</p>
+        <p class="now" id="nowReadout">hold</p>
+        <div class="row">
+          <label for="step">step</label>
+          <input id="step" type="range" min="80" max="1200" step="10" value="520" />
+          <span class="val" id="stepVal">520ms</span>
+        </div>
+        <div class="row">
+          <label for="hold0">hold in</label>
+          <input id="hold0" type="range" min="0" max="2000" step="50" value="600" />
+          <span class="val" id="hold0Val">600ms</span>
+        </div>
+        <div class="row">
+          <label for="hold1">hold out</label>
+          <input id="hold1" type="range" min="0" max="3000" step="50" value="900" />
+          <span class="val" id="hold1Val">900ms</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <script src="artboard-view.js?v=24"></script>
+    <script>
+      (function () {
+        var DEFAULT_TEXT =
+          "Schoolbook a\nDoublestorey g\nAlt l, Alt t, Alt y,\nAlt G, Alt G simple,\nAlt M, Alt Q,\nAlt R, Alt J, Alt &,\nAlt comma,\nAlt 1, Alt 3, Alt U,\nWhite Circled\nRound Punctuation,\nSpurless, Pointed";
+
+        var ALTS = [
+          { label: "Schoolbook a", feat: "ss01", hits: "a" },
+          { label: "Doublestorey g", feat: "ss02", hits: "g" },
+          { label: "Alt l", feat: "ss03", hits: "l" },
+          { label: "Alt t", feat: "ss04", hits: "t" },
+          { label: "Alt y", feat: "ss05", hits: "y" },
+          { label: "Alt G", feat: "ss06", hits: "G" },
+          { label: "Alt G simple", feat: "ss07", hits: "G" },
+          { label: "Alt M", feat: "ss08", hits: "M" },
+          { label: "Alt Q", feat: "ss09", hits: "Q" },
+          { label: "Alt R", feat: "ss10", hits: "R" },
+          { label: "Alt J", feat: "ss11", hits: "J" },
+          { label: "Alt &", feat: "ss12", hits: "&" },
+          { label: "Alt comma", feat: "ss13", hits: ",;" },
+          { label: "Alt 1", feat: "ss14", hits: "1" },
+          { label: "Alt 3", feat: "ss15", hits: "3" },
+          { label: "White Circled", feat: "ss16", hits: "0123456789" },
+          { label: "Alt U", feat: "ss17", hits: "U" },
+          { label: "Round Punctuation", feat: "ss18", hits: "ij.,:;!?" },
+          { label: "Spurless", feat: "ss19", hits: "abdpq" },
+          { label: "Pointed", feat: "ss20", hits: "AMVWvw" },
+        ];
+
+        var LABELS = ALTS.slice().sort(function (a, b) {
+          return b.label.length - a.label.length;
+        });
+
+        var LS_KEY = "animator:v2:alternates-list:settings:v1";
+        var root = document.documentElement;
+        var lockup = document.getElementById("lockup");
+        var nowReadout = document.getElementById("nowReadout");
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          hl: "#ee0000",
+          tx: DEFAULT_TEXT,
+          fs: 92,
+          lh: 0.94,
+          tr: -0.02,
+          oy: 0,
+          slnt: 0,
+          wdth: 78,
+          wght: 745,
+          cntr: 0,
+          step: 520,
+          hold0: 600,
+          hold1: 900,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
+
+        var els = {
+          bg: document.getElementById("bg"),
+          fg: document.getElementById("fg"),
+          hl: document.getElementById("hl"),
+          tx: document.getElementById("tx"),
+          fs: document.getElementById("fs"),
+          lh: document.getElementById("lh"),
+          tr: document.getElementById("tr"),
+          oy: document.getElementById("oy"),
+          slnt: document.getElementById("slnt"),
+          wdth: document.getElementById("wdth"),
+          wght: document.getElementById("wght"),
+          cntr: document.getElementById("cntr"),
+          step: document.getElementById("step"),
+          hold0: document.getElementById("hold0"),
+          hold1: document.getElementById("hold1"),
+        };
+
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          hl: document.getElementById("hlVal"),
+          fs: document.getElementById("fsVal"),
+          lh: document.getElementById("lhVal"),
+          tr: document.getElementById("trVal"),
+          oy: document.getElementById("oyVal"),
+          slnt: document.getElementById("slntVal"),
+          wdth: document.getElementById("wdthVal"),
+          wght: document.getElementById("wghtVal"),
+          cntr: document.getElementById("cntrVal"),
+          step: document.getElementById("stepVal"),
+          hold0: document.getElementById("hold0Val"),
+          hold1: document.getElementById("hold1Val"),
+        };
+
+        var nameNodes = [];
+        var charNodes = [];
+        var lastIndex = -2;
+        var t0 = 0;
+        var raf = 0;
+        var playing = true;
+
+        function isDigit(ch) {
+          return ch >= "0" && ch <= "9";
+        }
+
+        function isHit(alt, ch) {
+          return !!(alt && alt.hits && alt.hits.indexOf(ch) !== -1);
+        }
+
+        function tokenizeLine(line) {
+          var tokens = [];
+          var i = 0;
+          while (i < line.length) {
+            var hit = null;
+            var n = 0;
+            for (var a = 0; a < LABELS.length; a += 1) {
+              var lab = LABELS[a];
+              if (
+                lab.label.length > n &&
+                line.substr(i, lab.label.length) === lab.label
+              ) {
+                hit = lab;
+                n = lab.label.length;
+              }
+            }
+            if (hit) {
+              tokens.push({ text: hit.label, alt: hit });
+              i += hit.label.length;
+              continue;
+            }
+            var ch = line.charAt(i);
+            if (isDigit(ch)) {
+              var j = i;
+              while (j < line.length && isDigit(line.charAt(j))) j += 1;
+              tokens.push({ text: line.slice(i, j), alt: null, circled: true });
+              i = j;
+              continue;
+            }
+            tokens.push({ text: ch, alt: null });
+            i += 1;
+          }
+          return tokens;
+        }
+
+        function appendChars(parent, text, circled) {
+          if (circled && text.length) {
+            var run = document.createElement("span");
+            run.className = "ch ch-run";
+            run.textContent = text;
+            parent.appendChild(run);
+            charNodes.push({ el: run, text: text });
+            return;
+          }
+          for (var i = 0; i < text.length; i += 1) {
+            var span = document.createElement("span");
+            span.className = "ch";
+            span.textContent = text.charAt(i);
+            parent.appendChild(span);
+            charNodes.push({ el: span, text: text.charAt(i) });
+          }
+        }
+
+        function applyFeature(feat) {
+          if (!feat) {
+            lockup.style.fontFeatureSettings = '"liga" 0, "calt" 0, "kern" 1';
+            return;
+          }
+          lockup.style.fontFeatureSettings =
+            '"' + feat + '" 1, "liga" 0, "calt" 0, "kern" 1';
+        }
+
+        function buildLockup(text) {
+          lockup.innerHTML = "";
+          nameNodes = [];
+          charNodes = [];
+          var lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
+          if (lines.length === 1 && lines[0] === "") lines = [""];
+          lines.forEach(function (line) {
+            var lineEl = document.createElement("div");
+            lineEl.className = "line";
+            tokenizeLine(line).forEach(function (tok) {
+              if (tok.alt) {
+                var wrap = document.createElement("span");
+                wrap.className = "alt-name";
+                wrap.setAttribute("data-feat", tok.alt.feat);
+                appendChars(wrap, tok.text, false);
+                nameNodes.push({ el: wrap, alt: tok.alt });
+                lineEl.appendChild(wrap);
+                return;
+              }
+              appendChars(lineEl, tok.text, !!tok.circled);
+            });
+            lockup.appendChild(lineEl);
+          });
+          lastIndex = -2;
+        }
+
+        function setActive(index) {
+          if (index === lastIndex) return;
+          lastIndex = index;
+          var alt = index >= 0 && index < ALTS.length ? ALTS[index] : null;
+          applyFeature(alt ? alt.feat : null);
+          nameNodes.forEach(function (node) {
+            node.el.classList.toggle("is-on", !!(alt && node.alt.feat === alt.feat));
+          });
+          charNodes.forEach(function (node) {
+            var on = false;
+            if (alt) {
+              var t = node.text;
+              for (var i = 0; i < t.length; i += 1) {
+                if (isHit(alt, t.charAt(i))) {
+                  on = true;
+                  break;
+                }
+              }
+            }
+            node.el.classList.toggle("is-hit", on);
+          });
+          if (nowReadout) {
+            nowReadout.textContent = alt ? alt.label : "hold";
+          }
+        }
+
+        function cycleMs() {
+          var n = ALTS.length;
+          var step = Math.max(40, Number(els.step.value) || 520);
+          var hold0 = Math.max(0, Number(els.hold0.value) || 0);
+          var hold1 = Math.max(0, Number(els.hold1.value) || 0);
+          return hold0 + n * step + hold1;
+        }
+
+        function applyElapsed(elapsed) {
+          var n = ALTS.length;
+          var step = Math.max(40, Number(els.step.value) || 520);
+          var hold0 = Math.max(0, Number(els.hold0.value) || 0);
+          var total = cycleMs();
+          if (total <= 0) total = 1;
+          elapsed = elapsed % total;
+          if (elapsed < 0) elapsed += total;
+          var index;
+          if (elapsed < hold0) {
+            index = -1;
+          } else if (elapsed < hold0 + n * step) {
+            index = Math.min(n - 1, Math.floor((elapsed - hold0) / step));
+          } else {
+            index = n - 1;
+          }
+          setActive(index);
+        }
+
+        function frame(now) {
+          applyElapsed(now - t0);
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function durationMs() {
+          return Math.max(1, cycleMs());
+        }
+
+        function stopPlayback() {
+          playing = false;
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
+        }
+
+        function restart() {
+          t0 = performance.now();
+          lastIndex = -2;
+          setActive(-1);
+        }
+
+        function fmt(key, v) {
+          if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (key === "tx") return String(v);
+          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "lh" || key === "tr") return Number(v).toFixed(2);
+          if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
+          if (key === "wdth" || key === "wght" || key === "cntr") {
+            return String(Math.round(Number(v)));
+          }
+          return Math.round(Number(v)) + "ms";
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--hl", els.hl.value);
+          root.style.setProperty("--fs", String(els.fs.value));
+          root.style.setProperty("--lh", String(els.lh.value));
+          root.style.setProperty("--tracking", String(els.tr.value));
+          root.style.setProperty("--oy", String(els.oy.value));
+          root.style.setProperty("--slnt", String(els.slnt.value));
+          root.style.setProperty("--wdth", String(els.wdth.value));
+          root.style.setProperty("--wght", String(els.wght.value));
+          root.style.setProperty("--cntr", String(els.cntr.value));
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = fmt(key, els[key].value);
+          });
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            data[key] = els[key].value;
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw = null;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
+          if (!raw) return;
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            els[key].value = data[key];
+          });
+        }
+
+        function reset() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].value = DEFAULTS[key];
+          });
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (e) {}
+          buildLockup(els.tx.value);
+          applyVars();
+          paintVals();
+          restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          els[key].addEventListener("input", function () {
+            if (key === "tx") buildLockup(els.tx.value);
+            applyVars();
+            paintVals();
+            save();
+            if (key === "tx") restart();
+          });
+        });
+
+        loadSaved();
+        buildLockup(els.tx.value);
+        applyVars();
+        paintVals();
+        restart();
+        raf = requestAnimationFrame(frame);
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "alternates-list.mp4",
+          durationMs: durationMs,
+          seek: applyElapsed,
+          stop: stopPlayback,
+          start: startPlayback,
+        };
+      })();
+    </script>
+    <script type="module" src="../../web-export.js?v=9"></script>
+  </body>
+</html>

@@ -219,6 +219,11 @@
         font: inherit;
       }
 
+      .row input[type="text"][readonly] {
+        color: #9a9a9a;
+        cursor: default;
+      }
+
       .row .val {
         text-align: right;
         color: #9a9a9a;
@@ -615,22 +620,79 @@
           },
         };
 
-        var DEFAULT_CHAR = queryParam("ch", "9");
-        var PRESET_NAME = queryParam("preset", "full");
-        if (!PRESETS[PRESET_NAME]) PRESET_NAME = "full";
-        var preset = PRESETS[PRESET_NAME];
+        function copyPose(p) {
+          return {
+            slnt: p.slnt,
+            wdth: p.wdth,
+            wght: p.wght,
+            cntr: p.cntr,
+            fs: p.fs,
+            tr: p.tr,
+          };
+        }
+
+        function parseClips() {
+          var raw = queryParam("seq", "");
+          if (!raw) return null;
+          var clips = [];
+          String(raw)
+            .split(",")
+            .forEach(function (part) {
+              var bits = String(part).split(":");
+              var ch = (bits[0] || "").trim();
+              var name = (bits[1] || "full").trim();
+              if (!ch) return;
+              if (!PRESETS[name]) name = "full";
+              var src = PRESETS[name];
+              clips.push({
+                ch: ch,
+                preset: name,
+                axes: src.axes.slice(),
+                poses: src.poses.map(copyPose),
+              });
+            });
+          return clips.length ? clips : null;
+        }
+
+        var CLIPS = parseClips();
+        var SEQ_LABEL = CLIPS
+          ? CLIPS.map(function (c) {
+              return c.ch;
+            }).join(" → ")
+          : "";
+        var DEFAULT_CHAR = CLIPS ? CLIPS[0].ch : queryParam("ch", "9");
+        var PRESET_NAME = CLIPS ? "seq" : queryParam("preset", "full");
+        if (!CLIPS && !PRESETS[PRESET_NAME]) PRESET_NAME = "full";
+        var preset = CLIPS
+          ? { poses: CLIPS[0].poses, axes: CLIPS[0].axes }
+          : PRESETS[PRESET_NAME];
         var glyph = document.getElementById("glyph");
         var nowReadout = document.getElementById("nowReadout");
         var root = document.documentElement;
-        var LS_KEY = "animator:v2:glyph-cycle:v12:" + PRESET_NAME;
-        var OLD_LS_KEYS = [
-          "animator:v2:glyph-cycle:v11:" + PRESET_NAME,
-          "animator:v2:glyph-cycle:v10:" + PRESET_NAME,
-          "animator:v2:glyph-cycle:v9:" + PRESET_NAME,
-          "animator:v2:glyph-cycle:v8:" + PRESET_NAME,
-          "animator:v2:glyph-cycle:v7:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
-          "animator:v2:glyph-cycle:v6:" + PRESET_NAME + ":" + encodeURIComponent(DEFAULT_CHAR),
-        ];
+        var LS_KEY = CLIPS
+          ? "animator:v2:glyph-cycle:v12:seq:" +
+            encodeURIComponent(
+              CLIPS.map(function (c) {
+                return c.ch + ":" + c.preset;
+              }).join(",")
+            )
+          : "animator:v2:glyph-cycle:v12:" + PRESET_NAME;
+        var OLD_LS_KEYS = CLIPS
+          ? []
+          : [
+              "animator:v2:glyph-cycle:v11:" + PRESET_NAME,
+              "animator:v2:glyph-cycle:v10:" + PRESET_NAME,
+              "animator:v2:glyph-cycle:v9:" + PRESET_NAME,
+              "animator:v2:glyph-cycle:v8:" + PRESET_NAME,
+              "animator:v2:glyph-cycle:v7:" +
+                PRESET_NAME +
+                ":" +
+                encodeURIComponent(DEFAULT_CHAR),
+              "animator:v2:glyph-cycle:v6:" +
+                PRESET_NAME +
+                ":" +
+                encodeURIComponent(DEFAULT_CHAR),
+            ];
         var OLD_LAYOUT_KEY = "animator:v2:glyph-cycle:layout:v2";
 
         var MAX_KF = 6;
@@ -721,6 +783,8 @@
         var activeKf = 0;
         var holdKf = -1;
         var lastLiveKf = -1;
+        var currentClipIndex = -1;
+        var SHARED_KEYS = ["bg", "fg", "fs", "oy", "move", "hold"];
 
         function easeInOutCubic(t) {
           return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -745,6 +809,70 @@
             fs: numOr(els.fs, 860),
             tr: numOr(els["tr" + i], 0),
           };
+        }
+
+        function poseOf(clip, i) {
+          var p = clip.poses[i];
+          return {
+            slnt: p.slnt,
+            wdth: p.wdth,
+            wght: p.wght,
+            cntr: p.cntr,
+            fs: numOr(els.fs, 860),
+            tr: p.tr != null ? p.tr : 0,
+          };
+        }
+
+        function syncDomToCurrentClip() {
+          if (!CLIPS || currentClipIndex < 0) return;
+          var clip = CLIPS[currentClipIndex];
+          for (var i = 0; i < clip.poses.length; i += 1) {
+            clip.poses[i] = {
+              slnt: numOr(els["slnt" + i], REST.slnt),
+              wdth: numOr(els["wdth" + i], REST.wdth),
+              wght: numOr(els["wght" + i], REST.wght),
+              cntr: numOr(els["cntr" + i], REST.cntr),
+              fs: REST.fs,
+              tr: numOr(els["tr" + i], REST.tr),
+            };
+          }
+        }
+
+        function resetClips() {
+          if (!CLIPS) return;
+          CLIPS.forEach(function (clip) {
+            var src = PRESETS[clip.preset];
+            clip.poses = src.poses.map(copyPose);
+          });
+          currentClipIndex = -1;
+        }
+
+        function enterClip(index) {
+          if (!CLIPS || index < 0 || index >= CLIPS.length) return;
+          if (index === currentClipIndex) return;
+          currentClipIndex = index;
+          var clip = CLIPS[index];
+          KF_COUNT = clip.poses.length;
+          SEQUENCE = [];
+          for (var si = 0; si < KF_COUNT; si += 1) SEQUENCE.push(si);
+          CAPTION_AXES = clip.axes;
+          glyph.textContent = clip.ch;
+          document.title = SEQ_LABEL;
+          for (var pi = 0; pi < clip.poses.length; pi += 1) {
+            var p = clip.poses[pi];
+            if (els["slnt" + pi]) els["slnt" + pi].value = p.slnt;
+            if (els["wdth" + pi]) els["wdth" + pi].value = p.wdth;
+            if (els["wght" + pi]) els["wght" + pi].value = p.wght;
+            if (els["cntr" + pi]) els["cntr" + pi].value = p.cntr;
+            if (els["tr" + pi]) els["tr" + pi].value = p.tr;
+          }
+          if (activeKf >= KF_COUNT) activeKf = 0;
+          lastCaption = "";
+          lastLiveKf = -1;
+          syncKfUi();
+          paintKfTabs();
+          paintVals();
+          lockLiveCaption();
         }
 
         function mix(a, b, t) {
@@ -889,11 +1017,58 @@
         function segmentAt(elapsed) {
           if (holdKf >= 0) {
             var held = keyframe(holdKf);
-            return { state: held, from: held, to: held };
+            return {
+              state: held,
+              from: held,
+              to: held,
+              poseIndex: holdKf,
+              clipIndex: currentClipIndex,
+            };
           }
           var hold = Math.max(0, Number(els.hold.value) || 0);
           var move = Math.max(40, Number(els.move.value) || 1400);
           var seg = hold + move;
+          if (CLIPS) {
+            var durations = [];
+            var total = 0;
+            for (var ci = 0; ci < CLIPS.length; ci += 1) {
+              var d = CLIPS[ci].poses.length * seg;
+              durations.push(d);
+              total += d;
+            }
+            if (total <= 0) total = 1;
+            var t = elapsed % total;
+            if (t < 0) t += total;
+            var acc = 0;
+            var clipIndex = 0;
+            var local = t;
+            for (var cj = 0; cj < CLIPS.length; cj += 1) {
+              if (t < acc + durations[cj] || cj === CLIPS.length - 1) {
+                clipIndex = cj;
+                local = t - acc;
+                break;
+              }
+              acc += durations[cj];
+            }
+            var clip = CLIPS[clipIndex];
+            var n = clip.poses.length;
+            if (n < 1) n = 1;
+            var i = Math.floor(local / seg) % n;
+            var localSeg = local - Math.floor(local / seg) * seg;
+            var from = poseOf(clip, i);
+            var to = poseOf(clip, (i + 1) % n);
+            var state =
+              localSeg < hold
+                ? from
+                : mix(from, to, easeInOutCubic((localSeg - hold) / move));
+            return {
+              state: state,
+              from: from,
+              to: to,
+              poseIndex: i,
+              clipIndex: clipIndex,
+            };
+          }
           var total = SEQUENCE.length * seg;
           if (total <= 0) total = 1;
           var t = elapsed % total;
@@ -906,31 +1081,35 @@
             local < hold
               ? from
               : mix(from, to, easeInOutCubic((local - hold) / move));
-          return { state: state, from: from, to: to };
+          return {
+            state: state,
+            from: from,
+            to: to,
+            poseIndex: SEQUENCE[i],
+            clipIndex: -1,
+          };
         }
 
         function applySegment(seg) {
+          if (CLIPS && seg.clipIndex != null && seg.clipIndex >= 0) {
+            enterClip(seg.clipIndex);
+          }
           applyState(seg.state);
           setLiveCaption(liveCaption(seg.from, seg.to, seg.state));
         }
 
         function liveKf(elapsed) {
           if (holdKf >= 0) return holdKf;
-          var hold = Math.max(0, Number(els.hold.value) || 0);
-          var move = Math.max(40, Number(els.move.value) || 1400);
-          var seg = hold + move;
-          var total = SEQUENCE.length * seg;
-          if (total <= 0) total = 1;
-          var t = elapsed % total;
-          if (t < 0) t += total;
-          return SEQUENCE[Math.floor(t / seg) % SEQUENCE.length];
+          var seg = segmentAt(elapsed);
+          return seg.poseIndex != null ? seg.poseIndex : 0;
         }
 
         function seqLabel() {
           var parts = [];
           for (var n = 0; n < KF_COUNT; n += 1) parts.push(String(n + 1));
           parts.push("1");
-          return parts.join(" → ") + " · click a pose to hold";
+          var pose = parts.join(" → ") + " · click a pose to hold";
+          return CLIPS ? SEQ_LABEL + " · " + pose : pose;
         }
 
         function syncKfUi() {
@@ -1004,6 +1183,13 @@
         function durationMs() {
           var hold = Math.max(0, Number(els.hold.value) || 0);
           var move = Math.max(40, Number(els.move.value) || 1400);
+          if (CLIPS) {
+            var total = 0;
+            for (var i = 0; i < CLIPS.length; i += 1) {
+              total += CLIPS[i].poses.length * (hold + move);
+            }
+            return Math.max(1, total);
+          }
           return Math.max(1, SEQUENCE.length * (hold + move));
         }
 
@@ -1052,8 +1238,15 @@
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--oy", String(els.oy.value));
-          glyph.textContent = els.ch.value || DEFAULT_CHAR;
-          document.title = glyph.textContent;
+          if (CLIPS) {
+            var clip =
+              currentClipIndex >= 0 ? CLIPS[currentClipIndex] : CLIPS[0];
+            glyph.textContent = clip.ch;
+            document.title = SEQ_LABEL;
+          } else {
+            glyph.textContent = els.ch.value || DEFAULT_CHAR;
+            document.title = glyph.textContent;
+          }
         }
 
         function paintVals() {
@@ -1082,7 +1275,8 @@
 
         function save() {
           var local = {};
-          Object.keys(DEFAULTS).forEach(function (key) {
+          var keys = CLIPS ? SHARED_KEYS : Object.keys(DEFAULTS);
+          keys.forEach(function (key) {
             if (!els[key]) return;
             local[key] = els[key].value;
           });
@@ -1132,19 +1326,25 @@
         }
 
         function loadSaved() {
-          var local = readJson(LS_KEY) || migrateLegacy();
+          var local = readJson(LS_KEY) || (CLIPS ? null : migrateLegacy());
           if (local && local.fs == null && local.fs0 != null) local.fs = local.fs0;
           applyLocal(local);
+          if (CLIPS) {
+            if (els.ch) els.ch.value = SEQ_LABEL;
+            return;
+          }
           if (!local || local.ch == null) {
             if (els.ch) els.ch.value = DEFAULT_CHAR;
           }
         }
 
         function reset() {
+          resetClips();
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
             els[key].value = DEFAULTS[key];
           });
+          if (CLIPS && els.ch) els.ch.value = SEQ_LABEL;
           try {
             localStorage.removeItem(LS_KEY);
           } catch (e) {}
@@ -1152,6 +1352,7 @@
           paintVals();
           setActiveKf(0, false);
           restart();
+          applySegment(segmentAt(0));
           if (window.ArtboardView && window.ArtboardView.reset) {
             window.ArtboardView.reset();
           }
@@ -1159,6 +1360,7 @@
 
         function onSettingInput() {
           applyVars();
+          syncDomToCurrentClip();
           paintVals();
           paintKfTabs();
           try {
@@ -1176,17 +1378,25 @@
         }
 
         kfTabs.forEach(function (tab, i) {
-          if (!tab || i >= KF_COUNT) return;
+          if (!tab) return;
           tab.addEventListener("click", function () {
+            if (i >= KF_COUNT) return;
             if (holdKf === i) restart();
             else setActiveKf(i, true);
           });
         });
 
         glyph.textContent = DEFAULT_CHAR;
-        document.title = DEFAULT_CHAR;
+        document.title = CLIPS ? SEQ_LABEL : DEFAULT_CHAR;
         applyDefaults();
         loadSaved();
+        if (CLIPS && els.ch) {
+          els.ch.maxLength = 32;
+          els.ch.value = SEQ_LABEL;
+          els.ch.readOnly = true;
+          var chLabel = document.querySelector('label[for="ch"]');
+          if (chLabel) chLabel.textContent = "seq";
+        }
         syncKfUi();
         applyVars();
         paintVals();
@@ -1207,6 +1417,15 @@
         window.AnimatorExport = {
           stage: document.getElementById("stage"),
           filename: function () {
+            if (CLIPS) {
+              return (
+                "glyph-cycle-" +
+                CLIPS.map(function (c) {
+                  return c.ch;
+                }).join("-") +
+                ".mp4"
+              );
+            }
             return (
               "glyph-cycle-" +
               (els.ch.value || DEFAULT_CHAR) +

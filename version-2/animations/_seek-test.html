@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <body style="margin: 0">
+    <iframe
+      id="f"
+      src="alternates-list.html"
+      style="width: 1600px; height: 1000px; border: 0"
+    ></iframe>
+    <script>
+      var ms = Number(new URLSearchParams(location.search).get("ms") || 0);
+      var f = document.getElementById("f");
+      f.onload = function () {
+        var w = f.contentWindow;
+        function go() {
+          if (!w.AnimatorExport) {
+            requestAnimationFrame(go);
+            return;
+          }
+          w.AnimatorExport.stop();
+          w.AnimatorExport.seek(ms);
+          document.title = "ready-" + ms;
+        }
+        setTimeout(go, 500);
+      };
+    </script>
+  </body>
+</html>

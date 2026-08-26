@@ -498,6 +498,10 @@
               <span class="var-readout-label">Contrast</span>
               <span class="var-readout-values" id="readoutCntr"></span>
             </div>
+            <div class="var-readout-item">
+              <span class="var-readout-label">Slant</span>
+              <span class="var-readout-values" id="readoutSlnt"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -763,6 +767,7 @@
         }
 
         function fmtReadout(tag, v) {
+          if (tag === "slnt") return String(Math.round(Math.abs(Number(v))));
           return String(Math.round(Number(v)));
         }
 
@@ -796,6 +801,7 @@
             wght: w,
             CNTR: lerpFromRange(els.cMin, els.cMax, t),
             wdth: lerpFromRange(els.dMin, els.dMax, t),
+            slnt: lerpFromRange(els.sMin, els.sMax, t),
           };
         }
 
@@ -1141,13 +1147,14 @@
           wght: document.getElementById("readoutWght"),
           CNTR: document.getElementById("readoutCntr"),
           wdth: document.getElementById("readoutWdth"),
+          slnt: document.getElementById("readoutSlnt"),
         };
 
         var readoutScale = {
           key: "",
-          values: { wght: [], CNTR: [], wdth: [] },
-          cells: { wght: [], CNTR: [], wdth: [] },
-          current: { wght: -1, CNTR: -1, wdth: -1 },
+          values: { wght: [], CNTR: [], wdth: [], slnt: [] },
+          cells: { wght: [], CNTR: [], wdth: [], slnt: [] },
+          current: { wght: -1, CNTR: -1, wdth: -1, slnt: -1 },
         };
 
         function readoutScaleKey() {
@@ -1158,6 +1165,8 @@
             els.cMax.value,
             els.dMin.value,
             els.dMax.value,
+            els.sMin.value,
+            els.sMax.value,
           ].join("|");
         }
 
@@ -1184,21 +1193,26 @@
           var wghtVals = [];
           var cntrVals = [];
           var wdthVals = [];
+          var slntVals = [];
           for (var i = 0; i < weights.length; i++) {
             var related = relatedVariationAtWeight(weights[i], wStart, wEnd);
             wghtVals.push(related.wght);
             cntrVals.push(related.CNTR);
             wdthVals.push(related.wdth);
+            slntVals.push(related.slnt);
           }
           readoutScale.values.wght = wghtVals;
           readoutScale.values.CNTR = cntrVals;
           readoutScale.values.wdth = wdthVals;
+          readoutScale.values.slnt = slntVals;
           readoutScale.cells.wght = fillReadoutRow(readoutEls.wght, "wght", wghtVals);
           readoutScale.cells.CNTR = fillReadoutRow(readoutEls.CNTR, "CNTR", cntrVals);
           readoutScale.cells.wdth = fillReadoutRow(readoutEls.wdth, "wdth", wdthVals);
+          readoutScale.cells.slnt = fillReadoutRow(readoutEls.slnt, "slnt", slntVals);
           readoutScale.current.wght = -1;
           readoutScale.current.CNTR = -1;
           readoutScale.current.wdth = -1;
+          readoutScale.current.slnt = -1;
         }
 
         function syncReadoutCurrent(tag, currentValue) {
@@ -1217,6 +1231,7 @@
           syncReadoutCurrent("wght", v.wght);
           syncReadoutCurrent("CNTR", v.CNTR);
           syncReadoutCurrent("wdth", v.wdth);
+          syncReadoutCurrent("slnt", v.slnt);
         }
 
         function getText() {

@@ -99,6 +99,8 @@
         --ar-h: 1440;
         --bg: #ffffff;
         --fg: #000000;
+        --line: #000000;
+        --line-w: 2;
         --glyph-size: 357;
         --lh: 1.47;
         --metric-size: 26;
@@ -271,9 +273,8 @@
         position: absolute;
         top: 0;
         height: 100%;
-        width: 2px;
-        background: var(--fg);
-        opacity: 0.5;
+        width: calc(var(--line-w) * 1px);
+        background: var(--line);
         pointer-events: none;
         z-index: 2;
       }
@@ -596,6 +597,20 @@
       </div>
 
       <div class="group">
+        <p class="group-title">lines</p>
+        <div class="row">
+          <label for="ln">color</label>
+          <input id="ln" type="color" value="#000000" />
+          <span class="val" id="ln-val">#000000</span>
+        </div>
+        <div class="row">
+          <label for="lw">stroke</label>
+          <input id="lw" type="range" min="0.25" max="12" step="0.25" value="2" />
+          <span class="val" id="lw-val">2px</span>
+        </div>
+      </div>
+
+      <div class="group">
         <p class="group-title">content</p>
         <div class="row">
           <label for="ch">chars</label>
@@ -833,6 +848,8 @@
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
+          ln: "#000000",
+          lw: 2,
           ch: "a b c",
           fs: 357,
           lh: 1.47,
@@ -845,12 +862,14 @@
           hd: 0,
         };
 
-        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var COLOR_KEYS = { bg: 1, fg: 1, ln: 1 };
         var TEXT_KEYS = { ch: 1 };
 
         var els = {
           bg: document.getElementById("bg"),
           fg: document.getElementById("fg"),
+          ln: document.getElementById("ln"),
+          lw: document.getElementById("lw"),
           ch: document.getElementById("ch"),
           fs: document.getElementById("fs"),
           lh: document.getElementById("lh"),
@@ -872,6 +891,8 @@
         var vals = {
           bg: document.getElementById("bg-val"),
           fg: document.getElementById("fg-val"),
+          ln: document.getElementById("ln-val"),
+          lw: document.getElementById("lw-val"),
           fs: document.getElementById("fs-val"),
           lh: document.getElementById("lh-val"),
           ms: document.getElementById("ms-val"),
@@ -954,9 +975,13 @@
         }
 
         function formatVal(key, v) {
-          if (key === "bg" || key === "fg") return String(v).toLowerCase();
+          if (key === "bg" || key === "fg" || key === "ln") return String(v).toLowerCase();
           if (key === "ch") return String(v);
           if (key === "lh") return Number(v).toFixed(2);
+          if (key === "lw") {
+            var n = Number(v);
+            return (n % 1 === 0 ? String(n) : n.toFixed(2)) + "px";
+          }
           if (key === "fs" || key === "ms" || key === "g0" || key === "g1") {
             return Math.round(Number(v)) + "px";
           }
@@ -973,6 +998,8 @@
         function applyAppearance() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--line", els.ln.value);
+          root.style.setProperty("--line-w", String(parseFloat(els.lw.value)));
           root.style.setProperty("--glyph-size", parseFloat(els.fs.value));
           root.style.setProperty("--lh", String(parseFloat(els.lh.value)));
           root.style.setProperty("--metric-size", parseFloat(els.ms.value));
@@ -991,6 +1018,8 @@
           } else if (
             key === "bg" ||
             key === "fg" ||
+            key === "ln" ||
+            key === "lw" ||
             key === "fs" ||
             key === "lh" ||
             key === "ms" ||
@@ -1163,13 +1192,15 @@
             var rightX = (g.right - m.left) / zoom;
             var lineTop = (clipTop - m.top) / zoom;
             var span = Math.max(0, rightX - leftX);
+            var lineW = parseFloat(els.lw.value);
+            if (!isFinite(lineW)) lineW = 2;
 
             c.lineLeft.style.display = "block";
             c.lineRight.style.display = "block";
             c.lineLeft.style.left = leftX + "px";
             c.lineLeft.style.top = lineTop + "px";
             c.lineLeft.style.height = lineHeight + "px";
-            c.lineRight.style.left = rightX - 2 + "px";
+            c.lineRight.style.left = rightX - lineW + "px";
             c.lineRight.style.top = lineTop + "px";
             c.lineRight.style.height = lineHeight + "px";
 
