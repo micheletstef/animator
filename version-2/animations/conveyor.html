@@ -664,21 +664,6 @@
             ],
           },
           {
-            name: "iwata",
-            lines: [
-              {
-                text: "IWATA",
-                from: pose(220, 224, 0.08, 200, 100, 0, 0),
-                to: pose(220, 224, -0.04, 980, 100, 0, -12),
-              },
-              {
-                text: "NEO",
-                from: pose(220, 224, 0.08, 200, 100, 0, 0),
-                to: pose(220, 224, -0.04, 980, 100, 0, -12),
-              },
-            ],
-          },
-          {
             name: "grex",
             lines: [
               {
@@ -690,6 +675,21 @@
                 text: "TRITIUM",
                 from: pose(250, 224, -0.07, 1000, 82, 0, 0),
                 to: pose(250, 224, 0.01, 520, 100, 100, 0),
+              },
+            ],
+          },
+          {
+            name: "iwata",
+            lines: [
+              {
+                text: "IWATA",
+                from: pose(220, 224, 0.08, 200, 100, 0, 0),
+                to: pose(220, 224, -0.04, 980, 100, 0, -12),
+              },
+              {
+                text: "NEO",
+                from: pose(220, 224, 0.08, 200, 100, 0, 0),
+                to: pose(220, 224, -0.04, 980, 100, 0, -12),
               },
             ],
           },
@@ -773,6 +773,7 @@
         var playing = true;
         var lastElapsed = 0;
         var beltMs = 0;
+        var beltY = 0;
         var lastFrame = 0;
         var holdKf = -1;
         var lastLiveKf = -1;
@@ -780,7 +781,6 @@
         var nodes = [];
         var activeLine = 0;
         var syncingPoses = false;
-        var rebuildTimer = 0;
         var lineTabsEl = document.getElementById("lineTabs");
         var lineReadout = document.getElementById("lineReadout");
         var lineAxesEl = document.getElementById("lineAxes");
@@ -859,19 +859,38 @@
           });
         }
 
+        var OLD_BLOCK_ORDER = ["sparmax", "iwata", "grex", "badger", "hs"];
+
+        function savedByBlockName(list) {
+          var map = {};
+          var i;
+          if (!list || !list.length) return map;
+          if (list[0] && list[0].name) {
+            for (i = 0; i < list.length; i++) {
+              if (list[i] && list[i].name) map[list[i].name] = list[i];
+            }
+            return map;
+          }
+          for (i = 0; i < list.length; i++) {
+            if (OLD_BLOCK_ORDER[i]) map[OLD_BLOCK_ORDER[i]] = list[i];
+          }
+          return map;
+        }
+
         function applySavedPoses(data) {
           if (!data || !data.length) return;
-          var i;
-          var j;
-          for (i = 0; i < BLOCKS.length; i++) {
-            if (!data[i]) continue;
-            for (j = 0; j < BLOCKS[i].lines.length; j++) {
-              var saved = data[i][j] || (data[i].length === 1 ? data[i][0] : null);
-              if (!saved) continue;
-              mergePose(BLOCKS[i].lines[j].from, saved.from);
-              mergePose(BLOCKS[i].lines[j].to, saved.to);
-            }
-          }
+          var byName = savedByBlockName(data);
+          BLOCKS.forEach(function (block) {
+            var entry = byName[block.name];
+            var lines = entry && entry.lines ? entry.lines : entry;
+            if (!lines || !lines.length) return;
+            block.lines.forEach(function (line, j) {
+              var saved = lines[j] || (lines.length === 1 ? lines[0] : null);
+              if (!saved) return;
+              mergePose(line.from, saved.from);
+              mergePose(line.to, saved.to);
+            });
+          });
         }
 
         function blockGapLabel(block) {
@@ -894,32 +913,57 @@
         function applySavedGaps(data) {
           var i;
           var n;
+          var byName;
           if (data.blockGaps && data.blockGaps.length) {
-            for (i = 0; i < BLOCKS.length; i++) {
-              if (data.blockGaps[i] == null) continue;
-              BLOCKS[i].gap = clampGap(data.blockGaps[i]);
-            }
+            byName = savedByBlockName(
+              data.blockGaps[0] && data.blockGaps[0].name
+                ? data.blockGaps
+                : data.blockGaps.map(function (gap, idx) {
+                    return { name: OLD_BLOCK_ORDER[idx], gap: gap };
+                  })
+            );
+            BLOCKS.forEach(function (block) {
+              var entry = byName[block.name];
+              if (!entry) return;
+              n = entry.gap != null ? entry.gap : entry;
+              if (n == null) return;
+              block.gap = clampGap(n);
+            });
           } else if (data.gap != null) {
             n = clampGap(data.gap);
             for (i = 0; i < BLOCKS.length; i++) BLOCKS[i].gap = n;
           }
           if (data.pairGaps && data.pairGaps.length) {
-            for (i = 0; i < BLOCKS.length; i++) {
-              if (!BLOCKS[i].row || data.pairGaps[i] == null) continue;
-              BLOCKS[i].pairGap = clampPairGap(data.pairGaps[i]);
-            }
+            byName = savedByBlockName(
+              data.pairGaps[0] && data.pairGaps[0].name
+                ? data.pairGaps
+                : data.pairGaps.map(function (gap, idx) {
+                    return { name: OLD_BLOCK_ORDER[idx], pairGap: gap };
+                  })
+            );
+            BLOCKS.forEach(function (block) {
+              if (!block.row) return;
+              var entry = byName[block.name];
+              if (!entry) return;
+              n = entry.pairGap != null ? entry.pairGap : entry;
+              if (n == null) return;
+              block.pairGap = clampPairGap(n);
+            });
           }
         }
 
         function serializeGaps() {
           return BLOCKS.map(function (block) {
-            return clampGap(block.gap);
+            return { name: block.name, gap: clampGap(block.gap) };
           });
         }
 
         function serializePairGaps() {
           return BLOCKS.map(function (block) {
-            return block.row ? clampPairGap(block.pairGap) : null;
+            return {
+              name: block.name,
+              pairGap: block.row ? clampPairGap(block.pairGap) : null,
+            };
           });
         }
 
@@ -955,7 +999,7 @@
           if (!isFinite(i) || !BLOCKS[i]) return;
           BLOCKS[i].gap = clampGap(this.value);
           paintBlockGapVal(i);
-          scheduleRebuild();
+          syncTrack(true);
           save();
         }
 
@@ -1035,9 +1079,12 @@
 
         function serializePoses() {
           return BLOCKS.map(function (block) {
-            return block.lines.map(function (line) {
-              return { from: clonePose(line.from), to: clonePose(line.to) };
-            });
+            return {
+              name: block.name,
+              lines: block.lines.map(function (line) {
+                return { from: clonePose(line.from), to: clonePose(line.to) };
+              }),
+            };
           });
         }
 
@@ -1122,26 +1169,11 @@
           }
         }
 
-        function scheduleRebuild() {
-          if (rebuildTimer) return;
-          rebuildTimer = requestAnimationFrame(function () {
-            rebuildTimer = 0;
-            buildTrack();
-          });
-        }
-
         function onLineInput() {
           if (syncingPoses) return;
-          var size =
-            this &&
-            (this.id === "lnFs0" ||
-              this.id === "lnFs1" ||
-              this.id === "lnLh0" ||
-              this.id === "lnLh1");
           writeSlidersToLine();
           updateAllDualUI();
-          if (size) scheduleRebuild();
-          else applyElapsed(playing ? performance.now() - t0 : lastElapsed, beltMs);
+          syncTrack(true);
           save();
         }
 
@@ -1399,7 +1431,9 @@
           for (n = 1; n < need; n += 1) {
             track.appendChild(makeCycle());
           }
-          applyElapsed(lastElapsed, beltMs);
+          applyMorphs();
+          loopHeight = Math.max(1, first.offsetHeight);
+          applyTransform();
         }
 
         function morphCycleMs() {
@@ -1415,22 +1449,80 @@
           return Math.max(belt, morph);
         }
 
+        function wrapY(y, h) {
+          h = Math.max(1, h);
+          y = y % h;
+          if (y < 0) y += h;
+          return y;
+        }
+
+        function pinCenter(el) {
+          if (!el) return null;
+          var r = el.getBoundingClientRect();
+          return r.top + r.height / 2;
+        }
+
+        function pickPin() {
+          if (!nodes.length) return null;
+          var sr = stage.getBoundingClientRect();
+          if (!(sr.height > 1)) return null;
+          var pinY = sr.top + sr.height * 0.5;
+          var best = null;
+          var bestD = Infinity;
+          var i;
+          var r;
+          var cy;
+          var d;
+          for (i = 0; i < nodes.length; i++) {
+            r = nodes[i].el.getBoundingClientRect();
+            if (!(r.height > 1)) continue;
+            cy = r.top + r.height / 2;
+            d = Math.abs(cy - pinY);
+            if (d < bestD) {
+              bestD = d;
+              best = nodes[i].el;
+            }
+          }
+          return best;
+        }
+
+        function applyTransform() {
+          var h = Math.max(1, loopHeight);
+          while (h > 1 && beltY >= h) beltY -= h;
+          track.style.transform = "translate3d(0," + (-beltY).toFixed(2) + "px,0)";
+        }
+
+        function syncTrack(compensate) {
+          var pinEl = compensate ? pickPin() : null;
+          var before = pinCenter(pinEl);
+          applyMorphs();
+          if (compensate && pinEl && pinEl.isConnected && before != null) {
+            var after = pinCenter(pinEl);
+            var sr = stage.getBoundingClientRect();
+            var scaleY = sr.height / STAGE_H;
+            if (after != null && scaleY > 0.01) {
+              beltY += (after - before) / scaleY;
+            }
+          }
+          applyTransform();
+        }
+
         function applyElapsed(ms, beltTime) {
           lastElapsed = ms;
-          if (beltTime == null) beltTime = beltMs;
-          applyMorphs();
-          var dur = durationMs();
-          var bt = ((beltTime % dur) + dur) % dur;
-          var y = (bt / dur) * loopHeight;
-          track.style.transform = "translate3d(0," + -y.toFixed(2) + "px,0)";
+          if (beltTime != null) beltMs = beltTime;
+          syncTrack(true);
         }
 
         function frame(now) {
           if (!lastFrame) lastFrame = now;
           var dt = now - lastFrame;
           lastFrame = now;
-          if (scrollOn()) beltMs += dt;
-          applyElapsed(now - t0, beltMs);
+          lastElapsed = now - t0;
+          if (scrollOn()) {
+            beltMs += dt;
+            beltY += (dt / durationMs()) * loopHeight;
+          }
+          syncTrack(true);
           if (playing) raf = requestAnimationFrame(frame);
         }
 
@@ -1453,6 +1545,7 @@
           lastLiveKf = -1;
           lastFrame = 0;
           beltMs = 0;
+          beltY = 0;
           t0 = performance.now();
           paintKfTabs();
           applyElapsed(0, 0);
@@ -1468,7 +1561,7 @@
           }
           lastLiveKf = -1;
           paintKfTabs();
-          applyMorphs();
+          syncTrack(true);
         }
 
         function formatVal(key, v) {
@@ -1579,7 +1672,7 @@
           if (this && this.id === "scale") {
             buildTrack();
           } else {
-            applyElapsed(playing ? performance.now() - t0 : lastElapsed, beltMs);
+            syncTrack(true);
           }
           save();
         }
@@ -1634,8 +1727,12 @@
           filename: "conveyor.mp4",
           durationMs: durationMs,
           seek: function (ms) {
+            lastElapsed = ms;
             beltMs = ms;
-            applyElapsed(ms, ms);
+            applyMorphs();
+            var h = Math.max(1, loopHeight);
+            beltY = wrapY((ms / durationMs()) * h, h);
+            applyTransform();
           },
           stop: stopPlayback,
           start: startPlayback,
