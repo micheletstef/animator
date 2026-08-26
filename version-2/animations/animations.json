@@ -101,6 +101,12 @@
       "label": "technical outline v2",
       "url": "animations/technical-outline-v2.html",
       "mtime": 1787742300
+    },
+    {
+      "id": "conveyor",
+      "label": "conveyor",
+      "url": "animations/conveyor.html",
+      "mtime": 1787762400
     }
   ]
 }
