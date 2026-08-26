@@ -18,7 +18,23 @@
           }
           w.AnimatorExport.stop();
           w.AnimatorExport.seek(ms);
-          document.title = "ready-" + ms;
+          var lockup = w.document.getElementById("lockup");
+          var on = lockup.querySelectorAll(".alt-name.is-on");
+          var hits = lockup.querySelectorAll(".ch.is-hit");
+          var names = lockup.querySelectorAll(".alt-name");
+          document.title =
+            "ready names=" +
+            names.length +
+            " on=" +
+            on.length +
+            " hits=" +
+            hits.length +
+            " feat=" +
+            (on[0] ? on[0].getAttribute("data-feat") : "none");
+          var pre = document.createElement("pre");
+          pre.id = "dump";
+          pre.textContent = document.title + "\n" + lockup.innerHTML.slice(0, 800);
+          document.body.appendChild(pre);
         }
         setTimeout(go, 500);
       };
