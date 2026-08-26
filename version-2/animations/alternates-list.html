@@ -24,12 +24,12 @@
         --pad-r: 80;
         --pad-b: 120;
         --pad-l: 80;
-        --fs: 92;
-        --lh: 0.94;
-        --tracking: -0.02;
-        --oy: 0;
+        --fs: 118;
+        --lh: 0.99;
+        --tracking: -0.13;
+        --oy: 2;
         --wght: 745;
-        --wdth: 78;
+        --wdth: 67;
         --cntr: 0;
         --slnt: 0;
       }
@@ -266,7 +266,7 @@
     </style>
     <link rel="stylesheet" href="../../animation-chrome.css?v=23" />
   </head>
-  <body>
+  <body data-no-caption data-guide-cols="2" data-guide-margin="80">
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="alternates list animation">
@@ -319,23 +319,23 @@ Spurless, Pointed</textarea>
         <p class="group-title">type</p>
         <div class="row">
           <label for="fs">size</label>
-          <input id="fs" type="range" min="48" max="320" step="1" value="92" />
-          <span class="val" id="fsVal">92px</span>
+          <input id="fs" type="range" min="48" max="320" step="1" value="118" />
+          <span class="val" id="fsVal">118px</span>
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.94" />
-          <span class="val" id="lhVal">0.94</span>
+          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.99" />
+          <span class="val" id="lhVal">0.99</span>
         </div>
         <div class="row">
           <label for="tr">track</label>
-          <input id="tr" type="range" min="-1" max="1" step="0.005" value="-0.02" />
-          <span class="val" id="trVal">-0.02</span>
+          <input id="tr" type="range" min="-1" max="1" step="0.005" value="-0.13" />
+          <span class="val" id="trVal">-0.13</span>
         </div>
         <div class="row">
           <label for="oy">y</label>
-          <input id="oy" type="range" min="-720" max="720" step="1" value="0" />
-          <span class="val" id="oyVal">0px</span>
+          <input id="oy" type="range" min="-720" max="720" step="1" value="2" />
+          <span class="val" id="oyVal">2px</span>
         </div>
       </div>
 
@@ -348,8 +348,8 @@ Spurless, Pointed</textarea>
         </div>
         <div class="row">
           <label for="wdth">wdth</label>
-          <input id="wdth" type="range" min="65" max="130" step="1" value="78" />
-          <span class="val" id="wdthVal">78</span>
+          <input id="wdth" type="range" min="65" max="130" step="1" value="67" />
+          <span class="val" id="wdthVal">67</span>
         </div>
         <div class="row">
           <label for="wght">wght</label>
@@ -368,18 +368,18 @@ Spurless, Pointed</textarea>
         <p class="now" id="nowReadout">hold</p>
         <div class="row">
           <label for="step">step</label>
-          <input id="step" type="range" min="80" max="1200" step="10" value="520" />
-          <span class="val" id="stepVal">520ms</span>
+          <input id="step" type="range" min="80" max="1200" step="10" value="1200" />
+          <span class="val" id="stepVal">1200ms</span>
         </div>
         <div class="row">
           <label for="hold0">hold in</label>
-          <input id="hold0" type="range" min="0" max="2000" step="50" value="600" />
-          <span class="val" id="hold0Val">600ms</span>
+          <input id="hold0" type="range" min="0" max="2000" step="50" value="1000" />
+          <span class="val" id="hold0Val">1000ms</span>
         </div>
         <div class="row">
           <label for="hold1">hold out</label>
-          <input id="hold1" type="range" min="0" max="3000" step="50" value="900" />
-          <span class="val" id="hold1Val">900ms</span>
+          <input id="hold1" type="range" min="0" max="3000" step="50" value="1000" />
+          <span class="val" id="hold1Val">1000ms</span>
         </div>
       </div>
 
@@ -428,17 +428,17 @@ Spurless, Pointed</textarea>
           fg: "#000000",
           hl: "#ee0000",
           tx: DEFAULT_TEXT,
-          fs: 92,
-          lh: 0.94,
-          tr: -0.02,
-          oy: 0,
+          fs: 118,
+          lh: 0.99,
+          tr: -0.13,
+          oy: 2,
           slnt: 0,
-          wdth: 78,
+          wdth: 67,
           wght: 745,
           cntr: 0,
-          step: 520,
-          hold0: 600,
-          hold1: 900,
+          step: 1200,
+          hold0: 1000,
+          hold1: 1000,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
@@ -567,7 +567,7 @@ Spurless, Pointed</textarea>
 
         function cycleMs() {
           var n = ALTS.length;
-          var step = Math.max(40, Number(els.step.value) || 520);
+          var step = Math.max(40, Number(els.step.value) || 1200);
           var hold0 = Math.max(0, Number(els.hold0.value) || 0);
           var hold1 = Math.max(0, Number(els.hold1.value) || 0);
           return hold0 + n * step + hold1;
@@ -575,7 +575,7 @@ Spurless, Pointed</textarea>
 
         function applyElapsed(elapsed) {
           var n = ALTS.length;
-          var step = Math.max(40, Number(els.step.value) || 520);
+          var step = Math.max(40, Number(els.step.value) || 1200);
           var hold0 = Math.max(0, Number(els.hold0.value) || 0);
           var total = cycleMs();
           if (total <= 0) total = 1;

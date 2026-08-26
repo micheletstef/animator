@@ -107,6 +107,12 @@
       "label": "conveyor",
       "url": "animations/conveyor.html",
       "mtime": 1787762400
+    },
+    {
+      "id": "line-cascade",
+      "label": "line cascade",
+      "url": "animations/line-cascade.html",
+      "mtime": 1787767200
     }
   ]
 }

@@ -97,17 +97,18 @@
       .belt {
         position: absolute;
         top: 0;
-        right: var(--guide-r, calc(var(--pad-r) * 1px));
+        right: 0;
         bottom: 0;
-        left: var(--guide-l, calc(var(--pad-l) * 1px));
+        left: 0;
+        width: 1080px;
         overflow: hidden;
       }
 
       .track {
         position: absolute;
         left: 0;
-        right: 0;
         top: 0;
+        width: 1080px;
         will-change: transform;
       }
 
@@ -115,7 +116,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: 100%;
+        width: 1080px;
       }
 
       .block {
@@ -123,7 +124,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        width: 1080px;
         margin-bottom: calc(var(--gap) * 1px);
         text-align: center;
       }
@@ -132,13 +133,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        width: 1080px;
         overflow: visible;
       }
 
       .line {
         display: block;
-        width: 100%;
+        width: max-content;
+        max-width: none;
+        margin: 0 auto;
+        text-align: center;
         white-space: nowrap;
         font-kerning: none;
         font-synthesis: none;
@@ -412,6 +416,11 @@
           <span class="val" id="scrollVal">on</span>
         </div>
         <div class="row">
+          <label for="shift">shift</label>
+          <input id="shift" type="range" min="0" max="1000" step="1" value="0" />
+          <span class="val" id="shiftVal">0%</span>
+        </div>
+        <div class="row">
           <label for="hold">hold</label>
           <input id="hold" type="range" min="80" max="2000" step="20" value="880" />
           <span class="val" id="holdVal">880ms</span>
@@ -427,7 +436,7 @@
     <script src="artboard-view.js?v=27"></script>
     <script>
       (function () {
-        function pose(fs, lh, track, wght, wdth, cntr, slnt) {
+        function pose(fs, lh, track, wght, wdth, cntr, slnt, after) {
           return {
             fs: fs,
             lh: lh,
@@ -436,6 +445,7 @@
             wdth: wdth,
             cntr: cntr,
             slnt: slnt,
+            after: after || 0,
           };
         }
 
@@ -445,8 +455,8 @@
             lines: [
               {
                 text: "SPARMAX",
-                from: pose(290, 224, 0, 427, 67, 57, 0),
-                to: pose(150, 124, -0.08, 800, 130, 50, 0),
+                from: pose(290, 224, 0, 427, 67, 57, 0, 48),
+                to: pose(150, 124, -0.08, 800, 130, 50, 0, 4),
               },
               {
                 text: "SP-20X",
@@ -603,6 +613,7 @@
             wdth: lerp(a.wdth, b.wdth, e),
             cntr: lerp(a.cntr, b.cntr, e),
             slnt: lerp(a.slnt, b.slnt, e),
+            after: lerp(a.after || 0, b.after || 0, e),
           };
         }
 
@@ -627,6 +638,12 @@
           el.style.fontSize = p.fs * s + "px";
           el.style.lineHeight = p.lh * s + "px";
           el.style.letterSpacing = p.track + "em";
+          el.style.marginRight = -p.track + "em";
+          var slot = el.parentNode;
+          if (slot && slot.classList && slot.classList.contains("line-slot")) {
+            slot.style.height = p.lh * s + "px";
+            slot.style.marginBottom = p.after * s + "px";
+          }
         }
 
         function morphT(elapsed) {
@@ -669,6 +686,11 @@
               applyLine(node.lines[j], BLOCKS[node.index].lines[j], t);
             }
           }
+          var first = track.firstElementChild;
+          if (first) {
+            var h = first.offsetHeight;
+            if (h > 1) loopHeight = h;
+          }
           if (nowReadout) {
             var prefix = holdKf >= 0 ? "hold " + (holdKf + 1) + " · " : "";
             nowReadout.textContent = prefix + "pose " + (t * 100).toFixed(0) + "%";
@@ -701,8 +723,6 @@
             for (j = 0; j < spec.lines.length; j++) {
               slot = document.createElement("div");
               slot.className = "line-slot";
-              slot.style.height =
-                Math.max(spec.lines[j].from.lh, spec.lines[j].to.lh) * scale() + "px";
               line = document.createElement("span");
               line.className = "line";
               line.textContent = spec.lines[j].text;
@@ -751,11 +771,11 @@
         function applyElapsed(ms, beltTime) {
           lastElapsed = ms;
           if (beltTime == null) beltTime = beltMs;
+          applyMorphs();
           var dur = durationMs();
           var bt = ((beltTime % dur) + dur) % dur;
           var y = (bt / dur) * loopHeight;
           track.style.transform = "translate3d(0," + -y.toFixed(2) + "px,0)";
-          applyMorphs();
         }
 
         function frame(now) {

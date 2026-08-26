@@ -540,7 +540,11 @@
     panel.setAttribute("data-caption-ui", "1");
 
     var colorGroup = findPanelGroup("color");
-    if (colorGroup && !global.document.getElementById("stageCaptionColor")) {
+    if (
+      captionsEnabled() &&
+      colorGroup &&
+      !global.document.getElementById("stageCaptionColor")
+    ) {
       var colorRow = global.document.createElement("div");
       colorRow.className = "row";
       colorRow.innerHTML =
