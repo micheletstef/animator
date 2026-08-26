@@ -21,7 +21,7 @@
         --ar-h: 1440;
         --bg: #ffffff;
         --fg: #000000;
-        --pad-t: 32;
+        --pad-t: 80;
         --pad-r: 32;
         --pad-b: 32;
         --pad-l: 32;
@@ -107,7 +107,7 @@
       .track {
         position: absolute;
         left: 0;
-        top: 0;
+        top: calc(var(--pad-t) * 1px);
         width: 1080px;
         will-change: transform;
       }
@@ -125,8 +125,20 @@
         align-items: center;
         justify-content: center;
         width: 1080px;
-        margin-bottom: calc(var(--gap) * 1px);
+        margin-bottom: 0;
         text-align: center;
+      }
+
+      .block.is-row {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: baseline;
+        justify-content: center;
+      }
+
+      .block.is-row .line-slot {
+        width: auto;
+        align-items: baseline;
       }
 
       .line-slot {
@@ -536,11 +548,11 @@
           <input id="scale" type="range" min="50" max="130" step="1" value="100" />
           <span class="val" id="scaleVal">100%</span>
         </div>
-        <div class="row">
-          <label for="gap">gap</label>
-          <input id="gap" type="range" min="24" max="280" step="2" value="140" />
-          <span class="val" id="gapVal">140px</span>
-        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">gaps</p>
+        <div id="blockGaps"></div>
       </div>
 
       <div class="group">
@@ -620,9 +632,12 @@
           return src.map(function (block) {
             return {
               name: block.name,
+              gap: block.gap == null ? 140 : block.gap,
+              row: !!block.row,
               lines: block.lines.map(function (line) {
                 return {
                   text: line.text,
+                  space: line.space || 0,
                   from: clonePose(line.from),
                   to: clonePose(line.to),
                 };
@@ -694,9 +709,16 @@
           },
           {
             name: "hs",
+            row: true,
             lines: [
               {
-                text: "H&S ULTRA",
+                text: "H&S",
+                space: 0.4,
+                from: pose(160, 180, 0.05, 420, 90, 50, 0),
+                to: pose(160, 180, 0.12, 420, 126, 50, 0),
+              },
+              {
+                text: "ULTRA",
                 from: pose(160, 180, 0.05, 420, 90, 50, 0),
                 to: pose(160, 180, 0.12, 420, 126, 50, 0),
               },
@@ -721,7 +743,6 @@
           bg: "#ffffff",
           fg: "#000000",
           scale: 100,
-          gap: 140,
           loop: 16,
           scroll: "1",
           hold: 880,
@@ -736,7 +757,6 @@
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
           scale: document.getElementById("scaleVal"),
-          gap: document.getElementById("gapVal"),
           loop: document.getElementById("loopVal"),
           scroll: document.getElementById("scrollVal"),
           hold: document.getElementById("holdVal"),
@@ -763,11 +783,15 @@
         var lineTabsEl = document.getElementById("lineTabs");
         var lineReadout = document.getElementById("lineReadout");
         var lineAxesEl = document.getElementById("lineAxes");
+        var blockGapsEl = document.getElementById("blockGaps");
+        var GAP_MIN = 0;
+        var GAP_MAX = 600;
+        var GAP_DEFAULT = 140;
         var lineEls = {};
         var LINE_AXES = [
-          { key: "fs", id: "lnFs", label: "size", min: 80, max: 420, step: 1 },
-          { key: "lh", id: "lnLh", label: "lead", min: 60, max: 400, step: 1 },
-          { key: "track", id: "lnTr", label: "track", min: -0.16, max: 0.16, step: 0.005 },
+          { key: "fs", id: "lnFs", label: "size", min: 80, max: 900, step: 1 },
+          { key: "lh", id: "lnLh", label: "lead", min: 60, max: 900, step: 1 },
+          { key: "track", id: "lnTr", label: "track", min: -0.16, max: 2, step: 0.005 },
           { key: "wght", id: "lnWg", label: "wght", min: 100, max: 1000, step: 1 },
           { key: "wdth", id: "lnWd", label: "wdth", min: 65, max: 130, step: 1 },
           { key: "cntr", id: "lnCn", label: "CNTR", min: 0, max: 100, step: 1 },
@@ -838,11 +862,107 @@
           for (i = 0; i < BLOCKS.length; i++) {
             if (!data[i]) continue;
             for (j = 0; j < BLOCKS[i].lines.length; j++) {
-              if (!data[i][j]) continue;
-              mergePose(BLOCKS[i].lines[j].from, data[i][j].from);
-              mergePose(BLOCKS[i].lines[j].to, data[i][j].to);
+              var saved = data[i][j] || (data[i].length === 1 ? data[i][0] : null);
+              if (!saved) continue;
+              mergePose(BLOCKS[i].lines[j].from, saved.from);
+              mergePose(BLOCKS[i].lines[j].to, saved.to);
             }
           }
+        }
+
+        function blockGapLabel(block) {
+          if (block.name === "hs") return "h&s";
+          return block.name;
+        }
+
+        function clampGap(n) {
+          n = Number(n);
+          if (!isFinite(n)) return GAP_DEFAULT;
+          return Math.max(GAP_MIN, Math.min(GAP_MAX, n));
+        }
+
+        function applySavedGaps(data) {
+          var i;
+          var n;
+          if (data.blockGaps && data.blockGaps.length) {
+            for (i = 0; i < BLOCKS.length; i++) {
+              if (data.blockGaps[i] == null) continue;
+              BLOCKS[i].gap = clampGap(data.blockGaps[i]);
+            }
+            return;
+          }
+          if (data.gap != null) {
+            n = clampGap(data.gap);
+            for (i = 0; i < BLOCKS.length; i++) BLOCKS[i].gap = n;
+          }
+        }
+
+        function serializeGaps() {
+          return BLOCKS.map(function (block) {
+            return clampGap(block.gap);
+          });
+        }
+
+        function paintBlockGapVal(i) {
+          var val = document.getElementById("bgap" + i + "Val");
+          if (val) val.textContent = Math.round(clampGap(BLOCKS[i].gap)) + "px";
+        }
+
+        function writeGapsToSliders() {
+          var i;
+          var el;
+          for (i = 0; i < BLOCKS.length; i++) {
+            el = document.getElementById("bgap" + i);
+            if (!el) continue;
+            el.value = String(clampGap(BLOCKS[i].gap));
+            paintBlockGapVal(i);
+          }
+        }
+
+        function onBlockGapInput() {
+          var i = parseInt(this.getAttribute("data-block"), 10);
+          if (!isFinite(i) || !BLOCKS[i]) return;
+          BLOCKS[i].gap = clampGap(this.value);
+          paintBlockGapVal(i);
+          scheduleRebuild();
+          save();
+        }
+
+        function buildBlockGaps() {
+          if (!blockGapsEl) return;
+          blockGapsEl.innerHTML = "";
+          BLOCKS.forEach(function (block, i) {
+            var row = document.createElement("div");
+            row.className = "row";
+            row.innerHTML =
+              "<label for=\"bgap" +
+              i +
+              "\">" +
+              blockGapLabel(block) +
+              "</label>" +
+              "<input id=\"bgap" +
+              i +
+              "\" type=\"range\" min=\"" +
+              GAP_MIN +
+              "\" max=\"" +
+              GAP_MAX +
+              "\" step=\"2\" value=\"" +
+              clampGap(block.gap) +
+              "\" data-block=\"" +
+              i +
+              "\" />" +
+              "<span class=\"val\" id=\"bgap" +
+              i +
+              "Val\">" +
+              Math.round(clampGap(block.gap)) +
+              "px</span>";
+            blockGapsEl.appendChild(row);
+            var input = document.getElementById("bgap" + i);
+            if (input) {
+              input.addEventListener("input", onBlockGapInput);
+              input.addEventListener("change", onBlockGapInput);
+            }
+          });
         }
 
         function serializePoses() {
@@ -1082,10 +1202,18 @@
           el.style.lineHeight = p.lh * s + "px";
           el.style.letterSpacing = p.track + "em";
           el.style.marginLeft = "0";
-          el.style.marginRight = -p.track + "em";
+          el.style.marginRight = (spec.space || 0) - p.track + "em";
           var slot = el.parentNode;
           if (slot && slot.classList && slot.classList.contains("line-slot")) {
-            slot.style.height = p.lh * s + "px";
+            var row =
+              slot.parentNode &&
+              slot.parentNode.classList &&
+              slot.parentNode.classList.contains("is-row");
+            if (row) {
+              slot.style.height = "";
+            } else {
+              slot.style.height = p.lh * s + "px";
+            }
             slot.style.marginBottom = p.after * s + "px";
           }
         }
@@ -1161,7 +1289,7 @@
           for (i = 0; i < BLOCKS.length; i++) {
             spec = BLOCKS[i];
             block = document.createElement("div");
-            block.className = "block";
+            block.className = "block" + (spec.row ? " is-row" : "");
             block.setAttribute("data-block", spec.name);
             node = { el: block, index: i, lines: [] };
             for (j = 0; j < spec.lines.length; j++) {
@@ -1174,6 +1302,7 @@
               block.appendChild(slot);
               node.lines.push(line);
             }
+            block.style.marginBottom = clampGap(spec.gap) + "px";
             cycle.appendChild(block);
             nodes.push(node);
           }
@@ -1272,7 +1401,6 @@
           if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "scale") return Math.round(Number(v)) + "%";
-          if (key === "gap") return Math.round(Number(v)) + "px";
           if (key === "hold" || key === "snap") {
             var ms = Number(v);
             if (ms >= 1000) return (ms / 1000).toFixed(1) + "s";
@@ -1294,7 +1422,6 @@
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--gap", String(num("gap", 140)));
         }
 
         function paintVals() {
@@ -1313,6 +1440,7 @@
             else data[key] = parseFloat(els[key].value);
           });
           data.poses = serializePoses();
+          data.blockGaps = serializeGaps();
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
           } catch (e) {}
@@ -1339,6 +1467,7 @@
             }
           });
           if (data.poses) applySavedPoses(data.poses);
+          applySavedGaps(data);
         }
 
         function reset() {
@@ -1361,6 +1490,7 @@
           paintKfTabs();
           paintLineTabs();
           writeLineToSliders();
+          writeGapsToSliders();
           buildTrack();
           restart();
           if (window.ArtboardView && window.ArtboardView.reset) {
@@ -1371,7 +1501,7 @@
         function onSettingInput() {
           applyVars();
           paintVals();
-          if (this && (this.id === "scale" || this.id === "gap")) {
+          if (this && this.id === "scale") {
             buildTrack();
           } else {
             applyElapsed(playing ? performance.now() - t0 : lastElapsed, beltMs);
@@ -1398,6 +1528,7 @@
           if (holdParam === "1" || holdParam === "2") holdKf = Number(holdParam) - 1;
         } catch (e) {}
         buildLineAxes();
+        buildBlockGaps();
         paintLineTabs();
         writeLineToSliders();
         applyVars();
