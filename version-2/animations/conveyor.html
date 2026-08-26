@@ -329,8 +329,175 @@
         color: #cfcfcf;
         text-transform: lowercase;
       }
+
+      .line-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .panel .line-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        flex: none;
+        min-height: 36px;
+        padding: 6px 6px;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font: inherit;
+        font-family: "Courier New", Courier, monospace;
+        text-transform: lowercase;
+        cursor: pointer;
+      }
+
+      .line-tab:hover {
+        border-color: #555;
+        color: #fff;
+      }
+
+      .line-tab.is-on {
+        border-color: #fff;
+        color: #fff;
+        background: #111;
+      }
+
+      .line-tab-n {
+        font-size: 11px;
+        line-height: 1.2;
+        text-align: center;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .row.row-dual {
+        grid-template-columns: 64px minmax(0, 1fr);
+        margin-bottom: 12px;
+      }
+
+      .dual-range {
+        position: relative;
+        width: 100%;
+        height: 40px;
+        min-width: 0;
+      }
+
+      .dual-val {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        font-size: 10px;
+        line-height: 1.2;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+        z-index: 2;
+        white-space: nowrap;
+      }
+
+      .dual-track {
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        top: 24px;
+        height: 3px;
+        transform: translateY(-50%);
+        background: #2a2a2a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      .dual-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 2px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 14px;
+        width: 100%;
+        height: 22px;
+        margin: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .dual-range input[type="range"]:focus {
+        outline: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track,
+      .dual-range input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: 0;
+        height: 22px;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+        margin-top: 0;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        pointer-events: auto;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        box-shadow: 0 0 0 1px #fff;
+      }
+
+      .dual-range input.is-end[type="range"]::-webkit-slider-thumb,
+      .dual-range input.is-end[type="range"]::-moz-range-thumb {
+        background: #1a1a1a;
+        border-color: #fff;
+        box-shadow: 0 0 0 1px #fff;
+      }
     </style>
     <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
+    <style>
+      .panel .line-tab {
+        border-color: rgba(31, 31, 31, 0.28);
+        background: #fff;
+        color: #1f1f1f;
+      }
+
+      .panel .line-tab:hover {
+        border-color: #1f1f1f;
+        color: #000;
+      }
+
+      .panel .line-tab.is-on {
+        border-color: #1f1f1f;
+        color: #fff;
+        background: #1f1f1f;
+      }
+    </style>
   </head>
   <body data-no-caption data-guide-margin="32">
     <div class="stage-wrap" id="stageWrap">
@@ -393,14 +560,10 @@
       </div>
 
       <div class="group">
-        <p class="group-title">blocks</p>
-        <ul class="block-list">
-          <li><span class="n">sparmax</span><span>condensed → extended</span></li>
-          <li><span class="n">iwata</span><span>thin → black italic</span></li>
-          <li><span class="n">grex</span><span>sans → contrast</span></li>
-          <li><span class="n">badger</span><span>bold → black</span></li>
-          <li><span class="n">h&amp;s</span><span>flair width</span></li>
-        </ul>
+        <p class="group-title">lines</p>
+        <div class="line-tabs" id="lineTabs" role="tablist" aria-label="lines"></div>
+        <p class="now" id="lineReadout">pose 1 → 2</p>
+        <div id="lineAxes"></div>
       </div>
 
       <div class="group">
@@ -449,7 +612,26 @@
           };
         }
 
-        var BLOCKS = [
+        function clonePose(p) {
+          return pose(p.fs, p.lh, p.track, p.wght, p.wdth, p.cntr, p.slnt, p.after);
+        }
+
+        function cloneBlocks(src) {
+          return src.map(function (block) {
+            return {
+              name: block.name,
+              lines: block.lines.map(function (line) {
+                return {
+                  text: line.text,
+                  from: clonePose(line.from),
+                  to: clonePose(line.to),
+                };
+              }),
+            };
+          });
+        }
+
+        var BLOCK_DEFS = [
           {
             name: "sparmax",
             lines: [
@@ -522,6 +704,7 @@
           },
         ];
 
+        var BLOCKS = cloneBlocks(BLOCK_DEFS);
         var LS_KEY = "animator:v2:conveyor:settings:v3";
         var STAGE_H = 1440;
         var root = document.documentElement;
@@ -574,6 +757,22 @@
         var lastLiveKf = -1;
         var loopHeight = 1;
         var nodes = [];
+        var activeLine = 0;
+        var syncingPoses = false;
+        var rebuildTimer = 0;
+        var lineTabsEl = document.getElementById("lineTabs");
+        var lineReadout = document.getElementById("lineReadout");
+        var lineAxesEl = document.getElementById("lineAxes");
+        var lineEls = {};
+        var LINE_AXES = [
+          { key: "fs", id: "lnFs", label: "size", min: 80, max: 420, step: 1 },
+          { key: "lh", id: "lnLh", label: "lead", min: 60, max: 400, step: 1 },
+          { key: "track", id: "lnTr", label: "track", min: -0.16, max: 0.16, step: 0.005 },
+          { key: "wght", id: "lnWg", label: "wght", min: 100, max: 1000, step: 1 },
+          { key: "wdth", id: "lnWd", label: "wdth", min: 65, max: 130, step: 1 },
+          { key: "cntr", id: "lnCn", label: "CNTR", min: 0, max: 100, step: 1 },
+          { key: "slnt", id: "lnSl", label: "slnt", min: -12, max: 0, step: 0.25 },
+        ];
 
         function lerp(a, b, t) {
           return a + (b - a) * t;
@@ -601,6 +800,250 @@
         function num(key, fallback) {
           var n = els[key] ? parseFloat(els[key].value) : fallback;
           return isFinite(n) ? n : fallback;
+        }
+
+        function flatLines() {
+          var out = [];
+          var i;
+          var j;
+          for (i = 0; i < BLOCKS.length; i++) {
+            for (j = 0; j < BLOCKS[i].lines.length; j++) {
+              out.push(BLOCKS[i].lines[j]);
+            }
+          }
+          return out;
+        }
+
+        function activeSpec() {
+          var lines = flatLines();
+          if (!lines.length) return null;
+          if (activeLine < 0) activeLine = 0;
+          if (activeLine >= lines.length) activeLine = lines.length - 1;
+          return lines[activeLine];
+        }
+
+        function mergePose(target, src) {
+          if (!target || !src) return;
+          ["fs", "lh", "track", "wght", "wdth", "cntr", "slnt", "after"].forEach(function (key) {
+            if (src[key] == null) return;
+            var n = Number(src[key]);
+            if (isFinite(n)) target[key] = n;
+          });
+        }
+
+        function applySavedPoses(data) {
+          if (!data || !data.length) return;
+          var i;
+          var j;
+          for (i = 0; i < BLOCKS.length; i++) {
+            if (!data[i]) continue;
+            for (j = 0; j < BLOCKS[i].lines.length; j++) {
+              if (!data[i][j]) continue;
+              mergePose(BLOCKS[i].lines[j].from, data[i][j].from);
+              mergePose(BLOCKS[i].lines[j].to, data[i][j].to);
+            }
+          }
+        }
+
+        function serializePoses() {
+          return BLOCKS.map(function (block) {
+            return block.lines.map(function (line) {
+              return { from: clonePose(line.from), to: clonePose(line.to) };
+            });
+          });
+        }
+
+        function fmtAxis(axis, v) {
+          var n = Number(v);
+          if (!isFinite(n)) return "";
+          if (axis.key === "fs" || axis.key === "lh") return Math.round(n) + "px";
+          if (axis.key === "track") return n.toFixed(2);
+          if (axis.key === "slnt") return n.toFixed(2).replace(/\.00$/, "");
+          return String(Math.round(n));
+        }
+
+        function thumbPct(el) {
+          var min = parseFloat(el.min);
+          var max = parseFloat(el.max);
+          var span = max - min || 1;
+          return ((parseFloat(el.value) - min) / span) * 100;
+        }
+
+        function updateDualUI(axis) {
+          var startEl = lineEls[axis.id + "0"];
+          var endEl = lineEls[axis.id + "1"];
+          if (!startEl || !endEl) return;
+          var fill = document.getElementById(axis.id + "Fill");
+          var startVal = document.getElementById(axis.id + "0Val");
+          var endVal = document.getElementById(axis.id + "1Val");
+          var a = parseFloat(startEl.value);
+          var b = parseFloat(endEl.value);
+          var min = parseFloat(startEl.min);
+          var max = parseFloat(startEl.max);
+          var span = max - min || 1;
+          var lo = Math.min(a, b);
+          var hi = Math.max(a, b);
+          if (fill) {
+            fill.style.left = ((lo - min) / span) * 100 + "%";
+            fill.style.width = Math.max(0, ((hi - lo) / span) * 100) + "%";
+          }
+          if (startVal) {
+            startVal.textContent = fmtAxis(axis, a);
+            startVal.style.left = thumbPct(startEl) + "%";
+          }
+          if (endVal) {
+            endVal.textContent = fmtAxis(axis, b);
+            endVal.style.left = thumbPct(endEl) + "%";
+          }
+        }
+
+        function updateAllDualUI() {
+          LINE_AXES.forEach(updateDualUI);
+        }
+
+        function writeSlidersToLine() {
+          var spec = activeSpec();
+          if (!spec) return;
+          LINE_AXES.forEach(function (axis) {
+            var startEl = lineEls[axis.id + "0"];
+            var endEl = lineEls[axis.id + "1"];
+            if (!startEl || !endEl) return;
+            var a = parseFloat(startEl.value);
+            var b = parseFloat(endEl.value);
+            if (!isFinite(a) || !isFinite(b)) return;
+            spec.from[axis.key] = a;
+            spec.to[axis.key] = b;
+          });
+        }
+
+        function writeLineToSliders() {
+          var spec = activeSpec();
+          if (!spec) return;
+          syncingPoses = true;
+          LINE_AXES.forEach(function (axis) {
+            var startEl = lineEls[axis.id + "0"];
+            var endEl = lineEls[axis.id + "1"];
+            if (!startEl || !endEl) return;
+            startEl.value = spec.from[axis.key];
+            endEl.value = spec.to[axis.key];
+          });
+          syncingPoses = false;
+          updateAllDualUI();
+          if (lineReadout) {
+            lineReadout.textContent = spec.text.toLowerCase() + " · pose 1 → 2";
+          }
+        }
+
+        function scheduleRebuild() {
+          if (rebuildTimer) return;
+          rebuildTimer = requestAnimationFrame(function () {
+            rebuildTimer = 0;
+            buildTrack();
+          });
+        }
+
+        function onLineInput() {
+          if (syncingPoses) return;
+          var size =
+            this &&
+            (this.id === "lnFs0" ||
+              this.id === "lnFs1" ||
+              this.id === "lnLh0" ||
+              this.id === "lnLh1");
+          writeSlidersToLine();
+          updateAllDualUI();
+          if (size) scheduleRebuild();
+          else applyElapsed(playing ? performance.now() - t0 : lastElapsed, beltMs);
+          save();
+        }
+
+        function buildLineAxes() {
+          if (!lineAxesEl) return;
+          lineAxesEl.innerHTML = "";
+          lineEls = {};
+          LINE_AXES.forEach(function (axis) {
+            var row = document.createElement("div");
+            row.className = "row row-dual";
+            row.innerHTML =
+              "<label for=\"" +
+              axis.id +
+              "0\">" +
+              axis.label +
+              "</label>" +
+              "<div class=\"dual-range\">" +
+              "<span class=\"dual-val\" id=\"" +
+              axis.id +
+              "0Val\"></span>" +
+              "<span class=\"dual-val\" id=\"" +
+              axis.id +
+              "1Val\"></span>" +
+              "<div class=\"dual-track\"><div class=\"dual-fill\" id=\"" +
+              axis.id +
+              "Fill\"></div></div>" +
+              "<input id=\"" +
+              axis.id +
+              "0\" class=\"is-start\" type=\"range\" min=\"" +
+              axis.min +
+              "\" max=\"" +
+              axis.max +
+              "\" step=\"" +
+              axis.step +
+              "\" aria-label=\"" +
+              axis.label +
+              " pose 1\" />" +
+              "<input id=\"" +
+              axis.id +
+              "1\" class=\"is-end\" type=\"range\" min=\"" +
+              axis.min +
+              "\" max=\"" +
+              axis.max +
+              "\" step=\"" +
+              axis.step +
+              "\" aria-label=\"" +
+              axis.label +
+              " pose 2\" />" +
+              "</div>";
+            lineAxesEl.appendChild(row);
+            lineEls[axis.id + "0"] = document.getElementById(axis.id + "0");
+            lineEls[axis.id + "1"] = document.getElementById(axis.id + "1");
+          });
+          Object.keys(lineEls).forEach(function (key) {
+            if (!lineEls[key]) return;
+            lineEls[key].addEventListener("input", onLineInput);
+            lineEls[key].addEventListener("change", onLineInput);
+          });
+        }
+
+        function paintLineTabs() {
+          if (!lineTabsEl) return;
+          var lines = flatLines();
+          lineTabsEl.innerHTML = "";
+          lines.forEach(function (line, i) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "line-tab" + (i === activeLine ? " is-on" : "");
+            btn.setAttribute("data-line", String(i));
+            btn.setAttribute("role", "tab");
+            btn.setAttribute("aria-selected", i === activeLine ? "true" : "false");
+            var n = document.createElement("span");
+            n.className = "line-tab-n";
+            n.textContent = line.text;
+            btn.appendChild(n);
+            btn.addEventListener("click", function () {
+              setActiveLine(i);
+            });
+            lineTabsEl.appendChild(btn);
+          });
+        }
+
+        function setActiveLine(i) {
+          var n = flatLines().length;
+          if (n <= 0) return;
+          if (i < 0) i = 0;
+          if (i >= n) i = n - 1;
+          activeLine = i;
+          writeLineToSliders();
+          paintLineTabs();
         }
 
         function mixPose(a, b, t) {
@@ -869,6 +1312,7 @@
             else if (CHECK_KEYS[key]) data[key] = els[key].checked ? "1" : "0";
             else data[key] = parseFloat(els[key].value);
           });
+          data.poses = serializePoses();
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
           } catch (e) {}
@@ -894,6 +1338,7 @@
               els[key].value = data[key];
             }
           });
+          if (data.poses) applySavedPoses(data.poses);
         }
 
         function reset() {
@@ -905,6 +1350,8 @@
               els[key].value = DEFAULTS[key];
             }
           });
+          BLOCKS = cloneBlocks(BLOCK_DEFS);
+          activeLine = 0;
           holdKf = -1;
           try {
             localStorage.removeItem(LS_KEY);
@@ -912,6 +1359,8 @@
           applyVars();
           paintVals();
           paintKfTabs();
+          paintLineTabs();
+          writeLineToSliders();
           buildTrack();
           restart();
           if (window.ArtboardView && window.ArtboardView.reset) {
@@ -948,6 +1397,9 @@
           var holdParam = new URLSearchParams(location.search).get("hold");
           if (holdParam === "1" || holdParam === "2") holdKf = Number(holdParam) - 1;
         } catch (e) {}
+        buildLineAxes();
+        paintLineTabs();
+        writeLineToSliders();
         applyVars();
         paintVals();
         paintKfTabs();

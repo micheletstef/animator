@@ -106,10 +106,10 @@
         --metric-size: 26;
         --col-gap-1: 40;
         --col-gap-2: 40;
-        --pad-t: 0;
-        --pad-r: 0;
-        --pad-b: 0;
-        --pad-l: 0;
+        --pad-t: 80;
+        --pad-r: 80;
+        --pad-b: 80;
+        --pad-l: 80;
       }
 
       * {
@@ -174,10 +174,10 @@
 
       .lockup {
         position: absolute;
-        top: calc(var(--pad-t) * 1px);
-        right: calc(var(--pad-r) * 1px);
-        bottom: calc(var(--pad-b) * 1px);
-        left: calc(var(--pad-l) * 1px);
+        top: var(--guide-t, calc(var(--pad-t) * 1px));
+        right: var(--guide-r, calc(var(--pad-r) * 1px));
+        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        left: var(--guide-l, calc(var(--pad-l) * 1px));
         z-index: 1;
       }
 
@@ -564,7 +564,7 @@
   <body
     data-guide-cols="3"
     data-guide-gutter="14"
-    data-guide-margin="0"
+    data-guide-margin="80"
   >
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
@@ -1281,6 +1281,10 @@
         }
 
         window.addEventListener("resize", layoutGuides);
+        if (window.ResizeObserver) {
+          var lockup = document.querySelector(".lockup");
+          if (lockup) new ResizeObserver(layoutGuides).observe(lockup);
+        }
 
         load();
 

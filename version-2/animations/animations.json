@@ -13,12 +13,6 @@
       "mtime": 1787769000
     },
     {
-      "id": "alternates-2",
-      "label": "alternates 2",
-      "url": "animations/alternates-2.html",
-      "mtime": 1787769000
-    },
-    {
       "id": "alternates-list",
       "label": "alternates list",
       "url": "animations/alternates-list.html",
@@ -51,7 +45,7 @@
     {
       "id": "s-nine-g",
       "label": "Single \u2013 S \u2192 9 \u2192 G",
-      "url": "animations/glyph-cycle.html?seq=S:contrast,9:full,G:weight",
+      "url": "animations/glyph-cycle.html?seq=S:contrast,9:width,G:weight",
       "mtime": 1787769000
     },
     {
@@ -88,7 +82,7 @@
       "id": "matrix-v2",
       "label": "matrix v2",
       "url": "animations/matrix-v2.html",
-      "mtime": 1787769000
+      "mtime": 1787782000
     },
     {
       "id": "technical-outline",
