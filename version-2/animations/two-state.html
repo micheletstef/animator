@@ -256,7 +256,7 @@
         justify-content: center;
         gap: 2px;
         flex: none;
-        min-height: 76px;
+        min-height: 92px;
         padding: 8px 4px;
         background: transparent;
         color: #cfcfcf;
@@ -430,11 +430,6 @@ XT°5</textarea>
           <span class="val" id="lhVal">0.88</span>
         </div>
         <div class="row">
-          <label for="tr">track</label>
-          <input id="tr" type="range" min="-0.12" max="0.12" step="0.005" value="-0.02" />
-          <span class="val" id="trVal">-0.02</span>
-        </div>
-        <div class="row">
           <label for="oy">y</label>
           <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
           <span class="val" id="oyVal">0px</span>
@@ -443,16 +438,16 @@ XT°5</textarea>
 
       <div class="group">
         <p class="group-title">keyframes</p>
-        <p class="now" id="nowReadout">wght 920 · wdth 100 · CNTR 100 · slnt 0</p>
+        <p class="now" id="nowReadout">wght 920 · wdth 100 · CNTR 100 · slnt 0 · track -0.02</p>
         <p class="kf-seq" id="kfSeq">1 → 2 → 1 · click a pose to hold</p>
         <div class="kf-tabs" role="tablist" aria-label="poses">
           <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
             <span class="kf-tab-n">1</span>
-            <span class="kf-tab-v" id="kfTab0Val">wght 920<br />wdth 100<br />CNTR 100</span>
+            <span class="kf-tab-v" id="kfTab0Val">wght 920<br />wdth 100<br />CNTR 100<br />track -0.02</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
             <span class="kf-tab-n">2</span>
-            <span class="kf-tab-v" id="kfTab1Val">wght 200<br />wdth 100<br />CNTR 100</span>
+            <span class="kf-tab-v" id="kfTab1Val">wght 200<br />wdth 100<br />CNTR 100<br />track -0.02</span>
           </button>
         </div>
         <div class="kf-pose is-on" id="kfPose0">
@@ -476,6 +471,11 @@ XT°5</textarea>
             <input id="slnt0" type="range" min="-12" max="0" step="0.25" value="0" />
             <span class="val" id="slnt0Val">0</span>
           </div>
+          <div class="row">
+            <label for="tr0">track</label>
+            <input id="tr0" type="range" min="-0.12" max="0.12" step="0.005" value="-0.02" />
+            <span class="val" id="tr0Val">-0.02</span>
+          </div>
         </div>
         <div class="kf-pose" id="kfPose1">
           <div class="row">
@@ -497,6 +497,11 @@ XT°5</textarea>
             <label for="slnt1">slnt</label>
             <input id="slnt1" type="range" min="-12" max="0" step="0.25" value="0" />
             <span class="val" id="slnt1Val">0</span>
+          </div>
+          <div class="row">
+            <label for="tr1">track</label>
+            <input id="tr1" type="range" min="-0.12" max="0.12" step="0.005" value="-0.02" />
+            <span class="val" id="tr1Val">-0.02</span>
           </div>
         </div>
       </div>
@@ -545,16 +550,17 @@ XT°5</textarea>
           align: "center",
           fs: 410,
           lh: 0.88,
-          tr: -0.02,
           oy: 0,
           wght0: 920,
           wdth0: 100,
           cntr0: 100,
           slnt0: 0,
+          tr0: -0.02,
           wght1: 200,
           wdth1: 100,
           cntr1: 100,
           slnt1: 0,
+          tr1: -0.02,
           move: 420,
           hold: 700,
         };
@@ -568,16 +574,17 @@ XT°5</textarea>
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
-          tr: document.getElementById("trVal"),
           oy: document.getElementById("oyVal"),
           wght0: document.getElementById("wght0Val"),
           wdth0: document.getElementById("wdth0Val"),
           cntr0: document.getElementById("cntr0Val"),
           slnt0: document.getElementById("slnt0Val"),
+          tr0: document.getElementById("tr0Val"),
           wght1: document.getElementById("wght1Val"),
           wdth1: document.getElementById("wdth1Val"),
           cntr1: document.getElementById("cntr1Val"),
           slnt1: document.getElementById("slnt1Val"),
+          tr1: document.getElementById("tr1Val"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
         };
@@ -701,7 +708,6 @@ XT°5</textarea>
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--fs", String(num("fs", 410)));
           root.style.setProperty("--lh", String(num("lh", 0.88)));
-          root.style.setProperty("--tracking", String(num("tr", -0.02)));
           root.style.setProperty("--oy", String(num("oy", 0)));
           applyAlign();
         }
@@ -713,7 +719,9 @@ XT°5</textarea>
 
         function formatVal(key, v) {
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
-          if (key === "lh" || key === "tr") return Number(v).toFixed(2);
+          if (key === "lh" || key === "tr0" || key === "tr1") {
+            return Number(v).toFixed(2);
+          }
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
           if (key === "move" || key === "hold") return formatMs(Number(v));
           if (key === "slnt0" || key === "slnt1") {
@@ -747,6 +755,7 @@ XT°5</textarea>
             wdth: num("wdth" + p, 100),
             cntr: num("cntr" + p, 100),
             slnt: num("slnt" + p, 0),
+            track: num("tr" + p, -0.02),
           };
         }
 
@@ -757,6 +766,7 @@ XT°5</textarea>
             wdth: lerp(a.wdth, b.wdth, e),
             cntr: lerp(a.cntr, b.cntr, e),
             slnt: lerp(a.slnt, b.slnt, e),
+            track: lerp(a.track, b.track, e),
             t: e,
           };
         }
@@ -779,6 +789,7 @@ XT°5</textarea>
 
         function applyMix(mixed) {
           var i;
+          root.style.setProperty("--tracking", String(mixed.track));
           for (i = 0; i < glyphs.length; i++) {
             applyGlyph(glyphs[i], mixed);
           }
@@ -793,7 +804,9 @@ XT°5</textarea>
               " · CNTR " +
               Math.round(mixed.cntr) +
               " · slnt " +
-              slntLabel(mixed.slnt);
+              slntLabel(mixed.slnt) +
+              " · track " +
+              Number(mixed.track).toFixed(2);
           }
         }
 
@@ -946,7 +959,9 @@ XT°5</textarea>
                 "<br>wdth " +
                 Math.round(pose.wdth) +
                 "<br>CNTR " +
-                Math.round(pose.cntr);
+                Math.round(pose.cntr) +
+                "<br>track " +
+                Number(pose.track).toFixed(2);
             }
           }
           if (kfSeq) {
@@ -1040,8 +1055,17 @@ XT°5</textarea>
           return data;
         }
 
+        function migrateTrack(data) {
+          if (!data) return data;
+          if (data.tr0 == null && data.tr != null) data.tr0 = data.tr;
+          if (data.tr1 == null && data.tr != null) data.tr1 = data.tr;
+          return data;
+        }
+
         function loadSaved() {
-          var data = readJson(LS_KEY) || migrateV1(readJson(LS_KEY_V1));
+          var data = migrateTrack(
+            readJson(LS_KEY) || migrateV1(readJson(LS_KEY_V1))
+          );
           if (!data) return;
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;

@@ -124,22 +124,8 @@
         font-size: calc(var(--fs) * 1px);
       }
 
-      .ch {
-        color: var(--fg);
-        font-feature-settings: inherit;
-        font-variant-ligatures: none;
-        font-kerning: none;
-      }
-
-      .alt-name.is-on,
-      .alt-name.is-on .ch,
-      .ch.is-hit {
+      .alt-name.is-on {
         color: var(--hl);
-      }
-
-      .ch-run {
-        letter-spacing: 0;
-        font-kerning: auto;
       }
 
       .lockup,
@@ -406,26 +392,26 @@ Spurless, Pointed</textarea>
           "Schoolbook a\nDoublestorey g\nAlt l, Alt t, Alt y,\nAlt G, Alt G simple,\nAlt M, Alt Q,\nAlt R, Alt J, Alt &,\nAlt comma,\nAlt 1, Alt 3, Alt U,\nWhite Circled\nRound Punctuation,\nSpurless, Pointed";
 
         var ALTS = [
-          { label: "Schoolbook a", feat: "ss01", hits: "a" },
-          { label: "Doublestorey g", feat: "ss02", hits: "g" },
-          { label: "Alt l", feat: "ss03", hits: "l" },
-          { label: "Alt t", feat: "ss04", hits: "t" },
-          { label: "Alt y", feat: "ss05", hits: "y" },
-          { label: "Alt G", feat: "ss06", hits: "G" },
-          { label: "Alt G simple", feat: "ss07", hits: "G" },
-          { label: "Alt M", feat: "ss08", hits: "M" },
-          { label: "Alt Q", feat: "ss09", hits: "Q" },
-          { label: "Alt R", feat: "ss10", hits: "R" },
-          { label: "Alt J", feat: "ss11", hits: "J" },
-          { label: "Alt &", feat: "ss12", hits: "&" },
-          { label: "Alt comma", feat: "ss13", hits: ",;" },
-          { label: "Alt 1", feat: "ss14", hits: "1" },
-          { label: "Alt 3", feat: "ss15", hits: "3" },
-          { label: "White Circled", feat: "ss16", hits: "0123456789" },
-          { label: "Alt U", feat: "ss17", hits: "U" },
-          { label: "Round Punctuation", feat: "ss18", hits: "ij.,:;!?" },
-          { label: "Spurless", feat: "ss19", hits: "abdpq" },
-          { label: "Pointed", feat: "ss20", hits: "AMVWvw" },
+          { label: "Schoolbook a", feat: "ss01" },
+          { label: "Doublestorey g", feat: "ss02" },
+          { label: "Alt l", feat: "ss03" },
+          { label: "Alt t", feat: "ss04" },
+          { label: "Alt y", feat: "ss05" },
+          { label: "Alt G", feat: "ss06" },
+          { label: "Alt G simple", feat: "ss07" },
+          { label: "Alt M", feat: "ss08" },
+          { label: "Alt Q", feat: "ss09" },
+          { label: "Alt R", feat: "ss10" },
+          { label: "Alt J", feat: "ss11" },
+          { label: "Alt &", feat: "ss12" },
+          { label: "Alt comma", feat: "ss13" },
+          { label: "Alt 1", feat: "ss14" },
+          { label: "Alt 3", feat: "ss15" },
+          { label: "White Circled", feat: "ss16" },
+          { label: "Alt U", feat: "ss17" },
+          { label: "Round Punctuation", feat: "ss18" },
+          { label: "Spurless", feat: "ss19" },
+          { label: "Pointed", feat: "ss20" },
         ];
 
         var LABELS = ALTS.slice().sort(function (a, b) {
@@ -493,71 +479,43 @@ Spurless, Pointed</textarea>
         };
 
         var nameNodes = [];
-        var charNodes = [];
         var lastIndex = -2;
         var t0 = 0;
         var raf = 0;
         var playing = true;
 
-        function isDigit(ch) {
-          return ch >= "0" && ch <= "9";
-        }
-
-        function isHit(alt, ch) {
-          return !!(alt && alt.hits && alt.hits.indexOf(ch) !== -1);
+        function nextLabelAt(line, i) {
+          var hit = null;
+          var n = 0;
+          for (var a = 0; a < LABELS.length; a += 1) {
+            var lab = LABELS[a];
+            if (
+              lab.label.length > n &&
+              line.substr(i, lab.label.length) === lab.label
+            ) {
+              hit = lab;
+              n = lab.label.length;
+            }
+          }
+          return hit;
         }
 
         function tokenizeLine(line) {
           var tokens = [];
           var i = 0;
           while (i < line.length) {
-            var hit = null;
-            var n = 0;
-            for (var a = 0; a < LABELS.length; a += 1) {
-              var lab = LABELS[a];
-              if (
-                lab.label.length > n &&
-                line.substr(i, lab.label.length) === lab.label
-              ) {
-                hit = lab;
-                n = lab.label.length;
-              }
-            }
+            var hit = nextLabelAt(line, i);
             if (hit) {
               tokens.push({ text: hit.label, alt: hit });
               i += hit.label.length;
               continue;
             }
-            var ch = line.charAt(i);
-            if (isDigit(ch)) {
-              var j = i;
-              while (j < line.length && isDigit(line.charAt(j))) j += 1;
-              tokens.push({ text: line.slice(i, j), alt: null, circled: true });
-              i = j;
-              continue;
-            }
-            tokens.push({ text: ch, alt: null });
-            i += 1;
+            var j = i + 1;
+            while (j < line.length && !nextLabelAt(line, j)) j += 1;
+            tokens.push({ text: line.slice(i, j), alt: null });
+            i = j;
           }
           return tokens;
-        }
-
-        function appendChars(parent, text, circled) {
-          if (circled && text.length) {
-            var run = document.createElement("span");
-            run.className = "ch ch-run";
-            run.textContent = text;
-            parent.appendChild(run);
-            charNodes.push({ el: run, text: text });
-            return;
-          }
-          for (var i = 0; i < text.length; i += 1) {
-            var span = document.createElement("span");
-            span.className = "ch";
-            span.textContent = text.charAt(i);
-            parent.appendChild(span);
-            charNodes.push({ el: span, text: text.charAt(i) });
-          }
         }
 
         function applyFeature(feat) {
@@ -572,7 +530,6 @@ Spurless, Pointed</textarea>
         function buildLockup(text) {
           lockup.innerHTML = "";
           nameNodes = [];
-          charNodes = [];
           var lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
           if (lines.length === 1 && lines[0] === "") lines = [""];
           lines.forEach(function (line) {
@@ -583,12 +540,12 @@ Spurless, Pointed</textarea>
                 var wrap = document.createElement("span");
                 wrap.className = "alt-name";
                 wrap.setAttribute("data-feat", tok.alt.feat);
-                appendChars(wrap, tok.text, false);
+                wrap.textContent = tok.text;
                 nameNodes.push({ el: wrap, alt: tok.alt });
                 lineEl.appendChild(wrap);
                 return;
               }
-              appendChars(lineEl, tok.text, !!tok.circled);
+              lineEl.appendChild(document.createTextNode(tok.text));
             });
             lockup.appendChild(lineEl);
           });
@@ -602,19 +559,6 @@ Spurless, Pointed</textarea>
           applyFeature(alt ? alt.feat : null);
           nameNodes.forEach(function (node) {
             node.el.classList.toggle("is-on", !!(alt && node.alt.feat === alt.feat));
-          });
-          charNodes.forEach(function (node) {
-            var on = false;
-            if (alt) {
-              var t = node.text;
-              for (var i = 0; i < t.length; i += 1) {
-                if (isHit(alt, t.charAt(i))) {
-                  on = true;
-                  break;
-                }
-              }
-            }
-            node.el.classList.toggle("is-hit", on);
           });
           if (nowReadout) {
             nowReadout.textContent = alt ? alt.label : "hold";

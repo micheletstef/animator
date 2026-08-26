@@ -25,8 +25,8 @@
         --pad-r: 32;
         --pad-b: 32;
         --pad-l: 32;
-        --fs: 220;
-        --lh: 0.88;
+        --fs: 290;
+        --lh: 0.77;
         --tracking: 0;
         --gap: 140;
       }
@@ -133,16 +133,12 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        height: calc(var(--fs) * var(--slot-size) * var(--lh) * 1px);
         overflow: visible;
       }
 
       .line {
         display: block;
         width: 100%;
-        font-size: calc(var(--fs) * var(--line-size) * 1px);
-        line-height: var(--lh);
-        letter-spacing: calc(var(--line-track, var(--tracking)) * 1em);
         white-space: nowrap;
         font-kerning: none;
         font-synthesis: none;
@@ -205,6 +201,14 @@
       .row input[type="range"] {
         width: 100%;
         accent-color: #fff;
+      }
+
+      .row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        justify-self: start;
+        accent-color: #fff;
+        cursor: pointer;
       }
 
       .row input[type="color"] {
@@ -357,19 +361,9 @@
       <div class="group">
         <p class="group-title">type</p>
         <div class="row">
-          <label for="fs">size</label>
-          <input id="fs" type="range" min="80" max="280" step="1" value="220" />
-          <span class="val" id="fsVal">220px</span>
-        </div>
-        <div class="row">
-          <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.88" />
-          <span class="val" id="lhVal">0.88</span>
-        </div>
-        <div class="row">
-          <label for="tr">track</label>
-          <input id="tr" type="range" min="-0.08" max="0.12" step="0.005" value="0" />
-          <span class="val" id="trVal">0.00</span>
+          <label for="scale">scale</label>
+          <input id="scale" type="range" min="50" max="130" step="1" value="100" />
+          <span class="val" id="scaleVal">100%</span>
         </div>
         <div class="row">
           <label for="gap">gap</label>
@@ -397,7 +391,7 @@
       <div class="group">
         <p class="group-title">blocks</p>
         <ul class="block-list">
-          <li><span class="n">sparmax</span><span>width + weight</span></li>
+          <li><span class="n">sparmax</span><span>condensed → extended</span></li>
           <li><span class="n">iwata</span><span>thin → black italic</span></li>
           <li><span class="n">grex</span><span>sans → contrast</span></li>
           <li><span class="n">badger</span><span>bold → black</span></li>
@@ -413,14 +407,19 @@
           <span class="val" id="loopVal">16s</span>
         </div>
         <div class="row">
+          <label for="scroll">belt</label>
+          <input id="scroll" type="checkbox" checked />
+          <span class="val" id="scrollVal">on</span>
+        </div>
+        <div class="row">
           <label for="hold">hold</label>
           <input id="hold" type="range" min="80" max="2000" step="20" value="880" />
           <span class="val" id="holdVal">880ms</span>
         </div>
         <div class="row">
           <label for="snap">snap</label>
-          <input id="snap" type="range" min="40" max="400" step="10" value="120" />
-          <span class="val" id="snapVal">120ms</span>
+          <input id="snap" type="range" min="80" max="1600" step="10" value="520" />
+          <span class="val" id="snapVal">520ms</span>
         </div>
       </div>
     </aside>
@@ -428,14 +427,15 @@
     <script src="artboard-view.js?v=27"></script>
     <script>
       (function () {
-        function pose(wght, wdth, cntr, slnt, size, track) {
+        function pose(fs, lh, track, wght, wdth, cntr, slnt) {
           return {
+            fs: fs,
+            lh: lh,
+            track: track,
             wght: wght,
             wdth: wdth,
             cntr: cntr,
             slnt: slnt,
-            size: size,
-            track: track,
           };
         }
 
@@ -445,13 +445,13 @@
             lines: [
               {
                 text: "SPARMAX",
-                from: pose(700, 87, 0, 0, 1.14, -0.03),
-                to: pose(900, 80, 0, 0, 0.92, -0.03),
+                from: pose(290, 224, 0, 427, 67, 57, 0),
+                to: pose(150, 124, -0.08, 800, 130, 50, 0),
               },
               {
                 text: "SP-20X",
-                from: pose(600, 100, 0, 0, 1.0, -0.01),
-                to: pose(1000, 87, 37, 0, 1.55, -0.05),
+                from: pose(290, 224, -0.01, 427, 100, 57, 0),
+                to: pose(282, 224, -0.01, 407, 67, 57, 0),
               },
             ],
           },
@@ -460,13 +460,13 @@
             lines: [
               {
                 text: "IWATA",
-                from: pose(200, 102, 0, 0, 1.0, 0.03),
-                to: pose(980, 98, 0, -12, 1.0, -0.03),
+                from: pose(220, 224, 0.08, 200, 100, 0, 0),
+                to: pose(220, 224, -0.04, 980, 100, 0, -12),
               },
               {
                 text: "NEO",
-                from: pose(200, 102, 0, 0, 1.0, 0.03),
-                to: pose(980, 98, 0, -12, 1.0, -0.03),
+                from: pose(220, 224, 0.08, 200, 100, 0, 0),
+                to: pose(220, 224, -0.04, 980, 100, 0, -12),
               },
             ],
           },
@@ -475,13 +475,13 @@
             lines: [
               {
                 text: "GREX",
-                from: pose(1000, 82, 0, 0, 1.0, -0.07),
-                to: pose(520, 100, 100, 0, 1.0, 0.01),
+                from: pose(250, 224, -0.07, 1000, 82, 0, 0),
+                to: pose(250, 224, 0.01, 520, 100, 100, 0),
               },
               {
                 text: "TRITIUM",
-                from: pose(1000, 82, 0, 0, 1.0, -0.07),
-                to: pose(520, 100, 100, 0, 1.0, 0.01),
+                from: pose(250, 224, -0.07, 1000, 82, 0, 0),
+                to: pose(250, 224, 0.01, 520, 100, 100, 0),
               },
             ],
           },
@@ -490,13 +490,13 @@
             lines: [
               {
                 text: "BADGER",
-                from: pose(680, 100, 0, 0, 1.0, -0.02),
-                to: pose(1000, 90, 0, 0, 1.0, -0.05),
+                from: pose(250, 224, -0.02, 680, 100, 0, 0),
+                to: pose(250, 224, -0.05, 1000, 90, 0, 0),
               },
               {
                 text: "350",
-                from: pose(680, 100, 0, 0, 1.0, -0.02),
-                to: pose(1000, 90, 0, 0, 1.0, -0.05),
+                from: pose(250, 224, -0.02, 680, 100, 0, 0),
+                to: pose(250, 224, -0.05, 1000, 90, 0, 0),
               },
             ],
           },
@@ -505,14 +505,14 @@
             lines: [
               {
                 text: "H&S ULTRA",
-                from: pose(420, 90, 50, 0, 0.7, 0.05),
-                to: pose(420, 126, 50, 0, 0.7, 0.12),
+                from: pose(160, 180, 0.05, 420, 90, 50, 0),
+                to: pose(160, 180, 0.12, 420, 126, 50, 0),
               },
             ],
           },
         ];
 
-        var LS_KEY = "animator:v2:conveyor:settings:v2";
+        var LS_KEY = "animator:v2:conveyor:settings:v3";
         var STAGE_H = 1440;
         var root = document.documentElement;
         var stage = document.getElementById("stage");
@@ -527,26 +527,25 @@
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
-          fs: 220,
-          lh: 0.88,
-          tr: 0,
+          scale: 100,
           gap: 140,
           loop: 16,
+          scroll: "1",
           hold: 880,
-          snap: 120,
+          snap: 520,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
+        var CHECK_KEYS = { scroll: 1 };
 
         var els = {};
         var vals = {
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
-          fs: document.getElementById("fsVal"),
-          lh: document.getElementById("lhVal"),
-          tr: document.getElementById("trVal"),
+          scale: document.getElementById("scaleVal"),
           gap: document.getElementById("gapVal"),
           loop: document.getElementById("loopVal"),
+          scroll: document.getElementById("scrollVal"),
           hold: document.getElementById("holdVal"),
           snap: document.getElementById("snapVal"),
         };
@@ -559,6 +558,8 @@
         var raf = 0;
         var playing = true;
         var lastElapsed = 0;
+        var beltMs = 0;
+        var lastFrame = 0;
         var holdKf = -1;
         var lastLiveKf = -1;
         var loopHeight = 1;
@@ -576,7 +577,15 @@
 
         function ease(t) {
           t = clamp01(t);
-          return 1 - Math.pow(1 - t, 5);
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function scale() {
+          return Math.max(0.2, num("scale", 100) / 100);
+        }
+
+        function scrollOn() {
+          return !!(els.scroll && els.scroll.checked);
         }
 
         function num(key, fallback) {
@@ -587,12 +596,13 @@
         function mixPose(a, b, t) {
           var e = ease(t);
           return {
+            fs: lerp(a.fs, b.fs, e),
+            lh: lerp(a.lh, b.lh, e),
+            track: lerp(a.track, b.track, e),
             wght: lerp(a.wght, b.wght, e),
             wdth: lerp(a.wdth, b.wdth, e),
             cntr: lerp(a.cntr, b.cntr, e),
             slnt: lerp(a.slnt, b.slnt, e),
-            size: lerp(a.size, b.size, e),
-            track: lerp(a.track, b.track, e),
           };
         }
 
@@ -611,17 +621,18 @@
 
         function applyLine(el, spec, t) {
           var p = mixPose(spec.from, spec.to, t);
-          var trackOff = num("tr", 0);
+          var s = scale();
           el.style.fontVariationSettings = vfString(p);
           el.style.fontWeight = String(Math.round(p.wght));
-          el.style.setProperty("--line-size", String(p.size));
-          el.style.setProperty("--line-track", String(p.track + trackOff));
+          el.style.fontSize = p.fs * s + "px";
+          el.style.lineHeight = p.lh * s + "px";
+          el.style.letterSpacing = p.track + "em";
         }
 
         function morphT(elapsed) {
           if (holdKf >= 0) return holdKf;
           var hold = Math.max(0, num("hold", 880));
-          var snap = Math.max(40, num("snap", 120));
+          var snap = Math.max(40, num("snap", 520));
           var seg = hold + snap;
           var total = Math.max(1, 2 * seg);
           var t = ((elapsed % total) + total) % total;
@@ -690,10 +701,8 @@
             for (j = 0; j < spec.lines.length; j++) {
               slot = document.createElement("div");
               slot.className = "line-slot";
-              slot.style.setProperty(
-                "--slot-size",
-                String(Math.max(spec.lines[j].from.size, spec.lines[j].to.size) * 1.04)
-              );
+              slot.style.height =
+                Math.max(spec.lines[j].from.lh, spec.lines[j].to.lh) * scale() + "px";
               line = document.createElement("span");
               line.className = "line";
               line.textContent = spec.lines[j].text;
@@ -713,7 +722,6 @@
         }
 
         function buildTrack() {
-          var phase = loopHeight > 0 ? lastElapsed / Math.max(1, durationMs()) : 0;
           track.innerHTML = "";
           nodes = [];
           var first = makeCycle();
@@ -724,12 +732,12 @@
           for (n = 1; n < need; n += 1) {
             track.appendChild(makeCycle());
           }
-          applyElapsed(phase * durationMs());
+          applyElapsed(lastElapsed, beltMs);
         }
 
         function morphCycleMs() {
           var hold = Math.max(0, num("hold", 880));
-          var snap = Math.max(40, num("snap", 120));
+          var snap = Math.max(40, num("snap", 520));
           return Math.max(1, 2 * (hold + snap));
         }
 
@@ -740,28 +748,35 @@
           return Math.max(belt, morph);
         }
 
-        function applyElapsed(ms) {
+        function applyElapsed(ms, beltTime) {
           lastElapsed = ms;
+          if (beltTime == null) beltTime = beltMs;
           var dur = durationMs();
-          var t = ((ms % dur) + dur) % dur;
-          var y = (t / dur) * loopHeight;
+          var bt = ((beltTime % dur) + dur) % dur;
+          var y = (bt / dur) * loopHeight;
           track.style.transform = "translate3d(0," + -y.toFixed(2) + "px,0)";
           applyMorphs();
         }
 
         function frame(now) {
-          applyElapsed(now - t0);
+          if (!lastFrame) lastFrame = now;
+          var dt = now - lastFrame;
+          lastFrame = now;
+          if (scrollOn()) beltMs += dt;
+          applyElapsed(now - t0, beltMs);
           if (playing) raf = requestAnimationFrame(frame);
         }
 
         function stopPlayback() {
           playing = false;
+          lastFrame = 0;
           cancelAnimationFrame(raf);
           raf = 0;
         }
 
         function startPlayback() {
           playing = true;
+          lastFrame = 0;
           t0 = performance.now() - lastElapsed;
           cancelAnimationFrame(raf);
           raf = requestAnimationFrame(frame);
@@ -769,9 +784,11 @@
 
         function restart() {
           lastLiveKf = -1;
+          lastFrame = 0;
+          beltMs = 0;
           t0 = performance.now();
           paintKfTabs();
-          applyElapsed(0);
+          applyElapsed(0, 0);
           cancelAnimationFrame(raf);
           if (playing) raf = requestAnimationFrame(frame);
         }
@@ -788,9 +805,10 @@
         }
 
         function formatVal(key, v) {
+          if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
-          if (key === "lh" || key === "tr") return Number(v).toFixed(2);
-          if (key === "fs" || key === "gap") return Math.round(Number(v)) + "px";
+          if (key === "scale") return Math.round(Number(v)) + "%";
+          if (key === "gap") return Math.round(Number(v)) + "px";
           if (key === "hold" || key === "snap") {
             var ms = Number(v);
             if (ms >= 1000) return (ms / 1000).toFixed(1) + "s";
@@ -803,19 +821,22 @@
           return String(v);
         }
 
+        function controlValue(key) {
+          if (!els[key]) return DEFAULTS[key];
+          if (CHECK_KEYS[key]) return els[key].checked ? "1" : "0";
+          return els[key].value;
+        }
+
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--fs", String(num("fs", 220)));
-          root.style.setProperty("--lh", String(num("lh", 0.88)));
-          root.style.setProperty("--tracking", String(num("tr", 0)));
           root.style.setProperty("--gap", String(num("gap", 140)));
         }
 
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = formatVal(key, els[key].value);
+            vals[key].textContent = formatVal(key, controlValue(key));
           });
         }
 
@@ -824,6 +845,7 @@
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
             if (COLOR_KEYS[key]) data[key] = els[key].value;
+            else if (CHECK_KEYS[key]) data[key] = els[key].checked ? "1" : "0";
             else data[key] = parseFloat(els[key].value);
           });
           try {
@@ -845,14 +867,22 @@
           }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
-            els[key].value = data[key];
+            if (CHECK_KEYS[key]) {
+              els[key].checked = data[key] === "1" || data[key] === true;
+            } else {
+              els[key].value = data[key];
+            }
           });
         }
 
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            if (CHECK_KEYS[key]) {
+              els[key].checked = DEFAULTS[key] === "1";
+            } else {
+              els[key].value = DEFAULTS[key];
+            }
           });
           holdKf = -1;
           try {
@@ -871,10 +901,10 @@
         function onSettingInput() {
           applyVars();
           paintVals();
-          if (this && (this.id === "fs" || this.id === "lh" || this.id === "gap")) {
+          if (this && (this.id === "scale" || this.id === "gap")) {
             buildTrack();
           } else {
-            applyElapsed(playing ? performance.now() - t0 : lastElapsed);
+            applyElapsed(playing ? performance.now() - t0 : lastElapsed, beltMs);
           }
           save();
         }
@@ -909,7 +939,7 @@
 
         if (document.fonts && document.fonts.load) {
           Promise.all([
-            document.fonts.load('400 220px "IkarusPlusVariable"'),
+            document.fonts.load('400 290px "IkarusPlusVariable"'),
             document.fonts.ready,
           ])
             .then(afterFonts)
@@ -925,7 +955,8 @@
           filename: "conveyor.mp4",
           durationMs: durationMs,
           seek: function (ms) {
-            applyElapsed(ms);
+            beltMs = ms;
+            applyElapsed(ms, ms);
           },
           stop: stopPlayback,
           start: startPlayback,
