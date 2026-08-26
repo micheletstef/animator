@@ -633,11 +633,12 @@
             return {
               name: block.name,
               gap: block.gap == null ? 140 : block.gap,
+              pairGap: block.pairGap == null ? 64 : block.pairGap,
               row: !!block.row,
               lines: block.lines.map(function (line) {
                 return {
                   text: line.text,
-                  space: line.space || 0,
+                  pair: !!line.pair,
                   from: clonePose(line.from),
                   to: clonePose(line.to),
                 };
@@ -713,7 +714,7 @@
             lines: [
               {
                 text: "H&S",
-                space: 0.4,
+                pair: true,
                 from: pose(160, 180, 0.05, 420, 90, 50, 0),
                 to: pose(160, 180, 0.12, 420, 126, 50, 0),
               },
@@ -787,6 +788,9 @@
         var GAP_MIN = 0;
         var GAP_MAX = 600;
         var GAP_DEFAULT = 140;
+        var PAIR_MIN = 0;
+        var PAIR_MAX = 400;
+        var PAIR_DEFAULT = 64;
         var lineEls = {};
         var LINE_AXES = [
           { key: "fs", id: "lnFs", label: "size", min: 80, max: 900, step: 1 },
@@ -881,6 +885,12 @@
           return Math.max(GAP_MIN, Math.min(GAP_MAX, n));
         }
 
+        function clampPairGap(n) {
+          n = Number(n);
+          if (!isFinite(n)) return PAIR_DEFAULT;
+          return Math.max(PAIR_MIN, Math.min(PAIR_MAX, n));
+        }
+
         function applySavedGaps(data) {
           var i;
           var n;
@@ -889,11 +899,15 @@
               if (data.blockGaps[i] == null) continue;
               BLOCKS[i].gap = clampGap(data.blockGaps[i]);
             }
-            return;
-          }
-          if (data.gap != null) {
+          } else if (data.gap != null) {
             n = clampGap(data.gap);
             for (i = 0; i < BLOCKS.length; i++) BLOCKS[i].gap = n;
+          }
+          if (data.pairGaps && data.pairGaps.length) {
+            for (i = 0; i < BLOCKS.length; i++) {
+              if (!BLOCKS[i].row || data.pairGaps[i] == null) continue;
+              BLOCKS[i].pairGap = clampPairGap(data.pairGaps[i]);
+            }
           }
         }
 
@@ -903,9 +917,20 @@
           });
         }
 
+        function serializePairGaps() {
+          return BLOCKS.map(function (block) {
+            return block.row ? clampPairGap(block.pairGap) : null;
+          });
+        }
+
         function paintBlockGapVal(i) {
           var val = document.getElementById("bgap" + i + "Val");
           if (val) val.textContent = Math.round(clampGap(BLOCKS[i].gap)) + "px";
+        }
+
+        function paintPairGapVal(i) {
+          var val = document.getElementById("pgap" + i + "Val");
+          if (val) val.textContent = Math.round(clampPairGap(BLOCKS[i].pairGap)) + "px";
         }
 
         function writeGapsToSliders() {
@@ -913,9 +938,15 @@
           var el;
           for (i = 0; i < BLOCKS.length; i++) {
             el = document.getElementById("bgap" + i);
-            if (!el) continue;
-            el.value = String(clampGap(BLOCKS[i].gap));
-            paintBlockGapVal(i);
+            if (el) {
+              el.value = String(clampGap(BLOCKS[i].gap));
+              paintBlockGapVal(i);
+            }
+            el = document.getElementById("pgap" + i);
+            if (el) {
+              el.value = String(clampPairGap(BLOCKS[i].pairGap));
+              paintPairGapVal(i);
+            }
           }
         }
 
@@ -926,6 +957,22 @@
           paintBlockGapVal(i);
           scheduleRebuild();
           save();
+        }
+
+        function onPairGapInput() {
+          var i = parseInt(this.getAttribute("data-block"), 10);
+          if (!isFinite(i) || !BLOCKS[i]) return;
+          BLOCKS[i].pairGap = clampPairGap(this.value);
+          paintPairGapVal(i);
+          applyElapsed(playing ? performance.now() - t0 : lastElapsed, beltMs);
+          save();
+        }
+
+        function bindGapInput(id, handler) {
+          var input = document.getElementById(id);
+          if (!input) return;
+          input.addEventListener("input", handler);
+          input.addEventListener("change", handler);
         }
 
         function buildBlockGaps() {
@@ -957,11 +1004,32 @@
               Math.round(clampGap(block.gap)) +
               "px</span>";
             blockGapsEl.appendChild(row);
-            var input = document.getElementById("bgap" + i);
-            if (input) {
-              input.addEventListener("input", onBlockGapInput);
-              input.addEventListener("change", onBlockGapInput);
-            }
+            bindGapInput("bgap" + i, onBlockGapInput);
+            if (!block.row) return;
+            row = document.createElement("div");
+            row.className = "row";
+            row.innerHTML =
+              "<label for=\"pgap" +
+              i +
+              "\">h&s · ultra</label>" +
+              "<input id=\"pgap" +
+              i +
+              "\" type=\"range\" min=\"" +
+              PAIR_MIN +
+              "\" max=\"" +
+              PAIR_MAX +
+              "\" step=\"1\" value=\"" +
+              clampPairGap(block.pairGap) +
+              "\" data-block=\"" +
+              i +
+              "\" />" +
+              "<span class=\"val\" id=\"pgap" +
+              i +
+              "Val\">" +
+              Math.round(clampPairGap(block.pairGap)) +
+              "px</span>";
+            blockGapsEl.appendChild(row);
+            bindGapInput("pgap" + i, onPairGapInput);
           });
         }
 
@@ -1193,7 +1261,7 @@
           );
         }
 
-        function applyLine(el, spec, t) {
+        function applyLine(el, spec, t, pairGap) {
           var p = mixPose(spec.from, spec.to, t);
           var s = scale();
           el.style.fontVariationSettings = vfString(p);
@@ -1202,7 +1270,8 @@
           el.style.lineHeight = p.lh * s + "px";
           el.style.letterSpacing = p.track + "em";
           el.style.marginLeft = "0";
-          el.style.marginRight = (spec.space || 0) - p.track + "em";
+          var gapPx = spec.pair ? clampPairGap(pairGap) : 0;
+          el.style.marginRight = "calc(" + gapPx + "px + " + -p.track + "em)";
           var slot = el.parentNode;
           if (slot && slot.classList && slot.classList.contains("line-slot")) {
             var row =
@@ -1255,7 +1324,12 @@
           for (i = 0; i < nodes.length; i++) {
             node = nodes[i];
             for (j = 0; j < node.lines.length; j++) {
-              applyLine(node.lines[j], BLOCKS[node.index].lines[j], t);
+              applyLine(
+                node.lines[j],
+                BLOCKS[node.index].lines[j],
+                t,
+                BLOCKS[node.index].pairGap
+              );
             }
           }
           var first = track.firstElementChild;
@@ -1441,6 +1515,7 @@
           });
           data.poses = serializePoses();
           data.blockGaps = serializeGaps();
+          data.pairGaps = serializePairGaps();
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
           } catch (e) {}

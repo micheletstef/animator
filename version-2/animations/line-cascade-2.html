@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>line cascade 2</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-stretch: 65% 130%;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --fg: #000000;
+        --pad-t: 72;
+        --pad-r: 56;
+        --pad-b: 72;
+        --pad-l: 56;
+        --fs: 196;
+        --lh: 0.94;
+        --tracking: -0.03;
+        --oy: 0;
+        --lock-align: center;
+        --lock-text: center;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background: var(--bg);
+        color: var(--fg);
+        overflow: hidden;
+        box-shadow: none;
+        font-family: "IkarusPlusVariable", sans-serif;
+        font-synthesis: none;
+        font-feature-settings: "liga" 0, "kern" 1;
+        pointer-events: none;
+      }
+
+      .lockup {
+        position: absolute;
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: var(--lock-align);
+        text-align: var(--lock-text);
+        overflow: visible;
+        transform: translateY(calc(var(--oy) * 1px));
+      }
+
+      .line {
+        display: block;
+        width: 100%;
+        height: calc(var(--fs) * var(--lh) * 1px);
+        font-size: calc(var(--fs) * 1px);
+        line-height: var(--lh);
+        letter-spacing: calc(var(--tracking) * 1em);
+        white-space: nowrap;
+        font-kerning: none;
+        font-synthesis: none;
+        text-decoration-skip-ink: auto;
+        text-decoration-thickness: 0.04em;
+        text-underline-offset: 0.08em;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        color: #6a6a6a;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+        color: #cfcfcf;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+        accent-color: #fff;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .row input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 2px;
+      }
+
+      .row input[type="text"],
+      .row textarea,
+      .row select {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+        color: #e9e9e9;
+        font: inherit;
+      }
+
+      .row textarea {
+        min-height: 108px;
+        resize: vertical;
+        line-height: 1.25;
+        white-space: pre;
+      }
+
+      .row .val {
+        text-align: right;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 8px 0;
+        color: #9a9a9a;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+      }
+
+      .kf-seq {
+        margin: 0 0 10px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .kf-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .line-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .panel .kf-tab,
+      .panel .line-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        flex: none;
+        min-height: 44px;
+        padding: 7px 6px;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font: inherit;
+        font-family: "Courier New", Courier, monospace;
+        text-transform: lowercase;
+        cursor: pointer;
+      }
+
+      .panel .kf-tab {
+        min-height: 90px;
+      }
+
+      .kf-tab:hover,
+      .line-tab:hover {
+        border-color: #555;
+        color: #fff;
+      }
+
+      .kf-tab.is-on,
+      .line-tab.is-on {
+        border-color: #fff;
+        color: #fff;
+        background: #111;
+      }
+
+      .kf-tab.is-live:not(.is-on),
+      .line-tab.is-live:not(.is-on) {
+        border-color: #888;
+      }
+
+      .kf-tab-n,
+      .line-tab-n {
+        font-size: 12px;
+        line-height: 1.2;
+        text-align: center;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .kf-tab-v {
+        color: #9a9a9a;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .kf-tab.is-on .kf-tab-v {
+        color: #cfcfcf;
+      }
+    </style>
+    <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
+    <style>
+      .panel .kf-tab,
+      .panel .line-tab {
+        border-color: rgba(31, 31, 31, 0.28);
+        background: #fff;
+        color: #1f1f1f;
+      }
+
+      .panel .kf-tab:hover,
+      .panel .line-tab:hover {
+        border-color: #1f1f1f;
+        color: #000;
+      }
+
+      .panel .kf-tab.is-on,
+      .panel .line-tab.is-on {
+        border-color: #1f1f1f;
+        color: #fff;
+        background: #1f1f1f;
+      }
+
+      .panel .kf-tab.is-on .kf-tab-v {
+        color: #cfcfcf;
+      }
+
+      .panel .kf-tab.is-live:not(.is-on),
+      .panel .line-tab.is-live:not(.is-on) {
+        border-color: #1f1f1f;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="line cascade 2">
+          <div class="lockup" id="lockup"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">
+        scroll to zoom · drag to pan · double-click to fit · 1080 × 1440
+      </p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="fg">text</label>
+          <input id="fg" type="color" value="#000000" />
+          <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">content</p>
+        <div class="row">
+          <label for="tx">text</label>
+          <textarea id="tx" spellcheck="false" autocomplete="off">Nozzle
+Solvent
+± 30ml*
+Max CAP
+(SP-20X)</textarea>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">type</p>
+        <div class="row">
+          <label for="align">align</label>
+          <select id="align">
+            <option value="left">left</option>
+            <option value="center" selected>center</option>
+            <option value="right">right</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="fs">size</label>
+          <input id="fs" type="range" min="80" max="360" step="1" value="196" />
+          <span class="val" id="fsVal">196px</span>
+        </div>
+        <div class="row">
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.94" />
+          <span class="val" id="lhVal">0.94</span>
+        </div>
+        <div class="row">
+          <label for="oy">y</label>
+          <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
+          <span class="val" id="oyVal">0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">state 1 · all lines</p>
+        <p class="now" id="nowReadout">line 1 · wght 280 · wdth 90 · CNTR 0 · slnt 0</p>
+        <p class="kf-seq" id="kfSeq">1 → 2 line by line · click a pose to hold</p>
+        <div class="kf-tabs" role="tablist" aria-label="poses">
+          <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
+            <span class="kf-tab-n">1</span>
+            <span class="kf-tab-v" id="kfTab0Val">wght 280<br />wdth 90<br />CNTR 0<br />slnt 0</span>
+          </button>
+          <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
+            <span class="kf-tab-n">2</span>
+            <span class="kf-tab-v" id="kfTab1Val">per line</span>
+          </button>
+        </div>
+        <div class="row">
+          <label for="wght0">wght</label>
+          <input id="wght0" type="range" min="200" max="1000" step="1" value="280" />
+          <span class="val" id="wght0Val">280</span>
+        </div>
+        <div class="row">
+          <label for="wdth0">wdth</label>
+          <input id="wdth0" type="range" min="65" max="130" step="1" value="90" />
+          <span class="val" id="wdth0Val">90</span>
+        </div>
+        <div class="row">
+          <label for="cntr0">CNTR</label>
+          <input id="cntr0" type="range" min="0" max="100" step="1" value="0" />
+          <span class="val" id="cntr0Val">0</span>
+        </div>
+        <div class="row">
+          <label for="slnt0">slnt</label>
+          <input id="slnt0" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slnt0Val">0</span>
+        </div>
+        <div class="row">
+          <label for="tr0">track</label>
+          <input id="tr0" type="range" min="-0.12" max="0.12" step="0.005" value="-0.03" />
+          <span class="val" id="tr0Val">-0.03</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">state 2 · one line</p>
+        <div class="line-tabs" id="lineTabs" role="tablist" aria-label="lines"></div>
+        <div class="row">
+          <label for="fs1">size</label>
+          <input id="fs1" type="range" min="80" max="360" step="1" value="196" />
+          <span class="val" id="fs1Val">196px</span>
+        </div>
+        <div class="row">
+          <label for="wght1">wght</label>
+          <input id="wght1" type="range" min="200" max="1000" step="1" value="900" />
+          <span class="val" id="wght1Val">900</span>
+        </div>
+        <div class="row">
+          <label for="wdth1">wdth</label>
+          <input id="wdth1" type="range" min="65" max="130" step="1" value="73" />
+          <span class="val" id="wdth1Val">73</span>
+        </div>
+        <div class="row">
+          <label for="cntr1">CNTR</label>
+          <input id="cntr1" type="range" min="0" max="100" step="1" value="100" />
+          <span class="val" id="cntr1Val">100</span>
+        </div>
+        <div class="row">
+          <label for="slnt1">slnt</label>
+          <input id="slnt1" type="range" min="-12" max="0" step="0.25" value="0" />
+          <span class="val" id="slnt1Val">0</span>
+        </div>
+        <div class="row">
+          <label for="tr1">track</label>
+          <input id="tr1" type="range" min="-0.12" max="0.12" step="0.005" value="-0.015" />
+          <span class="val" id="tr1Val">-0.02</span>
+        </div>
+        <div class="row">
+          <label for="ul1">uline</label>
+          <input id="ul1" type="range" min="0" max="1" step="1" value="0" />
+          <span class="val" id="ul1Val">off</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion · one line at a time</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="80" max="2400" step="20" value="480" />
+          <span class="val" id="moveVal">480ms</span>
+        </div>
+        <div class="row">
+          <label for="lag">lag</label>
+          <input id="lag" type="range" min="40" max="1600" step="10" value="480" />
+          <span class="val" id="lagVal">480ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2400" step="50" value="800" />
+          <span class="val" id="holdVal">800ms</span>
+        </div>
+      </div>
+    </aside>
+
+    <script src="artboard-view.js?v=30"></script>
+    <script>
+      (function () {
+        var DEFAULT_TEXT = "Nozzle\nSolvent\n± 30ml*\nMax CAP\n(SP-20X)";
+        var LS_KEY = "animator:v2:line-cascade-2:settings:v1";
+        var POSE_KEYS = ["size", "wght", "wdth", "cntr", "slnt", "track", "ul"];
+        var LINE_PRESETS = [
+          { wght: 520, wdth: 92, cntr: 0, slnt: -12, track: -0.02, ul: 0 },
+          { wght: 780, wdth: 96, cntr: 0, slnt: 0, track: -0.03, ul: 0 },
+          { wght: 400, wdth: 90, cntr: 0, slnt: 0, track: -0.02, ul: 1 },
+          { wght: 1000, wdth: 96, cntr: 0, slnt: -12, track: -0.03, ul: 0 },
+          { wght: 420, wdth: 92, cntr: 0, slnt: 0, track: -0.02, ul: 0 },
+        ];
+        var FALLBACK_POSE = { size: 196, wght: 400, wdth: 90, cntr: 0, slnt: 0, track: -0.03, ul: 0 };
+        var root = document.documentElement;
+        var lockup = document.getElementById("lockup");
+        var lineTabsEl = document.getElementById("lineTabs");
+        var nowReadout = document.getElementById("nowReadout");
+        var kfSeq = document.getElementById("kfSeq");
+        var lineEls = [];
+        var linePoses = LINE_PRESETS.map(clonePose);
+        var activeLine = 0;
+        var syncingPose = false;
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          fg: "#000000",
+          tx: DEFAULT_TEXT,
+          align: "center",
+          fs: 196,
+          lh: 0.94,
+          oy: 0,
+          wght0: 280,
+          wdth0: 90,
+          cntr0: 0,
+          slnt0: 0,
+          tr0: -0.03,
+          move: 480,
+          lag: 480,
+          hold: 800,
+        };
+
+        var COLOR_KEYS = { bg: 1, fg: 1 };
+        var TEXT_KEYS = { tx: 1, align: 1 };
+
+        var els = {};
+        var vals = {
+          bg: document.getElementById("bgVal"),
+          fg: document.getElementById("fgVal"),
+          fs: document.getElementById("fsVal"),
+          fs1: document.getElementById("fs1Val"),
+          lh: document.getElementById("lhVal"),
+          oy: document.getElementById("oyVal"),
+          wght0: document.getElementById("wght0Val"),
+          wdth0: document.getElementById("wdth0Val"),
+          cntr0: document.getElementById("cntr0Val"),
+          slnt0: document.getElementById("slnt0Val"),
+          tr0: document.getElementById("tr0Val"),
+          wght1: document.getElementById("wght1Val"),
+          wdth1: document.getElementById("wdth1Val"),
+          cntr1: document.getElementById("cntr1Val"),
+          slnt1: document.getElementById("slnt1Val"),
+          tr1: document.getElementById("tr1Val"),
+          ul1: document.getElementById("ul1Val"),
+          move: document.getElementById("moveVal"),
+          lag: document.getElementById("lagVal"),
+          hold: document.getElementById("holdVal"),
+        };
+
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+        });
+        els.fs1 = document.getElementById("fs1");
+        els.wght1 = document.getElementById("wght1");
+        els.wdth1 = document.getElementById("wdth1");
+        els.cntr1 = document.getElementById("cntr1");
+        els.slnt1 = document.getElementById("slnt1");
+        els.tr1 = document.getElementById("tr1");
+        els.ul1 = document.getElementById("ul1");
+
+        var kfTabs = [
+          document.getElementById("kfTab0"),
+          document.getElementById("kfTab1"),
+        ];
+        var kfTabVals = [
+          document.getElementById("kfTab0Val"),
+          document.getElementById("kfTab1Val"),
+        ];
+
+        var t0 = 0;
+        var raf = 0;
+        var playing = true;
+        var lastElapsed = 0;
+        var holdKf = -1;
+        var lastLiveKf = -1;
+        var lastLiveLine = -1;
+
+        function defaultSize() {
+          if (els && els.fs) return num("fs", FALLBACK_POSE.size);
+          return FALLBACK_POSE.size;
+        }
+
+        function clonePose(src) {
+          var out = {};
+          var i;
+          var key;
+          var base = src || FALLBACK_POSE;
+          for (i = 0; i < POSE_KEYS.length; i++) {
+            key = POSE_KEYS[i];
+            out[key] = Number(base[key]);
+            if (!isFinite(out[key])) {
+              out[key] = key === "size" ? defaultSize() : FALLBACK_POSE[key];
+            }
+          }
+          return out;
+        }
+
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+
+        function ease(t) {
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return 1 - Math.pow(1 - t, 4);
+        }
+
+        function clamp01(t) {
+          if (t <= 0) return 0;
+          if (t >= 1) return 1;
+          return t;
+        }
+
+        function num(key, fallback) {
+          var n = els[key] ? parseFloat(els[key].value) : fallback;
+          return isFinite(n) ? n : fallback;
+        }
+
+        function parseLines(raw) {
+          return String(raw == null ? "" : raw)
+            .replace(/\r\n/g, "\n")
+            .split("\n")
+            .map(function (s) {
+              return s.replace(/\s+$/, "");
+            })
+            .filter(function (s) {
+              return s.length > 0;
+            });
+        }
+
+        function presetAt(i) {
+          if (i >= 0 && i < LINE_PRESETS.length) return clonePose(LINE_PRESETS[i]);
+          return clonePose(FALLBACK_POSE);
+        }
+
+        function ensurePoses(n) {
+          var i;
+          for (i = 0; i < n; i++) {
+            if (!linePoses[i]) linePoses[i] = presetAt(i);
+          }
+          if (linePoses.length > n) linePoses.length = n;
+          if (n <= 0) {
+            activeLine = 0;
+            return;
+          }
+          if (activeLine >= n) activeLine = n - 1;
+          if (activeLine < 0) activeLine = 0;
+        }
+
+        function startPose() {
+          return {
+            size: num("fs", 196),
+            wght: num("wght0", 280),
+            wdth: num("wdth0", 90),
+            cntr: num("cntr0", 0),
+            slnt: num("slnt0", 0),
+            track: num("tr0", -0.03),
+            ul: 0,
+          };
+        }
+
+        function mixPoses(a, b, t) {
+          return {
+            size: lerp(a.size, b.size, t),
+            wght: lerp(a.wght, b.wght, t),
+            wdth: lerp(a.wdth, b.wdth, t),
+            cntr: lerp(a.cntr, b.cntr, t),
+            slnt: lerp(a.slnt, b.slnt, t),
+            track: lerp(a.track, b.track, t),
+            ul: lerp(a.ul || 0, b.ul || 0, t),
+          };
+        }
+
+        function vfString(pose) {
+          return (
+            '"wght" ' +
+            pose.wght.toFixed(1) +
+            ', "wdth" ' +
+            pose.wdth.toFixed(1) +
+            ', "CNTR" ' +
+            pose.cntr.toFixed(1) +
+            ', "slnt" ' +
+            pose.slnt.toFixed(2)
+          );
+        }
+
+        function applyAlign() {
+          var a = (els.align && els.align.value) || "center";
+          if (a === "left") {
+            root.style.setProperty("--lock-align", "flex-start");
+            root.style.setProperty("--lock-text", "left");
+          } else if (a === "right") {
+            root.style.setProperty("--lock-align", "flex-end");
+            root.style.setProperty("--lock-text", "right");
+          } else {
+            root.style.setProperty("--lock-align", "center");
+            root.style.setProperty("--lock-text", "center");
+          }
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--fg", els.fg.value);
+          root.style.setProperty("--fs", String(num("fs", 196)));
+          root.style.setProperty("--lh", String(num("lh", 0.94)));
+          root.style.setProperty("--oy", String(num("oy", 0)));
+          applyAlign();
+        }
+
+        function formatMs(ms) {
+          if (ms >= 1000) return (ms / 1000).toFixed(1) + "s";
+          return Math.round(ms) + "ms";
+        }
+
+        function slntLabel(v) {
+          return Math.abs(v) < 0.001 ? "0" : Number(v).toFixed(2).replace(/\.00$/, "");
+        }
+
+        function formatVal(key, v) {
+          if (key === "bg" || key === "fg") return String(v).toLowerCase();
+          if (key === "ul1") return Number(v) >= 0.5 ? "on" : "off";
+          if (key === "lh" || key === "tr0" || key === "tr1") {
+            return Number(v).toFixed(2);
+          }
+          if (key === "fs" || key === "fs1" || key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "move" || key === "lag" || key === "hold") {
+            return formatMs(Number(v));
+          }
+          if (key === "slnt0" || key === "slnt1") return slntLabel(v);
+          if (
+            key === "wght0" ||
+            key === "wght1" ||
+            key === "wdth0" ||
+            key === "wdth1" ||
+            key === "cntr0" ||
+            key === "cntr1"
+          ) {
+            return String(Math.round(Number(v)));
+          }
+          return String(v);
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = formatVal(key, els[key].value);
+          });
+        }
+
+        function poseSummary(pose) {
+          return (
+            "size " +
+            Math.round(pose.size) +
+            "<br>wght " +
+            Math.round(pose.wght) +
+            "<br>wdth " +
+            Math.round(pose.wdth) +
+            "<br>CNTR " +
+            Math.round(pose.cntr) +
+            "<br>slnt " +
+            slntLabel(pose.slnt)
+          );
+        }
+
+        function writePoseToSliders(pose) {
+          syncingPose = true;
+          if (els.fs1) els.fs1.value = pose.size;
+          if (els.wght1) els.wght1.value = pose.wght;
+          if (els.wdth1) els.wdth1.value = pose.wdth;
+          if (els.cntr1) els.cntr1.value = pose.cntr;
+          if (els.slnt1) els.slnt1.value = pose.slnt;
+          if (els.tr1) els.tr1.value = pose.track;
+          if (els.ul1) els.ul1.value = pose.ul ? 1 : 0;
+          syncingPose = false;
+          paintVals();
+        }
+
+        function readPoseFromSliders() {
+          return {
+            size: num("fs1", defaultSize()),
+            wght: num("wght1", 400),
+            wdth: num("wdth1", 80),
+            cntr: num("cntr1", 0),
+            slnt: num("slnt1", 0),
+            track: num("tr1", -0.03),
+            ul: num("ul1", 0) >= 0.5 ? 1 : 0,
+          };
+        }
+
+        function timing(n) {
+          var move = Math.max(40, num("move", 480));
+          var lag = Math.max(0, num("lag", 480));
+          var hold = Math.max(0, num("hold", 800));
+          var count = Math.max(1, n);
+          var travel = (count - 1) * lag + move;
+          return {
+            move: move,
+            lag: lag,
+            hold: hold,
+            travel: travel,
+            cycle: Math.max(1, 2 * (hold + travel)),
+          };
+        }
+
+        function lineAmt(elapsed, i, n) {
+          if (holdKf === 0) return 0;
+          if (holdKf === 1) return 1;
+          var w = timing(n);
+          var t = ((elapsed % w.cycle) + w.cycle) % w.cycle;
+          var local;
+          if (t < w.hold) return 0;
+          if (t < w.hold + w.travel) {
+            local = (t - w.hold - i * w.lag) / w.move;
+            return ease(clamp01(local));
+          }
+          if (t < w.hold + w.travel + w.hold) return 1;
+          local = (t - w.hold - w.travel - w.hold - i * w.lag) / w.move;
+          return 1 - ease(clamp01(local));
+        }
+
+        function liveLine(elapsed, n) {
+          if (holdKf === 0) return -1;
+          if (holdKf === 1) return n - 1;
+          var w = timing(n);
+          var t = ((elapsed % w.cycle) + w.cycle) % w.cycle;
+          var local;
+          var i;
+          if (t < w.hold) return 0;
+          if (t < w.hold + w.travel) {
+            local = t - w.hold;
+            i = Math.floor(local / Math.max(1, w.lag));
+            if (i < 0) i = 0;
+            if (i >= n) i = n - 1;
+            return i;
+          }
+          if (t < w.hold + w.travel + w.hold) return n - 1;
+          local = t - w.hold - w.travel - w.hold;
+          i = Math.floor(local / Math.max(1, w.lag));
+          if (i < 0) i = 0;
+          if (i >= n) i = n - 1;
+          return i;
+        }
+
+        function liveKf(elapsed, n) {
+          if (holdKf >= 0) return holdKf;
+          var w = timing(n);
+          var t = ((elapsed % w.cycle) + w.cycle) % w.cycle;
+          return t < w.hold + w.travel ? 0 : 1;
+        }
+
+        function applyLine(el, pose) {
+          var fs = isFinite(pose.size) ? pose.size : defaultSize();
+          var lh = num("lh", 0.94);
+          el.style.fontSize = fs + "px";
+          el.style.height = fs * lh + "px";
+          el.style.fontVariationSettings = vfString(pose);
+          el.style.fontWeight = String(Math.round(pose.wght));
+          el.style.letterSpacing = pose.track + "em";
+          var ul = isFinite(pose.ul) ? pose.ul : 0;
+          if (ul > 0.02) {
+            el.style.textDecorationLine = "underline";
+            el.style.textDecorationColor =
+              "color-mix(in srgb, currentColor " + Math.round(ul * 100) + "%, transparent)";
+          } else {
+            el.style.textDecorationLine = "none";
+            el.style.textDecorationColor = "transparent";
+          }
+        }
+
+        function applyElapsed(ms) {
+          lastElapsed = ms;
+          var from = startPose();
+          var n = lineEls.length;
+          var i;
+          var amt;
+          var pose;
+          var live = liveLine(ms, n);
+          for (i = 0; i < n; i++) {
+            amt = lineAmt(ms, i, n);
+            pose = amt <= 0 ? from : amt >= 1 ? linePoses[i] : mixPoses(from, linePoses[i], amt);
+            applyLine(lineEls[i], pose);
+          }
+          if (nowReadout) {
+            var idx = live >= 0 ? live : 0;
+            var shownAmt = n ? lineAmt(ms, idx, n) : 0;
+            var shown =
+              shownAmt <= 0
+                ? from
+                : shownAmt >= 1
+                  ? linePoses[idx]
+                  : mixPoses(from, linePoses[idx], shownAmt);
+            var prefix = holdKf >= 0 ? "hold " + (holdKf + 1) + " · " : "";
+            var label = lineEls[idx] ? lineEls[idx].textContent : "all";
+            nowReadout.textContent =
+              prefix +
+              label +
+              " · size " +
+              Math.round(shown.size) +
+              " · wght " +
+              Math.round(shown.wght) +
+              " · wdth " +
+              Math.round(shown.wdth) +
+              " · CNTR " +
+              Math.round(shown.cntr) +
+              " · slnt " +
+              slntLabel(shown.slnt);
+          }
+          paintLive(ms, n);
+        }
+
+        function paintLive(ms, n) {
+          var live = liveKf(ms, n);
+          var line = liveLine(ms, n);
+          if (live === lastLiveKf && line === lastLiveLine) return;
+          lastLiveKf = live;
+          lastLiveLine = line;
+          kfTabs.forEach(function (tab, i) {
+            if (tab) tab.classList.toggle("is-live", i === live);
+          });
+          if (!lineTabsEl) return;
+          var tabs = lineTabsEl.querySelectorAll(".line-tab");
+          for (var i = 0; i < tabs.length; i++) {
+            tabs[i].classList.toggle("is-live", i === line);
+          }
+        }
+
+        function seqLabel() {
+          return "1 → 2 line by line · click a pose to hold";
+        }
+
+        function paintKfTabs() {
+          kfTabs.forEach(function (tab, i) {
+            if (!tab) return;
+            tab.classList.toggle("is-on", holdKf === i);
+            tab.setAttribute("aria-selected", holdKf === i ? "true" : "false");
+          });
+          if (kfTabVals[0]) kfTabVals[0].innerHTML = poseSummary(startPose());
+          if (kfTabVals[1]) {
+            var pose = linePoses[activeLine] || FALLBACK_POSE;
+            kfTabVals[1].innerHTML = poseSummary(pose);
+          }
+          if (kfSeq) {
+            kfSeq.textContent =
+              holdKf >= 0
+                ? "holding pose " + (holdKf + 1) + " · click again to play"
+                : seqLabel();
+          }
+        }
+
+        function paintLineTabs() {
+          if (!lineTabsEl) return;
+          var texts = parseLines(els.tx ? els.tx.value : DEFAULT_TEXT);
+          if (!texts.length) texts = [""];
+          lineTabsEl.innerHTML = "";
+          texts.forEach(function (text, i) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "line-tab" + (i === activeLine ? " is-on" : "");
+            btn.setAttribute("data-line", String(i));
+            btn.setAttribute("role", "tab");
+            btn.setAttribute("aria-selected", i === activeLine ? "true" : "false");
+            var n = document.createElement("span");
+            n.className = "line-tab-n";
+            n.textContent = text || "line " + (i + 1);
+            btn.appendChild(n);
+            btn.addEventListener("click", function () {
+              setActiveLine(i);
+            });
+            lineTabsEl.appendChild(btn);
+          });
+        }
+
+        function setActiveLine(i) {
+          var n = parseLines(els.tx ? els.tx.value : DEFAULT_TEXT).length;
+          if (n <= 0) return;
+          if (i < 0) i = 0;
+          if (i >= n) i = n - 1;
+          activeLine = i;
+          ensurePoses(n);
+          writePoseToSliders(linePoses[activeLine]);
+          paintLineTabs();
+          paintKfTabs();
+        }
+
+        function buildLockup() {
+          var texts = parseLines(els.tx ? els.tx.value : DEFAULT_TEXT);
+          if (!texts.length) texts = [""];
+          ensurePoses(texts.length);
+          lockup.innerHTML = "";
+          lineEls = [];
+          texts.forEach(function (text) {
+            var line = document.createElement("div");
+            line.className = "line";
+            line.textContent = text;
+            lockup.appendChild(line);
+            lineEls.push(line);
+          });
+          if (activeLine >= texts.length) activeLine = Math.max(0, texts.length - 1);
+          writePoseToSliders(linePoses[activeLine] || presetAt(activeLine));
+          paintLineTabs();
+          paintKfTabs();
+          applyElapsed(lastElapsed);
+        }
+
+        function durationMs() {
+          return timing(Math.max(1, lineEls.length)).cycle;
+        }
+
+        function frame(now) {
+          applyElapsed(now - t0);
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function stopPlayback() {
+          playing = false;
+          holdKf = -1;
+          lastLiveKf = -1;
+          lastLiveLine = -1;
+          cancelAnimationFrame(raf);
+          raf = 0;
+          paintKfTabs();
+        }
+
+        function startPlayback() {
+          playing = true;
+          restart();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
+        }
+
+        function restart() {
+          holdKf = -1;
+          lastLiveKf = -1;
+          lastLiveLine = -1;
+          t0 = performance.now();
+          paintKfTabs();
+          applyElapsed(0);
+          cancelAnimationFrame(raf);
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function setHoldKf(i) {
+          if (holdKf === i) {
+            restart();
+            return;
+          }
+          holdKf = i;
+          lastLiveKf = -1;
+          lastLiveLine = -1;
+          paintKfTabs();
+          applyElapsed(lastElapsed);
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            if (TEXT_KEYS[key] || COLOR_KEYS[key]) data[key] = els[key].value;
+            else data[key] = parseFloat(els[key].value);
+          });
+          data.poses = linePoses.map(clonePose);
+          data.activeLine = activeLine;
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw;
+          var data;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+            if (!raw) return;
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          if (!data || typeof data !== "object") return;
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            els[key].value = data[key];
+          });
+          if (Array.isArray(data.poses)) {
+            linePoses = data.poses.map(clonePose);
+          }
+          if (data.activeLine != null) {
+            activeLine = Math.max(0, Math.round(Number(data.activeLine) || 0));
+          }
+        }
+
+        function reset() {
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            els[key].value = DEFAULTS[key];
+          });
+          linePoses = LINE_PRESETS.map(clonePose);
+          activeLine = 0;
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (e) {}
+          applyVars();
+          paintVals();
+          buildLockup();
+          restart();
+          if (window.ArtboardView && window.ArtboardView.reset) {
+            window.ArtboardView.reset();
+          }
+        }
+
+        function onSettingInput() {
+          if (syncingPose) return;
+          if (this && (this.id === "fs1" || this.id === "wght1" || this.id === "wdth1" || this.id === "cntr1" || this.id === "slnt1" || this.id === "tr1" || this.id === "ul1")) {
+            if (linePoses[activeLine]) linePoses[activeLine] = readPoseFromSliders();
+          }
+          applyVars();
+          paintVals();
+          paintKfTabs();
+          if (this && this.id === "tx") buildLockup();
+          else applyElapsed(playing && holdKf < 0 ? performance.now() - t0 : lastElapsed);
+          save();
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          els[key].addEventListener("input", onSettingInput);
+          els[key].addEventListener("change", onSettingInput);
+        });
+
+        kfTabs.forEach(function (tab, i) {
+          if (!tab) return;
+          tab.addEventListener("click", function () {
+            setHoldKf(i);
+          });
+        });
+
+        loadSaved();
+        applyVars();
+        paintVals();
+        buildLockup();
+        restart();
+
+        function afterFonts() {
+          applyElapsed(lastElapsed);
+        }
+
+        if (document.fonts && document.fonts.load) {
+          Promise.all([
+            document.fonts.load('400 196px "IkarusPlusVariable"'),
+            document.fonts.ready,
+          ])
+            .then(afterFonts)
+            .catch(afterFonts);
+        } else if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(afterFonts);
+        } else {
+          afterFonts();
+        }
+
+        window.AnimatorExport = {
+          stage: document.getElementById("stage"),
+          filename: "line-cascade-2.mp4",
+          durationMs: durationMs,
+          seek: function (ms) {
+            applyElapsed(ms);
+          },
+          stop: stopPlayback,
+          start: startPlayback,
+        };
+      })();
+    </script>
+    <script type="module" src="../../web-export.js?v=9"></script>
+  </body>
+</html>
