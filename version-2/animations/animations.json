@@ -4,115 +4,115 @@
       "id": "width-fill",
       "label": "width fill",
       "url": "animations/width-fill.html",
-      "mtime": 1787578800
+      "mtime": 1787769000
     },
     {
       "id": "alternates-1",
       "label": "alternates 1",
       "url": "animations/alternates-1.html",
-      "mtime": 1787578570
+      "mtime": 1787769000
     },
     {
       "id": "alternates-2",
       "label": "alternates 2",
       "url": "animations/alternates-2.html",
-      "mtime": 1787578570
+      "mtime": 1787769000
     },
     {
       "id": "alternates-list",
       "label": "alternates list",
       "url": "animations/alternates-list.html",
-      "mtime": 1787759000
+      "mtime": 1787769000
     },
     {
       "id": "nine",
-      "label": "Single – 9 (full)",
+      "label": "Single \u2013 9 (full)",
       "url": "animations/glyph-cycle.html?ch=9&preset=full",
-      "mtime": 1787684400
+      "mtime": 1787769000
     },
     {
       "id": "nine-width",
-      "label": "Single – 9 (width)",
+      "label": "Single \u2013 9 (width)",
       "url": "animations/glyph-cycle.html?ch=9&preset=width",
-      "mtime": 1787684400
+      "mtime": 1787769000
     },
     {
       "id": "g",
-      "label": "Single – G",
+      "label": "Single \u2013 G",
       "url": "animations/glyph-cycle.html?ch=G&preset=weight",
-      "mtime": 1787684400
+      "mtime": 1787769000
     },
     {
       "id": "s",
-      "label": "Single – S",
+      "label": "Single \u2013 S",
       "url": "animations/glyph-cycle.html?ch=S&preset=contrast",
-      "mtime": 1787684400
+      "mtime": 1787769000
     },
     {
       "id": "s-nine-g",
-      "label": "Single – S → 9 → G",
+      "label": "Single \u2013 S \u2192 9 \u2192 G",
       "url": "animations/glyph-cycle.html?seq=S:contrast,9:full,G:weight",
-      "mtime": 1787755000
+      "mtime": 1787769000
     },
     {
       "id": "width-swap",
       "label": "width swap",
       "url": "animations/width-swap.html",
-      "mtime": 1787578570
+      "mtime": 1787769000
     },
     {
       "id": "weight-cascade",
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",
-      "mtime": 1787672500
+      "mtime": 1787769000
     },
     {
       "id": "two-state",
       "label": "two state",
       "url": "animations/two-state.html",
-      "mtime": 1787761000
+      "mtime": 1787769000
     },
     {
       "id": "weight-cascade-left",
       "label": "weight cascade left",
       "url": "animations/weight-cascade-left.html",
-      "mtime": 1787748000
+      "mtime": 1787769000
     },
     {
       "id": "psi-count",
-      "label": "PSI 0 → 60",
+      "label": "PSI 0 \u2192 60",
       "url": "animations/psi-count.html",
-      "mtime": 1787578570
+      "mtime": 1787769000
     },
     {
       "id": "matrix-v2",
       "label": "matrix v2",
       "url": "animations/matrix-v2.html",
-      "mtime": 1787738071
+      "mtime": 1787769000
     },
     {
       "id": "technical-outline",
       "label": "technical outline v1",
       "url": "animations/technical-outline.html",
-      "mtime": 1787742300
+      "mtime": 1787769000
     },
     {
       "id": "technical-outline-v2",
       "label": "technical outline v2",
       "url": "animations/technical-outline-v2.html",
-      "mtime": 1787742300
+      "mtime": 1787769000
     },
     {
       "id": "conveyor",
       "label": "conveyor",
       "url": "animations/conveyor.html",
-      "mtime": 1787762400
+      "mtime": 1787769000
     },
     {
       "id": "line-cascade",
       "label": "line cascade",
       "url": "animations/line-cascade.html",
-      "mtime": 1787767200
+      "mtime": 1787769000
     }
   ]
 }

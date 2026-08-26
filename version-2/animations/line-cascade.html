@@ -273,7 +273,7 @@
       }
 
       .panel .kf-tab {
-        min-height: 72px;
+        min-height: 90px;
       }
 
       .kf-tab:hover,
@@ -461,6 +461,11 @@ DIN/RAL
         <p class="group-title">state 2 · one line</p>
         <div class="line-tabs" id="lineTabs" role="tablist" aria-label="lines"></div>
         <div class="row">
+          <label for="fs1">size</label>
+          <input id="fs1" type="range" min="80" max="360" step="1" value="196" />
+          <span class="val" id="fs1Val">196px</span>
+        </div>
+        <div class="row">
           <label for="wght1">wght</label>
           <input id="wght1" type="range" min="200" max="1000" step="1" value="900" />
           <span class="val" id="wght1Val">900</span>
@@ -507,12 +512,12 @@ DIN/RAL
       </div>
     </aside>
 
-    <script src="artboard-view.js?v=29"></script>
+    <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = "FEATHER\nOPAQUE\n2 CFM\nDIN/RAL\n60 PSI";
         var LS_KEY = "animator:v2:line-cascade:settings:v1";
-        var POSE_KEYS = ["wght", "wdth", "cntr", "slnt", "track"];
+        var POSE_KEYS = ["size", "wght", "wdth", "cntr", "slnt", "track"];
         var LINE_PRESETS = [
           { wght: 900, wdth: 73, cntr: 100, slnt: 0, track: -0.015 },
           { wght: 400, wdth: 70, cntr: 0, slnt: 0, track: -0.04 },
@@ -520,7 +525,7 @@ DIN/RAL
           { wght: 200, wdth: 67, cntr: 0, slnt: 0, track: -0.02 },
           { wght: 1000, wdth: 100, cntr: 50, slnt: 0, track: -0.04 },
         ];
-        var FALLBACK_POSE = { wght: 400, wdth: 80, cntr: 0, slnt: 0, track: -0.03 };
+        var FALLBACK_POSE = { size: 196, wght: 400, wdth: 80, cntr: 0, slnt: 0, track: -0.03 };
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var lineTabsEl = document.getElementById("lineTabs");
@@ -557,6 +562,7 @@ DIN/RAL
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
+          fs1: document.getElementById("fs1Val"),
           lh: document.getElementById("lhVal"),
           oy: document.getElementById("oyVal"),
           wght0: document.getElementById("wght0Val"),
@@ -577,6 +583,7 @@ DIN/RAL
         Object.keys(DEFAULTS).forEach(function (key) {
           els[key] = document.getElementById(key);
         });
+        els.fs1 = document.getElementById("fs1");
         els.wght1 = document.getElementById("wght1");
         els.wdth1 = document.getElementById("wdth1");
         els.cntr1 = document.getElementById("cntr1");
@@ -600,6 +607,11 @@ DIN/RAL
         var lastLiveKf = -1;
         var lastLiveLine = -1;
 
+        function defaultSize() {
+          if (els && els.fs) return num("fs", FALLBACK_POSE.size);
+          return FALLBACK_POSE.size;
+        }
+
         function clonePose(src) {
           var out = {};
           var i;
@@ -608,7 +620,9 @@ DIN/RAL
           for (i = 0; i < POSE_KEYS.length; i++) {
             key = POSE_KEYS[i];
             out[key] = Number(base[key]);
-            if (!isFinite(out[key])) out[key] = FALLBACK_POSE[key];
+            if (!isFinite(out[key])) {
+              out[key] = key === "size" ? defaultSize() : FALLBACK_POSE[key];
+            }
           }
           return out;
         }
@@ -667,6 +681,7 @@ DIN/RAL
 
         function startPose() {
           return {
+            size: num("fs", 196),
             wght: num("wght0", 1000),
             wdth: num("wdth0", 87),
             cntr: num("cntr0", 0),
@@ -676,13 +691,13 @@ DIN/RAL
         }
 
         function mixPoses(a, b, t) {
-          var e = ease(t);
           return {
-            wght: lerp(a.wght, b.wght, e),
-            wdth: lerp(a.wdth, b.wdth, e),
-            cntr: lerp(a.cntr, b.cntr, e),
-            slnt: lerp(a.slnt, b.slnt, e),
-            track: lerp(a.track, b.track, e),
+            size: lerp(a.size, b.size, t),
+            wght: lerp(a.wght, b.wght, t),
+            wdth: lerp(a.wdth, b.wdth, t),
+            cntr: lerp(a.cntr, b.cntr, t),
+            slnt: lerp(a.slnt, b.slnt, t),
+            track: lerp(a.track, b.track, t),
           };
         }
 
@@ -736,7 +751,7 @@ DIN/RAL
           if (key === "lh" || key === "tr0" || key === "tr1") {
             return Number(v).toFixed(2);
           }
-          if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
+          if (key === "fs" || key === "fs1" || key === "oy") return Math.round(Number(v)) + "px";
           if (key === "move" || key === "lag" || key === "hold") {
             return formatMs(Number(v));
           }
@@ -763,7 +778,9 @@ DIN/RAL
 
         function poseSummary(pose) {
           return (
-            "wght " +
+            "size " +
+            Math.round(pose.size) +
+            "<br>wght " +
             Math.round(pose.wght) +
             "<br>wdth " +
             Math.round(pose.wdth) +
@@ -776,6 +793,7 @@ DIN/RAL
 
         function writePoseToSliders(pose) {
           syncingPose = true;
+          if (els.fs1) els.fs1.value = pose.size;
           if (els.wght1) els.wght1.value = pose.wght;
           if (els.wdth1) els.wdth1.value = pose.wdth;
           if (els.cntr1) els.cntr1.value = pose.cntr;
@@ -787,6 +805,7 @@ DIN/RAL
 
         function readPoseFromSliders() {
           return {
+            size: num("fs1", defaultSize()),
             wght: num("wght1", 400),
             wdth: num("wdth1", 80),
             cntr: num("cntr1", 0),
@@ -819,11 +838,11 @@ DIN/RAL
           if (t < w.hold) return 0;
           if (t < w.hold + w.travel) {
             local = (t - w.hold - i * w.lag) / w.move;
-            return clamp01(local);
+            return ease(clamp01(local));
           }
           if (t < w.hold + w.travel + w.hold) return 1;
           local = (t - w.hold - w.travel - w.hold - i * w.lag) / w.move;
-          return 1 - clamp01(local);
+          return 1 - ease(clamp01(local));
         }
 
         function liveLine(elapsed, n) {
@@ -857,6 +876,10 @@ DIN/RAL
         }
 
         function applyLine(el, pose) {
+          var fs = isFinite(pose.size) ? pose.size : defaultSize();
+          var lh = num("lh", 0.86);
+          el.style.fontSize = fs + "px";
+          el.style.height = fs * lh + "px";
           el.style.fontVariationSettings = vfString(pose);
           el.style.fontWeight = String(Math.round(pose.wght));
           el.style.letterSpacing = pose.track + "em";
@@ -889,6 +912,8 @@ DIN/RAL
             nowReadout.textContent =
               prefix +
               label +
+              " · size " +
+              Math.round(shown.size) +
               " · wght " +
               Math.round(shown.wght) +
               " · wdth " +
@@ -1102,7 +1127,7 @@ DIN/RAL
 
         function onSettingInput() {
           if (syncingPose) return;
-          if (this && (this.id === "wght1" || this.id === "wdth1" || this.id === "cntr1" || this.id === "slnt1" || this.id === "tr1")) {
+          if (this && (this.id === "fs1" || this.id === "wght1" || this.id === "wdth1" || this.id === "cntr1" || this.id === "slnt1" || this.id === "tr1")) {
             if (linePoses[activeLine]) linePoses[activeLine] = readPoseFromSliders();
           }
           applyVars();

@@ -141,7 +141,7 @@
         display: block;
         width: max-content;
         max-width: none;
-        margin: 0 auto;
+        margin: 0;
         text-align: center;
         white-space: nowrap;
         font-kerning: none;
@@ -433,7 +433,7 @@
       </div>
     </aside>
 
-    <script src="artboard-view.js?v=29"></script>
+    <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
         function pose(fs, lh, track, wght, wdth, cntr, slnt, after) {
@@ -638,6 +638,7 @@
           el.style.fontSize = p.fs * s + "px";
           el.style.lineHeight = p.lh * s + "px";
           el.style.letterSpacing = p.track + "em";
+          el.style.marginLeft = "0";
           el.style.marginRight = -p.track + "em";
           var slot = el.parentNode;
           if (slot && slot.classList && slot.classList.contains("line-slot")) {
