@@ -982,6 +982,8 @@
           return Math.max(0, Math.min(1, Number(v)));
         }
 
+        var AXIS_STEPS = 8;
+
         function stepTiming() {
           var stepDur = Math.max(200, parseFloat(els.cy.value));
           var pause = Math.max(0, parseFloat(els.sp.value));
@@ -991,7 +993,10 @@
             stepDur: stepDur,
             pause: pause,
             overlap: overlap,
-            total: 6 * stepDur + 6 * pause - 5 * overlap,
+            total:
+              AXIS_STEPS * stepDur +
+              AXIS_STEPS * pause -
+              (AXIS_STEPS - 1) * overlap,
           };
         }
 
@@ -1007,29 +1012,41 @@
         var keyframeCache = null;
 
         function buildKeyframes(timing) {
-          var s = timing.stepDur;
+          var stepDur = timing.stepDur;
           var p = timing.pause;
           var o = timing.overlap;
           var kf = [];
+          var poses = [
+            { w: 0, d: 0, c: 0, s: 0 },
+            { w: 1, d: 0, c: 0, s: 0 },
+            { w: 1, d: 1, c: 0, s: 0 },
+            { w: 1, d: 1, c: 1, s: 0 },
+            { w: 1, d: 1, c: 1, s: 1 },
+            { w: 1, d: 1, c: 1, s: 0 },
+            { w: 1, d: 1, c: 0, s: 0 },
+            { w: 1, d: 0, c: 0, s: 0 },
+            { w: 0, d: 0, c: 0, s: 0 },
+          ];
 
-          function add(time, w, d, c) {
-            kf.push({ t: time, w: w, d: d, c: c });
+          function add(time, pose) {
+            kf.push({
+              t: time,
+              w: pose.w,
+              d: pose.d,
+              c: pose.c,
+              s: pose.s,
+            });
           }
 
-          // Weight → Width → Contrast → Width → Weight → Contrast, one axis at a time
-          add(0, 0, 0, 0);
-          add(s, 1, 0, 0);
-          add(s + Math.max(0, p - o), 1, 0, 0);
-          add(2 * s + p - o, 1, 1, 0);
-          add(2 * s + 2 * p - 2 * o, 1, 1, 0);
-          add(3 * s + 2 * p - 2 * o, 1, 1, 1);
-          add(3 * s + 3 * p - 3 * o, 1, 1, 1);
-          add(4 * s + 3 * p - 3 * o, 1, 0, 1);
-          add(4 * s + 4 * p - 4 * o, 1, 0, 1);
-          add(5 * s + 4 * p - 4 * o, 0, 0, 1);
-          add(5 * s + 5 * p - 5 * o, 0, 0, 1);
-          add(6 * s + 5 * p - 5 * o, 0, 0, 0);
-          add(6 * s + 6 * p - 5 * o, 0, 0, 0);
+          add(0, poses[0]);
+          for (var k = 1; k < poses.length; k++) {
+            add(k * stepDur + (k - 1) * p - (k - 1) * o, poses[k]);
+            var pauseEnd =
+              k === poses.length - 1
+                ? k * stepDur + k * p - (k - 1) * o
+                : k * stepDur + k * p - k * o;
+            add(pauseEnd, poses[k]);
+          }
 
           return kf;
         }
@@ -1056,22 +1073,22 @@
           );
         }
 
+        function sampledAxes(k) {
+          return { wght: k.w, wdth: k.d, cntr: k.c, slnt: k.s };
+        }
+
         function segmentAnimates(a, b) {
-          return a.w !== b.w || a.d !== b.d || a.c !== b.c;
+          return a.w !== b.w || a.d !== b.d || a.c !== b.c || a.s !== b.s;
         }
 
         function sampleKeyframes(time) {
           var kf = getKeyframes();
-          if (!kf.length) return { wght: 0, wdth: 0, cntr: 0 };
+          if (!kf.length) return { wght: 0, wdth: 0, cntr: 0, slnt: 0 };
 
-          if (time <= kf[0].t) {
-            return { wght: kf[0].w, wdth: kf[0].d, cntr: kf[0].c };
-          }
+          if (time <= kf[0].t) return sampledAxes(kf[0]);
 
           var last = kf[kf.length - 1];
-          if (time >= last.t) {
-            return { wght: last.w, wdth: last.d, cntr: last.c };
-          }
+          if (time >= last.t) return sampledAxes(last);
 
           for (var i = 0; i < kf.length - 1; i++) {
             var k1 = kf[i];
@@ -1079,9 +1096,7 @@
             if (time < k1.t || time > k2.t) continue;
 
             var span = k2.t - k1.t;
-            if (span <= 0) {
-              return { wght: k2.w, wdth: k2.d, cntr: k2.c };
-            }
+            if (span <= 0) return sampledAxes(k2);
 
             var u = (time - k1.t) / span;
             if (segmentAnimates(k1, k2)) u = easeInOut(u);
@@ -1093,24 +1108,20 @@
               wght: clamp01(catmullRom1D(k0.w, k1.w, k2.w, k3.w, u)),
               wdth: clamp01(catmullRom1D(k0.d, k1.d, k2.d, k3.d, u)),
               cntr: clamp01(catmullRom1D(k0.c, k1.c, k2.c, k3.c, u)),
+              slnt: clamp01(catmullRom1D(k0.s, k1.s, k2.s, k3.s, u)),
             };
           }
 
-          return { wght: last.w, wdth: last.d, cntr: last.c };
+          return sampledAxes(last);
         }
 
         function sequentialAxisFromElapsed(elapsed) {
-          var sampled = sampleKeyframes(cycleElapsed(elapsed));
-          return {
-            wght: sampled.wght,
-            wdth: sampled.wdth,
-            cntr: sampled.cntr,
-          };
+          return sampleKeyframes(cycleElapsed(elapsed));
         }
 
         function motionPhaseFromElapsed(elapsed) {
           var seq = sequentialAxisCached(elapsed);
-          return Math.max(seq.wght, seq.wdth, seq.cntr);
+          return Math.max(seq.wght, seq.wdth, seq.cntr, seq.slnt);
         }
 
         var seqCacheElapsed = -1;
@@ -1131,7 +1142,7 @@
             wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, seq.wght)),
             CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, seq.cntr)),
             wdth: clampAxis("wdth", lerpFromRange(els.dMin, els.dMax, seq.wdth)),
-            slnt: clampAxis("slnt", parseFloat(els.sMin.value)),
+            slnt: clampAxis("slnt", lerpFromRange(els.sMin, els.sMax, seq.slnt)),
           };
         }
 

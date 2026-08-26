@@ -275,7 +275,7 @@
     </style>
     <link rel="stylesheet" href="../../animation-chrome.css?v=25" />
   </head>
-  <body data-pair-caption>
+  <body>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="weight cascade left">
@@ -570,132 +570,9 @@ Ultra</textarea>
           return Math.max(0, Number(els.blend.value) || 0);
         }
 
-        function familyById(id) {
-          for (var i = 0; i < FAMILIES.length; i++) {
-            if (FAMILIES[i].id === id) return FAMILIES[i];
-          }
-          return null;
-        }
-
-        function nearestFamily(cntr) {
-          var best = FAMILIES[0];
-          var bestD = Infinity;
-          var i;
-          var d;
-          for (i = 0; i < FAMILIES.length; i++) {
-            d = Math.abs(FAMILIES[i].cntr - cntr);
-            if (d < bestD) {
-              bestD = d;
-              best = FAMILIES[i];
-            }
-          }
-          return best;
-        }
-
-        function familyLabel(id) {
-          var fam = familyById(id);
-          if (fam) return fam.label;
-          if (!id) return "";
-          return id.charAt(0).toUpperCase() + id.slice(1);
-        }
-
-        function captionBase() {
-          var input = document.getElementById("stageCaption");
-          if (input) return String(input.value || "");
-          if (window.ArtboardView && window.ArtboardView.readCaption) {
-            return String(window.ArtboardView.readCaption() || "");
-          }
-          return "";
-        }
-
-        function stripFamilyPrefix(text) {
-          var s = String(text == null ? "" : text).replace(/^\s+|\s+$/g, "");
-          var i;
-          var label;
-          var re;
-          var changed = true;
-          while (changed) {
-            changed = false;
-            for (i = 0; i < FAMILIES.length; i++) {
-              label = FAMILIES[i].label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-              re = new RegExp("^" + label + "(?:\\s*[·—–-]\\s*|\\s+)");
-              if (re.test(s)) {
-                s = s.replace(re, "").replace(/^\s+/, "");
-                changed = true;
-              }
-            }
-          }
-          return s;
-        }
-
-        var currentFamilyId = "standard";
-        var origSetCaption = null;
-        var lastPaintKey = "";
-
-        function paintFamilyCaption(raw) {
-          var name = familyLabel(currentFamilyId);
-          var base = stripFamilyPrefix(raw == null ? captionBase() : raw);
-          var key = name + "\t" + base;
-          if (key === lastPaintKey) return;
-          lastPaintKey = key;
-          if (origSetCaption) {
-            if (name) {
-              origSetCaption([{ label: name, value: base, active: true }]);
-            } else {
-              origSetCaption(base);
-            }
-            return;
-          }
-          var el =
-            document.querySelector("#stage > .stage-caption") ||
-            document.querySelector(".stage-caption");
-          if (!el) {
-            var stage = document.getElementById("stage");
-            if (!stage) return;
-            el = document.createElement("p");
-            el.className = "stage-caption";
-            stage.appendChild(el);
-          }
-          el.textContent = name && base ? name + " · " + base : name || base;
-        }
-
-        function installCaptionHook() {
-          if (!window.ArtboardView || typeof window.ArtboardView.setCaption !== "function") {
-            return;
-          }
-          if (window.ArtboardView._cascadeCaption) return;
-          origSetCaption = window.ArtboardView.setCaption;
-          window.ArtboardView._cascadeCaption = true;
-          window.ArtboardView.setCaption = function (text) {
-            if (Array.isArray(text)) {
-              origSetCaption(text);
-              return;
-            }
-            paintFamilyCaption(text);
-          };
-        }
-
-        function applyLiveCaption(familyId) {
-          if (familyId) currentFamilyId = familyId;
-          installCaptionHook();
-          paintFamilyCaption();
-        }
-
         function stepMs(n) {
           var w = waveTiming(n);
           return Math.max(1, w.travel + w.hold + blendMs());
-        }
-
-        function lineFamilyAt(p, fromId, toId, after, morph) {
-          if (after) return morph >= 1 ? toId : fromId;
-          return p > 0 ? toId : fromId;
-        }
-
-        function lineCopy(text, familyId) {
-          var base = stripFamilyPrefix(text);
-          if (!familyId) return base;
-          var name = familyLabel(familyId);
-          return name ? name + " " + base : base;
         }
 
         function sample(elapsed) {
@@ -705,9 +582,7 @@ Ultra</textarea>
           if (!isFinite(peak)) peak = 990;
           var weights = new Array(n);
           var cntrs = new Array(n);
-          var familyIds = new Array(n);
           var family = "";
-          var activeFamily = "";
           var staticCntr = Number(els.cntr.value) || 0;
           var i;
           var p;
@@ -718,15 +593,11 @@ Ultra</textarea>
               p = (local - i * w.lag) / w.move;
               weights[i] = lerp(WORDS[i].start, peak, bump(p));
               cntrs[i] = staticCntr;
-              familyIds[i] = "";
             }
-            activeFamily = nearestFamily(staticCntr).id;
             return {
               weights: weights,
               cntrs: cntrs,
-              familyIds: familyIds,
               family: family,
-              activeFamily: activeFamily,
             };
           }
 
@@ -753,16 +624,13 @@ Ultra</textarea>
               morph = 1;
             }
             family = morph > 0 && morph < 1 ? from.id + " → " + to.id : morph >= 1 ? to.id : from.id;
-            activeFamily = morph >= 1 ? to.id : from.id;
           } else {
             family = t >= w.travel ? to.id : from.id + " → " + to.id;
-            activeFamily = t >= w.travel ? to.id : from.id;
           }
 
           for (i = 0; i < n; i++) {
             p = (t - i * w.lag) / w.move;
             weights[i] = lerp(WORDS[i].start, peak, bump(p));
-            familyIds[i] = lineFamilyAt(p, from.id, to.id, after, morph);
             if (after) {
               cntrs[i] = lerp(fromC, toC, morph);
             } else if (p <= 0) {
@@ -777,9 +645,7 @@ Ultra</textarea>
           return {
             weights: weights,
             cntrs: cntrs,
-            familyIds: familyIds,
             family: family,
-            activeFamily: activeFamily,
           };
         }
 
@@ -788,7 +654,6 @@ Ultra</textarea>
           var wdth = Number(els.wdth.value) || 95;
           var weights = state.weights;
           var cntrs = state.cntrs;
-          var familyIds = state.familyIds || [];
           for (var i = 0; i < lines.length; i++) {
             var wt = weights[i];
             var c = cntrs[i];
@@ -804,10 +669,7 @@ Ultra</textarea>
               ', "slnt" ' +
               slnt;
             lines[i].style.letterSpacing = trackingForWeight(wt) + "em";
-            var next = lineCopy(
-              WORDS[i] ? WORDS[i].text : "",
-              familyIds[i] || ""
-            );
+            var next = WORDS[i] ? WORDS[i].text : "";
             if (lines[i].textContent !== next) lines[i].textContent = next;
           }
           var liveIdx = 0;
@@ -829,7 +691,6 @@ Ultra</textarea>
                 return Math.round(wt);
               })
               .join(" ");
-          applyLiveCaption(state.activeFamily);
         }
 
         function frame(now) {
@@ -1008,15 +869,7 @@ Ultra</textarea>
           });
         });
 
-        var captionInput = document.getElementById("stageCaption");
-        if (captionInput) {
-          captionInput.addEventListener("input", function () {
-            applyLiveCaption(sample(playing ? performance.now() - t0 : 0).activeFamily);
-          });
-        }
-
         loadSaved();
-        installCaptionHook();
         applyVars();
         paintVals();
         buildLockup();

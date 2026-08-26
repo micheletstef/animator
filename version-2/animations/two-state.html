@@ -230,10 +230,82 @@
       }
 
       .now {
-        margin: 0 0 10px 0;
+        margin: 0 0 8px 0;
         color: #9a9a9a;
         font-variant-numeric: tabular-nums;
         font-size: 11px;
+      }
+
+      .kf-seq {
+        margin: 0 0 10px 0;
+        color: #6a6a6a;
+        font-size: 11px;
+      }
+
+      .kf-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .panel .kf-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        flex: none;
+        min-height: 76px;
+        padding: 8px 4px;
+        background: transparent;
+        color: #cfcfcf;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font: inherit;
+        font-family: "Courier New", Courier, monospace;
+        text-transform: lowercase;
+        cursor: pointer;
+      }
+
+      .kf-tab:hover {
+        border-color: #555;
+        color: #fff;
+      }
+
+      .kf-tab.is-on {
+        border-color: #fff;
+        color: #fff;
+        background: #111;
+      }
+
+      .kf-tab.is-live:not(.is-on) {
+        border-color: #888;
+      }
+
+      .kf-tab-n {
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .kf-tab-v {
+        color: #9a9a9a;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .kf-tab.is-on .kf-tab-v {
+        color: #cfcfcf;
+      }
+
+      .kf-pose {
+        display: none;
+      }
+
+      .kf-pose.is-on {
+        display: block;
       }
 
       .glyph-pad {
@@ -370,71 +442,82 @@ XT°5</textarea>
       </div>
 
       <div class="group">
-        <p class="group-title">state 1</p>
-        <div class="row">
-          <label for="w1">wght</label>
-          <input id="w1" type="range" min="200" max="1000" step="1" value="920" />
-          <span class="val" id="w1Val">920</span>
+        <p class="group-title">keyframes</p>
+        <p class="now" id="nowReadout">wght 920 · wdth 100 · CNTR 100 · slnt 0</p>
+        <p class="kf-seq" id="kfSeq">1 → 2 → 1 · click a pose to hold</p>
+        <div class="kf-tabs" role="tablist" aria-label="poses">
+          <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
+            <span class="kf-tab-n">1</span>
+            <span class="kf-tab-v" id="kfTab0Val">wght 920<br />wdth 100<br />CNTR 100</span>
+          </button>
+          <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
+            <span class="kf-tab-n">2</span>
+            <span class="kf-tab-v" id="kfTab1Val">wght 200<br />wdth 100<br />CNTR 100</span>
+          </button>
         </div>
-        <div class="row">
-          <label for="d1">wdth</label>
-          <input id="d1" type="range" min="65" max="130" step="1" value="100" />
-          <span class="val" id="d1Val">100</span>
+        <div class="kf-pose is-on" id="kfPose0">
+          <div class="row">
+            <label for="wght0">wght</label>
+            <input id="wght0" type="range" min="200" max="1000" step="1" value="920" />
+            <span class="val" id="wght0Val">920</span>
+          </div>
+          <div class="row">
+            <label for="wdth0">wdth</label>
+            <input id="wdth0" type="range" min="65" max="130" step="1" value="100" />
+            <span class="val" id="wdth0Val">100</span>
+          </div>
+          <div class="row">
+            <label for="cntr0">CNTR</label>
+            <input id="cntr0" type="range" min="0" max="100" step="1" value="100" />
+            <span class="val" id="cntr0Val">100</span>
+          </div>
+          <div class="row">
+            <label for="slnt0">slnt</label>
+            <input id="slnt0" type="range" min="-12" max="0" step="0.25" value="0" />
+            <span class="val" id="slnt0Val">0</span>
+          </div>
         </div>
-        <div class="row">
-          <label for="c1">CNTR</label>
-          <input id="c1" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="c1Val">100</span>
-        </div>
-        <div class="row">
-          <label for="s1">slnt</label>
-          <input id="s1" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="s1Val">0</span>
+        <div class="kf-pose" id="kfPose1">
+          <div class="row">
+            <label for="wght1">wght</label>
+            <input id="wght1" type="range" min="200" max="1000" step="1" value="200" />
+            <span class="val" id="wght1Val">200</span>
+          </div>
+          <div class="row">
+            <label for="wdth1">wdth</label>
+            <input id="wdth1" type="range" min="65" max="130" step="1" value="100" />
+            <span class="val" id="wdth1Val">100</span>
+          </div>
+          <div class="row">
+            <label for="cntr1">CNTR</label>
+            <input id="cntr1" type="range" min="0" max="100" step="1" value="100" />
+            <span class="val" id="cntr1Val">100</span>
+          </div>
+          <div class="row">
+            <label for="slnt1">slnt</label>
+            <input id="slnt1" type="range" min="-12" max="0" step="0.25" value="0" />
+            <span class="val" id="slnt1Val">0</span>
+          </div>
         </div>
       </div>
 
       <div class="group">
-        <p class="group-title">state 2</p>
-        <div class="row">
-          <label for="w2">wght</label>
-          <input id="w2" type="range" min="200" max="1000" step="1" value="200" />
-          <span class="val" id="w2Val">200</span>
-        </div>
-        <div class="row">
-          <label for="d2">wdth</label>
-          <input id="d2" type="range" min="65" max="130" step="1" value="100" />
-          <span class="val" id="d2Val">100</span>
-        </div>
-        <div class="row">
-          <label for="c2">CNTR</label>
-          <input id="c2" type="range" min="0" max="100" step="1" value="100" />
-          <span class="val" id="c2Val">100</span>
-        </div>
-        <div class="row">
-          <label for="s2">slnt</label>
-          <input id="s2" type="range" min="-12" max="0" step="0.25" value="0" />
-          <span class="val" id="s2Val">0</span>
-        </div>
-      </div>
-
-      <div class="group">
-        <p class="group-title">glyphs · state 1 mix</p>
-        <p class="hint">dark = uses state 1 wght · light = stays at state 2 wght</p>
+        <p class="group-title">glyphs · pose 1 mix</p>
+        <p class="hint">dark = uses pose 1 wght · light = stays at pose 2 wght</p>
         <div class="glyph-pad" id="glyphPad"></div>
       </div>
 
       <div class="group">
         <p class="group-title">motion</p>
-        <p class="now" id="nowReadout">state 1</p>
         <div class="row">
-          <label for="cy">cycle</label>
-          <input id="cy" type="range" min="800" max="12000" step="100" value="2800" />
-          <span class="val" id="cyVal">2.8s</span>
+          <label for="move">move</label>
+          <input id="move" type="range" min="80" max="4000" step="20" value="420" />
+          <span class="val" id="moveVal">420ms</span>
         </div>
         <div class="row">
-          <label for="hd">hold</label>
-          <input id="hd" type="range" min="0" max="2400" step="50" value="700" />
-          <span class="val" id="hdVal">700ms</span>
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2400" step="50" value="700" />
+          <span class="val" id="holdVal">700ms</span>
         </div>
       </div>
     </aside>
@@ -443,11 +526,14 @@ XT°5</textarea>
     <script>
       (function () {
         var DEFAULT_TEXT = ".35\nMm\nXT°5";
-        var LS_KEY = "animator:v2:two-state:settings:v1";
+        var LS_KEY = "animator:v2:two-state:settings:v2";
+        var LS_KEY_V1 = "animator:v2:two-state:settings:v1";
+        var KF_COUNT = 2;
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var glyphPad = document.getElementById("glyphPad");
         var nowReadout = document.getElementById("nowReadout");
+        var kfSeq = document.getElementById("kfSeq");
         var glyphs = [];
         var mix = [];
         var lastText = DEFAULT_TEXT;
@@ -461,16 +547,16 @@ XT°5</textarea>
           lh: 0.88,
           tr: -0.02,
           oy: 0,
-          w1: 920,
-          d1: 100,
-          c1: 100,
-          s1: 0,
-          w2: 200,
-          d2: 100,
-          c2: 100,
-          s2: 0,
-          cy: 2800,
-          hd: 700,
+          wght0: 920,
+          wdth0: 100,
+          cntr0: 100,
+          slnt0: 0,
+          wght1: 200,
+          wdth1: 100,
+          cntr1: 100,
+          slnt1: 0,
+          move: 420,
+          hold: 700,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
@@ -484,26 +570,38 @@ XT°5</textarea>
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
           oy: document.getElementById("oyVal"),
-          w1: document.getElementById("w1Val"),
-          d1: document.getElementById("d1Val"),
-          c1: document.getElementById("c1Val"),
-          s1: document.getElementById("s1Val"),
-          w2: document.getElementById("w2Val"),
-          d2: document.getElementById("d2Val"),
-          c2: document.getElementById("c2Val"),
-          s2: document.getElementById("s2Val"),
-          cy: document.getElementById("cyVal"),
-          hd: document.getElementById("hdVal"),
+          wght0: document.getElementById("wght0Val"),
+          wdth0: document.getElementById("wdth0Val"),
+          cntr0: document.getElementById("cntr0Val"),
+          slnt0: document.getElementById("slnt0Val"),
+          wght1: document.getElementById("wght1Val"),
+          wdth1: document.getElementById("wdth1Val"),
+          cntr1: document.getElementById("cntr1Val"),
+          slnt1: document.getElementById("slnt1Val"),
+          move: document.getElementById("moveVal"),
+          hold: document.getElementById("holdVal"),
         };
 
         Object.keys(DEFAULTS).forEach(function (key) {
           els[key] = document.getElementById(key);
         });
 
+        var kfTabs = [];
+        var kfTabVals = [];
+        var kfPoses = [];
+        for (var k = 0; k < KF_COUNT; k += 1) {
+          kfTabs.push(document.getElementById("kfTab" + k));
+          kfTabVals.push(document.getElementById("kfTab" + k + "Val"));
+          kfPoses.push(document.getElementById("kfPose" + k));
+        }
+
         var t0 = 0;
         var raf = 0;
         var playing = true;
-        var lastPhase = 0;
+        var lastElapsed = 0;
+        var activeKf = 0;
+        var holdKf = -1;
+        var lastLiveKf = -1;
 
         function lerp(a, b, t) {
           return a + (b - a) * t;
@@ -512,7 +610,7 @@ XT°5</textarea>
         function ease(t) {
           if (t <= 0) return 0;
           if (t >= 1) return 1;
-          return 0.5 * (1 - Math.cos(Math.PI * t));
+          return 1 - Math.pow(1 - t, 4);
         }
 
         function num(key, fallback) {
@@ -617,12 +715,19 @@ XT°5</textarea>
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "lh" || key === "tr") return Number(v).toFixed(2);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
-          if (key === "cy" || key === "hd") return formatMs(Number(v));
-          if (key === "s1" || key === "s2") {
+          if (key === "move" || key === "hold") return formatMs(Number(v));
+          if (key === "slnt0" || key === "slnt1") {
             var s = Number(v);
             return Math.abs(s) < 0.001 ? "0" : String(s);
           }
-          if (key === "w1" || key === "w2" || key === "d1" || key === "d2" || key === "c1" || key === "c2") {
+          if (
+            key === "wght0" ||
+            key === "wght1" ||
+            key === "wdth0" ||
+            key === "wdth1" ||
+            key === "cntr0" ||
+            key === "cntr1"
+          ) {
             return String(Math.round(Number(v)));
           }
           return String(v);
@@ -635,32 +740,30 @@ XT°5</textarea>
           });
         }
 
-        function stateValues(which) {
-          var p = which === 2 ? "2" : "1";
+        function keyframe(i) {
+          var p = i === 1 ? 1 : 0;
           return {
-            wght: num("w" + p, which === 2 ? 200 : 920),
-            wdth: num("d" + p, 100),
-            cntr: num("c" + p, 100),
-            slnt: num("s" + p, 0),
+            wght: num("wght" + p, p === 1 ? 200 : 920),
+            wdth: num("wdth" + p, 100),
+            cntr: num("cntr" + p, 100),
+            slnt: num("slnt" + p, 0),
           };
         }
 
-        function mixAt(p) {
-          var a = stateValues(1);
-          var b = stateValues(2);
-          var t = ease(p);
+        function mixPoses(a, b, t) {
+          var e = ease(t);
           return {
-            wght: lerp(a.wght, b.wght, t),
-            wdth: lerp(a.wdth, b.wdth, t),
-            cntr: lerp(a.cntr, b.cntr, t),
-            slnt: lerp(a.slnt, b.slnt, t),
-            t: t,
+            wght: lerp(a.wght, b.wght, e),
+            wdth: lerp(a.wdth, b.wdth, e),
+            cntr: lerp(a.cntr, b.cntr, e),
+            slnt: lerp(a.slnt, b.slnt, e),
+            t: e,
           };
         }
 
         function applyGlyph(g, mixed) {
-          var s2 = stateValues(2);
-          var wght = g.thick ? mixed.wght : s2.wght;
+          var thin = keyframe(1);
+          var wght = g.thick ? mixed.wght : thin.wght;
           g.el.style.fontVariationSettings = vfString(
             wght,
             mixed.wdth,
@@ -670,16 +773,27 @@ XT°5</textarea>
           g.el.style.fontWeight = String(Math.round(wght));
         }
 
-        function applyMix(p) {
-          var mixed = mixAt(p);
+        function slntLabel(v) {
+          return Math.abs(v) < 0.001 ? "0" : Number(v).toFixed(2).replace(/\.00$/, "");
+        }
+
+        function applyMix(mixed) {
           var i;
           for (i = 0; i < glyphs.length; i++) {
             applyGlyph(glyphs[i], mixed);
           }
           if (nowReadout) {
-            if (mixed.t <= 0.001) nowReadout.textContent = "state 1";
-            else if (mixed.t >= 0.999) nowReadout.textContent = "state 2";
-            else nowReadout.textContent = "mix " + mixed.t.toFixed(2);
+            var prefix = holdKf >= 0 ? "hold " + (holdKf + 1) + " · " : "";
+            nowReadout.textContent =
+              prefix +
+              "wght " +
+              Math.round(mixed.wght) +
+              " · wdth " +
+              Math.round(mixed.wdth) +
+              " · CNTR " +
+              Math.round(mixed.cntr) +
+              " · slnt " +
+              slntLabel(mixed.slnt);
           }
         }
 
@@ -707,8 +821,8 @@ XT°5</textarea>
                 glyphs[index].thick ? "true" : "false"
               );
               btn.title = glyphs[index].thick
-                ? "state 1 wght"
-                : "stays at state 2 wght";
+                ? "pose 1 wght"
+                : "stays at pose 2 wght";
               btn.addEventListener("click", function () {
                 glyphs[index].thick = !glyphs[index].thick;
                 mix[index] = glyphs[index].thick ? 1 : 0;
@@ -718,9 +832,9 @@ XT°5</textarea>
                   glyphs[index].thick ? "true" : "false"
                 );
                 btn.title = glyphs[index].thick
-                  ? "state 1 wght"
-                  : "stays at state 2 wght";
-                applyMix(lastPhase);
+                  ? "pose 1 wght"
+                  : "stays at pose 2 wght";
+                applyElapsed(lastElapsed);
                 save();
               });
               lineEl.appendChild(btn);
@@ -761,36 +875,100 @@ XT°5</textarea>
             lockup.appendChild(lineEl);
           }
           buildChips();
-          applyMix(lastPhase);
-        }
-
-        function timing() {
-          var cycle = Math.max(80, num("cy", 2800));
-          var hold = Math.max(0, num("hd", 0));
-          return {
-            cycle: cycle,
-            hold: hold,
-            half: cycle / 2,
-            total: cycle + 2 * hold,
-          };
+          applyElapsed(lastElapsed);
         }
 
         function durationMs() {
-          return Math.max(1, timing().total);
+          var hold = Math.max(0, num("hold", 700));
+          var move = Math.max(40, num("move", 420));
+          return Math.max(1, KF_COUNT * (hold + move));
         }
 
-        function phaseFromElapsed(elapsed) {
-          var t = timing();
-          var x = ((elapsed % t.total) + t.total) % t.total;
-          if (x < t.hold) return 0;
-          if (x < t.hold + t.half) return (x - t.hold) / t.half;
-          if (x < t.hold + t.half + t.hold) return 1;
-          return 1 - (x - t.hold - t.half - t.hold) / t.half;
+        function segmentAt(elapsed) {
+          if (holdKf >= 0) {
+            var held = keyframe(holdKf);
+            return {
+              state: held,
+              from: held,
+              to: held,
+              poseIndex: holdKf,
+            };
+          }
+          var hold = Math.max(0, num("hold", 700));
+          var move = Math.max(40, num("move", 420));
+          var seg = hold + move;
+          var total = KF_COUNT * seg;
+          if (total <= 0) total = 1;
+          var t = ((elapsed % total) + total) % total;
+          var i = Math.floor(t / seg) % KF_COUNT;
+          var local = t - i * seg;
+          var from = keyframe(i);
+          var to = keyframe((i + 1) % KF_COUNT);
+          return {
+            state: local < hold ? from : mixPoses(from, to, (local - hold) / move),
+            from: from,
+            to: to,
+            poseIndex: i,
+          };
+        }
+
+        function liveKf(elapsed) {
+          if (holdKf >= 0) return holdKf;
+          return segmentAt(elapsed).poseIndex;
+        }
+
+        function seqLabel() {
+          return "1 → 2 → 1 · click a pose to hold";
+        }
+
+        function paintLiveTab(elapsed) {
+          var live = liveKf(elapsed);
+          if (live === lastLiveKf) return;
+          lastLiveKf = live;
+          for (var p = 0; p < KF_COUNT; p += 1) {
+            if (kfTabs[p]) kfTabs[p].classList.toggle("is-live", p === live);
+          }
+        }
+
+        function paintKfTabs() {
+          for (var i = 0; i < KF_COUNT; i += 1) {
+            var on = i === activeKf;
+            if (kfPoses[i]) kfPoses[i].classList.toggle("is-on", on);
+            if (kfTabs[i]) {
+              kfTabs[i].classList.toggle("is-on", on);
+              kfTabs[i].setAttribute("aria-selected", on ? "true" : "false");
+            }
+            if (kfTabVals[i]) {
+              var pose = keyframe(i);
+              kfTabVals[i].innerHTML =
+                "wght " +
+                Math.round(pose.wght) +
+                "<br>wdth " +
+                Math.round(pose.wdth) +
+                "<br>CNTR " +
+                Math.round(pose.cntr);
+            }
+          }
+          if (kfSeq) {
+            kfSeq.textContent =
+              holdKf >= 0
+                ? "holding pose " + (holdKf + 1) + " · click again to play"
+                : seqLabel();
+          }
+        }
+
+        function setActiveKf(i, hold) {
+          activeKf = i;
+          holdKf = hold ? i : -1;
+          lastLiveKf = -1;
+          paintKfTabs();
+          if (holdKf >= 0) applyElapsed(lastElapsed);
         }
 
         function applyElapsed(ms) {
-          lastPhase = phaseFromElapsed(ms);
-          applyMix(lastPhase);
+          lastElapsed = ms;
+          applyMix(segmentAt(ms).state);
+          paintLiveTab(ms);
         }
 
         function frame(now) {
@@ -800,19 +978,25 @@ XT°5</textarea>
 
         function stopPlayback() {
           playing = false;
+          holdKf = -1;
+          lastLiveKf = -1;
           cancelAnimationFrame(raf);
           raf = 0;
+          paintKfTabs();
         }
 
         function startPlayback() {
           playing = true;
-          t0 = performance.now();
+          restart();
           cancelAnimationFrame(raf);
           raf = requestAnimationFrame(frame);
         }
 
         function restart() {
+          holdKf = -1;
+          lastLiveKf = -1;
           t0 = performance.now();
+          paintKfTabs();
           applyElapsed(0);
           cancelAnimationFrame(raf);
           if (playing) raf = requestAnimationFrame(frame);
@@ -831,18 +1015,34 @@ XT°5</textarea>
           } catch (e) {}
         }
 
-        function loadSaved() {
-          var raw = null;
+        function readJson(key) {
           try {
-            raw = localStorage.getItem(LS_KEY);
-          } catch (e) {}
-          if (!raw) return;
-          var data;
-          try {
-            data = JSON.parse(raw);
+            var raw = localStorage.getItem(key);
+            if (!raw) return null;
+            var data = JSON.parse(raw);
+            return data && typeof data === "object" ? data : null;
           } catch (e) {
-            return;
+            return null;
           }
+        }
+
+        function migrateV1(data) {
+          if (!data) return data;
+          if (data.wght0 == null && data.w1 != null) data.wght0 = data.w1;
+          if (data.wdth0 == null && data.d1 != null) data.wdth0 = data.d1;
+          if (data.cntr0 == null && data.c1 != null) data.cntr0 = data.c1;
+          if (data.slnt0 == null && data.s1 != null) data.slnt0 = data.s1;
+          if (data.wght1 == null && data.w2 != null) data.wght1 = data.w2;
+          if (data.wdth1 == null && data.d2 != null) data.wdth1 = data.d2;
+          if (data.cntr1 == null && data.c2 != null) data.cntr1 = data.c2;
+          if (data.slnt1 == null && data.s2 != null) data.slnt1 = data.s2;
+          if (data.hold == null && data.hd != null) data.hold = data.hd;
+          return data;
+        }
+
+        function loadSaved() {
+          var data = readJson(LS_KEY) || migrateV1(readJson(LS_KEY_V1));
+          if (!data) return;
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
             els[key].value = data[key];
@@ -866,6 +1066,7 @@ XT°5</textarea>
           } catch (e) {}
           applyVars();
           paintVals();
+          setActiveKf(0, false);
           buildLockup();
           restart();
           if (window.ArtboardView && window.ArtboardView.reset) {
@@ -873,14 +1074,26 @@ XT°5</textarea>
           }
         }
 
+        function onSettingInput() {
+          applyVars();
+          paintVals();
+          paintKfTabs();
+          if (this && this.id === "tx") buildLockup();
+          else applyElapsed(playing && holdKf < 0 ? performance.now() - t0 : lastElapsed);
+          save();
+        }
+
         Object.keys(els).forEach(function (key) {
           if (!els[key]) return;
-          els[key].addEventListener("input", function () {
-            applyVars();
-            paintVals();
-            if (key === "tx") buildLockup();
-            else applyMix(lastPhase);
-            save();
+          els[key].addEventListener("input", onSettingInput);
+          els[key].addEventListener("change", onSettingInput);
+        });
+
+        kfTabs.forEach(function (tab, i) {
+          if (!tab) return;
+          tab.addEventListener("click", function () {
+            if (holdKf === i) restart();
+            else setActiveKf(i, true);
           });
         });
 
@@ -888,11 +1101,12 @@ XT°5</textarea>
         lastText = els.tx ? els.tx.value : DEFAULT_TEXT;
         applyVars();
         paintVals();
+        paintKfTabs();
         buildLockup();
         restart();
 
         function afterFonts() {
-          applyMix(lastPhase);
+          applyElapsed(lastElapsed);
         }
 
         if (document.fonts && document.fonts.load) {
