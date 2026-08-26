@@ -292,8 +292,8 @@
     var alignY = opts && opts.alignY === "top" ? "top" : "center";
     var stageCy;
     if (alignY === "top") {
-      var padT = cssVarPx(root, "--guide-t");
-      if (!isFinite(padT)) padT = cssVarPx(root, "--pad-t");
+      var padT = cssVarPx(root, "--pad-t");
+      if (!isFinite(padT)) padT = cssVarPx(root, "--guide-t");
       if (!isFinite(padT)) padT = 0;
       var extra = 0;
       if (opts && opts.alignYOffset != null && isFinite(Number(opts.alignYOffset))) {

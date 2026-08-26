@@ -174,10 +174,10 @@
 
       .lockup {
         position: absolute;
-        top: var(--guide-t, calc(var(--pad-t) * 1px));
-        right: var(--guide-r, calc(var(--pad-r) * 1px));
-        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
-        left: var(--guide-l, calc(var(--pad-l) * 1px));
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
         z-index: 1;
       }
 
@@ -673,7 +673,7 @@
 
     </aside>
 
-    <script src="artboard-view.js?v=27"></script>
+    <script src="artboard-view.js?v=29"></script>
     <script>
       (function () {
         var FAMILIES = ["standard", "flair", "contrast"];

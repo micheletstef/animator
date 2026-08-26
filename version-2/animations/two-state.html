@@ -97,10 +97,10 @@
 
       .lockup {
         position: absolute;
-        top: var(--guide-t, calc(var(--pad-t) * 1px));
-        right: var(--guide-r, calc(var(--pad-r) * 1px));
-        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
-        left: var(--guide-l, calc(var(--pad-l) * 1px));
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -527,7 +527,7 @@ XT°5</textarea>
       </div>
     </aside>
 
-    <script src="artboard-view.js?v=28"></script>
+    <script src="artboard-view.js?v=29"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = ".35\nMm\nXT°5";
@@ -617,7 +617,7 @@ XT°5</textarea>
         function ease(t) {
           if (t <= 0) return 0;
           if (t >= 1) return 1;
-          return 1 - Math.pow(1 - t, 4);
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         }
 
         function num(key, fallback) {

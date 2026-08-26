@@ -96,10 +96,10 @@
 
       .lockup {
         position: absolute;
-        top: var(--guide-t, calc(var(--pad-t) * 1px));
-        right: var(--guide-r, calc(var(--pad-r) * 1px));
-        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
-        left: var(--guide-l, calc(var(--pad-l) * 1px));
+        top: calc(var(--pad-t) * 1px);
+        right: calc(var(--pad-r) * 1px);
+        bottom: calc(var(--pad-b) * 1px);
+        left: calc(var(--pad-l) * 1px);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -400,7 +400,7 @@ Layering</textarea>
       </div>
 
       <div class="group">
-        <p class="group-title">families · standard → contrast → flair</p>
+        <p class="group-title">families · standard → flair → contrast</p>
         <div class="row">
           <label for="cycle">cycle</label>
           <input id="cycle" type="checkbox" checked />
@@ -422,7 +422,7 @@ Layering</textarea>
 
     </aside>
 
-    <script src="artboard-view.js?v=27"></script>
+    <script src="artboard-view.js?v=29"></script>
     <script>
       (function () {
         var W_MIN = 200;
@@ -435,8 +435,8 @@ Layering</textarea>
         var LS_KEY = "animator:v2:weight-cascade:settings:v6";
         var FAMILIES = [
           { id: "standard", label: "Standard", cntr: 0 },
-          { id: "contrast", label: "Contrast", cntr: 100 },
           { id: "flair", label: "Flair", cntr: 50 },
+          { id: "contrast", label: "Contrast", cntr: 100 },
         ];
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");

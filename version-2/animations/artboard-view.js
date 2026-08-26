@@ -878,10 +878,6 @@
     root.style.setProperty("--guide-b", g.b + "px");
     root.style.setProperty("--guide-l", g.l + "px");
     root.style.setProperty("--guide-gutter", g.gutter + "px");
-    root.style.setProperty("--pad-t", String(g.t));
-    root.style.setProperty("--pad-r", String(g.r));
-    root.style.setProperty("--pad-b", String(g.b));
-    root.style.setProperty("--pad-l", String(g.l));
     var overlay = global.document.querySelector(".stage-guides");
     if (!overlay) return;
     overlay.hidden = !g.on;
