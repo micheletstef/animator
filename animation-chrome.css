@@ -653,5 +653,5 @@ body,
   fill: var(--bg);
   fill-opacity: 1;
   fill-rule: nonzero;
-  paint-order: stroke fill;
+  paint-order: fill stroke;
 }

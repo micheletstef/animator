@@ -111,7 +111,7 @@
         fill: var(--bg);
         fill-opacity: 1;
         fill-rule: nonzero;
-        paint-order: stroke fill;
+        paint-order: fill stroke;
       }
 
       .outline-layer .glyph-outline-handle-line,
@@ -449,7 +449,7 @@
         color: #fff;
       }
     </style>
-    <link rel="stylesheet" href="../animation-chrome.css?v=33" />
+    <link rel="stylesheet" href="../animation-chrome.css?v=36" />
   </head>
   <body>
     <div class="stage-wrap" id="stageWrap">
@@ -513,8 +513,8 @@
             <span class="dual-val" id="fs0Val">900px</span>
             <span class="dual-val" id="fs1Val">900px</span>
             <div class="dual-track"><div class="dual-fill" id="fsFill"></div></div>
-            <input id="fs0" class="is-start" type="range" min="200" max="1600" step="1" value="900" aria-label="size start" />
-            <input id="fs1" class="is-end" type="range" min="200" max="1600" step="1" value="900" aria-label="size end" />
+            <input id="fs0" class="is-start" type="range" min="200" max="900" step="1" value="900" aria-label="size start" />
+            <input id="fs1" class="is-end" type="range" min="200" max="900" step="1" value="900" aria-label="size end" />
           </div>
         </div>
         <div class="row">
@@ -640,7 +640,7 @@
     </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@2.0.0/dist/opentype.min.js"></script>
-    <script src="glyph-outlines.js?v=12"></script>
+    <script src="glyph-outlines.js?v=13"></script>
     <script src="artboard-zoom.js?v=3"></script>
     <script>
       (function () {
@@ -654,7 +654,7 @@
         var textDrag = null;
         var animT0 = 0;
 
-        var FS = { min: 200, max: 1600, step: 1, default: 900 };
+        var FS = { min: 200, max: 900, step: 1, default: 900 };
 
         var AXES = {
           CNTR: { min: 0, max: 100, step: 0.1, default: 0 },

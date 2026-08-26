@@ -924,6 +924,18 @@
     var filled = pathFill && pathFill !== "none";
     var i = idx;
 
+    var pathEl = ensureChild(g, i, "path", "glyph-outline-path");
+    pathEl.setAttribute("d", outline.d);
+    pathEl.setAttribute("fill", filled ? pathFill : "none");
+    pathEl.setAttribute("fill-opacity", filled ? "1" : "0");
+    pathEl.setAttribute("fill-rule", "nonzero");
+    pathEl.setAttribute("paint-order", "fill stroke");
+    pathEl.setAttribute("stroke", strokeAttr || colors.path);
+    pathEl.setAttribute("stroke-width", String(style.strokeW));
+    pathEl.setAttribute("stroke-linejoin", "miter");
+    pathEl.setAttribute("stroke-miterlimit", "2.5");
+    i++;
+
     if (style.handleSize > 0) {
       geom.handleLines.forEach(function (seg) {
         var a = mapPoint(map, seg[0]);
@@ -954,18 +966,6 @@
         i++;
       });
     }
-
-    var pathEl = ensureChild(g, i, "path", "glyph-outline-path");
-    pathEl.setAttribute("d", outline.d);
-    pathEl.setAttribute("fill", filled ? pathFill : "none");
-    pathEl.setAttribute("fill-opacity", filled ? "1" : "0");
-    pathEl.setAttribute("fill-rule", "nonzero");
-    pathEl.setAttribute("paint-order", "stroke fill");
-    pathEl.setAttribute("stroke", strokeAttr || colors.path);
-    pathEl.setAttribute("stroke-width", String(style.strokeW));
-    pathEl.setAttribute("stroke-linejoin", "miter");
-    pathEl.setAttribute("stroke-miterlimit", "2.5");
-    i++;
 
     if (style.nodeSize > 0) {
       var nodeR = style.nodeSize / 2;
