@@ -21,15 +21,14 @@
         --ar-h: 1440;
         --bg: #ffffff;
         --fg: #000000;
-        --pad-t: 80;
-        --pad-r: 72;
-        --pad-b: 80;
-        --pad-l: 72;
-        --fs: 122;
-        --lh: 0.92;
+        --pad-t: 32;
+        --pad-r: 32;
+        --pad-b: 32;
+        --pad-l: 32;
+        --fs: 220;
+        --lh: 0.88;
         --tracking: 0;
-        --star: 52;
-        --star-fs: 32;
+        --gap: 140;
       }
 
       * {
@@ -97,9 +96,9 @@
 
       .belt {
         position: absolute;
-        top: var(--guide-t, calc(var(--pad-t) * 1px));
+        top: 0;
         right: var(--guide-r, calc(var(--pad-r) * 1px));
-        bottom: var(--guide-b, calc(var(--pad-b) * 1px));
+        bottom: 0;
         left: var(--guide-l, calc(var(--pad-l) * 1px));
         overflow: hidden;
       }
@@ -125,6 +124,7 @@
         align-items: center;
         justify-content: center;
         width: 100%;
+        margin-bottom: calc(var(--gap) * 1px);
         text-align: center;
       }
 
@@ -149,18 +149,6 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      .star {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: calc(var(--star) * 1px);
-        font-size: calc(var(--star-fs) * 1px);
-        line-height: 1;
-        letter-spacing: 0;
-        font-variation-settings: "wght" 400, "wdth" 100, "CNTR" 0, "slnt" 0;
-        font-weight: 400;
-      }
 
       .panel {
         align-self: stretch;
@@ -336,7 +324,7 @@
     </style>
     <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
   </head>
-  <body>
+  <body data-no-caption data-guide-margin="32">
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
         <div class="stage" id="stage" aria-label="conveyor">
@@ -370,13 +358,13 @@
         <p class="group-title">type</p>
         <div class="row">
           <label for="fs">size</label>
-          <input id="fs" type="range" min="72" max="220" step="1" value="122" />
-          <span class="val" id="fsVal">122px</span>
+          <input id="fs" type="range" min="80" max="280" step="1" value="220" />
+          <span class="val" id="fsVal">220px</span>
         </div>
         <div class="row">
           <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.92" />
-          <span class="val" id="lhVal">0.92</span>
+          <input id="lh" type="range" min="0.7" max="1.2" step="0.01" value="0.88" />
+          <span class="val" id="lhVal">0.88</span>
         </div>
         <div class="row">
           <label for="tr">track</label>
@@ -384,24 +372,24 @@
           <span class="val" id="trVal">0.00</span>
         </div>
         <div class="row">
-          <label for="star">star</label>
-          <input id="star" type="range" min="32" max="140" step="1" value="52" />
-          <span class="val" id="starVal">52px</span>
+          <label for="gap">gap</label>
+          <input id="gap" type="range" min="24" max="280" step="2" value="140" />
+          <span class="val" id="gapVal">140px</span>
         </div>
       </div>
 
       <div class="group">
         <p class="group-title">keyframes</p>
-        <p class="now" id="nowReadout">pose 1 → 2 by position</p>
-        <p class="kf-seq" id="kfSeq">bottom = 1 · top = 2 · click a pose to hold</p>
+        <p class="now" id="nowReadout">pose 1 → 2 → 1</p>
+        <p class="kf-seq" id="kfSeq">1 → 2 → 1 · click a pose to hold</p>
         <div class="kf-tabs" role="tablist" aria-label="poses">
           <button type="button" class="kf-tab" id="kfTab0" data-kf="0" role="tab" aria-selected="false">
             <span class="kf-tab-n">1</span>
-            <span class="kf-tab-v">enter · bottom</span>
+            <span class="kf-tab-v">hold</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
             <span class="kf-tab-n">2</span>
-            <span class="kf-tab-v">exit · top</span>
+            <span class="kf-tab-v">hold</span>
           </button>
         </div>
       </div>
@@ -409,7 +397,7 @@
       <div class="group">
         <p class="group-title">blocks</p>
         <ul class="block-list">
-          <li><span class="n">sparmax</span><span>size + weight</span></li>
+          <li><span class="n">sparmax</span><span>width + weight</span></li>
           <li><span class="n">iwata</span><span>thin → black italic</span></li>
           <li><span class="n">grex</span><span>sans → contrast</span></li>
           <li><span class="n">badger</span><span>bold → black</span></li>
@@ -423,6 +411,16 @@
           <label for="loop">loop</label>
           <input id="loop" type="range" min="6" max="40" step="0.5" value="16" />
           <span class="val" id="loopVal">16s</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="80" max="2000" step="20" value="880" />
+          <span class="val" id="holdVal">880ms</span>
+        </div>
+        <div class="row">
+          <label for="snap">snap</label>
+          <input id="snap" type="range" min="40" max="400" step="10" value="120" />
+          <span class="val" id="snapVal">120ms</span>
         </div>
       </div>
     </aside>
@@ -447,13 +445,13 @@
             lines: [
               {
                 text: "SPARMAX",
-                from: pose(480, 70, 0, 0, 1.0, -0.05),
-                to: pose(480, 92, 0, 0, 0.72, -0.02),
+                from: pose(700, 87, 0, 0, 1.14, -0.03),
+                to: pose(900, 80, 0, 0, 0.92, -0.03),
               },
               {
                 text: "SP-20X",
-                from: pose(480, 70, 0, 0, 0.78, -0.05),
-                to: pose(980, 110, 0, 0, 1.18, -0.03),
+                from: pose(600, 100, 0, 0, 1.0, -0.01),
+                to: pose(1000, 87, 37, 0, 1.55, -0.05),
               },
             ],
           },
@@ -514,11 +512,10 @@
           },
         ];
 
-        var LS_KEY = "animator:v2:conveyor:settings:v1";
+        var LS_KEY = "animator:v2:conveyor:settings:v2";
         var STAGE_H = 1440;
         var root = document.documentElement;
         var stage = document.getElementById("stage");
-        var belt = document.getElementById("belt");
         var track = document.getElementById("track");
         var nowReadout = document.getElementById("nowReadout");
         var kfSeq = document.getElementById("kfSeq");
@@ -530,11 +527,13 @@
         var DEFAULTS = {
           bg: "#ffffff",
           fg: "#000000",
-          fs: 122,
-          lh: 0.92,
+          fs: 220,
+          lh: 0.88,
           tr: 0,
-          star: 52,
+          gap: 140,
           loop: 16,
+          hold: 880,
+          snap: 120,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
@@ -546,8 +545,10 @@
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
           tr: document.getElementById("trVal"),
-          star: document.getElementById("starVal"),
+          gap: document.getElementById("gapVal"),
           loop: document.getElementById("loopVal"),
+          hold: document.getElementById("holdVal"),
+          snap: document.getElementById("snapVal"),
         };
 
         Object.keys(DEFAULTS).forEach(function (key) {
@@ -575,7 +576,7 @@
 
         function ease(t) {
           t = clamp01(t);
-          return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+          return 1 - Math.pow(1 - t, 5);
         }
 
         function num(key, fallback) {
@@ -617,14 +618,18 @@
           el.style.setProperty("--line-track", String(p.track + trackOff));
         }
 
-        function morphTForBlock(el) {
+        function morphT(elapsed) {
           if (holdKf >= 0) return holdKf;
-          var box = belt.getBoundingClientRect();
-          var r = el.getBoundingClientRect();
-          var h = box.height || 1;
-          var mid = (r.top + r.bottom) / 2;
-          var y = (mid - box.top) / h;
-          return clamp01(1 - y);
+          var hold = Math.max(0, num("hold", 880));
+          var snap = Math.max(40, num("snap", 120));
+          var seg = hold + snap;
+          var total = Math.max(1, 2 * seg);
+          var t = ((elapsed % total) + total) % total;
+          var i = t < seg ? 0 : 1;
+          var local = t - i * seg;
+          if (local < hold) return i;
+          var u = (local - hold) / snap;
+          return i + (1 - 2 * i) * ease(u);
         }
 
         function paintKfTabs() {
@@ -638,38 +643,26 @@
             kfSeq.textContent =
               holdKf >= 0
                 ? "holding pose " + (holdKf + 1) + " · click again to play"
-                : "bottom = 1 · top = 2 · click a pose to hold";
+                : "1 → 2 → 1 · click a pose to hold";
           }
         }
 
         function applyMorphs() {
           var i;
           var j;
-          var t;
+          var t = morphT(lastElapsed);
           var node;
-          var centerT = 0;
-          var centerDist = Infinity;
-          var box = belt.getBoundingClientRect();
-          var stageMid = box.top + box.height * 0.5;
           for (i = 0; i < nodes.length; i++) {
             node = nodes[i];
-            t = morphTForBlock(node.el);
             for (j = 0; j < node.lines.length; j++) {
               applyLine(node.lines[j], BLOCKS[node.index].lines[j], t);
-            }
-            var r = node.el.getBoundingClientRect();
-            var d = Math.abs((r.top + r.bottom) / 2 - stageMid);
-            if (d < centerDist) {
-              centerDist = d;
-              centerT = t;
             }
           }
           if (nowReadout) {
             var prefix = holdKf >= 0 ? "hold " + (holdKf + 1) + " · " : "";
-            nowReadout.textContent =
-              prefix + "pose " + (centerT * 100).toFixed(0) + "% · " + BLOCKS.length + " blocks";
+            nowReadout.textContent = prefix + "pose " + (t * 100).toFixed(0) + "%";
           }
-          var live = holdKf >= 0 ? holdKf : centerT >= 0.5 ? 1 : 0;
+          var live = holdKf >= 0 ? holdKf : t >= 0.5 ? 1 : 0;
           if (live !== lastLiveKf) {
             lastLiveKf = live;
             kfTabs.forEach(function (tab, i) {
@@ -687,7 +680,6 @@
           var spec;
           var slot;
           var line;
-          var star;
           var node;
           for (i = 0; i < BLOCKS.length; i++) {
             spec = BLOCKS[i];
@@ -711,11 +703,6 @@
             }
             cycle.appendChild(block);
             nodes.push(node);
-            star = document.createElement("div");
-            star.className = "star";
-            star.textContent = "*";
-            star.setAttribute("aria-hidden", "true");
-            cycle.appendChild(star);
           }
           return cycle;
         }
@@ -740,8 +727,17 @@
           applyElapsed(phase * durationMs());
         }
 
+        function morphCycleMs() {
+          var hold = Math.max(0, num("hold", 880));
+          var snap = Math.max(40, num("snap", 120));
+          return Math.max(1, 2 * (hold + snap));
+        }
+
         function durationMs() {
-          return Math.max(1000, num("loop", 16) * 1000);
+          var belt = Math.max(1000, num("loop", 16) * 1000);
+          var morph = morphCycleMs();
+          if (belt % morph === 0) return belt;
+          return Math.max(belt, morph);
         }
 
         function applyElapsed(ms) {
@@ -794,7 +790,12 @@
         function formatVal(key, v) {
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "lh" || key === "tr") return Number(v).toFixed(2);
-          if (key === "fs" || key === "star") return Math.round(Number(v)) + "px";
+          if (key === "fs" || key === "gap") return Math.round(Number(v)) + "px";
+          if (key === "hold" || key === "snap") {
+            var ms = Number(v);
+            if (ms >= 1000) return (ms / 1000).toFixed(1) + "s";
+            return Math.round(ms) + "ms";
+          }
           if (key === "loop") {
             var n = Number(v);
             return (Math.round(n * 10) / 10).toFixed(n % 1 ? 1 : 0) + "s";
@@ -805,11 +806,10 @@
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
           root.style.setProperty("--fg", els.fg.value);
-          root.style.setProperty("--fs", String(num("fs", 122)));
-          root.style.setProperty("--lh", String(num("lh", 0.92)));
+          root.style.setProperty("--fs", String(num("fs", 220)));
+          root.style.setProperty("--lh", String(num("lh", 0.88)));
           root.style.setProperty("--tracking", String(num("tr", 0)));
-          root.style.setProperty("--star", String(num("star", 52)));
-          root.style.setProperty("--star-fs", String(Math.round(num("star", 52) * 0.58)));
+          root.style.setProperty("--gap", String(num("gap", 140)));
         }
 
         function paintVals() {
@@ -871,7 +871,7 @@
         function onSettingInput() {
           applyVars();
           paintVals();
-          if (this && (this.id === "fs" || this.id === "lh" || this.id === "star")) {
+          if (this && (this.id === "fs" || this.id === "lh" || this.id === "gap")) {
             buildTrack();
           } else {
             applyElapsed(playing ? performance.now() - t0 : lastElapsed);
@@ -909,7 +909,7 @@
 
         if (document.fonts && document.fonts.load) {
           Promise.all([
-            document.fonts.load('400 138px "IkarusPlusVariable"'),
+            document.fonts.load('400 220px "IkarusPlusVariable"'),
             document.fonts.ready,
           ])
             .then(afterFonts)

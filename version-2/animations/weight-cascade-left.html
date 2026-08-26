@@ -570,9 +570,55 @@ Ultra</textarea>
           return Math.max(0, Number(els.blend.value) || 0);
         }
 
+        function familyById(id) {
+          for (var i = 0; i < FAMILIES.length; i++) {
+            if (FAMILIES[i].id === id) return FAMILIES[i];
+          }
+          return null;
+        }
+
+        function familyLabel(id) {
+          var fam = familyById(id);
+          if (fam) return fam.label;
+          if (!id) return "";
+          return id.charAt(0).toUpperCase() + id.slice(1);
+        }
+
+        function stripFamilyPrefix(text) {
+          var s = String(text == null ? "" : text).replace(/^\s+|\s+$/g, "");
+          var i;
+          var label;
+          var re;
+          var changed = true;
+          while (changed) {
+            changed = false;
+            for (i = 0; i < FAMILIES.length; i++) {
+              label = FAMILIES[i].label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              re = new RegExp("^" + label + "(?:\\s*[·—–-]\\s*|\\s+)");
+              if (re.test(s)) {
+                s = s.replace(re, "").replace(/^\s+/, "");
+                changed = true;
+              }
+            }
+          }
+          return s;
+        }
+
         function stepMs(n) {
           var w = waveTiming(n);
           return Math.max(1, w.travel + w.hold + blendMs());
+        }
+
+        function lineFamilyAt(p, fromId, toId, after, morph) {
+          if (after) return morph >= 1 ? toId : fromId;
+          return p > 0 ? toId : fromId;
+        }
+
+        function lineCopy(text, familyId) {
+          var base = stripFamilyPrefix(text);
+          if (!familyId || familyId === "standard") return base;
+          var name = familyLabel(familyId);
+          return name ? name + " " + base : base;
         }
 
         function sample(elapsed) {
@@ -582,6 +628,7 @@ Ultra</textarea>
           if (!isFinite(peak)) peak = 990;
           var weights = new Array(n);
           var cntrs = new Array(n);
+          var familyIds = new Array(n);
           var family = "";
           var staticCntr = Number(els.cntr.value) || 0;
           var i;
@@ -593,10 +640,12 @@ Ultra</textarea>
               p = (local - i * w.lag) / w.move;
               weights[i] = lerp(WORDS[i].start, peak, bump(p));
               cntrs[i] = staticCntr;
+              familyIds[i] = "";
             }
             return {
               weights: weights,
               cntrs: cntrs,
+              familyIds: familyIds,
               family: family,
             };
           }
@@ -631,6 +680,7 @@ Ultra</textarea>
           for (i = 0; i < n; i++) {
             p = (t - i * w.lag) / w.move;
             weights[i] = lerp(WORDS[i].start, peak, bump(p));
+            familyIds[i] = lineFamilyAt(p, from.id, to.id, after, morph);
             if (after) {
               cntrs[i] = lerp(fromC, toC, morph);
             } else if (p <= 0) {
@@ -645,6 +695,7 @@ Ultra</textarea>
           return {
             weights: weights,
             cntrs: cntrs,
+            familyIds: familyIds,
             family: family,
           };
         }
@@ -654,6 +705,7 @@ Ultra</textarea>
           var wdth = Number(els.wdth.value) || 95;
           var weights = state.weights;
           var cntrs = state.cntrs;
+          var familyIds = state.familyIds || [];
           for (var i = 0; i < lines.length; i++) {
             var wt = weights[i];
             var c = cntrs[i];
@@ -669,7 +721,10 @@ Ultra</textarea>
               ', "slnt" ' +
               slnt;
             lines[i].style.letterSpacing = trackingForWeight(wt) + "em";
-            var next = WORDS[i] ? WORDS[i].text : "";
+            var next = lineCopy(
+              WORDS[i] ? WORDS[i].text : "",
+              familyIds[i] || ""
+            );
             if (lines[i].textContent !== next) lines[i].textContent = next;
           }
           var liveIdx = 0;
