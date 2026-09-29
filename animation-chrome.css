@@ -653,7 +653,6 @@ body,
   fill: var(--bg);
   fill-opacity: 1;
   fill-rule: nonzero;
-  stroke: none;
 }
 
 .outline-layer .glyph-outline-stroke {

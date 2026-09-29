@@ -13,12 +13,6 @@
       "mtime": 1790682348
     },
     {
-      "id": "bottle-tall",
-      "label": "bottle tall",
-      "url": "animations/bottle-tall.html",
-      "mtime": 1790682348
-    },
-    {
       "id": "width-fill",
       "label": "width fill",
       "url": "animations/width-fill.html",
@@ -100,13 +94,13 @@
       "id": "technical-outline",
       "label": "technical outline v1",
       "url": "animations/technical-outline.html",
-      "mtime": 1787769000
+      "mtime": 1790685000
     },
     {
       "id": "technical-outline-v2",
       "label": "technical outline v2",
       "url": "animations/technical-outline-v2.html",
-      "mtime": 1787769000
+      "mtime": 1790685000
     },
     {
       "id": "conveyor",
