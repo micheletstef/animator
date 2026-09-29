@@ -1,6 +1,24 @@
 {
   "animations": [
     {
+      "id": "bottle-square",
+      "label": "bottle square",
+      "url": "animations/bottle-square.html",
+      "mtime": 1790682348
+    },
+    {
+      "id": "bottle-wide",
+      "label": "bottle wide",
+      "url": "animations/bottle-wide.html",
+      "mtime": 1790682348
+    },
+    {
+      "id": "bottle-tall",
+      "label": "bottle tall",
+      "url": "animations/bottle-tall.html",
+      "mtime": 1790682348
+    },
+    {
       "id": "width-fill",
       "label": "width fill",
       "url": "animations/width-fill.html",

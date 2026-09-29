@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>bottle wide</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 200 1000;
+        font-stretch: 65% 130%;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 3775;
+        --ar-h: 2400;
+        --stage: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        margin: 0 0 8px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: lowercase;
+      }
+    </style>
+    <link rel="stylesheet" href="bottle.css?v=1" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
+  </head>
+  <body data-no-caption data-store="animator:v2:bottle-wide:v1">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="bottle wide">
+          <img class="art" alt="" src="bottle-assets/wide.svg" />
+          <p class="ln" data-block="hero" data-wght0="900" data-wdth0="130" data-cntr0="0" data-slnt0="0" data-track0="-0.0416" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1978.1626px;top:748.5px;font-size:373.5px;color:#ffffff;--wght:900;--wdth:130;--cntr:0;--slnt:0;--track:-0.0416">IKARUS</p>
+          <p class="ln" data-block="brand" data-wght0="800" data-wdth0="90" data-cntr0="100" data-slnt0="0" data-track0="-0.0508" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:2077.9395px;top:1092.0936px;font-size:269.9642px;color:#0091e1;--wght:800;--wdth:90;--cntr:100;--slnt:0;--track:-0.0508">abc  Dinamo</p>
+          <p class="ln" data-block="brand" data-wght0="800" data-wdth0="90" data-cntr0="100" data-slnt0="0" data-track0="0" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:3507.2552px;top:1144.6791px;font-size:148.6963px;color:#0091e1;--wght:800;--wdth:90;--cntr:100;--slnt:0;--track:0">™</p>
+          <p class="ln" data-block="vars" data-wght0="750" data-wdth0="110" data-cntr0="100" data-slnt0="0" data-track0="-0.0045" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:2197.5208px;top:1491.3044px;font-size:205.8px;color:#0091e1;--wght:750;--wdth:110;--cntr:100;--slnt:0;--track:-0.0045">VARIABLES</p>
+          <p class="ln" data-block="multi" data-wght0="750" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:2127.6187px;top:1663.1493px;font-size:125.44px;color:#0091e1;--wght:750;--wdth:65;--cntr:0;--slnt:0;--track:0">MULTI-AXIS / MULTI-PURPOSE</p>
+          <p class="ln" data-block="weights" data-wght0="750" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0.007" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:2315.5032px;top:1799.593px;font-size:83.3px;color:#000000;--wght:750;--wdth:80;--cntr:50;--slnt:0;--track:0.007">8-WEIGHTS</p>
+          <p class="ln" data-block="weights" data-wght0="600" data-wdth0="125" data-cntr0="50" data-slnt0="0" data-track0="-0.018" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:2750.327px;top:1788.764px;font-size:49.98px;color:#000000;--wght:600;--wdth:125;--cntr:50;--slnt:0;--track:-0.018">PER</p>
+          <p class="ln" data-block="weights" data-wght0="500" data-wdth0="80" data-cntr0="0" data-slnt0="0" data-track0="0.0234" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:2890.7364px;top:1799.593px;font-size:83.3px;color:#000000;--wght:500;--wdth:80;--cntr:0;--slnt:0;--track:0.0234">3 SUBFAM.</p>
+          <p class="ln" data-block="ready" data-wght0="1000" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0587" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:2315.2076px;top:1272.0547px;font-size:125.44px;color:#0091e1;--wght:1000;--wdth:100;--cntr:0;--slnt:0;--track:-0.0587">READY</p>
+          <p class="ln" data-block="ready" data-wght0="1000" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0587" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:2787.8656px;top:1272.0547px;font-size:125.44px;color:#0091e1;--wght:1000;--wdth:100;--cntr:0;--slnt:0;--track:-0.0587">TO</p>
+          <p class="ln" data-block="ready" data-wght0="1000" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0587" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:3025.0726px;top:1272.0547px;font-size:125.44px;color:#0091e1;--wght:1000;--wdth:100;--cntr:0;--slnt:0;--track:-0.0587">USE</p>
+          <p class="ln" data-block="header" data-wght0="700" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0269" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:210.9847px;top:559.25px;font-size:103.95px;color:#e1e4eb;--wght:700;--wdth:100;--cntr:0;--slnt:0;--track:-0.0269">TEST FIRST • ALL WEIGHTS </p>
+          <p class="ln" data-block="header" data-wght0="650" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="0.0085" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:1547.6779px;top:559.25px;font-size:103.95px;color:#e1e4eb;--wght:650;--wdth:65;--cntr:0;--slnt:0;--track:0.0085">INCL.</p>
+          <p class="ln" data-block="header" data-wght0="700" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:200.4857px;top:658.5222px;font-size:103.95px;color:#e1e4eb;--wght:700;--wdth:100;--cntr:0;--slnt:0;--track:0">LEGIBLE WHEN SET CORRECTLY</p>
+          <p class="ln" data-block="header" data-wght0="700" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0223" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:453.5001px;top:757.7944px;font-size:103.95px;color:#e1e4eb;--wght:700;--wdth:100;--cntr:0;--slnt:0;--track:-0.0223">SAFE FILE AFTER USE</p>
+          <p class="ln" data-block="hint" data-wght0="700" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:387.1615px;top:943px;font-size:80px;color:#0091e1;--wght:700;--wdth:100;--cntr:0;--slnt:0;--track:0">USE ADEQUATE HINTING WHEN  </p>
+          <p class="ln" data-block="hint" data-wght0="700" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.028" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:186.6016px;top:1033px;font-size:80px;color:#0091e1;--wght:700;--wdth:100;--cntr:0;--slnt:0;--track:-0.028">RENDERING SMALL SIZES • A CAREFUL EYE  </p>
+          <p class="ln" data-block="hint" data-wght0="700" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0271" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:309.9617px;top:1123px;font-size:80px;color:#0091e1;--wght:700;--wdth:100;--cntr:0;--slnt:0;--track:-0.0271">IS RECOMMENDED WHEN KERNING</p>
+          <p class="ln" data-block="hint" data-wght0="650" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0294" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:313.0817px;top:1213px;font-size:80px;color:#0091e1;--wght:650;--wdth:100;--cntr:0;--slnt:0;--track:-0.0294">DO NOT MIX WITH SYSTEM FONTS.</p>
+          <p class="ln" data-block="features" data-wght0="350" data-wdth0="80" data-cntr0="0" data-slnt0="0" data-track0="-0.0264" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:371.1042px;top:1359px;font-size:70px;color:#0091e1;--wght:350;--wdth:80;--cntr:0;--slnt:0;--track:-0.0264">LEGIBLE • QUICK LOADING • INTERCHANGEABLE  </p>
+          <p class="ln" data-block="features" data-wght0="350" data-wdth0="80" data-cntr0="0" data-slnt0="0" data-track0="-0.0279" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:485.4144px;top:1436.98px;font-size:70px;color:#0091e1;--wght:350;--wdth:80;--cntr:0;--slnt:0;--track:-0.0279">VARIABLE • CONSISTENT • PRE-HINTED</p>
+          <p class="ln" data-block="features" data-wght0="400" data-wdth0="80" data-cntr0="0" data-slnt0="0" data-track0="-0.0336" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:467.1445px;top:1514.9599px;font-size:70px;color:#0091e1;--wght:400;--wdth:80;--cntr:0;--slnt:0;--track:-0.0336">OPENTYPE FEATURES IN VECTOR-BASED  </p>
+          <p class="ln" data-block="features" data-wght0="400" data-wdth0="80" data-cntr0="0" data-slnt0="0" data-track0="-0.0335" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:277.7245px;top:1592.9399px;font-size:70px;color:#0091e1;--wght:400;--wdth:80;--cntr:0;--slnt:0;--track:-0.0335">OUTLINE TECHNOLOGY (FOR USE IN PRINT OR DIGITAL)</p>
+          <p class="ln" data-block="address" data-wght0="800" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="-0.0029" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:654.8157px;top:1725.4771px;font-size:75.6px;color:#000000;--wght:800;--wdth:65;--cntr:0;--slnt:0;--track:-0.0029">DINAMO AIR-BRUSH CO.</p>
+          <p class="ln" data-block="address" data-wght0="500" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="0.0238" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:488.9493px;top:1807.9567px;font-size:75.6px;color:#000000;--wght:500;--wdth:65;--cntr:0;--slnt:0;--track:0.0238">Prinzenstraße 84 • Berlin, DE 10969</p>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">scroll to zoom · drag to pan · double-click to fit · 3775 × 2400</p>
+      <div class="group">
+        <p class="group-title">poses</p>
+        <p class="hint">each block eases between its printed axes and a second variable pose</p>
+        <div class="kf-tabs" role="tablist">
+          <button type="button" class="kf-tab is-on" id="posePlay" role="tab" aria-selected="true">play</button>
+          <button type="button" class="kf-tab" id="poseRest" role="tab" aria-selected="false">rest</button>
+          <button type="button" class="kf-tab" id="poseAlt" role="tab" aria-selected="false">alt</button>
+        </div>
+      </div>
+      <div class="group">
+        <p class="group-title">motion</p>
+        <p class="now" id="nowReadout">rest · printed axes</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="4000" step="20" value="1100" />
+          <span class="val" id="moveVal">1100ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2400" step="20" value="640" />
+          <span class="val" id="holdVal">640ms</span>
+        </div>
+        <div class="row">
+          <label for="stagger">stagger</label>
+          <input id="stagger" type="range" min="0" max="800" step="10" value="160" />
+          <span class="val" id="staggerVal">160ms</span>
+        </div>
+      </div>
+    </aside>
+    <script src="artboard-view.js?v=30"></script>
+    <script src="bottle-motion.js?v=1"></script>
+    <script type="module" src="../../web-export.js?v=9"></script>
+  </body>
+</html>

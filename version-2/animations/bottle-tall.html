@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>bottle tall</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 200 1000;
+        font-stretch: 65% 130%;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 2250;
+        --ar-h: 2400;
+        --stage: #f5b400;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        margin: 0 0 8px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: lowercase;
+      }
+    </style>
+    <link rel="stylesheet" href="bottle.css?v=1" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
+  </head>
+  <body data-no-caption data-store="animator:v2:bottle-tall:v1">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="bottle tall">
+          <img class="art" alt="" src="bottle-assets/tall.svg" />
+          <p class="ln" data-block="tagline" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0003" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1259.0667px;top:2137px;font-size:36px;color:#e61e00;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0.0003">Variabel in Kontrast, Breite, Stärke und Neigung</p>
+          <p class="ln" data-block="tagline" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0026" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1359.0747px;top:2178.004px;font-size:36px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0026">Variable in contrast, width, weight and slant</p>
+          <p class="ln" data-block="tagline" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0004" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1259.0667px;top:2219.008px;font-size:36px;color:#e61e00;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:-0.0004">Variable en contraste, largeur, graisse et inclinaison</p>
+          <p class="ln" data-block="tagline" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0009" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1359.0747px;top:2260.012px;font-size:36px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0.0009">Variabel in contrast, breedte, gewicht en helling</p>
+          <p class="ln" data-block="counts" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0004" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:2261.6801px;font-size:55px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0004">279 alts.</p>
+          <p class="ln" data-block="counts" data-wght0="500" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.0172" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:466px;top:2101px;font-size:24px;color:#000000;--wght:500;--wdth:85;--cntr:100;--slnt:0;--track:0.0172">Zeichenanzahl:</p>
+          <p class="ln" data-block="counts" data-wght0="800" data-wdth0="75" data-cntr0="50" data-slnt0="0" data-track0="0.0214" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:466px;top:2131px;font-size:24px;color:#000000;--wght:800;--wdth:75;--cntr:50;--slnt:0;--track:0.0214">Contents:</p>
+          <p class="ln" data-block="counts" data-wght0="500" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="-0.0142" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:466px;top:2161px;font-size:24px;color:#000000;--wght:500;--wdth:90;--cntr:50;--slnt:0;--track:-0.0142">Nombre de caractères :</p>
+          <p class="ln" data-block="counts" data-wght0="600" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="-0.0245" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:466px;top:2191px;font-size:24px;color:#000000;--wght:600;--wdth:90;--cntr:50;--slnt:0;--track:-0.0245">Aantal tekens:</p>
+          <p class="ln" data-block="counts" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.001" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:2101px;font-size:24px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.001">Alternativzeichen:</p>
+          <p class="ln" data-block="counts" data-wght0="350" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.037" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:2131px;font-size:24px;color:#000000;--wght:350;--wdth:85;--cntr:100;--slnt:0;--track:0.037">Alternates:</p>
+          <p class="ln" data-block="counts" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0017" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:2161px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0.0017">Caractères alternatifs :</p>
+          <p class="ln" data-block="counts" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0048" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:2191px;font-size:24px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0048">Alternatieve tekens:</p>
+          <p class="ln" data-block="counts" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0006" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:466px;top:2261.6801px;font-size:55px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0006">960 glyphs</p>
+          <p class="ln" data-block="badges" data-wght0="700" data-wdth0="75" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="280" data-wdth1="75" data-cntr1="100" data-slnt1="-8" data-track1="0" style="left:175.1477px;top:172.88px;font-size:31.2px;color:#ffffff;--wght:700;--wdth:75;--cntr:0;--slnt:0;--track:0">D</p>
+          <p class="ln" data-block="copy-de" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:220px;top:173px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0">Verbinden Sie die Schriftart über den Variable-Achsen-Regler </p>
+          <p class="ln" data-block="copy-de" data-wght0="800" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0308" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:204.992px;font-size:24px;color:#000000;--wght:800;--wdth:85;--cntr:0;--slnt:0;--track:-0.0308">mit allen gängigen DTP-Programmen. Datei nach Gebrauch schließen. </p>
+          <p class="ln" data-block="copy-de" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:236.984px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0">Ikarus nutzt OpenType-Variable-Font-Technologie (Version 1.8 oder </p>
+          <p class="ln" data-block="copy-de" data-wght0="200" data-wdth0="90" data-cntr0="0" data-slnt0="0" data-track0="0.0232" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:268.9758px;font-size:24px;color:#000000;--wght:200;--wdth:90;--cntr:0;--slnt:0;--track:0.0232">höher) und ist mit allen gängigen Design-Programmen kompatibel, </p>
+          <p class="ln" data-block="copy-de" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0074" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:300.9677px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0.0074">für Druck und Bildschirm gleichermaßen. Besonders auf die korrekte </p>
+          <p class="ln" data-block="copy-de" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.003" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:332.9596px;font-size:24px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.003">Einstellung der Achsen achten.</p>
+          <p class="ln" data-block="copy-de" data-wght0="750" data-wdth0="75" data-cntr0="100" data-slnt0="0" data-track0="0.0737" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:380.9597px;font-size:24px;color:#000000;--wght:750;--wdth:75;--cntr:100;--slnt:0;--track:0.0737">Gefahr!</p>
+          <p class="ln" data-block="copy-de" data-wght0="850" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="-0.0567" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:246.112px;top:380.9597px;font-size:24px;color:#000000;--wght:850;--wdth:90;--cntr:50;--slnt:0;--track:-0.0567"> Sehr leicht verstellbare Schriftart. Auch nach Gebrauch unter </p>
+          <p class="ln" data-block="copy-de" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:412.9516px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0">Spannung: nicht überdehnen oder überlasten. Kann bei extremen </p>
+          <p class="ln" data-block="copy-de" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:444.9436px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0">Einstellungen unleserlich werden. Von Anfängern fernhalten. Vor </p>
+          <p class="ln" data-block="copy-de" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0005" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:476.9355px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0005">Gebrauch das Spezimen lesen.</p>
+          <p class="ln" data-block="copy-de" data-wght0="850" data-wdth0="90" data-cntr0="0" data-slnt0="0" data-track0="-0.0256" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:524.9355px;font-size:24px;color:#000000;--wght:850;--wdth:90;--cntr:0;--slnt:0;--track:-0.0256">Gebrauch.</p>
+          <p class="ln" data-block="copy-de" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:275.488px;top:524.9355px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0"> Schriftschnitt schließen (Stellung „Regular”) und erst </p>
+          <p class="ln" data-block="copy-de" data-wght0="200" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.0563" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:556.9275px;font-size:24px;color:#000000;--wght:200;--wdth:85;--cntr:100;--slnt:0;--track:0.0563">danach die gewünschten Achsen fest einstellen. Die Regler steuern </p>
+          <p class="ln" data-block="copy-de" data-wght0="500" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="-0.0149" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:160px;top:588.9194px;font-size:24px;color:#000000;--wght:500;--wdth:90;--cntr:50;--slnt:0;--track:-0.0149">Kontrast, Breite, Stärke und Neigung.</p>
+          <p class="ln" data-block="badges" data-wght0="700" data-wdth0="75" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="280" data-wdth1="75" data-cntr1="100" data-slnt1="-8" data-track1="0" style="left:177.7059px;top:1012.28px;font-size:31.2px;color:#ffffff;--wght:700;--wdth:75;--cntr:0;--slnt:0;--track:0">F</p>
+          <p class="ln" data-block="copy-fr" data-wght0="400" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.0286" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:220px;top:1009.4px;font-size:24px;color:#000000;--wght:400;--wdth:85;--cntr:100;--slnt:0;--track:0.0286">Connectez la police à tous les programmes PAO courants via le </p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1041.392px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:0">régulateur d’axes variables. Fermer le fichier après usage. Ikarus utilise </p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="-0.0168" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1073.3839px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:-0.0168">la technologie de police variable OpenType (version 1.8 ou supérieure) </p>
+          <p class="ln" data-block="copy-fr" data-wght0="800" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0261" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1105.3758px;font-size:24px;color:#000000;--wght:800;--wdth:85;--cntr:50;--slnt:0;--track:-0.0261">et est compatible avec tous les logiciels de conception courants, pour </p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1137.3678px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:0">l’impression comme pour l’écran. Veillez particulièrement à un bon </p>
+          <p class="ln" data-block="copy-fr" data-wght0="600" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.0076" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1169.3597px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:100;--slnt:0;--track:0.0076">réglage des axes.</p>
+          <p class="ln" data-block="copy-fr" data-wght0="450" data-wdth0="75" data-cntr0="100" data-slnt0="0" data-track0="0.1123" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1217.3597px;font-size:24px;color:#000000;--wght:450;--wdth:75;--cntr:100;--slnt:0;--track:0.1123">Danger !</p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:257.68px;top:1217.3597px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:0"> Caractère hautement réglable. Sous tension même après </p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1249.3517px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:0">usage : ne pas surétendre ni surcharger. Peut devenir illisible à </p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1281.3436px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:0">des réglages extrêmes. Tenir hors de portée des débutants. Lire la </p>
+          <p class="ln" data-block="copy-fr" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.003" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1313.3356px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0.003">spécimen avant usage.</p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.0056" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1361.3356px;font-size:24px;color:#000000;--wght:850;--wdth:85;--cntr:100;--slnt:0;--track:0.0056">Usage.</p>
+          <p class="ln" data-block="copy-fr" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:235.36px;top:1361.3356px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:0"> Fermer la graisse (position « Regular ») avant de régler </p>
+          <p class="ln" data-block="copy-fr" data-wght0="350" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="0.006" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1393.3276px;font-size:24px;color:#000000;--wght:350;--wdth:90;--cntr:50;--slnt:0;--track:0.006">fermement les axes souhaités. Les commandes règlent le contraste, </p>
+          <p class="ln" data-block="copy-fr" data-wght0="550" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1425.3196px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:0;--slnt:0;--track:-0">la largeur, la graisse et l’inclinaison.</p>
+          <p class="ln" data-block="badges" data-wght0="700" data-wdth0="75" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="280" data-wdth1="75" data-cntr1="100" data-slnt1="-8" data-track1="0" style="left:169.3913px;top:1478.2801px;font-size:31.2px;color:#ffffff;--wght:700;--wdth:75;--cntr:0;--slnt:0;--track:0">NL</p>
+          <p class="ln" data-block="copy-nl" data-wght0="700" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:220px;top:1476.8px;font-size:24px;color:#000000;--wght:700;--wdth:90;--cntr:50;--slnt:0;--track:0">Sluit het lettertype aan op alle courante DTP-programma’s </p>
+          <p class="ln" data-block="copy-nl" data-wght0="700" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="-0.0354" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1508.792px;font-size:24px;color:#000000;--wght:700;--wdth:90;--cntr:50;--slnt:0;--track:-0.0354">d.m.v. de variabele-asregelaar. Sluit het bestand na gebruik af. Ikarus </p>
+          <p class="ln" data-block="copy-nl" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0064" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1540.784px;font-size:24px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0.0064">maakt gebruik van OpenType-variabele lettertypetechnologie (v 1.8 </p>
+          <p class="ln" data-block="copy-nl" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0043" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1572.776px;font-size:24px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0043">of hoger) en is compatibel met alle courante ontwerpsoftware, voor </p>
+          <p class="ln" data-block="copy-nl" data-wght0="800" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0282" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1604.768px;font-size:24px;color:#000000;--wght:800;--wdth:85;--cntr:50;--slnt:0;--track:-0.0282">druk en beeldscherm. Let vooral op een goede instelling van de assen.</p>
+          <p class="ln" data-block="copy-nl" data-wght0="750" data-wdth0="75" data-cntr0="50" data-slnt0="0" data-track0="0.0675" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1652.768px;font-size:24px;color:#000000;--wght:750;--wdth:75;--cntr:50;--slnt:0;--track:0.0675">Gevaar!</p>
+          <p class="ln" data-block="copy-nl" data-wght0="700" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:247.552px;top:1652.768px;font-size:24px;color:#000000;--wght:700;--wdth:90;--cntr:50;--slnt:0;--track:0"> Zeer licht verstelbaar lettertype. Onder spanning ook na </p>
+          <p class="ln" data-block="copy-nl" data-wght0="950" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="-0.0479" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1684.76px;font-size:24px;color:#000000;--wght:950;--wdth:80;--cntr:50;--slnt:0;--track:-0.0479">gebruik: niet overrekken of overbelasten. Kan bij extreme instellingen </p>
+          <p class="ln" data-block="copy-nl" data-wght0="200" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.0619" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1716.752px;font-size:24px;color:#000000;--wght:200;--wdth:85;--cntr:100;--slnt:0;--track:0.0619">onleesbaar worden. Buiten het bereik van beginners houden. Vóór </p>
+          <p class="ln" data-block="copy-nl" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0025" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1748.744px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0.0025">gebruik het specimen lezen.</p>
+          <p class="ln" data-block="copy-nl" data-wght0="900" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0102" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1796.744px;font-size:24px;color:#000000;--wght:900;--wdth:85;--cntr:0;--slnt:0;--track:-0.0102">Gebruik.</p>
+          <p class="ln" data-block="copy-nl" data-wght0="700" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:257.6536px;top:1796.744px;font-size:24px;color:#000000;--wght:700;--wdth:90;--cntr:50;--slnt:0;--track:0"> Sluit het lettertype af (stand “Regular”) voordat u de </p>
+          <p class="ln" data-block="copy-nl" data-wght0="750" data-wdth0="90" data-cntr0="50" data-slnt0="0" data-track0="-0.0413" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1828.736px;font-size:24px;color:#000000;--wght:750;--wdth:90;--cntr:50;--slnt:0;--track:-0.0413">gewenste assen stevig instelt. De regelaars sturen contrast, breedte, </p>
+          <p class="ln" data-block="copy-nl" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0013" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:160px;top:1860.728px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0013">gewicht en helling.</p>
+          <p class="ln" data-block="copy-gb" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:220px;top:639.3201px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0">Connect the typeface to all common DTP programs via the </p>
+          <p class="ln" data-block="copy-gb" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:671.312px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0">variable-axis controller. Close the file after use. Ikarus works with </p>
+          <p class="ln" data-block="copy-gb" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:703.304px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0">OpenType variable font technology (version 1.8 or higher) and is </p>
+          <p class="ln" data-block="copy-gb" data-wght0="200" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.06" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:735.2959px;font-size:24px;color:#000000;--wght:200;--wdth:85;--cntr:100;--slnt:0;--track:0.06">compatible with all common design software, for print and screen </p>
+          <p class="ln" data-block="copy-gb" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0013" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:767.2878px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:-0.0013">alike. Pay particular attention to correct configuration of the axes.</p>
+          <p class="ln" data-block="copy-gb" data-wght0="850" data-wdth0="80" data-cntr0="50" data-slnt0="0" data-track0="0.0263" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:815.2878px;font-size:24px;color:#000000;--wght:850;--wdth:80;--cntr:50;--slnt:0;--track:0.0263">Danger!</p>
+          <p class="ln" data-block="copy-gb" data-wght0="200" data-wdth0="85" data-cntr0="100" data-slnt0="0" data-track0="0.0565" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:250.84px;top:815.2878px;font-size:24px;color:#000000;--wght:200;--wdth:85;--cntr:100;--slnt:0;--track:0.0565"> Highly adjustable typeface. Under tension even after use: </p>
+          <p class="ln" data-block="copy-gb" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:847.2798px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0">do not overextend or overload. May become illegible at extreme </p>
+          <p class="ln" data-block="copy-gb" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0036" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:879.2717px;font-size:24px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0036">settings. Keep away from beginners. Read the specimen before use.</p>
+          <p class="ln" data-block="copy-gb" data-wght0="900" data-wdth0="90" data-cntr0="0" data-slnt0="0" data-track0="-0.033" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:927.2717px;font-size:24px;color:#000000;--wght:900;--wdth:90;--cntr:0;--slnt:0;--track:-0.033">Use</p>
+          <p class="ln" data-block="copy-gb" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:200.272px;top:927.2717px;font-size:24px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0">. Close the cut (position &quot;Regular&quot;) before firmly setting the desired </p>
+          <p class="ln" data-block="copy-gb" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0035" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:160px;top:959.2637px;font-size:24px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0035">axes. The controls regulate contrast, width, weight and slant.</p>
+          <p class="ln" data-block="badges" data-wght0="700" data-wdth0="75" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="280" data-wdth1="75" data-cntr1="100" data-slnt1="-8" data-track1="0" style="left:168.1123px;top:641.88px;font-size:31.2px;color:#ffffff;--wght:700;--wdth:75;--cntr:0;--slnt:0;--track:0">GB</p>
+          <p class="ln" data-block="code" data-wght0="650" data-wdth0="75" data-cntr0="50" data-slnt0="0" data-track0="0.0494" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:1014.621px;top:2260px;font-size:42px;color:#000000;--wght:650;--wdth:75;--cntr:50;--slnt:0;--track:0.0494">FHEKJBIM</p>
+          <p class="ln" data-block="contains" data-wght0="650" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0062" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:1023.7136px;top:543.2363px;font-size:20px;color:#000000;--wght:650;--wdth:85;--cntr:0;--slnt:0;--track:-0.0062">Enthält: Contains: </p>
+          <p class="ln" data-block="contains" data-wght0="700" data-wdth0="80" data-cntr0="0" data-slnt0="0" data-track0="0.0097" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:1029.3937px;top:567.2363px;font-size:20px;color:#000000;--wght:700;--wdth:80;--cntr:0;--slnt:0;--track:0.0097">Contient : Bevat:</p>
+          <p class="ln" data-block="contains" data-wght0="650" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0031" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:1021.2337px;top:591.2363px;font-size:20px;color:#000000;--wght:650;--wdth:100;--cntr:0;--slnt:0;--track:-0.0031">Ikarus Standard</p>
+          <p class="ln" data-block="contains" data-wght0="600" data-wdth0="100" data-cntr0="0" data-slnt0="0" data-track0="-0.0029" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:1047.8538px;top:615.2363px;font-size:20px;color:#000000;--wght:600;--wdth:100;--cntr:0;--slnt:0;--track:-0.0029">Ikarus Flair </p>
+          <p class="ln" data-block="contains" data-wght0="750" data-wdth0="95" data-cntr0="100" data-slnt0="0" data-track0="0.0048" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:1026.5737px;top:639.2363px;font-size:20px;color:#000000;--wght:750;--wdth:95;--cntr:100;--slnt:0;--track:0.0048">Ikarus Contrast</p>
+          <p class="ln" data-block="variable" data-wght0="550" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0074" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:1045.2538px;top:897.3164px;font-size:20px;color:#000000;--wght:550;--wdth:85;--cntr:50;--slnt:0;--track:0.0074">Hochvariabel </p>
+          <p class="ln" data-block="variable" data-wght0="700" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0076" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:1037.0938px;top:921.3164px;font-size:20px;color:#000000;--wght:700;--wdth:85;--cntr:50;--slnt:0;--track:-0.0076">Highly variable</p>
+          <p class="ln" data-block="variable" data-wght0="700" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0071" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:1013.8738px;top:945.3164px;font-size:20px;color:#000000;--wght:700;--wdth:85;--cntr:50;--slnt:0;--track:-0.0071">Hautement variable</p>
+          <p class="ln" data-block="variable" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0047" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:1046.3338px;top:969.3164px;font-size:20px;color:#000000;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0047">Zeer variabel</p>
+          <p class="ln" data-block="availability" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.003" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:996.4937px;top:1229.3164px;font-size:20px;color:#000000;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0.003">Erhältlich in 8 Schnitten  </p>
+          <p class="ln" data-block="availability" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0022" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:1038.3737px;top:1253.3164px;font-size:20px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0022">pro Subfamilie</p>
+          <p class="ln" data-block="availability" data-wght0="650" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="-0.0026" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:1005.6137px;top:1277.3164px;font-size:20px;color:#e61e00;--wght:650;--wdth:85;--cntr:50;--slnt:0;--track:-0.0026">Available in 8 Weights  </p>
+          <p class="ln" data-block="availability" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0028" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:1041.8536px;top:1301.3164px;font-size:20px;color:#e61e00;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0028">per Subfamily</p>
+          <p class="ln" data-block="availability" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0002" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:997.3936px;top:1325.3164px;font-size:20px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0002">Disponible en 8 graisses  </p>
+          <p class="ln" data-block="availability" data-wght0="650" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0079" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:1032.0736px;top:1349.3164px;font-size:20px;color:#000000;--wght:650;--wdth:85;--cntr:0;--slnt:0;--track:-0.0079">par sous-famille</p>
+          <p class="ln" data-block="availability" data-wght0="600" data-wdth0="85" data-cntr0="50" data-slnt0="0" data-track0="0.0019" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:980.2536px;top:1373.3164px;font-size:20px;color:#e61e00;--wght:600;--wdth:85;--cntr:50;--slnt:0;--track:0.0019">Beschikbaar in  8 gewichten  </p>
+          <p class="ln" data-block="availability" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0025" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:1039.6936px;top:1397.3164px;font-size:20px;color:#e61e00;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0025">per subfamilie</p>
+          <p class="ln" data-block="weights" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0035" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:984.8489px;top:1798.3832px;font-size:16px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0035">* DE: Inkl. Kursiv für jeden Schnitt</p>
+          <p class="ln" data-block="weights" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0044" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:995.7929px;top:1817.5832px;font-size:16px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0044">EN: Incl. italics for each weight</p>
+          <p class="ln" data-block="weights" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0007" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:957.2808px;top:1836.7832px;font-size:16px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0007">FR: Italiques incluses pour chaque graisse</p>
+          <p class="ln" data-block="weights" data-wght0="600" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="-0.0049" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:990.3529px;top:1855.9832px;font-size:16px;color:#000000;--wght:600;--wdth:85;--cntr:0;--slnt:0;--track:-0.0049">NL: Incl. cursief voor elk gewicht</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.1429px;top:1457.0466px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Thin</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.1428px;top:1457.0466px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.1509px;top:1457.0466px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.143px;top:1497.0545px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Light</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.143px;top:1497.0545px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.151px;top:1497.0545px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.1431px;top:1537.0625px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Regular</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.1431px;top:1537.0625px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.1511px;top:1537.0625px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.1432px;top:1577.0705px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Medium</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.1432px;top:1577.0705px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.1513px;top:1577.0705px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.1433px;top:1617.0785px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Bold</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.1433px;top:1617.0785px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.1514px;top:1617.0785px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.1433px;top:1657.0865px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Heavy</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.1433px;top:1657.0865px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.1514px;top:1657.0865px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.1434px;top:1697.0945px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Black</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.1434px;top:1697.0945px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.1515px;top:1697.0945px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:977.1435px;top:1737.1025px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">Ultra</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1094.1436px;top:1737.1025px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">COND.</p>
+          <p class="ln" data-block="weights" data-wght0="620" data-wdth0="85" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:1170.1516px;top:1737.1025px;font-size:24px;color:#000000;--wght:620;--wdth:85;--cntr:0;--slnt:0;--track:0">EXT.</p>
+          <p class="ln is-vert" data-block="barcode" data-wght0="600" data-wdth0="70" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="300" data-wdth1="80" data-cntr1="0" data-slnt1="0" data-track1="0.02" style="left:1176.343px;top:2164.6762px;font-size:20px;color:#000000;--wght:600;--wdth:70;--cntr:0;--slnt:0;--track:0">WWW.</p>
+          <p class="ln is-vert" data-block="barcode" data-wght0="600" data-wdth0="70" data-cntr0="0" data-slnt0="0" data-track0="0.0015" data-wght1="300" data-wdth1="80" data-cntr1="0" data-slnt1="0" data-track1="0.02" style="left:1176.343px;top:2092.6762px;font-size:20px;color:#000000;--wght:600;--wdth:70;--cntr:0;--slnt:0;--track:0.0015">ABCDINAMO</p>
+          <p class="ln is-vert" data-block="barcode" data-wght0="800" data-wdth0="75" data-cntr0="0" data-slnt0="0" data-track0="-0.0573" data-wght1="300" data-wdth1="80" data-cntr1="0" data-slnt1="0" data-track1="0.02" style="left:1176.343px;top:1977.5362px;font-size:20px;color:#000000;--wght:800;--wdth:75;--cntr:0;--slnt:0;--track:-0.0573">.COM</p>
+          <p class="ln" data-block="footer" data-wght0="750" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1925.7579px;font-size:28px;color:#000000;--wght:750;--wdth:65;--cntr:0;--slnt:0;--track:0">©</p>
+          <p class="ln" data-block="footer" data-wght0="750" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="-0.0024" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:188.588px;top:1925.7579px;font-size:28px;color:#000000;--wght:750;--wdth:65;--cntr:0;--slnt:0;--track:-0.0024"> 2026 Dinamo Typefaces GmbH, Prinzenstr 84,</p>
+          <p class="ln" data-block="footer" data-wght0="750" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="-0.0023" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1955.7459px;font-size:28px;color:#000000;--wght:750;--wdth:65;--cntr:0;--slnt:0;--track:-0.0023">D-10969 Berlin. An independent studio, not a subsidiary of anyone.  </p>
+          <p class="ln" data-block="footer" data-wght0="750" data-wdth0="65" data-cntr0="0" data-slnt0="0" data-track0="-0.0026" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:1985.7339px;font-size:28px;color:#000000;--wght:750;--wdth:65;--cntr:0;--slnt:0;--track:-0.0026">DINAMO IS A TRADEMARK OF DINAMO TYPEFACES GMBH, GERMANY</p>
+          <p class="ln" data-block="footer" data-wght0="800" data-wdth0="65" data-cntr0="50" data-slnt0="0" data-track0="-0.0116" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:160px;top:2030.7299px;font-size:28px;color:#000000;--wght:800;--wdth:65;--cntr:50;--slnt:0;--track:-0.0116">www.abcdinamo.com</p>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">scroll to zoom · drag to pan · double-click to fit · 2250 × 2400</p>
+      <div class="group">
+        <p class="group-title">poses</p>
+        <p class="hint">each block eases between its printed axes and a second variable pose</p>
+        <div class="kf-tabs" role="tablist">
+          <button type="button" class="kf-tab is-on" id="posePlay" role="tab" aria-selected="true">play</button>
+          <button type="button" class="kf-tab" id="poseRest" role="tab" aria-selected="false">rest</button>
+          <button type="button" class="kf-tab" id="poseAlt" role="tab" aria-selected="false">alt</button>
+        </div>
+      </div>
+      <div class="group">
+        <p class="group-title">motion</p>
+        <p class="now" id="nowReadout">rest · printed axes</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="4000" step="20" value="1100" />
+          <span class="val" id="moveVal">1100ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2400" step="20" value="640" />
+          <span class="val" id="holdVal">640ms</span>
+        </div>
+        <div class="row">
+          <label for="stagger">stagger</label>
+          <input id="stagger" type="range" min="0" max="800" step="10" value="160" />
+          <span class="val" id="staggerVal">160ms</span>
+        </div>
+      </div>
+    </aside>
+    <script src="artboard-view.js?v=30"></script>
+    <script src="bottle-motion.js?v=1"></script>
+    <script type="module" src="../../web-export.js?v=9"></script>
+  </body>
+</html>

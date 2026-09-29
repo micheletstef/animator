@@ -1,0 +1,92 @@
+.stage-outer,
+.stage {
+  width: calc(var(--ar-w) * 1px);
+  height: calc(var(--ar-h) * 1px);
+}
+
+.stage {
+  position: relative;
+  background: var(--stage, #fff);
+  overflow: hidden;
+  font-family: "IkarusPlusVariable", sans-serif;
+  font-synthesis: none;
+  font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0, "kern" 1;
+  color: #000;
+  pointer-events: none;
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.ln {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  line-height: 1;
+  font-weight: 400;
+  font-stretch: 100%;
+  letter-spacing: calc(var(--track) * 1em);
+  font-variation-settings:
+    "wght" var(--wght),
+    "wdth" var(--wdth),
+    "CNTR" var(--cntr),
+    "slnt" var(--slnt);
+  font-kerning: normal;
+  transform-origin: 0 0;
+}
+
+.ln.is-stroke {
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+
+.panel .kf-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.panel .kf-tab {
+  min-height: 36px;
+  padding: 6px 4px;
+  border: 1px solid rgba(31, 31, 31, 0.28);
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 72px 1fr 58px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.row label {
+  text-transform: lowercase;
+}
+
+.row input[type="range"] {
+  width: 100%;
+}
+
+.row .val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.now {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}

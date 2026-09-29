@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>bottle square</title>
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 200 1000;
+        font-stretch: 65% 130%;
+        font-style: normal;
+        font-display: block;
+      }
+
+      :root {
+        color-scheme: light;
+        --ar-w: 1887.5;
+        --ar-h: 2400;
+        --stage: #1148ac;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        margin: 0 0 8px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: lowercase;
+      }
+    </style>
+    <link rel="stylesheet" href="bottle.css?v=1" />
+    <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
+  </head>
+  <body data-no-caption data-store="animator:v2:bottle-square:v1">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="bottle square">
+          <img class="art" alt="" src="bottle-assets/square.svg" />
+          <p class="ln" data-block="volume" data-wght0="400" data-wdth0="70" data-cntr0="100" data-slnt0="0" data-track0="0.0018" data-wght1="860" data-wdth1="125" data-cntr1="20" data-slnt1="0" data-track1="-0.01" style="left:1453.75px;top:489.3401px;font-size:140px;color:#e9e7ee;--wght:400;--wdth:70;--cntr:100;--slnt:0;--track:0.0018">18 ml</p>
+          <p class="ln" data-block="hero" data-wght0="850" data-wdth0="70" data-cntr0="50" data-slnt0="0" data-track0="-0.0396" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:80px;top:1024.6511px;font-size:413.4893px;color:#e9e7ee;--wght:850;--wdth:70;--cntr:50;--slnt:0;--track:-0.0396">ABC IKARUS</p>
+          <p class="ln is-stroke" data-block="subs" data-wght0="750" data-wdth0="75" data-cntr0="0" data-slnt0="0" data-track0="0.0116" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:81.5934px;top:1230px;font-size:150px;color:#ffd300;--wght:750;--wdth:75;--cntr:0;--slnt:0;--track:0.0116">Standard • Contrast • Flair</p>
+          <p class="ln is-stroke" data-block="subs" data-wght0="700" data-wdth0="80" data-cntr0="0" data-slnt0="0" data-track0="-0.0021" data-wght1="1000" data-wdth1="68" data-cntr1="100" data-slnt1="-9" data-track1="-0.035" style="left:203.7965px;top:1370px;font-size:150px;color:#ffd300;--wght:700;--wdth:80;--cntr:0;--slnt:0;--track:-0.0021">incl. 8 weights &amp; italics</p>
+          <p class="ln" data-block="purpose" data-wght0="650" data-wdth0="75" data-cntr0="0" data-slnt0="0" data-track0="0.011" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:265.8168px;top:1543px;font-size:90px;color:#1148ac;--wght:650;--wdth:75;--cntr:0;--slnt:0;--track:0.011">Für jeden Zweck • For every purpose</p>
+          <p class="ln" data-block="purpose" data-wght0="650" data-wdth0="75" data-cntr0="50" data-slnt0="0" data-track0="0.0149" data-wght1="340" data-wdth1="100" data-cntr1="100" data-slnt1="-6" data-track1="0.015" style="left:275.9868px;top:1651px;font-size:90px;color:#1148ac;--wght:650;--wdth:75;--cntr:50;--slnt:0;--track:0.0149">Pour tous les usages • Voor elk doel</p>
+          <p class="ln" data-block="legal" data-wght0="450" data-wdth0="70" data-cntr0="0" data-slnt0="0" data-track0="0" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:124.7868px;top:1836.76px;font-size:90px;color:#1148ac;--wght:450;--wdth:70;--cntr:0;--slnt:0;--track:0">©</p>
+          <p class="ln" data-block="legal" data-wght0="550" data-wdth0="65" data-cntr0="50" data-slnt0="0" data-track0="0.0141" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:232.9668px;top:1836.76px;font-size:90px;color:#1148ac;--wght:550;--wdth:65;--cntr:50;--slnt:0;--track:0.0141">2026 Dinamo Typefaces GmbH, Prinzenstr 84,</p>
+          <p class="ln" data-block="legal" data-wght0="450" data-wdth0="70" data-cntr0="0" data-slnt0="0" data-track0="-0.0008" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:124.7868px;top:1936.75px;font-size:90px;color:#1148ac;--wght:450;--wdth:70;--cntr:0;--slnt:0;--track:-0.0008">D-10969 Berlin. An independent studio, not a </p>
+          <p class="ln" data-block="legal" data-wght0="450" data-wdth0="70" data-cntr0="0" data-slnt0="0" data-track0="0.0002" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:124.7869px;top:2036.74px;font-size:90px;color:#1148ac;--wght:450;--wdth:70;--cntr:0;--slnt:0;--track:0.0002">subsidiary of anyone. DINAMO IS A TRADEMARK </p>
+          <p class="ln" data-block="legal" data-wght0="400" data-wdth0="70" data-cntr0="0" data-slnt0="0" data-track0="0.0045" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:124.7869px;top:2136.73px;font-size:90px;color:#1148ac;--wght:400;--wdth:70;--cntr:0;--slnt:0;--track:0.0045">OF DINAMO TYPEFACES GMBH, GERMANY</p>
+          <p class="ln" data-block="legal" data-wght0="350" data-wdth0="75" data-cntr0="100" data-slnt0="0" data-track0="-0.0052" data-wght1="240" data-wdth1="120" data-cntr1="0" data-slnt1="0" data-track1="0" style="left:124.7869px;top:2236.72px;font-size:90px;color:#1148ac;--wght:350;--wdth:75;--cntr:100;--slnt:0;--track:-0.0052">Made in Berlin.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">scroll to zoom · drag to pan · double-click to fit · 1887.5 × 2400</p>
+      <div class="group">
+        <p class="group-title">poses</p>
+        <p class="hint">each block eases between its printed axes and a second variable pose</p>
+        <div class="kf-tabs" role="tablist">
+          <button type="button" class="kf-tab is-on" id="posePlay" role="tab" aria-selected="true">play</button>
+          <button type="button" class="kf-tab" id="poseRest" role="tab" aria-selected="false">rest</button>
+          <button type="button" class="kf-tab" id="poseAlt" role="tab" aria-selected="false">alt</button>
+        </div>
+      </div>
+      <div class="group">
+        <p class="group-title">motion</p>
+        <p class="now" id="nowReadout">rest · printed axes</p>
+        <div class="row">
+          <label for="move">move</label>
+          <input id="move" type="range" min="200" max="4000" step="20" value="1100" />
+          <span class="val" id="moveVal">1100ms</span>
+        </div>
+        <div class="row">
+          <label for="hold">hold</label>
+          <input id="hold" type="range" min="0" max="2400" step="20" value="640" />
+          <span class="val" id="holdVal">640ms</span>
+        </div>
+        <div class="row">
+          <label for="stagger">stagger</label>
+          <input id="stagger" type="range" min="0" max="800" step="10" value="160" />
+          <span class="val" id="staggerVal">160ms</span>
+        </div>
+      </div>
+    </aside>
+    <script src="artboard-view.js?v=30"></script>
+    <script src="bottle-motion.js?v=1"></script>
+    <script type="module" src="../../web-export.js?v=9"></script>
+  </body>
+</html>
