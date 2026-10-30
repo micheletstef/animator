@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: "IkarusPlusVariable";
+        src: url("../../fonts/ABCIkarusPlusVariable.ttf") format("truetype-variations");
+        font-weight: 100 1000;
+        font-stretch: 65% 130%;
+        font-display: block;
+      }
+      body {
+        margin: 48px;
+        background: #fff;
+        color: #000;
+        font-family: IkarusPlusVariable, sans-serif;
+        font-synthesis: none;
+      }
+      .row {
+        font-size: 140px;
+        line-height: 2.2;
+        margin: 0;
+        white-space: nowrap;
+        font-variation-settings: "wght" 420, "wdth" 92, "CNTR" 0, "slnt" 0;
+      }
+      .case {
+        font-feature-settings: "case" 1, "liga" 0, "kern" 1;
+      }
+      .ordn {
+        font-feature-settings: "ordn" 1, "liga" 0, "kern" 1;
+      }
+      .plain {
+        font-feature-settings: "liga" 0, "kern" 1;
+      }
+      pre {
+        font-family: Courier New, monospace;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="row plain" id="low">{H</p>
+    <p class="row plain" id="raised"><span class="case">{</span>H</p>
+    <p class="row ordn" id="tip">No. 7 Tip</p>
+    <p class="row plain" id="num">&#x2116; 7 Tip</p>
+    <pre id="out">measuring</pre>
+    <script>
+      function bbox(ch, features) {
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "400");
+        svg.setAttribute("height", "400");
+        var t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", "20");
+        t.setAttribute("y", "200");
+        t.setAttribute("font-family", "IkarusPlusVariable");
+        t.setAttribute("font-size", "140");
+        t.style.fontFeatureSettings = features;
+        t.style.fontVariationSettings = '"wght" 420, "wdth" 92, "CNTR" 0, "slnt" 0';
+        t.textContent = ch;
+        svg.appendChild(t);
+        svg.style.position = "absolute";
+        svg.style.left = "-9999px";
+        document.body.appendChild(svg);
+        var b = t.getBBox();
+        svg.remove();
+        return { y: Math.round(b.y), h: Math.round(b.height), bottom: Math.round(b.y + b.height), w: Math.round(b.width) };
+      }
+      document.fonts.ready.then(function () {
+        var H = bbox("H", '"liga" 0');
+        var low = bbox("{", '"liga" 0');
+        var up = bbox("{", '"case" 1, "liga" 0');
+        var tip = document.getElementById("tip");
+        var num = document.getElementById("num");
+        document.getElementById("out").textContent = JSON.stringify(
+          {
+            H: H,
+            low: low,
+            up: up,
+            lowMidDelta: (low.y + low.h / 2) - (H.y + H.h / 2),
+            upMidDelta: (up.y + up.h / 2) - (H.y + H.h / 2),
+            tipW: Math.round(tip.getBoundingClientRect().width),
+            numW: Math.round(num.getBoundingClientRect().width),
+            tipText: tip.textContent,
+          },
+          null,
+          2
+        );
+      });
+    </script>
+  </body>
+</html>

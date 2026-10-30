@@ -7,3 +7,4 @@ deploy.log
 render/node_modules/
 render/frames/
 render/out/
+animator-settings.json

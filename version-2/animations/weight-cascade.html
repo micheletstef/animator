@@ -357,7 +357,7 @@ Layering</textarea>
 
       <div class="group">
         <p class="group-title">variables</p>
-        <p class="now" id="nowReadout">wght 200 280 360 450 540 630 720 810</p>
+        <p class="now" id="nowReadout">wght 200 300 400 500 700 800 900 1000</p>
         <div class="row">
           <label for="slnt">slnt</label>
           <input id="slnt" type="range" min="-12" max="0" step="0.25" value="0" />
@@ -429,7 +429,17 @@ Layering</textarea>
         var W_MAX = 1000;
         var DEFAULT_TEXT =
           "Wave\nEscalate\nModulate\nPressure\nAscend\nShadow\nFade\nLayering";
-        var START_WEIGHTS = [200, 280, 360, 450, 540, 630, 720, 810];
+        var NAMED_WEIGHTS = {
+          thin: 200,
+          light: 300,
+          regular: 400,
+          medium: 500,
+          bold: 700,
+          heavy: 800,
+          black: 900,
+          ultra: 1000,
+        };
+        var START_WEIGHTS = [200, 300, 400, 500, 700, 800, 900, 1000];
         var WORDS = [];
 
         var LS_KEY = "animator:v2:weight-cascade:settings:v6";
@@ -703,7 +713,7 @@ Layering</textarea>
             var local = elapsed % Math.max(1, w.travel + w.hold);
             for (i = 0; i < n; i++) {
               p = (local - i * w.lag) / w.move;
-              weights[i] = lerp(WORDS[i].start, peak, bump(p));
+              weights[i] = lerp(WORDS[i].start, Math.max(WORDS[i].start, peak), bump(p));
               cntrs[i] = staticCntr;
             }
             activeFamily = nearestFamily(staticCntr).id;
@@ -746,7 +756,7 @@ Layering</textarea>
 
           for (i = 0; i < n; i++) {
             p = (t - i * w.lag) / w.move;
-            weights[i] = lerp(WORDS[i].start, peak, bump(p));
+            weights[i] = lerp(WORDS[i].start, Math.max(WORDS[i].start, peak), bump(p));
             if (after) {
               cntrs[i] = lerp(fromC, toC, morph);
             } else if (p <= 0) {
@@ -952,11 +962,21 @@ Layering</textarea>
           return lerp(START_WEIGHTS[lo], START_WEIGHTS[hi], pos - lo);
         }
 
+        function weightForLine(text, i, n) {
+          var key = String(text || "")
+            .replace(/^\s+|\s+$/g, "")
+            .toLowerCase();
+          if (Object.prototype.hasOwnProperty.call(NAMED_WEIGHTS, key)) {
+            return NAMED_WEIGHTS[key];
+          }
+          return startWeightAt(i, n);
+        }
+
         function syncWords() {
           var texts = parseLines(els.tx && els.tx.value);
           if (!texts.length) texts = [""];
           WORDS = texts.map(function (text, i) {
-            return { text: text, start: startWeightAt(i, texts.length) };
+            return { text: text, start: weightForLine(text, i, texts.length) };
           });
         }
 

@@ -548,6 +548,169 @@
     } catch (err) {}
   });
 
+  var SETTINGS_PREFIXES = [
+    "animator:",
+    "ghost-anim:",
+    "matrix-anim:",
+    "matrix-v2-anim:",
+    "psi-anim:",
+    "wave-anim:",
+    "names-marquee:",
+    "technical-outline",
+  ];
+  var PATH_MARKERS = ["/version-2/", "/version-1/", "/animations/", "/index.html"];
+
+  function isSettingsKey(key) {
+    if (!key) return false;
+    for (var i = 0; i < SETTINGS_PREFIXES.length; i++) {
+      if (key.indexOf(SETTINGS_PREFIXES[i]) === 0) return true;
+    }
+    return false;
+  }
+
+  function siteRoot() {
+    var path = location.pathname;
+    var tails = ["/version-2/overview.html", "/version-1/overview.html", "/overview.html"];
+    for (var i = 0; i < tails.length; i++) {
+      if (path.length >= tails[i].length && path.slice(-tails[i].length) === tails[i]) {
+        return path.slice(0, path.length - tails[i].length);
+      }
+    }
+    return "";
+  }
+
+  function pathMarkerAt(value) {
+    var best = -1;
+    for (var i = 0; i < PATH_MARKERS.length; i++) {
+      var at = value.indexOf(PATH_MARKERS[i]);
+      if (at >= 0 && (best < 0 || at < best)) best = at;
+    }
+    return best;
+  }
+
+  function splitPathKey(key) {
+    var at = pathMarkerAt(key);
+    if (at < 0) return null;
+    var colon = key.lastIndexOf(":", at);
+    if (colon < 0) return null;
+    var path = key.slice(colon + 1);
+    if (path.charAt(0) !== "/") return null;
+    return { head: key.slice(0, colon + 1), path: path };
+  }
+
+  function toPortableKey(key) {
+    var parts = splitPathKey(key);
+    if (!parts) return key;
+    var at = pathMarkerAt(parts.path);
+    if (at < 0) return key;
+    return parts.head + parts.path.slice(at);
+  }
+
+  function fromPortableKey(key) {
+    var parts = splitPathKey(key);
+    if (!parts) return key;
+    var root = siteRoot();
+    if (!root) return key;
+    if (parts.path.indexOf(root + "/") === 0) return key;
+    return parts.head + root + parts.path;
+  }
+
+  function collectSettings() {
+    var keys = {};
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (!isSettingsKey(key)) continue;
+      var value = localStorage.getItem(key);
+      if (value == null) continue;
+      keys[toPortableKey(key)] = value;
+    }
+    return { animatorSettings: 1, keys: keys };
+  }
+
+  function downloadSettings(payload) {
+    var blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "animator-settings.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
+  function applySettings(payload) {
+    var keys = payload && payload.keys;
+    if (!keys || typeof keys !== "object" || payload.animatorSettings !== 1) {
+      throw new Error("not an animator settings file");
+    }
+    var existing = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (isSettingsKey(key)) existing.push(key);
+    }
+    existing.forEach(function (key) {
+      localStorage.removeItem(key);
+    });
+    Object.keys(keys).forEach(function (key) {
+      if (!isSettingsKey(key)) return;
+      var value = keys[key];
+      if (typeof value !== "string") value = JSON.stringify(value);
+      localStorage.setItem(fromPortableKey(key), value);
+    });
+  }
+
+  function installSettingsTransfer() {
+    var footer = document.querySelector(".sidebar-footer");
+    if (!footer || document.getElementById("exportSettings")) return;
+
+    var exportBtn = document.createElement("button");
+    exportBtn.type = "button";
+    exportBtn.id = "exportSettings";
+    exportBtn.textContent = "copy settings";
+
+    var importBtn = document.createElement("button");
+    importBtn.type = "button";
+    importBtn.id = "importSettings";
+    importBtn.textContent = "paste settings";
+
+    var file = document.createElement("input");
+    file.type = "file";
+    file.id = "importSettingsFile";
+    file.accept = "application/json,.json";
+    file.hidden = true;
+
+    footer.appendChild(exportBtn);
+    footer.appendChild(importBtn);
+    footer.appendChild(file);
+
+    exportBtn.addEventListener("click", function () {
+      downloadSettings(collectSettings());
+    });
+    importBtn.addEventListener("click", function () {
+      file.value = "";
+      file.click();
+    });
+    file.addEventListener("change", function () {
+      var picked = file.files && file.files[0];
+      if (!picked) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          applySettings(JSON.parse(String(reader.result || "")));
+          location.reload();
+        } catch (err) {
+          importBtn.textContent = "paste settings failed";
+        }
+      };
+      reader.readAsText(picked);
+    });
+  }
+
+  function startPortal() {
+  installSettingsTransfer();
   readCollapsed();
   readDirectory();
   Promise.all([loadManifest(VERSIONS.v1), loadManifest(VERSIONS.v2)]).then(
@@ -571,4 +734,26 @@
       }
     }
   );
+  }
+
+  var importParams = new URLSearchParams(location.search);
+  if (importParams.get("import") === "1") {
+    var settingsRoot = document.body.getAttribute("data-portal-root") || "";
+    fetch(settingsRoot + "animator-settings.json", { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("settings " + r.status);
+        return r.json();
+      })
+      .then(function (payload) {
+        applySettings(payload);
+        importParams.delete("import");
+        var q = importParams.toString();
+        location.replace(location.pathname + (q ? "?" + q : "") + location.hash);
+      })
+      .catch(function () {
+        startPortal();
+      });
+  } else {
+    startPortal();
+  }
 })();

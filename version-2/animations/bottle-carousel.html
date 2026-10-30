@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>bottle carousel</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ar-w: 1080;
+        --ar-h: 1440;
+        --bg: #ffffff;
+        --bg-image: linear-gradient(
+          to bottom,
+          #2c2839 0%,
+          #2a2f45 8%,
+          #263957 18%,
+          #1f4166 26%,
+          #144a76 34%,
+          #085488 40%,
+          #01609a 48%,
+          #0178b0 58%,
+          #0091c4 68%,
+          #16a9d5 78%,
+          #58bdd9 90%,
+          #58bdd9 100%
+        );
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #d3d3d3;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+        color: #1f1f1f;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+
+      .stage-wrap.is-panning {
+        cursor: grabbing;
+      }
+
+      .stage-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1440px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        background-color: var(--bg);
+        background-image: var(--bg-image);
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        overflow: hidden;
+        box-shadow: none;
+        pointer-events: none;
+      }
+
+      .belt {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .track {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        will-change: transform;
+      }
+
+      .bottle {
+        display: block;
+        flex: 0 0 auto;
+      }
+
+      .masters {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 8px;
+        height: 8px;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .masters video {
+        width: 320px;
+        height: 180px;
+      }
+
+      .panel {
+        align-self: stretch;
+        max-height: 100%;
+        overflow: auto;
+        padding: 16px 18px;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .panel h2 {
+        margin: 0 0 4px 0;
+        font-size: 12px;
+        font-weight: 400;
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+      }
+
+      .panel .hint {
+        margin: 0 0 14px 0;
+        font-size: 11px;
+      }
+
+      .panel .group {
+        margin-bottom: 18px;
+      }
+
+      .panel .group-title {
+        text-transform: lowercase;
+        margin: 0 0 8px 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 64px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .row label {
+        text-transform: lowercase;
+      }
+
+      .row input[type="range"] {
+        width: 100%;
+      }
+
+      .row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        justify-self: start;
+        cursor: pointer;
+      }
+
+      .row input[type="color"] {
+        width: 100%;
+        height: 22px;
+        padding: 0;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .row .val {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0 0 8px 0;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+      }
+    </style>
+    <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
+  </head>
+  <body data-no-caption data-guide-margin="32">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage-outer">
+        <div class="stage" id="stage" aria-label="bottle carousel">
+          <div class="belt">
+            <div class="track" id="track"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Settings">
+      <h2>settings</h2>
+      <p class="hint">
+        large then small, right to left · scroll to zoom · drag to pan · double-click to fit · 1080 × 1440
+      </p>
+
+      <div class="group">
+        <p class="group-title">color</p>
+        <div class="row">
+          <label for="grad">gradient</label>
+          <input id="grad" type="checkbox" checked />
+          <span class="val" id="gradVal">on</span>
+        </div>
+        <div class="row">
+          <label for="bg">bg</label>
+          <input id="bg" type="color" value="#ffffff" />
+          <span class="val" id="bgVal">#ffffff</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">motion</p>
+        <p class="now" id="nowReadout">large · small</p>
+        <div class="row">
+          <label for="loop">loop</label>
+          <input id="loop" type="range" min="4" max="40" step="0.5" value="16" />
+          <span class="val" id="loopVal">16s</span>
+        </div>
+        <div class="row">
+          <label for="gap">gap</label>
+          <input id="gap" type="range" min="0" max="800" step="2" value="240" />
+          <span class="val" id="gapVal">240px</span>
+        </div>
+        <div class="row">
+          <label for="scale">scale</label>
+          <input id="scale" type="range" min="50" max="130" step="1" value="100" />
+          <span class="val" id="scaleVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="floor">floor</label>
+          <input id="floor" type="range" min="0" max="480" step="2" value="140" />
+          <span class="val" id="floorVal">140px</span>
+        </div>
+        <div class="row">
+          <label for="phase">phase</label>
+          <input id="phase" type="range" min="0" max="100" step="0.1" value="0" />
+          <span class="val" id="phaseVal">0%</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="masters" aria-hidden="true">
+      <video id="vid-large" src="bottle-assets/large-white.webm" muted playsinline loop autoplay preload="auto"></video>
+      <video id="vid-small" src="bottle-assets/small-white.webm" muted playsinline loop autoplay preload="auto"></video>
+    </div>
+
+    <script src="artboard-view.js?v=30"></script>
+    <script>
+      (function () {
+        var STAGE_W = 1080;
+        var PX = 2;
+        var BOTTLES = [
+          { id: "large", w: 336, h: 1160 },
+          { id: "small", w: 424, h: 960 },
+        ];
+        var GRADIENT =
+          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 18%, #1f4166 26%, #144a76 34%, #085488 40%, #01609a 48%, #0178b0 58%, #0091c4 68%, #16a9d5 78%, #58bdd9 90%, #58bdd9 100%)";
+        var LS_KEY = "animator:v2:bottle-carousel:v1";
+        var root = document.documentElement;
+        var stage = document.getElementById("stage");
+        var track = document.getElementById("track");
+        var nowReadout = document.getElementById("nowReadout");
+
+        var DEFAULTS = {
+          bg: "#ffffff",
+          grad: "1",
+          loop: 16,
+          gap: 240,
+          scale: 100,
+          floor: 140,
+          phase: 0,
+        };
+        var COLOR_KEYS = { bg: 1 };
+        var CHECK_KEYS = { grad: 1 };
+
+        var els = {};
+        var vals = {};
+        Object.keys(DEFAULTS).forEach(function (key) {
+          els[key] = document.getElementById(key);
+          vals[key] = document.getElementById(key + "Val");
+        });
+
+        var videos = {
+          large: document.getElementById("vid-large"),
+          small: document.getElementById("vid-small"),
+        };
+        var canvases = [];
+        var cycleW = 1;
+        var travel = 0;
+        var playing = true;
+        var raf = 0;
+        var lastFrame = 0;
+
+        function num(key, fallback) {
+          var n = els[key] ? parseFloat(els[key].value) : fallback;
+          return isFinite(n) ? n : fallback;
+        }
+
+        function scaleOf() {
+          return Math.max(0.2, num("scale", 100) / 100);
+        }
+
+        function gapPx() {
+          return Math.max(0, num("gap", 240));
+        }
+
+        function durationMs() {
+          return Math.max(500, num("loop", 16) * 1000);
+        }
+
+        function bottleSize(bottle) {
+          var s = scaleOf();
+          return {
+            w: Math.max(2, Math.round(bottle.w * s)),
+            h: Math.max(2, Math.round(bottle.h * s)),
+          };
+        }
+
+        function measureCycle() {
+          var w = 0;
+          var i;
+          var size;
+          var g = gapPx();
+          for (i = 0; i < BOTTLES.length; i++) {
+            size = bottleSize(BOTTLES[i]);
+            w += size.w + g;
+          }
+          return Math.max(1, w);
+        }
+
+        function copyCount(cycle) {
+          return Math.max(2, Math.ceil(STAGE_W / cycle) + 1);
+        }
+
+        function wrap(n, m) {
+          m = Math.max(1, m);
+          n = n % m;
+          if (n < 0) n += m;
+          return n;
+        }
+
+        function position() {
+          return wrap(travel + (num("phase", 0) / 100) * cycleW, cycleW);
+        }
+
+        function applyFloor() {
+          track.style.paddingBottom = Math.max(0, num("floor", 140)) + "px";
+        }
+
+        function applyTransform() {
+          track.style.transform = "translate3d(" + (-position()).toFixed(2) + "px,0,0)";
+        }
+
+        function paint() {
+          var i;
+          var canvas;
+          var video;
+          var ctx;
+          for (i = 0; i < canvases.length; i++) {
+            canvas = canvases[i];
+            video = videos[canvas._id];
+            if (!video || video.readyState < 2) continue;
+            if (canvas._drawn === video.currentTime && !canvas._force) continue;
+            ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas._drawn = video.currentTime;
+            canvas._force = false;
+          }
+        }
+
+        function forcePaint() {
+          var i;
+          for (i = 0; i < canvases.length; i++) canvases[i]._force = true;
+          paint();
+        }
+
+        function buildTrack() {
+          var ratio = cycleW > 1 ? wrap(travel, cycleW) / cycleW : 0;
+          cycleW = measureCycle();
+          var copies = copyCount(cycleW);
+          var g = gapPx();
+          var c;
+          var i;
+          var bottle;
+          var size;
+          var canvas;
+          track.innerHTML = "";
+          canvases = [];
+          for (c = 0; c < copies; c++) {
+            for (i = 0; i < BOTTLES.length; i++) {
+              bottle = BOTTLES[i];
+              size = bottleSize(bottle);
+              canvas = document.createElement("canvas");
+              canvas.className = "bottle";
+              canvas._id = bottle.id;
+              canvas.width = size.w * PX;
+              canvas.height = size.h * PX;
+              canvas.style.width = size.w + "px";
+              canvas.style.height = size.h + "px";
+              canvas.style.marginRight = g + "px";
+              canvas.setAttribute("aria-hidden", "true");
+              track.appendChild(canvas);
+              canvases.push(canvas);
+            }
+          }
+          travel = ratio * cycleW;
+          applyFloor();
+          applyTransform();
+          forcePaint();
+        }
+
+        function playVideos() {
+          Object.keys(videos).forEach(function (id) {
+            var video = videos[id];
+            if (!video) return;
+            var pending = video.play();
+            if (pending && pending.catch) pending.catch(function () {});
+          });
+        }
+
+        function pauseVideos() {
+          Object.keys(videos).forEach(function (id) {
+            if (videos[id]) videos[id].pause();
+          });
+        }
+
+        function seekVideos(ms) {
+          Object.keys(videos).forEach(function (id) {
+            var video = videos[id];
+            if (!video || !(video.duration > 0)) return;
+            var target = (ms / 1000) % video.duration;
+            if (Math.abs(video.currentTime - target) > 0.0005) {
+              try {
+                video.currentTime = target;
+              } catch (e) {}
+            }
+          });
+        }
+
+        function frame(now) {
+          if (!lastFrame) lastFrame = now;
+          var dt = now - lastFrame;
+          lastFrame = now;
+          if (dt > 0 && dt < 200) travel += (dt / durationMs()) * cycleW;
+          travel = wrap(travel, cycleW);
+          applyTransform();
+          paint();
+          if (playing) raf = requestAnimationFrame(frame);
+        }
+
+        function stopPlayback() {
+          playing = false;
+          lastFrame = 0;
+          cancelAnimationFrame(raf);
+          raf = 0;
+          pauseVideos();
+        }
+
+        function startPlayback() {
+          playing = true;
+          lastFrame = 0;
+          playVideos();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
+        }
+
+        function formatVal(key, v) {
+          if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
+          if (COLOR_KEYS[key]) return String(v).toLowerCase();
+          if (key === "scale" || key === "phase") {
+            var n = Number(v);
+            if (key === "phase") return (Math.round(n * 10) / 10).toFixed(n % 1 ? 1 : 0) + "%";
+            return Math.round(n) + "%";
+          }
+          if (key === "gap" || key === "floor") return Math.round(Number(v)) + "px";
+          if (key === "loop") {
+            var loop = Number(v);
+            return (Math.round(loop * 10) / 10).toFixed(loop % 1 ? 1 : 0) + "s";
+          }
+          return String(v);
+        }
+
+        function controlValue(key) {
+          if (!els[key]) return DEFAULTS[key];
+          if (CHECK_KEYS[key]) return els[key].checked ? "1" : "0";
+          return els[key].value;
+        }
+
+        function applyVars() {
+          root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--bg-image", els.grad.checked ? GRADIENT : "none");
+        }
+
+        function paintVals() {
+          Object.keys(vals).forEach(function (key) {
+            if (!vals[key] || !els[key]) return;
+            vals[key].textContent = formatVal(key, controlValue(key));
+          });
+          if (nowReadout) nowReadout.textContent = "large · small · " + formatVal("loop", controlValue("loop"));
+        }
+
+        function save() {
+          var data = {};
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key]) return;
+            if (COLOR_KEYS[key]) data[key] = els[key].value;
+            else if (CHECK_KEYS[key]) data[key] = els[key].checked ? "1" : "0";
+            else data[key] = parseFloat(els[key].value);
+          });
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function loadSaved() {
+          var raw = null;
+          try {
+            raw = localStorage.getItem(LS_KEY);
+          } catch (e) {}
+          if (!raw) return;
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            return;
+          }
+          Object.keys(DEFAULTS).forEach(function (key) {
+            if (!els[key] || data[key] == null) return;
+            if (CHECK_KEYS[key]) els[key].checked = data[key] === "1" || data[key] === true;
+            else els[key].value = data[key];
+          });
+        }
+
+        function onSetting() {
+          applyVars();
+          paintVals();
+          if (this && (this.id === "scale" || this.id === "gap")) buildTrack();
+          else {
+            applyFloor();
+            applyTransform();
+          }
+          save();
+        }
+
+        Object.keys(els).forEach(function (key) {
+          if (!els[key]) return;
+          els[key].addEventListener("input", onSetting);
+          els[key].addEventListener("change", onSetting);
+        });
+
+        Object.keys(videos).forEach(function (id) {
+          var video = videos[id];
+          if (!video) return;
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          video.addEventListener("loadeddata", forcePaint);
+          video.addEventListener("seeked", forcePaint);
+          video.addEventListener("error", function () {
+            if (nowReadout) nowReadout.textContent = id + " failed to load";
+          });
+        });
+
+        document.addEventListener("pointerdown", playVideos, { once: true });
+
+        loadSaved();
+        applyVars();
+        paintVals();
+        buildTrack();
+        startPlayback();
+
+        window.AnimatorExport = {
+          stage: stage,
+          filename: "bottle-carousel.mp4",
+          durationMs: durationMs,
+          seek: function (ms) {
+            var dur = durationMs();
+            travel = wrap((ms / dur) * cycleW, cycleW);
+            applyTransform();
+            seekVideos(ms);
+            forcePaint();
+          },
+          stop: stopPlayback,
+          start: startPlayback,
+        };
+      })();
+    </script>
+    <script type="module" src="../../web-export.js?v=9"></script>
+  </body>
+</html>

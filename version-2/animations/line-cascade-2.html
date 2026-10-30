@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <title>line cascade 2</title>
+    <title>line cascade (OPT 2)</title>
     <style>
       @font-face {
         font-family: "IkarusPlusVariable";
@@ -92,7 +92,7 @@
         box-shadow: none;
         font-family: "IkarusPlusVariable", sans-serif;
         font-synthesis: none;
-        font-feature-settings: "liga" 0, "kern" 1;
+        font-feature-settings: "ordn" 1, "liga" 0, "kern" 1;
         pointer-events: none;
       }
 
@@ -124,6 +124,10 @@
         text-decoration-skip-ink: auto;
         text-decoration-thickness: 0.04em;
         text-underline-offset: 0.08em;
+      }
+
+      .line .case {
+        font-feature-settings: "case" 1, "liga" 0, "kern" 1;
       }
 
       .panel {
@@ -352,10 +356,10 @@
       }
     </style>
   </head>
-  <body>
+  <body data-no-caption>
     <div class="stage-wrap" id="stageWrap">
       <div class="stage-outer">
-        <div class="stage" id="stage" aria-label="line cascade 2">
+        <div class="stage" id="stage" aria-label="line cascade (OPT 2)">
           <div class="lockup" id="lockup"></div>
         </div>
       </div>
@@ -388,7 +392,8 @@
 Solvent
 ± 30ml*
 Max CAP
-(SP-20X)</textarea>
+{SP-20X}
+No. 7 Tip</textarea>
         </div>
       </div>
 
@@ -455,7 +460,7 @@ Max CAP
         </div>
         <div class="row">
           <label for="tr0">track</label>
-          <input id="tr0" type="range" min="-0.12" max="0.12" step="0.005" value="-0.03" />
+          <input id="tr0" type="range" min="-0.12" max="1" step="0.005" value="-0.03" />
           <span class="val" id="tr0Val">-0.03</span>
         </div>
       </div>
@@ -490,7 +495,7 @@ Max CAP
         </div>
         <div class="row">
           <label for="tr1">track</label>
-          <input id="tr1" type="range" min="-0.12" max="0.12" step="0.005" value="-0.015" />
+          <input id="tr1" type="range" min="-0.12" max="1" step="0.005" value="-0.015" />
           <span class="val" id="tr1Val">-0.02</span>
         </div>
         <div class="row">
@@ -523,13 +528,13 @@ Max CAP
     <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
-        var DEFAULT_TEXT = "Nozzle\nSolvent\n± 30ml*\nMax CAP\n(SP-20X)";
+        var DEFAULT_TEXT = "Nozzle\nSolvent\n± 30ml*\nMax CAP\n{SP-20X}\nNo. 7 Tip";
         var LS_KEY = "animator:v2:line-cascade-2:settings:v1";
         var POSE_KEYS = ["size", "wght", "wdth", "cntr", "slnt", "track", "ul"];
         var LINE_PRESETS = [
           { wght: 520, wdth: 92, cntr: 0, slnt: -12, track: -0.02, ul: 0 },
           { wght: 780, wdth: 96, cntr: 0, slnt: 0, track: -0.03, ul: 0 },
-          { wght: 400, wdth: 90, cntr: 0, slnt: 0, track: -0.02, ul: 1 },
+          { wght: 400, wdth: 90, cntr: 0, slnt: 0, track: -0.02, ul: 0 },
           { wght: 1000, wdth: 96, cntr: 0, slnt: -12, track: -0.03, ul: 0 },
           { wght: 420, wdth: 92, cntr: 0, slnt: 0, track: -0.02, ul: 0 },
         ];
@@ -1024,6 +1029,26 @@ Max CAP
           paintKfTabs();
         }
 
+        function fillLine(el, text) {
+          var i;
+          var ch;
+          var node;
+          el.textContent = "";
+          for (i = 0; i < text.length; i++) {
+            ch = text.charAt(i);
+            if (ch === "{" || ch === "}") {
+              node = document.createElement("span");
+              node.className = "case";
+              node.textContent = ch;
+              el.appendChild(node);
+            } else {
+              node = el.lastChild;
+              if (node && node.nodeType === 3) node.nodeValue += ch;
+              else el.appendChild(document.createTextNode(ch));
+            }
+          }
+        }
+
         function buildLockup() {
           var texts = parseLines(els.tx ? els.tx.value : DEFAULT_TEXT);
           if (!texts.length) texts = [""];
@@ -1033,7 +1058,7 @@ Max CAP
           texts.forEach(function (text) {
             var line = document.createElement("div");
             line.className = "line";
-            line.textContent = text;
+            fillLine(line, text);
             lockup.appendChild(line);
             lineEls.push(line);
           });
@@ -1124,6 +1149,16 @@ Max CAP
           });
           if (Array.isArray(data.poses)) {
             linePoses = data.poses.map(clonePose);
+          }
+          if (!data.dropUl) {
+            parseLines(data.tx || DEFAULT_TEXT).forEach(function (text, i) {
+              if (linePoses[i] && text.indexOf("30ml") !== -1) linePoses[i].ul = 0;
+            });
+            data.dropUl = 1;
+            data.poses = linePoses.map(clonePose);
+            try {
+              localStorage.setItem(LS_KEY, JSON.stringify(data));
+            } catch (e) {}
           }
           if (data.activeLine != null) {
             activeLine = Math.max(0, Math.round(Number(data.activeLine) || 0));

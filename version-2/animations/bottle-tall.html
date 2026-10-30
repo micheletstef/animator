@@ -101,7 +101,7 @@
         text-transform: lowercase;
       }
     </style>
-    <link rel="stylesheet" href="bottle.css?v=1" />
+    <link rel="stylesheet" href="bottle.css?v=5" />
     <link rel="stylesheet" href="../../animation-chrome.css?v=38" />
   </head>
   <body data-no-caption data-store="animator:v2:bottle-tall:v1">
@@ -245,7 +245,7 @@
       <p class="hint">scroll to zoom · drag to pan · double-click to fit · 2250 × 2400</p>
       <div class="group">
         <p class="group-title">poses</p>
-        <p class="hint">each block eases between its printed axes and a second variable pose</p>
+        <p class="hint">each block moves forward, then they return one by one.</p>
         <div class="kf-tabs" role="tablist">
           <button type="button" class="kf-tab is-on" id="posePlay" role="tab" aria-selected="true">play</button>
           <button type="button" class="kf-tab" id="poseRest" role="tab" aria-selected="false">rest</button>
@@ -265,15 +265,10 @@
           <input id="hold" type="range" min="0" max="2400" step="20" value="640" />
           <span class="val" id="holdVal">640ms</span>
         </div>
-        <div class="row">
-          <label for="stagger">stagger</label>
-          <input id="stagger" type="range" min="0" max="800" step="10" value="160" />
-          <span class="val" id="staggerVal">160ms</span>
-        </div>
       </div>
     </aside>
     <script src="artboard-view.js?v=30"></script>
-    <script src="bottle-motion.js?v=1"></script>
+    <script src="bottle-motion.js?v=5"></script>
     <script type="module" src="../../web-export.js?v=9"></script>
   </body>
 </html>

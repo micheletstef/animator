@@ -1,22 +1,10 @@
 {
   "animations": [
     {
-      "id": "bottle-square",
-      "label": "bottle square",
-      "url": "animations/bottle-square.html",
-      "mtime": 1790682348
-    },
-    {
-      "id": "bottle-wide",
-      "label": "bottle wide",
-      "url": "animations/bottle-wide.html",
-      "mtime": 1790682348
-    },
-    {
       "id": "width-fill",
       "label": "width fill",
       "url": "animations/width-fill.html",
-      "mtime": 1787769000
+      "mtime": 1790696000
     },
     {
       "id": "alternates-1",
@@ -70,18 +58,12 @@
       "id": "weight-cascade",
       "label": "weight cascade",
       "url": "animations/weight-cascade.html",
-      "mtime": 1787769000
+      "mtime": 1793328100
     },
     {
       "id": "two-state",
       "label": "two state",
       "url": "animations/two-state.html",
-      "mtime": 1787769000
-    },
-    {
-      "id": "psi-count",
-      "label": "PSI 0 \u2192 60",
-      "url": "animations/psi-count.html",
       "mtime": 1787769000
     },
     {
@@ -94,7 +76,7 @@
       "id": "technical-outline",
       "label": "technical outline v1",
       "url": "animations/technical-outline.html",
-      "mtime": 1790685000
+      "mtime": 1793402000
     },
     {
       "id": "technical-outline-v2",
@@ -106,19 +88,31 @@
       "id": "conveyor",
       "label": "conveyor",
       "url": "animations/conveyor.html",
-      "mtime": 1787793100
+      "mtime": 1790698800
     },
     {
       "id": "line-cascade",
-      "label": "line cascade",
+      "label": "line cascade (OPT 1)",
       "url": "animations/line-cascade.html",
-      "mtime": 1787769000
+      "mtime": 1793356000
+    },
+    {
+      "id": "line-cascade-opt1-v2",
+      "label": "line cascade (OPT 1) v2",
+      "url": "animations/line-cascade-opt1-v2.html",
+      "mtime": 1793356300
     },
     {
       "id": "line-cascade-2",
-      "label": "line cascade 2",
+      "label": "line cascade (OPT 2)",
       "url": "animations/line-cascade-2.html",
-      "mtime": 1787792000
+      "mtime": 1793356100
+    },
+    {
+      "id": "bottle-carousel",
+      "label": "bottle carousel",
+      "url": "animations/bottle-carousel.html",
+      "mtime": 1793368272
     }
   ]
 }

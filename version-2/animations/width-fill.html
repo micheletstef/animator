@@ -19,6 +19,21 @@
         --ar-w: 1080;
         --ar-h: 1440;
         --bg: #ffffff;
+        --bg-image: linear-gradient(
+          to bottom,
+          #2c2839 0%,
+          #2a2f45 8%,
+          #263957 18%,
+          #1f4166 26%,
+          #144a76 34%,
+          #085488 40%,
+          #01609a 48%,
+          #0178b0 58%,
+          #0091c4 68%,
+          #16a9d5 78%,
+          #58bdd9 90%,
+          #58bdd9 100%
+        );
         --fg: #000000;
         --pad-t: 88;
         --pad-r: 72;
@@ -86,7 +101,10 @@
         position: relative;
         width: 1080px;
         height: 1440px;
-        background: var(--bg);
+        background-color: var(--bg);
+        background-image: var(--bg-image);
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
         color: var(--fg);
         overflow: hidden;
         box-shadow: none;
@@ -341,6 +359,11 @@
       <div class="group">
         <p class="group-title">color</p>
         <div class="row">
+          <label for="grad">gradient</label>
+          <input id="grad" type="checkbox" checked />
+          <span class="val" id="gradVal">on</span>
+        </div>
+        <div class="row">
           <label for="bg">bg</label>
           <input id="bg" type="color" value="#ffffff" />
           <span class="val" id="bgVal">#ffffff</span>
@@ -447,6 +470,8 @@ Grex Genesis.XT</textarea>
       (function () {
         var DEFAULT_TEXT =
           "Eclipse\nSuper 63\nH&S Ultra\nBadger 350\nSparmax GP-50\nGrex Genesis.XT";
+        var GRADIENT =
+          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 18%, #1f4166 26%, #144a76 34%, #085488 40%, #01609a 48%, #0178b0 58%, #0091c4 68%, #16a9d5 78%, #58bdd9 90%, #58bdd9 100%)";
         var LS_KEY = "animator:v2:width-fill:settings:v1";
         var STAGE_W = 1080;
         var WDTH_STEP = 1;
@@ -465,6 +490,7 @@ Grex Genesis.XT</textarea>
 
         var DEFAULTS = {
           bg: "#ffffff",
+          grad: "1",
           fg: "#000000",
           tx: DEFAULT_TEXT,
           fs: 168,
@@ -482,6 +508,7 @@ Grex Genesis.XT</textarea>
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
+        var CHECK_KEYS = { grad: 1 };
         var TEXT_KEYS = { tx: 1 };
         var MEASURE_KEYS = {
           tx: 1,
@@ -497,6 +524,7 @@ Grex Genesis.XT</textarea>
         var els = {};
         var vals = {
           bg: document.getElementById("bgVal"),
+          grad: document.getElementById("gradVal"),
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           lh: document.getElementById("lhVal"),
@@ -809,7 +837,14 @@ Grex Genesis.XT</textarea>
           t0 = performance.now();
         }
 
+        function controlValue(key) {
+          if (!els[key]) return DEFAULTS[key];
+          if (CHECK_KEYS[key]) return els[key].checked ? "1" : "0";
+          return els[key].value;
+        }
+
         function fmt(key, v) {
+          if (CHECK_KEYS[key]) return v === "1" || v === true || v === "on" ? "on" : "off";
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (TEXT_KEYS[key]) return String(v);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
@@ -823,6 +858,7 @@ Grex Genesis.XT</textarea>
 
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--bg-image", els.grad.checked ? GRADIENT : "none");
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--fs", String(els.fs.value));
           root.style.setProperty("--lh", String(els.lh.value));
@@ -836,7 +872,7 @@ Grex Genesis.XT</textarea>
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = fmt(key, els[key].value);
+            vals[key].textContent = fmt(key, controlValue(key));
           });
         }
 
@@ -844,7 +880,7 @@ Grex Genesis.XT</textarea>
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            data[key] = els[key].value;
+            data[key] = controlValue(key);
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -865,7 +901,11 @@ Grex Genesis.XT</textarea>
           }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
-            els[key].value = data[key];
+            if (CHECK_KEYS[key]) {
+              els[key].checked = data[key] === true || data[key] === 1 || data[key] === "1" || data[key] === "on";
+            } else {
+              els[key].value = data[key];
+            }
           });
         }
 
@@ -907,7 +947,8 @@ Grex Genesis.XT</textarea>
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            if (CHECK_KEYS[key]) els[key].checked = DEFAULTS[key] === "1";
+            else els[key].value = DEFAULTS[key];
           });
           try {
             localStorage.removeItem(LS_KEY);

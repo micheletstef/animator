@@ -30,8 +30,6 @@
   padding: 0;
   white-space: pre;
   line-height: 1;
-  font-weight: 400;
-  font-stretch: 100%;
   letter-spacing: calc(var(--track) * 1em);
   font-variation-settings:
     "wght" var(--wght),
@@ -45,6 +43,44 @@
 .ln.is-stroke {
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
+}
+
+.ln.is-spin .spin {
+  display: inline-block;
+  transform-origin: center center;
+}
+
+.sep {
+  display: inline-block;
+  text-align: center;
+  line-height: 1;
+  vertical-align: baseline;
+}
+
+.sep i {
+  font-style: normal;
+  line-height: 1;
+}
+
+.sep-ready {
+  width: 0.55em;
+}
+
+.sep-ready i {
+  font-size: 0.58em;
+  position: relative;
+  top: 0.05em;
+}
+
+.sep-brand {
+  width: 0.35em;
+}
+
+.sep-brand i {
+  font-size: 0.66em;
+  position: relative;
+  left: 0.06em;
+  top: 0.05em;
 }
 
 .panel .kf-tabs {

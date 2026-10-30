@@ -390,6 +390,18 @@
         box-shadow: 0 0 0 1px #fff;
       }
 
+      .dual-range input.is-start {
+        z-index: 2;
+      }
+
+      .dual-range input.is-end {
+        z-index: 3;
+      }
+
+      .dual-range input.is-active {
+        z-index: 4;
+      }
+
       .dual-range input.is-end[type="range"]::-webkit-slider-thumb,
       .dual-range input.is-end[type="range"]::-moz-range-thumb {
         background: #1a1a1a;
@@ -542,8 +554,8 @@
             <span class="dual-val" id="lh0Val">1.10</span>
             <span class="dual-val" id="lh1Val">1.10</span>
             <div class="dual-track"><div class="dual-fill" id="lhFill"></div></div>
-            <input id="lh0" class="is-start" type="range" min="0.7" max="1.1" step="0.01" value="1.1" aria-label="leading start" />
-            <input id="lh1" class="is-end" type="range" min="0.7" max="1.1" step="0.01" value="1.1" aria-label="leading end" />
+            <input id="lh0" class="is-start" type="range" min="0.5" max="1.1" step="0.01" value="1.1" aria-label="leading start" />
+            <input id="lh1" class="is-end" type="range" min="0.5" max="1.1" step="0.01" value="1.1" aria-label="leading end" />
           </div>
         </div>
         <div class="axis-row">
@@ -755,7 +767,7 @@
           maxVal: "kn1Val",
         };
 
-        var LH = { min: 0.7, max: 1.1, step: 0.01, default: 1.1 };
+        var LH = { min: 0.5, max: 1.1, step: 0.01, default: 1.1 };
 
         var LH_DUAL = {
           minKey: "lh0",
@@ -1005,8 +1017,46 @@
           syncOutlines(v, null, eased);
         }
 
+        var poseHold = null;
+
+        function poseForKey(key) {
+          if (
+            key === "kn1" ||
+            key === "lh1" ||
+            key === "fs1" ||
+            key === "wMax" ||
+            key === "cMax" ||
+            key === "dMax" ||
+            key === "sMax"
+          ) {
+            return 1;
+          }
+          if (
+            key === "kn0" ||
+            key === "lh0" ||
+            key === "fs0" ||
+            key === "wMin" ||
+            key === "cMin" ||
+            key === "dMin" ||
+            key === "sMin"
+          ) {
+            return 0;
+          }
+          return null;
+        }
+
+        function showPose(eased) {
+          var v = variationAt(eased);
+          applyFontSize(eased);
+          applyLeading(eased);
+          applyVariation(v);
+          updateVarReadout(v);
+          syncOutlines(v, null, eased);
+        }
+
         function frame(now) {
-          applyElapsed(now - t0);
+          if (poseHold != null) showPose(poseHold);
+          else applyElapsed(now - t0);
           if (playing) raf = requestAnimationFrame(frame);
         }
 
@@ -1243,6 +1293,28 @@
           els[k].addEventListener("input", function () {
             var v = COLOR_KEYS[k] || STRING_KEYS[k] ? els[k].value : parseFloat(els[k].value);
             setValue(k, v);
+          });
+          if (poseForKey(k) != null) {
+            els[k].addEventListener("pointerdown", function () {
+              poseHold = poseForKey(k);
+              els[k].classList.add("is-active");
+              showPose(poseHold);
+            });
+          }
+        });
+
+        window.addEventListener("pointerup", function () {
+          if (poseHold == null) return;
+          poseHold = null;
+          Object.keys(els).forEach(function (k) {
+            els[k].classList.remove("is-active");
+          });
+        });
+        window.addEventListener("pointercancel", function () {
+          if (poseHold == null) return;
+          poseHold = null;
+          Object.keys(els).forEach(function (k) {
+            els[k].classList.remove("is-active");
           });
         });
 

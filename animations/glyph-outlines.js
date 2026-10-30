@@ -1092,10 +1092,39 @@
     trimTo(svg, next);
   }
 
+  function textOutline(fontUrl, text, fontSize, variation, opts) {
+    opts = opts || {};
+    return loadFont(fontUrl).then(function (font) {
+      var tracking = opts.tracking || 0;
+      var x0 = opts.x || 0;
+      var y0 = opts.y || 0;
+      if (cachedHbState) setHbVariations(cachedHbState, font, variation);
+      var shaped = shapeLineWithEngine(
+        cachedHbState,
+        font,
+        text || "",
+        0,
+        0,
+        fontSize,
+        variation,
+        tracking
+      );
+      var commands = [];
+      shaped.runs.forEach(function (run) {
+        commands.push.apply(commands, run.commands);
+      });
+      var d = pathDFromCommands(commands, function (x, y) {
+        return { x: x + x0, y: y + y0 };
+      });
+      return { d: d, width: shaped.width };
+    });
+  }
+
   global.GlyphOutlines = {
     loadFont: loadFont,
     parseVariation: parseVariationSettings,
     parseVariationFromElement: parseVariationFromElement,
+    textOutline: textOutline,
 
     sync: function (svg, stageEl, targets, opts) {
       if (!svg || !stageEl || !targets || !targets.length) {
