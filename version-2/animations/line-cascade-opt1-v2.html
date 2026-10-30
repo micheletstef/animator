@@ -186,7 +186,7 @@
 
       .row {
         display: grid;
-        grid-template-columns: 64px 1fr 52px;
+        grid-template-columns: 76px 1fr 48px;
         align-items: center;
         gap: 8px;
         margin-bottom: 6px;
@@ -429,8 +429,8 @@ CHROME</textarea>
         </div>
         <div class="row">
           <label for="fs">size</label>
-          <input id="fs" type="range" min="80" max="360" step="1" value="196" />
-          <span class="val" id="fsVal">196px</span>
+          <input id="fs" type="range" min="80" max="360" step="1" value="256" />
+          <span class="val" id="fsVal">256px</span>
         </div>
         <div class="row">
           <label for="off">offset</label>
@@ -438,25 +438,30 @@ CHROME</textarea>
           <span class="val" id="offVal">14</span>
         </div>
         <div class="row">
-          <label for="lh">leading</label>
-          <input id="lh" type="range" min="0.7" max="1.4" step="0.01" value="0.86" />
-          <span class="val" id="lhVal">0.86</span>
+          <label for="rnd">rounding</label>
+          <input id="rnd" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="rndVal">14</span>
+        </div>
+        <div class="row">
+          <label for="ost">stroke</label>
+          <input id="ost" type="range" min="0" max="20" step="0.1" value="6.19" />
+          <span class="val" id="ostVal">6.19</span>
         </div>
         <div class="row">
           <label for="oy">y</label>
-          <input id="oy" type="range" min="-360" max="360" step="1" value="0" />
-          <span class="val" id="oyVal">0px</span>
+          <input id="oy" type="range" min="-360" max="360" step="1" value="-14" />
+          <span class="val" id="oyVal">-14px</span>
         </div>
       </div>
 
       <div class="group">
         <p class="group-title">state 1 · all lines</p>
-        <p class="now" id="nowReadout">line 1 · wght 1000 · wdth 87 · CNTR 0 · slnt 0</p>
+        <p class="now" id="nowReadout">line 1 · wght 915 · wdth 75 · CNTR 0 · slnt 0</p>
         <p class="kf-seq" id="kfSeq">1 → 2 line by line · click a pose to hold</p>
         <div class="kf-tabs" role="tablist" aria-label="poses">
           <button type="button" class="kf-tab is-on" id="kfTab0" data-kf="0" role="tab" aria-selected="true">
             <span class="kf-tab-n">1</span>
-            <span class="kf-tab-v" id="kfTab0Val">wght 1000<br />wdth 87<br />CNTR 0<br />slnt 0</span>
+            <span class="kf-tab-v" id="kfTab0Val">wght 915<br />wdth 75<br />CNTR 0<br />slnt 0</span>
           </button>
           <button type="button" class="kf-tab" id="kfTab1" data-kf="1" role="tab" aria-selected="false">
             <span class="kf-tab-n">2</span>
@@ -464,14 +469,19 @@ CHROME</textarea>
           </button>
         </div>
         <div class="row">
+          <label for="lh0">leading</label>
+          <input id="lh0" type="range" min="0.5" max="1.6" step="0.01" value="0.85" />
+          <span class="val" id="lh0Val">0.85</span>
+        </div>
+        <div class="row">
           <label for="wght0">wght</label>
-          <input id="wght0" type="range" min="200" max="1000" step="1" value="1000" />
-          <span class="val" id="wght0Val">1000</span>
+          <input id="wght0" type="range" min="200" max="1000" step="1" value="915" />
+          <span class="val" id="wght0Val">915</span>
         </div>
         <div class="row">
           <label for="wdth0">wdth</label>
-          <input id="wdth0" type="range" min="65" max="130" step="1" value="87" />
-          <span class="val" id="wdth0Val">87</span>
+          <input id="wdth0" type="range" min="65" max="130" step="1" value="75" />
+          <span class="val" id="wdth0Val">75</span>
         </div>
         <div class="row">
           <label for="cntr0">CNTR</label>
@@ -485,8 +495,8 @@ CHROME</textarea>
         </div>
         <div class="row">
           <label for="tr0">track</label>
-          <input id="tr0" type="range" min="-0.12" max="1" step="0.005" value="-0.03" />
-          <span class="val" id="tr0Val">-0.03</span>
+          <input id="tr0" type="range" min="-0.12" max="1" step="0.005" value="-0.02" />
+          <span class="val" id="tr0Val">-0.02</span>
         </div>
       </div>
 
@@ -495,18 +505,23 @@ CHROME</textarea>
         <div class="line-tabs" id="lineTabs" role="tablist" aria-label="lines"></div>
         <div class="row">
           <label for="fs1">size</label>
-          <input id="fs1" type="range" min="80" max="360" step="1" value="196" />
-          <span class="val" id="fs1Val">196px</span>
+          <input id="fs1" type="range" min="80" max="360" step="1" value="259" />
+          <span class="val" id="fs1Val">259px</span>
+        </div>
+        <div class="row">
+          <label for="lh1">leading</label>
+          <input id="lh1" type="range" min="0.5" max="1.6" step="0.01" value="0.85" />
+          <span class="val" id="lh1Val">0.85</span>
         </div>
         <div class="row">
           <label for="wght1">wght</label>
-          <input id="wght1" type="range" min="200" max="1000" step="1" value="900" />
-          <span class="val" id="wght1Val">900</span>
+          <input id="wght1" type="range" min="200" max="1000" step="1" value="877" />
+          <span class="val" id="wght1Val">877</span>
         </div>
         <div class="row">
           <label for="wdth1">wdth</label>
-          <input id="wdth1" type="range" min="65" max="130" step="1" value="73" />
-          <span class="val" id="wdth1Val">73</span>
+          <input id="wdth1" type="range" min="65" max="130" step="1" value="65" />
+          <span class="val" id="wdth1Val">65</span>
         </div>
         <div class="row">
           <label for="cntr1">CNTR</label>
@@ -551,17 +566,17 @@ CHROME</textarea>
     <script>
       (function () {
         var DEFAULT_TEXT = "FEATHER\nOPAQUE\n2 CFM\nDIN/RAL\n60 PSI\nCHROME";
-        var LS_KEY = "animator:v2:line-cascade-opt1-v2:settings:v2";
-        var POSE_KEYS = ["size", "wght", "wdth", "cntr", "slnt", "track"];
+        var LS_KEY = "animator:v2:line-cascade-opt1-v2:settings:v3";
+        var POSE_KEYS = ["size", "lh", "wght", "wdth", "cntr", "slnt", "track"];
         var LINE_PRESETS = [
-          { wght: 900, wdth: 73, cntr: 100, slnt: 0, track: -0.015 },
-          { wght: 400, wdth: 70, cntr: 0, slnt: 0, track: -0.04 },
-          { wght: 500, wdth: 87, cntr: 0, slnt: -12, track: 0 },
-          { wght: 200, wdth: 67, cntr: 0, slnt: 0, track: -0.02 },
-          { wght: 1000, wdth: 100, cntr: 50, slnt: 0, track: -0.04 },
-          { wght: 860, wdth: 88, cntr: 40, slnt: 0, track: -0.02 },
+          { size: 259, lh: 0.85, wght: 877, wdth: 65, cntr: 100, slnt: 0, track: -0.015 },
+          { size: 278, lh: 0.85, wght: 929, wdth: 74, cntr: 71, slnt: 0, track: -0.02 },
+          { size: 263, lh: 0.85, wght: 200, wdth: 115, cntr: 70, slnt: -12, track: -0.065 },
+          { size: 318, lh: 0.85, wght: 375, wdth: 65, cntr: 0, slnt: 0, track: -0.04 },
+          { size: 229, lh: 0.85, wght: 1000, wdth: 130, cntr: 65, slnt: 0, track: 0 },
+          { size: 196, lh: 0.85, wght: 514, wdth: 99, cntr: 58, slnt: 0, track: 0.035 },
         ];
-        var FALLBACK_POSE = { size: 196, wght: 400, wdth: 80, cntr: 0, slnt: 0, track: -0.03 };
+        var FALLBACK_POSE = { size: 196, lh: 0.85, wght: 400, wdth: 80, cntr: 0, slnt: 0, track: -0.03 };
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var lineTabsEl = document.getElementById("lineTabs");
@@ -586,15 +601,17 @@ CHROME</textarea>
           fg: "#000000",
           tx: DEFAULT_TEXT,
           align: "center",
-          fs: 196,
+          fs: 256,
           off: 14,
-          lh: 0.86,
-          oy: 0,
-          wght0: 1000,
-          wdth0: 87,
+          rnd: 14,
+          ost: 6.19,
+          lh0: 0.85,
+          oy: -14,
+          wght0: 915,
+          wdth0: 75,
           cntr0: 0,
           slnt0: 0,
-          tr0: -0.03,
+          tr0: -0.02,
           move: 480,
           lag: 480,
           hold: 800,
@@ -611,8 +628,11 @@ CHROME</textarea>
           fg: document.getElementById("fgVal"),
           fs: document.getElementById("fsVal"),
           off: document.getElementById("offVal"),
+          rnd: document.getElementById("rndVal"),
+          ost: document.getElementById("ostVal"),
           fs1: document.getElementById("fs1Val"),
-          lh: document.getElementById("lhVal"),
+          lh0: document.getElementById("lh0Val"),
+          lh1: document.getElementById("lh1Val"),
           oy: document.getElementById("oyVal"),
           wght0: document.getElementById("wght0Val"),
           wdth0: document.getElementById("wdth0Val"),
@@ -633,6 +653,7 @@ CHROME</textarea>
           els[key] = document.getElementById(key);
         });
         els.fs1 = document.getElementById("fs1");
+        els.lh1 = document.getElementById("lh1");
         els.wght1 = document.getElementById("wght1");
         els.wdth1 = document.getElementById("wdth1");
         els.cntr1 = document.getElementById("cntr1");
@@ -730,18 +751,20 @@ CHROME</textarea>
 
         function startPose() {
           return {
-            size: num("fs", 196),
-            wght: num("wght0", 1000),
-            wdth: num("wdth0", 87),
+            size: num("fs", 256),
+            lh: num("lh0", 0.85),
+            wght: num("wght0", 915),
+            wdth: num("wdth0", 75),
             cntr: num("cntr0", 0),
             slnt: num("slnt0", 0),
-            track: num("tr0", -0.03),
+            track: num("tr0", -0.02),
           };
         }
 
         function mixPoses(a, b, t) {
           return {
             size: lerp(a.size, b.size, t),
+            lh: lerp(a.lh, b.lh, t),
             wght: lerp(a.wght, b.wght, t),
             wdth: lerp(a.wdth, b.wdth, t),
             cntr: lerp(a.cntr, b.cntr, t),
@@ -782,7 +805,7 @@ CHROME</textarea>
           root.style.setProperty("--bg-image", els.grad && els.grad.checked ? BG_GRADIENT : "none");
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--fs", String(num("fs", 196)));
-          root.style.setProperty("--lh", String(num("lh", 0.86)));
+          root.style.setProperty("--lh", String(num("lh0", 0.85)));
           root.style.setProperty("--oy", String(num("oy", 0)));
           applyAlign();
         }
@@ -799,12 +822,12 @@ CHROME</textarea>
         function formatVal(key, v) {
           if (CHECK_KEYS[key]) return els[key] && els[key].checked ? "on" : "off";
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
-          if (key === "lh" || key === "tr0" || key === "tr1") {
+          if (key === "lh0" || key === "lh1" || key === "tr0" || key === "tr1") {
             return Number(v).toFixed(2);
           }
-          if (key === "off") {
-            var n = Number(v);
-            return (Math.round(n * 2) / 2).toString();
+          if (key === "off" || key === "rnd" || key === "ost") {
+            var n = Math.round(Number(v) * 100) / 100;
+            return String(n);
           }
           if (key === "fs" || key === "fs1" || key === "oy") return Math.round(Number(v)) + "px";
           if (key === "move" || key === "lag" || key === "hold") {
@@ -849,6 +872,7 @@ CHROME</textarea>
         function writePoseToSliders(pose) {
           syncingPose = true;
           if (els.fs1) els.fs1.value = pose.size;
+          if (els.lh1) els.lh1.value = pose.lh;
           if (els.wght1) els.wght1.value = pose.wght;
           if (els.wdth1) els.wdth1.value = pose.wdth;
           if (els.cntr1) els.cntr1.value = pose.cntr;
@@ -861,6 +885,7 @@ CHROME</textarea>
         function readPoseFromSliders() {
           return {
             size: num("fs1", defaultSize()),
+            lh: num("lh1", 0.85),
             wght: num("wght1", 400),
             wdth: num("wdth1", 80),
             cntr: num("cntr1", 0),
@@ -957,7 +982,281 @@ CHROME</textarea>
           [0.44, "#2D3345"],
           [1, "#212534"],
         ];
-        var STROKE_WEIGHT = 6.19;
+        var FACE_GRADIENT_END = 0.74;
+
+        function flattenPath(d, tol) {
+          var tok = String(d || "").match(/[MLQCZ]|[-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]?\d+)?/g);
+          if (!tok) return [];
+          var i = 0;
+          var subs = [];
+          var sub = [];
+          var cx = 0;
+          var cy = 0;
+          function push(x, y) {
+            var last = sub[sub.length - 1];
+            if (!last || Math.hypot(last.x - x, last.y - y) > 0.02) sub.push({ x: x, y: y });
+            cx = x;
+            cy = y;
+          }
+          function mid(a, b) {
+            return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+          }
+          function flatCubic(a, b, c, e, depth) {
+            var dx = e.x - a.x;
+            var dy = e.y - a.y;
+            var len = Math.hypot(dx, dy);
+            var dev =
+              len < 1e-6
+                ? Math.max(Math.hypot(b.x - a.x, b.y - a.y), Math.hypot(c.x - a.x, c.y - a.y))
+                : Math.max(
+                    Math.abs((b.x - a.x) * dy - (b.y - a.y) * dx),
+                    Math.abs((c.x - a.x) * dy - (c.y - a.y) * dx)
+                  ) / len;
+            if (dev <= tol || depth > 10) {
+              push(e.x, e.y);
+              return;
+            }
+            var ab = mid(a, b);
+            var bc = mid(b, c);
+            var ce = mid(c, e);
+            var abc = mid(ab, bc);
+            var bce = mid(bc, ce);
+            var abcd = mid(abc, bce);
+            flatCubic(a, ab, abc, abcd, depth + 1);
+            flatCubic(abcd, bce, ce, e, depth + 1);
+          }
+          function closeSub() {
+            if (sub.length >= 3) {
+              var a = sub[0];
+              var b = sub[sub.length - 1];
+              if (Math.hypot(a.x - b.x, a.y - b.y) < 0.05) sub.pop();
+              if (sub.length >= 3) subs.push(sub);
+            }
+            sub = [];
+          }
+          while (i < tok.length) {
+            var op = tok[i++];
+            if (op === "M") {
+              if (sub.length) closeSub();
+              cx = parseFloat(tok[i++]);
+              cy = parseFloat(tok[i++]);
+              sub = [{ x: cx, y: cy }];
+            } else if (op === "L") {
+              push(parseFloat(tok[i++]), parseFloat(tok[i++]));
+            } else if (op === "Q") {
+              var x1 = parseFloat(tok[i++]);
+              var y1 = parseFloat(tok[i++]);
+              var x = parseFloat(tok[i++]);
+              var y = parseFloat(tok[i++]);
+              var p0 = { x: cx, y: cy };
+              var p2 = { x: x, y: y };
+              flatCubic(
+                p0,
+                { x: p0.x + (2 / 3) * (x1 - p0.x), y: p0.y + (2 / 3) * (y1 - p0.y) },
+                { x: p2.x + (2 / 3) * (x1 - p2.x), y: p2.y + (2 / 3) * (y1 - p2.y) },
+                p2,
+                0
+              );
+            } else if (op === "C") {
+              var c1x = parseFloat(tok[i++]);
+              var c1y = parseFloat(tok[i++]);
+              var c2x = parseFloat(tok[i++]);
+              var c2y = parseFloat(tok[i++]);
+              var ex = parseFloat(tok[i++]);
+              var ey = parseFloat(tok[i++]);
+              flatCubic({ x: cx, y: cy }, { x: c1x, y: c1y }, { x: c2x, y: c2y }, { x: ex, y: ey }, 0);
+            } else if (op === "Z") {
+              closeSub();
+            }
+          }
+          if (sub.length) closeSub();
+          return subs;
+        }
+
+        function ringsToD(rings) {
+          var parts = [];
+          rings.forEach(function (ring) {
+            if (!ring || ring.length < 3) return;
+            parts.push("M" + ring[0].x.toFixed(2) + " " + ring[0].y.toFixed(2));
+            for (var i = 1; i < ring.length; i++) {
+              parts.push("L" + ring[i].x.toFixed(2) + " " + ring[i].y.toFixed(2));
+            }
+            parts.push("Z");
+          });
+          return parts.join("");
+        }
+
+        function offsetRing(pts, dist, radius) {
+          var n = pts.length;
+          if (n < 3) return [];
+          if (dist <= 0.05) {
+            return pts.map(function (p) {
+              return { x: p.x, y: p.y };
+            });
+          }
+          var dirs = [];
+          var nors = [];
+          var i;
+          for (i = 0; i < n; i++) {
+            var a = pts[i];
+            var b = pts[(i + 1) % n];
+            var dx = b.x - a.x;
+            var dy = b.y - a.y;
+            var len = Math.hypot(dx, dy) || 1;
+            dirs.push({ x: dx / len, y: dy / len });
+            nors.push({ x: dy / len, y: -dx / len });
+          }
+          function intersect(p, d, q, e) {
+            var cross = d.x * e.y - d.y * e.x;
+            if (Math.abs(cross) < 1e-9) return null;
+            var ddx = q.x - p.x;
+            var ddy = q.y - p.y;
+            var t = (ddx * e.y - ddy * e.x) / cross;
+            return { x: p.x + d.x * t, y: p.y + d.y * t };
+          }
+          function onSeg(T, A, B) {
+            var sx = B.x - A.x;
+            var sy = B.y - A.y;
+            var L2 = sx * sx + sy * sy;
+            if (L2 < 1e-6) return false;
+            var u = ((T.x - A.x) * sx + (T.y - A.y) * sy) / L2;
+            return u >= -0.04 && u <= 1.04;
+          }
+          function normAng(ang) {
+            while (ang <= -Math.PI) ang += Math.PI * 2;
+            while (ang > Math.PI) ang -= Math.PI * 2;
+            return ang;
+          }
+          var out = [];
+          for (i = 0; i < n; i++) {
+            var ip = (i + n - 1) % n;
+            var inn = (i + 1) % n;
+            var n0 = nors[ip];
+            var n1 = nors[i];
+            var d0 = dirs[ip];
+            var d1 = dirs[i];
+            var v = pts[i];
+            var vp = pts[ip];
+            var vn = pts[inn];
+            var edge0 = { x: vp.x + n0.x * dist, y: vp.y + n0.y * dist };
+            var p0 = { x: v.x + n0.x * dist, y: v.y + n0.y * dist };
+            var p1 = { x: v.x + n1.x * dist, y: v.y + n1.y * dist };
+            var edge1 = { x: vn.x + n1.x * dist, y: vn.y + n1.y * dist };
+            var M = intersect(p0, d0, p1, d1) || p1;
+            var cross = d0.x * d1.y - d0.y * d1.x;
+            var dot = d0.x * d1.x + d0.y * d1.y;
+            var turn = Math.atan2(cross, dot);
+            var fitted = false;
+            if (turn > 0.32 && radius > 0.3) {
+              var det = n0.x * n1.y - n0.y * n1.x;
+              if (Math.abs(det) > 1e-8) {
+                var target = dist - radius;
+                var C = {
+                  x: v.x + (target * (n1.y - n0.y)) / det,
+                  y: v.y + (target * (n0.x - n1.x)) / det,
+                };
+                var T0 = { x: C.x + n0.x * radius, y: C.y + n0.y * radius };
+                var T1 = { x: C.x + n1.x * radius, y: C.y + n1.y * radius };
+                if (onSeg(T0, edge0, p0) && onSeg(T1, p1, edge1)) {
+                  var a0 = Math.atan2(T0.y - C.y, T0.x - C.x);
+                  var a1 = Math.atan2(T1.y - C.y, T1.x - C.x);
+                  var am = Math.atan2(M.y - C.y, M.x - C.x);
+                  var delta = normAng(a1 - a0);
+                  var alt = delta > 0 ? delta - Math.PI * 2 : delta + Math.PI * 2;
+                  function contains(span) {
+                    var rel = normAng(am - a0);
+                    if (span >= 0) return rel >= -0.08 && rel <= span + 0.08;
+                    return rel <= 0.08 && rel >= span - 0.08;
+                  }
+                  if (!contains(delta) && contains(alt)) delta = alt;
+                  if (Math.abs(delta) <= Math.PI * 0.96) {
+                    var steps = Math.max(2, Math.ceil(Math.abs(delta) / (Math.PI / 10)));
+                    var s;
+                    for (s = 0; s <= steps; s++) {
+                      var ang = a0 + delta * (s / steps);
+                      out.push({ x: C.x + Math.cos(ang) * radius, y: C.y + Math.sin(ang) * radius });
+                    }
+                    fitted = true;
+                  }
+                }
+              }
+            }
+            if (!fitted) {
+              var md = Math.hypot(M.x - v.x, M.y - v.y);
+              if (md > dist * 4) {
+                out.push(p0);
+                out.push(p1);
+              } else {
+                out.push(M);
+              }
+            }
+          }
+          var clean = [];
+          for (i = 0; i < out.length; i++) {
+            var prev = clean[clean.length - 1];
+            if (!prev || Math.hypot(prev.x - out[i].x, prev.y - out[i].y) > 0.04) clean.push(out[i]);
+          }
+          if (clean.length > 2 && Math.hypot(clean[0].x - clean[clean.length - 1].x, clean[0].y - clean[clean.length - 1].y) < 0.05) {
+            clean.pop();
+          }
+          return clean.length >= 3 ? clean : [];
+        }
+
+        function expandRings(rings, dist, radius) {
+          var out = [];
+          rings.forEach(function (ring) {
+            var next = offsetRing(ring, dist, radius);
+            if (next.length >= 3) out.push(next);
+          });
+          return out;
+        }
+
+        function cornerDotsD(rings, radius) {
+          if (radius < 0.4) return "";
+          var parts = [];
+          rings.forEach(function (ring) {
+            var n = ring.length;
+            var i;
+            for (i = 0; i < n; i++) {
+              var b = ring[i];
+              var a = null;
+              var c = null;
+              var k;
+              var j = i;
+              for (k = 0; k < n; k++) {
+                j = (j - 1 + n) % n;
+                if (Math.hypot(ring[j].x - b.x, ring[j].y - b.y) >= 1.8) {
+                  a = ring[j];
+                  break;
+                }
+              }
+              j = i;
+              for (k = 0; k < n; k++) {
+                j = (j + 1) % n;
+                if (Math.hypot(ring[j].x - b.x, ring[j].y - b.y) >= 1.8) {
+                  c = ring[j];
+                  break;
+                }
+              }
+              if (!a || !c) continue;
+              var d0x = b.x - a.x;
+              var d0y = b.y - a.y;
+              var d1x = c.x - b.x;
+              var d1y = c.y - b.y;
+              var ang = Math.abs(Math.atan2(d0x * d1y - d0y * d1x, d0x * d1x + d0y * d1y));
+              if (ang < 0.62) continue;
+              var r = radius.toFixed(2);
+              var x = b.x.toFixed(2);
+              var y = b.y.toFixed(2);
+              parts.push(
+                "M" + x + " " + (b.y - radius).toFixed(2) +
+                  "A" + r + " " + r + " 0 1 1 " + x + " " + (b.y + radius).toFixed(2) +
+                  "A" + r + " " + r + " 0 1 1 " + x + " " + (b.y - radius).toFixed(2) + "Z"
+              );
+            }
+          });
+          return parts.join("");
+        }
 
         function ensureChrome(el) {
           var svg = el.querySelector("svg.chrome");
@@ -977,13 +1276,16 @@ CHROME</textarea>
               var node = document.createElementNS(SVGNS, "stop");
               node.setAttribute("offset", stop[0] * 100 + "%");
               node.setAttribute("stop-color", stop[1]);
+              if (stop.length > 2) node.setAttribute("stop-opacity", String(stop[2]));
               grad.appendChild(node);
             });
             return grad;
           }
           defs.appendChild(makeGrad("chromeOffsetFill" + index, OFFSET_FILL_STOPS));
           defs.appendChild(makeGrad("chromeOffsetStroke" + index, OFFSET_STROKE_STOPS));
-          defs.appendChild(makeGrad("chromeGrad" + index, CHROME_FILL_STOPS));
+          var faceGrad = makeGrad("chromeGrad" + index, CHROME_FILL_STOPS);
+          faceGrad.setAttribute("class", "face-grad");
+          defs.appendChild(faceGrad);
           defs.appendChild(makeGrad("chromeStroke" + index, CHROME_STROKE_STOPS));
           function userMask(id) {
             var node = document.createElementNS(SVGNS, "mask");
@@ -1009,6 +1311,14 @@ CHROME</textarea>
             node.setAttribute("class", node.getAttribute("class") + " " + widthClass);
             return node;
           }
+          function plainPath(className, fill) {
+            var node = document.createElementNS(SVGNS, "path");
+            node.setAttribute("class", className);
+            node.setAttribute("fill", fill || "#ffffff");
+            node.setAttribute("fill-rule", "nonzero");
+            node.setAttribute("stroke", "none");
+            return node;
+          }
           function filterNode(name, attrs) {
             var node = document.createElementNS(SVGNS, name);
             Object.keys(attrs).forEach(function (key) {
@@ -1017,14 +1327,11 @@ CHROME</textarea>
             return node;
           }
           var fillMask = userMask("chromeOffsetFillMask" + index);
-          fillMask.appendChild(glyphPath("offset-fill-shape", "#ffffff"));
-          fillMask.appendChild(offsetStroke("offset-fill-rim", "#ffffff", "width-offset"));
+          fillMask.appendChild(plainPath("expand-fill", "#ffffff"));
           defs.appendChild(fillMask);
           var strokeMask = userMask("chromeOffsetStrokeMask" + index);
-          strokeMask.appendChild(glyphPath("offset-outer-fill", "#ffffff"));
-          strokeMask.appendChild(offsetStroke("offset-outer", "#ffffff", "width-outer"));
-          strokeMask.appendChild(glyphPath("offset-inner-fill", "#000000"));
-          strokeMask.appendChild(offsetStroke("offset-inner", "#000000", "width-inner"));
+          strokeMask.appendChild(plainPath("expand-outer", "#ffffff"));
+          strokeMask.appendChild(plainPath("expand-inner", "#000000"));
           defs.appendChild(strokeMask);
           var mask = userMask("chromeStrokeMask" + index);
           mask.appendChild(glyphPath("edge-fill", "#ffffff"));
@@ -1106,6 +1413,8 @@ CHROME</textarea>
             pose.track.toFixed(4),
             align,
             num("off", 14).toFixed(2),
+            num("rnd", 14).toFixed(2),
+            num("ost", 6.19).toFixed(2),
           ].join("|");
           if (el._chromeKey === key) return;
           el._chromeKey = key;
@@ -1122,15 +1431,21 @@ CHROME</textarea>
             svg.setAttribute("width", String(width));
             svg.setAttribute("height", String(height));
             svg.setAttribute("viewBox", "0 0 " + width + " " + height);
-            var y1 = String(baseline - cap);
-            var y2 = String(baseline + fontSize * 0.02);
+            var top = baseline - cap;
+            var bot = baseline + fontSize * 0.02;
             svg.querySelectorAll("linearGradient").forEach(function (grad) {
-              grad.setAttribute("y1", y1);
-              grad.setAttribute("y2", y2);
+              grad.setAttribute("y1", String(top));
+              grad.setAttribute("y2", String(bot));
             });
-            var edgeW = figmaPx(STROKE_WEIGHT, fontSize);
+            var faceGradNode = svg.querySelector(".face-grad");
+            if (faceGradNode) {
+              faceGradNode.setAttribute("y2", String(top + (bot - top) * FACE_GRADIENT_END));
+            }
+            var edgeW = figmaPx(num("ost", 6.19), fontSize);
+            var innerEdge = figmaPx(6.19, fontSize);
             var offsetD = figmaPx(num("off", 14), fontSize);
-            var pad = Math.max(24, figmaPx(21.66, fontSize) * 3, (offsetD + edgeW) * 3);
+            var roundR = figmaPx(num("rnd", 14), fontSize);
+            var pad = Math.max(24, figmaPx(21.66, fontSize) * 3, (offsetD + edgeW + roundR) * 2);
             svg.querySelectorAll(".chrome-region").forEach(function (node) {
               node.setAttribute("x", String(-pad));
               node.setAttribute("y", String(-pad));
@@ -1142,10 +1457,7 @@ CHROME</textarea>
                 node.setAttribute("stroke-width", String(Math.max(0.4, width)));
               });
             }
-            setWidth(".width-offset", offsetD * 2);
-            setWidth(".width-outer", (offsetD + edgeW / 2) * 2);
-            setWidth(".width-inner", Math.max(0.4, offsetD - edgeW / 2) * 2);
-            setWidth(".width-edge", edgeW);
+            setWidth(".width-edge", innerEdge);
             svg.querySelector(".drop-blur").setAttribute("stdDeviation", String(figmaPx(21.66, fontSize) / 2));
             svg.querySelector(".inner-offset").setAttribute("dx", String(figmaPx(1.55, fontSize)));
             svg.querySelector(".inner-offset").setAttribute("dy", String(figmaPx(1.55, fontSize)));
@@ -1155,6 +1467,18 @@ CHROME</textarea>
               node.setAttribute("d", d);
               node.setAttribute("transform", shift);
             });
+            var rings = flattenPath(d, 0.45);
+            function putRings(selector, dist, rad) {
+              var pathD = dist <= 0.2 ? d : ringsToD(expandRings(rings, dist, Math.max(0, rad)));
+              svg.querySelectorAll(selector).forEach(function (node) {
+                if (node.classList.contains("glyph")) return;
+                node.setAttribute("d", pathD || "");
+                node.setAttribute("transform", shift);
+              });
+            }
+            putRings(".expand-fill", offsetD, roundR);
+            putRings(".expand-outer", offsetD + edgeW / 2, roundR + edgeW / 2);
+            putRings(".expand-inner", Math.max(0, offsetD - edgeW / 2), Math.max(0, roundR - edgeW / 2));
             svg.querySelectorAll(".plate").forEach(function (node) {
               node.setAttribute("x", String(-pad));
               node.setAttribute("y", String(-pad));
@@ -1166,8 +1490,9 @@ CHROME</textarea>
 
         function applyLine(el, pose) {
           var fs = isFinite(pose.size) ? pose.size : defaultSize();
-          var lh = num("lh", 0.86);
+          var lh = isFinite(pose.lh) ? pose.lh : num("lh0", 0.85);
           el.style.fontSize = fs + "px";
+          el.style.lineHeight = String(lh);
           el.style.height = fs * lh + "px";
           el.style.fontVariationSettings = vfString(pose);
           el.style.fontWeight = String(Math.round(pose.wght));
@@ -1398,8 +1723,13 @@ CHROME</textarea>
             }
             els[key].value = data[key];
           });
+          if (data.lh0 == null && data.lh != null && els.lh0) els.lh0.value = data.lh;
           if (Array.isArray(data.poses)) {
-            linePoses = data.poses.map(clonePose);
+            linePoses = data.poses.map(function (pose) {
+              var next = clonePose(pose);
+              if ((pose == null || pose.lh == null) && data.lh != null) next.lh = Number(data.lh);
+              return next;
+            });
           }
           if (data.activeLine != null) {
             activeLine = Math.max(0, Math.round(Number(data.activeLine) || 0));
@@ -1431,7 +1761,7 @@ CHROME</textarea>
 
         function onSettingInput() {
           if (syncingPose) return;
-          if (this && (this.id === "fs1" || this.id === "wght1" || this.id === "wdth1" || this.id === "cntr1" || this.id === "slnt1" || this.id === "tr1")) {
+          if (this && (this.id === "fs1" || this.id === "lh1" || this.id === "wght1" || this.id === "wdth1" || this.id === "cntr1" || this.id === "slnt1" || this.id === "tr1")) {
             if (linePoses[activeLine]) linePoses[activeLine] = readPoseFromSliders();
           }
           applyVars();
@@ -1456,6 +1786,10 @@ CHROME</textarea>
         });
 
         loadSaved();
+        var query = new URLSearchParams(location.search);
+        ["off", "rnd", "ost"].forEach(function (key) {
+          if (query.has(key) && els[key]) els[key].value = query.get(key);
+        });
         applyVars();
         paintVals();
         buildLockup();
