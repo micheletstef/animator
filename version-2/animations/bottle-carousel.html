@@ -167,7 +167,7 @@
 
       .row {
         display: grid;
-        grid-template-columns: 64px 1fr 52px;
+        grid-template-columns: 72px 1fr 52px;
         align-items: center;
         gap: 8px;
         margin-bottom: 6px;
@@ -238,6 +238,64 @@
           <input id="bg" type="color" value="#ffffff" />
           <span class="val" id="bgVal">#ffffff</span>
         </div>
+        <div class="row">
+          <label for="ink">ink</label>
+          <input id="ink" type="color" value="#ffffff" />
+          <span class="val" id="inkVal">#ffffff</span>
+        </div>
+        <div class="row">
+          <label for="stroke">stroke</label>
+          <input id="stroke" type="range" min="0" max="40" step="1" value="0" />
+          <span class="val" id="strokeVal">0px</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">large</p>
+        <div class="row">
+          <label for="sizeLarge">size</label>
+          <input id="sizeLarge" type="range" min="40" max="160" step="1" value="100" />
+          <span class="val" id="sizeLargeVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="briLarge">bright</label>
+          <input id="briLarge" type="range" min="0" max="200" step="1" value="100" />
+          <span class="val" id="briLargeVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="conLarge">contrast</label>
+          <input id="conLarge" type="range" min="0" max="200" step="1" value="100" />
+          <span class="val" id="conLargeVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="satLarge">sat</label>
+          <input id="satLarge" type="range" min="0" max="200" step="1" value="100" />
+          <span class="val" id="satLargeVal">100%</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">small</p>
+        <div class="row">
+          <label for="sizeSmall">size</label>
+          <input id="sizeSmall" type="range" min="40" max="160" step="1" value="100" />
+          <span class="val" id="sizeSmallVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="briSmall">bright</label>
+          <input id="briSmall" type="range" min="0" max="200" step="1" value="100" />
+          <span class="val" id="briSmallVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="conSmall">contrast</label>
+          <input id="conSmall" type="range" min="0" max="200" step="1" value="100" />
+          <span class="val" id="conSmallVal">100%</span>
+        </div>
+        <div class="row">
+          <label for="satSmall">sat</label>
+          <input id="satSmall" type="range" min="0" max="200" step="1" value="100" />
+          <span class="val" id="satSmallVal">100%</span>
+        </div>
       </div>
 
       <div class="group">
@@ -252,11 +310,6 @@
           <label for="gap">gap</label>
           <input id="gap" type="range" min="0" max="800" step="2" value="240" />
           <span class="val" id="gapVal">240px</span>
-        </div>
-        <div class="row">
-          <label for="scale">scale</label>
-          <input id="scale" type="range" min="50" max="130" step="1" value="100" />
-          <span class="val" id="scaleVal">100%</span>
         </div>
         <div class="row">
           <label for="floor">floor</label>
@@ -296,13 +349,22 @@
         var DEFAULTS = {
           bg: "#ffffff",
           grad: "1",
+          ink: "#ffffff",
+          stroke: 0,
           loop: 16,
           gap: 240,
-          scale: 100,
+          sizeLarge: 100,
+          briLarge: 100,
+          conLarge: 100,
+          satLarge: 100,
+          sizeSmall: 100,
+          briSmall: 100,
+          conSmall: 100,
+          satSmall: 100,
           floor: 140,
           phase: 0,
         };
-        var COLOR_KEYS = { bg: 1 };
+        var COLOR_KEYS = { bg: 1, ink: 1 };
         var CHECK_KEYS = { grad: 1 };
 
         var els = {};
@@ -317,6 +379,8 @@
           small: document.getElementById("vid-small"),
         };
         var canvases = [];
+        var plates = {};
+        var silhouettes = {};
         var cycleW = 1;
         var travel = 0;
         var playing = true;
@@ -328,12 +392,44 @@
           return isFinite(n) ? n : fallback;
         }
 
-        function scaleOf() {
-          return Math.max(0.2, num("scale", 100) / 100);
+        function scaleOf(bottle) {
+          var key = bottle && bottle.id === "small" ? "sizeSmall" : "sizeLarge";
+          return Math.max(0.2, num(key, 100) / 100);
         }
 
         function gapPx() {
           return Math.max(0, num("gap", 240));
+        }
+
+        function strokePx() {
+          return Math.max(0, num("stroke", 0));
+        }
+
+        function strokeColor() {
+          return els.ink && els.ink.value ? els.ink.value : "#ffffff";
+        }
+
+        function gradeSuffix(id) {
+          return id === "small" ? "Small" : "Large";
+        }
+
+        function gradeFilter(id) {
+          var suffix = gradeSuffix(id);
+          var bright = num("bri" + suffix, 100) / 100;
+          var contrast = num("con" + suffix, 100) / 100;
+          var sat = num("sat" + suffix, 100) / 100;
+          if (Math.abs(bright - 1) < 0.001 && Math.abs(contrast - 1) < 0.001 && Math.abs(sat - 1) < 0.001) {
+            return "none";
+          }
+          return (
+            "brightness(" +
+            bright.toFixed(3) +
+            ") contrast(" +
+            contrast.toFixed(3) +
+            ") saturate(" +
+            sat.toFixed(3) +
+            ")"
+          );
         }
 
         function durationMs() {
@@ -341,7 +437,7 @@
         }
 
         function bottleSize(bottle) {
-          var s = scaleOf();
+          var s = scaleOf(bottle);
           return {
             w: Math.max(2, Math.round(bottle.w * s)),
             h: Math.max(2, Math.round(bottle.h * s)),
@@ -383,22 +479,100 @@
           track.style.transform = "translate3d(" + (-position()).toFixed(2) + "px,0,0)";
         }
 
+        function scratch(store, id) {
+          if (!store[id]) store[id] = document.createElement("canvas");
+          return store[id];
+        }
+
+        function fitCanvas(canvas, w, h) {
+          var width = Math.max(1, Math.round(w));
+          var height = Math.max(1, Math.round(h));
+          if (canvas.width !== width) canvas.width = width;
+          if (canvas.height !== height) canvas.height = height;
+        }
+
+        function renderPlate(id, video, dw, dh, radius, color, filter) {
+          var plate = scratch(plates, id);
+          var sil = scratch(silhouettes, id);
+          var pad = Math.ceil(radius);
+          fitCanvas(sil, dw, dh);
+          var sctx = sil.getContext("2d");
+          sctx.clearRect(0, 0, sil.width, sil.height);
+          sctx.imageSmoothingEnabled = true;
+          sctx.imageSmoothingQuality = "high";
+          sctx.drawImage(video, 0, 0, dw, dh);
+          sctx.globalCompositeOperation = "source-in";
+          sctx.fillStyle = color;
+          sctx.fillRect(0, 0, sil.width, sil.height);
+          sctx.globalCompositeOperation = "source-over";
+
+          fitCanvas(plate, dw + pad * 2, dh + pad * 2);
+          var pctx = plate.getContext("2d");
+          pctx.clearRect(0, 0, plate.width, plate.height);
+          pctx.imageSmoothingEnabled = true;
+          pctx.imageSmoothingQuality = "high";
+          var steps = Math.max(12, Math.min(72, Math.ceil((Math.PI * radius) / 1.25)));
+          var i;
+          var a;
+          for (i = 0; i < steps; i++) {
+            a = (i / steps) * Math.PI * 2;
+            pctx.drawImage(sil, pad + Math.cos(a) * radius, pad + Math.sin(a) * radius);
+          }
+          pctx.filter = filter || "none";
+          pctx.drawImage(video, pad, pad, dw, dh);
+          pctx.filter = "none";
+          return plate;
+        }
+
         function paint() {
           var i;
           var canvas;
           var video;
           var ctx;
+          var radius = strokePx() * PX;
+          var color = strokeColor();
+          var ready = {};
+          var filter;
           for (i = 0; i < canvases.length; i++) {
             canvas = canvases[i];
             video = videos[canvas._id];
             if (!video || video.readyState < 2) continue;
-            if (canvas._drawn === video.currentTime && !canvas._force) continue;
+            filter = gradeFilter(canvas._id);
+            if (
+              !canvas._force &&
+              canvas._drawn === video.currentTime &&
+              canvas._stroke === radius &&
+              canvas._ink === color &&
+              canvas._grade === filter
+            ) {
+              continue;
+            }
             ctx = canvas.getContext("2d");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = "high";
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (radius > 0.5) {
+              if (!ready[canvas._id]) {
+                ready[canvas._id] = renderPlate(
+                  canvas._id,
+                  video,
+                  canvas._dw,
+                  canvas._dh,
+                  radius,
+                  color,
+                  filter
+                );
+              }
+              ctx.drawImage(ready[canvas._id], 0, 0);
+            } else {
+              ctx.filter = filter;
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              ctx.filter = "none";
+            }
             canvas._drawn = video.currentTime;
+            canvas._stroke = radius;
+            canvas._ink = color;
+            canvas._grade = filter;
             canvas._force = false;
           }
         }
@@ -414,25 +588,34 @@
           cycleW = measureCycle();
           var copies = copyCount(cycleW);
           var g = gapPx();
+          var pad = Math.ceil(strokePx());
           var c;
           var i;
           var bottle;
           var size;
           var canvas;
+          var boxW;
+          var boxH;
           track.innerHTML = "";
           canvases = [];
           for (c = 0; c < copies; c++) {
             for (i = 0; i < BOTTLES.length; i++) {
               bottle = BOTTLES[i];
               size = bottleSize(bottle);
+              boxW = size.w + pad * 2;
+              boxH = size.h + pad * 2;
               canvas = document.createElement("canvas");
               canvas.className = "bottle";
               canvas._id = bottle.id;
-              canvas.width = size.w * PX;
-              canvas.height = size.h * PX;
-              canvas.style.width = size.w + "px";
-              canvas.style.height = size.h + "px";
-              canvas.style.marginRight = g + "px";
+              canvas._dw = size.w * PX;
+              canvas._dh = size.h * PX;
+              canvas.width = boxW * PX;
+              canvas.height = boxH * PX;
+              canvas.style.width = boxW + "px";
+              canvas.style.height = boxH + "px";
+              canvas.style.marginLeft = -pad + "px";
+              canvas.style.marginRight = g - pad + "px";
+              canvas.style.marginBottom = -pad + "px";
               canvas.setAttribute("aria-hidden", "true");
               track.appendChild(canvas);
               canvases.push(canvas);
@@ -502,12 +685,22 @@
         function formatVal(key, v) {
           if (CHECK_KEYS[key]) return Number(v) ? "on" : "off";
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
-          if (key === "scale" || key === "phase") {
+          if (
+            key === "sizeLarge" ||
+            key === "sizeSmall" ||
+            key === "briLarge" ||
+            key === "conLarge" ||
+            key === "satLarge" ||
+            key === "briSmall" ||
+            key === "conSmall" ||
+            key === "satSmall" ||
+            key === "phase"
+          ) {
             var n = Number(v);
             if (key === "phase") return (Math.round(n * 10) / 10).toFixed(n % 1 ? 1 : 0) + "%";
             return Math.round(n) + "%";
           }
-          if (key === "gap" || key === "floor") return Math.round(Number(v)) + "px";
+          if (key === "gap" || key === "floor" || key === "stroke") return Math.round(Number(v)) + "px";
           if (key === "loop") {
             var loop = Number(v);
             return (Math.round(loop * 10) / 10).toFixed(loop % 1 ? 1 : 0) + "s";
@@ -559,6 +752,10 @@
           } catch (e) {
             return;
           }
+          if (data.scale != null && data.sizeLarge == null) {
+            data.sizeLarge = data.scale;
+            data.sizeSmall = data.scale;
+          }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
             if (CHECK_KEYS[key]) els[key].checked = data[key] === "1" || data[key] === true;
@@ -569,7 +766,7 @@
         function onSetting() {
           applyVars();
           paintVals();
-          if (this && (this.id === "scale" || this.id === "gap")) buildTrack();
+          if (this && (this.id === "sizeLarge" || this.id === "sizeSmall" || this.id === "gap" || this.id === "stroke")) buildTrack();
           else {
             applyFloor();
             applyTransform();
