@@ -1079,6 +1079,87 @@
     return cachedKern || null;
   }
 
+  function clusterCode(line, cluster) {
+    if (cluster == null || cluster < 0 || cluster >= line.length) return 0;
+    return line.charCodeAt(cluster);
+  }
+
+  function isSlashCode(code) {
+    return code === 47 || code === 8260 || code === 8725 || code === 65295;
+  }
+
+  function lineHasSlash(line) {
+    return /[/\u2044\u2215\uff0f]/.test(line);
+  }
+
+  function hbTextAdvance(hbState, text, scale) {
+    var buffer = hbBuffer(hbState);
+    buffer.addText(text);
+    buffer.guessSegmentProperties();
+    hbState.shape(hbState.font, buffer, hbFeatures(hbState));
+    var glyphs = buffer.getGlyphInfosAndPositions();
+    var adv = 0;
+    for (var i = 0; i < glyphs.length; i++) adv += (glyphs[i].xAdvance || 0) * scale;
+    return adv;
+  }
+
+  function localInkX(commands, originX) {
+    var minX = Infinity;
+    var maxX = -Infinity;
+    if (commands) {
+      for (var i = 0; i < commands.length; i++) {
+        var c = commands[i];
+        if (c.x != null) {
+          if (c.x < minX) minX = c.x;
+          if (c.x > maxX) maxX = c.x;
+        }
+        if (c.x1 != null) {
+          if (c.x1 < minX) minX = c.x1;
+          if (c.x1 > maxX) maxX = c.x1;
+        }
+        if (c.x2 != null) {
+          if (c.x2 < minX) minX = c.x2;
+          if (c.x2 > maxX) maxX = c.x2;
+        }
+      }
+    }
+    if (!isFinite(minX)) return { has: false, min: 0, max: 0 };
+    return { has: true, min: minX - originX, max: maxX - originX };
+  }
+
+  /**
+   * The fraction slash is drawn with large negative sidebearings, so it tucks
+   * into the letters beside it. Open each side until the ink-to-ink gap is
+   * half a word space.
+   */
+  function placedRuns(items, halfSpace) {
+    var shift = 0;
+    var prevEnd = null;
+    var runs = [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (halfSpace > 0 && it.slash && it.hasInk && prevEnd != null) {
+        var gapBefore = it.x + shift + it.localMin - prevEnd;
+        if (gapBefore < halfSpace) shift += halfSpace - gapBefore;
+      }
+      var drawShift = shift;
+      if (it.commands && it.commands.length) {
+        runs.push({
+          commands: drawShift ? translateCommands(it.commands, drawShift, 0) : it.commands,
+          x: it.x + drawShift,
+          advance: it.advance,
+        });
+      }
+      if (it.hasInk) prevEnd = it.x + drawShift + it.localMax;
+      if (halfSpace > 0 && it.slash && it.hasInk && i + 1 < items.length && items[i + 1].hasInk) {
+        var next = items[i + 1];
+        var gapAfter = next.x + shift + next.localMin - (it.x + drawShift + it.localMax);
+        if (gapAfter < halfSpace) shift += halfSpace - gapAfter;
+      }
+    }
+    return { runs: runs, shift: shift };
+  }
+
   /**
    * Shape with HarfBuzz. Advances follow the variation; pair kerning is applied
    * from the font's GPOS kern feature when HarfBuzz leaves it out.
@@ -1090,6 +1171,8 @@
     var pathOpts = pathOptsForGlyph(variation);
     var scale = fontSize / hbState.upem;
     var trackExtra = trackingPxVal ? trackingPxVal / fontSize : 0;
+    var slashGap = lineHasSlash(line);
+    var halfSpace = slashGap ? hbTextAdvance(hbState, " ", scale) * 0.5 : 0;
 
     var buffer = hbBuffer(hbState);
     buffer.addText(line);
@@ -1097,7 +1180,7 @@
     hbState.shape(hbState.font, buffer, hbFeatures(hbState));
 
     var glyphs = buffer.getGlyphInfosAndPositions();
-    var runs = [];
+    var items = [];
     var x = x0;
     var kern = kernModel();
 
@@ -1106,13 +1189,16 @@
       var gX = x + (g.xOffset || 0) * scale;
       var gY = y0 + (g.yOffset || 0) * scale;
       var commands = commandsForGlyph(hbState, otFont, g.codepoint, gX, gY, fontSize, pathOpts);
-      if (commands && commands.length) {
-        runs.push({
-          commands: commands,
-          x: gX,
-          advance: g.xAdvance * scale,
-        });
-      }
+      var ink = halfSpace ? localInkX(commands, gX) : { has: false, min: 0, max: 0 };
+      items.push({
+        commands: commands,
+        x: gX,
+        advance: g.xAdvance * scale,
+        localMin: ink.min,
+        localMax: ink.max,
+        hasInk: ink.has,
+        slash: halfSpace ? isSlashCode(clusterCode(line, g.cluster)) : false,
+      });
       x += g.xAdvance * scale;
       if (i < glyphs.length - 1) {
         if (kern) x += kernPairUnits(kern, variation, g.codepoint, glyphs[i + 1].codepoint) * scale;
@@ -1120,7 +1206,8 @@
       }
     }
 
-    return { runs: runs, width: x - x0 };
+    var placed = placedRuns(items, halfSpace);
+    return { runs: placed.runs, width: x + placed.shift - x0 };
   }
 
   function lineHeightPx(font, fontSize) {
@@ -1154,18 +1241,30 @@
     if (otFont.variation) otFont.variation.set(pathOpts.variation);
     var trackEm = trackingPxVal ? trackingPxVal / fontSize : 0;
     if (trackEm) pathOpts.letterSpacing = trackEm;
-    var runs = [];
+    var slashGap = lineHasSlash(line);
+    var items = [];
     var endX = otFont.forEachGlyph(line, x0, y0, fontSize, pathOpts, function (glyph, gX, gY) {
       var glyphPath = glyph.getPath(gX, gY, fontSize, pathOpts, otFont);
-      if (glyphPath.commands && glyphPath.commands.length) {
-        runs.push({
-          commands: glyphPath.commands,
-          x: gX,
-          advance: glyph.advanceWidth ? (glyph.advanceWidth / otFont.unitsPerEm) * fontSize : 0,
-        });
-      }
+      var commands = glyphPath && glyphPath.commands ? glyphPath.commands : [];
+      var ink = slashGap ? localInkX(commands, gX) : { has: false, min: 0, max: 0 };
+      items.push({
+        commands: commands,
+        x: gX,
+        advance: glyph.advanceWidth ? (glyph.advanceWidth / otFont.unitsPerEm) * fontSize : 0,
+        localMin: ink.min,
+        localMax: ink.max,
+        hasInk: ink.has,
+        slash: slashGap && isSlashCode(glyph.unicode || 0),
+      });
     });
-    return { runs: runs, width: endX - x0 };
+    var halfSpace = 0;
+    if (slashGap) {
+      var space = otFont.charToGlyph(" ");
+      var spaceUnits = space && space.advanceWidth ? space.advanceWidth : otFont.unitsPerEm * 0.25;
+      halfSpace = (spaceUnits / otFont.unitsPerEm) * fontSize * 0.5;
+    }
+    var placed = placedRuns(items, halfSpace);
+    return { runs: placed.runs, width: endX + placed.shift - x0 };
   }
 
   function shapeLineWithEngine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal) {

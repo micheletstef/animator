@@ -412,7 +412,7 @@
           <textarea id="tx" spellcheck="false" autocomplete="off">FEATHER
 OPAQUE
 2 CFM
-DIN/RAL
+DIN⁄RAL
 60 PSI
 CHROME</textarea>
         </div>
@@ -566,11 +566,11 @@ CHROME</textarea>
     </aside>
 
     <script src="../../node_modules/opentype.js/dist/opentype.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=18"></script>
+    <script src="../../animations/glyph-outlines.js?v=19"></script>
     <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
-        var DEFAULT_TEXT = "FEATHER\nOPAQUE\n2 CFM\nDIN/RAL\n60 PSI\nCHROME";
+        var DEFAULT_TEXT = "FEATHER\nOPAQUE\n2 CFM\nDIN⁄RAL\n60 PSI\nCHROME";
         var LS_KEY = "animator:v2:line-cascade-opt1-v2:settings:v3";
         var POSE_KEYS = ["size", "wght", "wdth", "cntr", "slnt", "track"];
         var LINE_PRESETS = [
@@ -713,7 +713,7 @@ CHROME</textarea>
         function ease(t) {
           if (t <= 0) return 0;
           if (t >= 1) return 1;
-          return 1 - Math.pow(1 - t, 4);
+          return t < 0.5 ? 16 * Math.pow(t, 5) : 1 - Math.pow(-2 * t + 2, 5) / 2;
         }
 
         function clamp01(t) {
@@ -1837,6 +1837,9 @@ CHROME</textarea>
         });
 
         loadSaved();
+        if (els.tx && els.tx.value.indexOf("DIN/RAL") !== -1) {
+          els.tx.value = els.tx.value.split("DIN/RAL").join("DIN\u2044RAL");
+        }
         var query = new URLSearchParams(location.search);
         ["off", "rnd", "ost"].forEach(function (key) {
           if (query.has(key) && els[key]) els[key].value = query.get(key);
