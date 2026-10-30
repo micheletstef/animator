@@ -115,18 +115,19 @@
       .masters {
         position: fixed;
         left: 0;
-        top: 0;
-        width: 8px;
-        height: 8px;
+        bottom: 0;
+        width: 48px;
+        height: 48px;
         overflow: hidden;
-        opacity: 0;
+        opacity: 0.02;
         pointer-events: none;
-        z-index: -1;
+        z-index: 1;
       }
 
       .masters video {
-        width: 320px;
-        height: 180px;
+        display: block;
+        width: 48px;
+        height: 48px;
       }
 
       .panel {
@@ -325,8 +326,8 @@
     </aside>
 
     <div class="masters" aria-hidden="true">
-      <video id="vid-large" src="bottle-assets/large-white.webm" muted playsinline loop autoplay preload="auto"></video>
-      <video id="vid-small" src="bottle-assets/small-white.webm" muted playsinline loop autoplay preload="auto"></video>
+      <video id="vid-large" src="bottle-assets/large-white.webm?v=60" muted playsinline loop autoplay preload="auto"></video>
+      <video id="vid-small" src="bottle-assets/small-white.webm?v=60" muted playsinline loop autoplay preload="auto"></video>
     </div>
 
     <script src="artboard-view.js?v=30"></script>
@@ -655,6 +656,27 @@
           });
         }
 
+        function presentedFrames(video) {
+          if (video.getVideoPlaybackQuality) {
+            var quality = video.getVideoPlaybackQuality();
+            if (quality && isFinite(quality.totalVideoFrames)) return quality.totalVideoFrames;
+          }
+          return video.currentTime;
+        }
+
+        function bindFramePump(video) {
+          if (!video || video._pumped) return;
+          video._pumped = true;
+          if (!video.requestVideoFrameCallback) return;
+          var step = function () {
+            video.requestVideoFrameCallback(function () {
+              if (playing) paint();
+              if (video._pumped) step();
+            });
+          };
+          step();
+        }
+
         function frame(now) {
           if (!lastFrame) lastFrame = now;
           var dt = now - lastFrame;
@@ -662,7 +684,21 @@
           if (dt > 0 && dt < 200) travel += (dt / durationMs()) * cycleW;
           travel = wrap(travel, cycleW);
           applyTransform();
-          paint();
+          var id;
+          var video;
+          var frames;
+          if (!videos.large.requestVideoFrameCallback) {
+            for (id in videos) {
+              video = videos[id];
+              if (!video) continue;
+              frames = presentedFrames(video);
+              if (video._presented !== frames) {
+                video._presented = frames;
+                paint();
+                break;
+              }
+            }
+          }
           if (playing) raf = requestAnimationFrame(frame);
         }
 
@@ -770,6 +806,7 @@
           else {
             applyFloor();
             applyTransform();
+            forcePaint();
           }
           save();
         }
@@ -786,6 +823,10 @@
           video.muted = true;
           video.loop = true;
           video.playsInline = true;
+          try {
+            video.disablePictureInPicture = true;
+          } catch (e) {}
+          bindFramePump(video);
           video.addEventListener("loadeddata", forcePaint);
           video.addEventListener("seeked", forcePaint);
           video.addEventListener("error", function () {
