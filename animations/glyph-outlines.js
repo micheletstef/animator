@@ -10,6 +10,7 @@
   var cachedFont = null;
   var cachedFontBuf = null;
   var cachedHbState = null;
+  var cachedKern = null;
   var hbModulePromise = null;
   var COLORS = {
     path: "rgba(0, 120, 255, 0.85)",
@@ -80,6 +81,7 @@
       cachedFont = null;
       cachedFontBuf = null;
       cachedHbState = null;
+      cachedKern = null;
     }
     if (!fontPromise) {
       fontPromise = Promise.all([
@@ -700,7 +702,386 @@
   }
 
   /**
-   * Shape with HarfBuzz (full GPOS kern, like InDesign / Core Text).
+   * HarfBuzz applies this font's gvar advances but drops GPOS kerning while the
+   * pair adjustments still carry variation-index devices. Read the kern feature
+   * (pair positioning, including type-9 extensions) and the GDEF item store so
+   * the outlines match an instantiated instance of the same variation.
+   */
+  function buildKernModel(buffer) {
+    if (!buffer) return null;
+    var view = new DataView(buffer);
+    var bytes = new Uint8Array(buffer);
+    function u16(o) { return view.getUint16(o); }
+    function i16(o) { return view.getInt16(o); }
+    function u32(o) { return view.getUint32(o); }
+    function tagAt(o) {
+      return String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
+    }
+    function f2(o) { return i16(o) / 16384; }
+    function fixed(o) { return view.getInt32(o) / 65536; }
+
+    var tables = {};
+    var numTables = u16(4);
+    for (var ti = 0; ti < numTables; ti++) {
+      var rec = 12 + ti * 16;
+      tables[tagAt(rec)] = u32(rec + 8);
+    }
+    if (tables.GPOS == null || tables.GDEF == null || tables.fvar == null) return null;
+
+    var fvar = tables.fvar;
+    var axisCount = u16(fvar + 8);
+    var axisSize = u16(fvar + 10);
+    var axes = [];
+    for (var ai = 0; ai < axisCount; ai++) {
+      var ao = fvar + u16(fvar + 4) + ai * axisSize;
+      axes.push({ tag: tagAt(ao), min: fixed(ao + 4), def: fixed(ao + 8), max: fixed(ao + 12) });
+    }
+
+    var avar = null;
+    if (tables.avar != null) {
+      var ap = tables.avar + 8;
+      avar = [];
+      for (var ax = 0; ax < axisCount; ax++) {
+        var segCount = u16(ap);
+        ap += 2;
+        var segs = [];
+        for (var si = 0; si < segCount; si++) {
+          segs.push([f2(ap), f2(ap + 2)]);
+          ap += 4;
+        }
+        avar.push(segs);
+      }
+    }
+
+    var gdef = tables.GDEF;
+    if (u16(gdef + 2) < 3) return null;
+    var storeOff = 4 + 8;
+    if (u16(gdef + 2) >= 2) storeOff += 2;
+    var store = gdef + u32(gdef + storeOff);
+    var regionList = store + u32(store + 2);
+    var regionAxisCount = u16(regionList);
+    var regionCount = u16(regionList + 2);
+    var regions = [];
+    var rp = regionList + 4;
+    for (var ri = 0; ri < regionCount; ri++) {
+      var region = [];
+      for (var ra = 0; ra < regionAxisCount; ra++) {
+        region.push([f2(rp), f2(rp + 2), f2(rp + 4)]);
+        rp += 6;
+      }
+      regions.push(region);
+    }
+    var varDataCount = u16(store + 6);
+    var blocks = [];
+    for (var vi = 0; vi < varDataCount; vi++) {
+      var data = store + u32(store + 8 + vi * 4);
+      var itemCount = u16(data);
+      var numShorts = u16(data + 2);
+      var varRegionCount = u16(data + 4);
+      var idxs = [];
+      for (var vr = 0; vr < varRegionCount; vr++) idxs.push(u16(data + 6 + vr * 2));
+      var ip = data + 6 + varRegionCount * 2;
+      var items = new Int16Array(itemCount * varRegionCount);
+      for (var n = 0; n < itemCount; n++) {
+        for (var r = 0; r < varRegionCount; r++) {
+          if (r < numShorts) {
+            items[n * varRegionCount + r] = i16(ip);
+            ip += 2;
+          } else {
+            items[n * varRegionCount + r] = view.getInt8(ip);
+            ip += 1;
+          }
+        }
+      }
+      blocks.push({ idxs: idxs, items: items, stride: varRegionCount });
+    }
+
+    function coverageList(base, rel) {
+      var o = base + rel;
+      var fmt = u16(o);
+      var list = [];
+      var i;
+      if (fmt === 1) {
+        var count = u16(o + 2);
+        for (i = 0; i < count; i++) list.push(u16(o + 4 + i * 2));
+      } else if (fmt === 2) {
+        var ranges = u16(o + 2);
+        for (i = 0; i < ranges; i++) {
+          var start = u16(o + 4 + i * 6);
+          var end = u16(o + 6 + i * 6);
+          for (var g = start; g <= end; g++) list.push(g);
+        }
+      }
+      return list;
+    }
+
+    function classMap(base, rel) {
+      var map = new Map();
+      if (!rel) return map;
+      var o = base + rel;
+      var fmt = u16(o);
+      var i;
+      if (fmt === 1) {
+        var startG = u16(o + 2);
+        var countC = u16(o + 4);
+        for (i = 0; i < countC; i++) map.set(startG + i, u16(o + 6 + i * 2));
+      } else if (fmt === 2) {
+        var rangesC = u16(o + 2);
+        for (i = 0; i < rangesC; i++) {
+          var startC = u16(o + 4 + i * 6);
+          var endC = u16(o + 6 + i * 6);
+          var cls = u16(o + 8 + i * 6);
+          if (!cls) continue;
+          for (var g2 = startC; g2 <= endC; g2++) map.set(g2, cls);
+        }
+      }
+      return map;
+    }
+
+    function readValue(base, o, fmt) {
+      var p = o;
+      var x = 0;
+      var devOff = 0;
+      for (var bit = 0; bit < 8; bit++) {
+        if (!(fmt & (1 << bit))) continue;
+        if (bit === 2) x = i16(p);
+        else if (bit === 6) devOff = u16(p);
+        p += 2;
+      }
+      var outer = 0;
+      var inner = -1;
+      if (devOff) {
+        var d = base + devOff;
+        if (u16(d + 4) === 0x8000) {
+          outer = u16(d);
+          inner = u16(d + 2);
+        }
+      }
+      return { x: x, outer: outer, inner: inner, next: p };
+    }
+
+    function parsePair(base) {
+      var fmt = u16(base);
+      var vf1 = u16(base + 4);
+      var vf2 = u16(base + 6);
+      if (!(vf1 & 4) && !(vf1 & 0x40)) return null;
+      var i;
+      if (fmt === 1) {
+        var glyphs = coverageList(base, u16(base + 2));
+        var pairSets = u16(base + 8);
+        var map = new Map();
+        for (i = 0; i < pairSets; i++) {
+          var ps = base + u16(base + 10 + i * 2);
+          var pairs = u16(ps);
+          var p = ps + 2;
+          var innerMap = new Map();
+          for (var j = 0; j < pairs; j++) {
+            var second = u16(p);
+            p += 2;
+            var v1 = readValue(base, p, vf1);
+            p = v1.next;
+            if (vf2) p = readValue(base, p, vf2).next;
+            if (v1.x || v1.inner >= 0) innerMap.set(second, v1);
+          }
+          if (innerMap.size) map.set(glyphs[i], innerMap);
+        }
+        return map.size ? { kind: 1, map: map } : null;
+      }
+      if (fmt === 2) {
+        var covered = coverageList(base, u16(base + 2));
+        var cov = new Set(covered);
+        var c1 = classMap(base, u16(base + 8));
+        var c2 = classMap(base, u16(base + 10));
+        var n1 = u16(base + 12);
+        var n2 = u16(base + 14);
+        var p2 = base + 16;
+        var recs = [];
+        for (i = 0; i < n1 * n2; i++) {
+          var rec = readValue(base, p2, vf1);
+          p2 = rec.next;
+          if (vf2) p2 = readValue(base, p2, vf2).next;
+          recs.push(rec.x || rec.inner >= 0 ? rec : null);
+        }
+        return { kind: 2, cov: cov, c1: c1, c2: c2, n2: n2, recs: recs };
+      }
+      return null;
+    }
+
+    var gpos = tables.GPOS;
+    var scriptList = gpos + u16(gpos + 4);
+    var featureList = gpos + u16(gpos + 6);
+    var lookupList = gpos + u16(gpos + 8);
+    var featureIdxs = [];
+    var scriptCount = u16(scriptList);
+    for (var sc = 0; sc < scriptCount; sc++) {
+      var scriptTag = tagAt(scriptList + 2 + sc * 6);
+      if (scriptTag !== "latn" && scriptTag !== "DFLT") continue;
+      var script = scriptList + u16(scriptList + 6 + sc * 6);
+      var langs = [];
+      if (u16(script)) langs.push(script + u16(script));
+      var langCount = u16(script + 2);
+      for (var li = 0; li < langCount; li++) {
+        var langTag = tagAt(script + 4 + li * 6);
+        if (langTag === "dflt" || langTag === "DFLT" || langTag === "latn") {
+          langs.push(script + u16(script + 8 + li * 6));
+        }
+      }
+      for (var ls = 0; ls < langs.length; ls++) {
+        var lang = langs[ls];
+        var featCount = u16(lang + 4);
+        for (var fi = 0; fi < featCount; fi++) featureIdxs.push(u16(lang + 6 + fi * 2));
+      }
+    }
+
+    var lookupIdx = {};
+    for (var fx = 0; fx < featureIdxs.length; fx++) {
+      var fr = featureList + 2 + featureIdxs[fx] * 6;
+      if (tagAt(fr) !== "kern") continue;
+      var feat = featureList + u16(fr + 4);
+      var lookCount = u16(feat + 2);
+      for (var lx = 0; lx < lookCount; lx++) lookupIdx[u16(feat + 4 + lx * 2)] = true;
+    }
+
+    var subs = [];
+    for (var key in lookupIdx) {
+      if (!lookupIdx.hasOwnProperty(key)) continue;
+      var look = lookupList + u16(lookupList + 2 + Number(key) * 2);
+      var kind = u16(look);
+      var subCount = u16(look + 4);
+      for (var s = 0; s < subCount; s++) {
+        var sub = look + u16(look + 6 + s * 2);
+        var subKind = kind;
+        if (subKind === 9) {
+          subKind = u16(sub + 2);
+          sub = sub + u32(sub + 4);
+        }
+        if (subKind !== 2) continue;
+        var parsed = parsePair(sub);
+        if (parsed) subs.push(parsed);
+      }
+    }
+    if (!subs.length) return null;
+
+    return {
+      axes: axes,
+      avar: avar,
+      regions: regions,
+      blocks: blocks,
+      subs: subs,
+      scalarKey: "",
+      scalars: null,
+    };
+  }
+
+  function kernSupport(loc, region) {
+    var scalar = 1;
+    for (var i = 0; i < region.length; i++) {
+      var start = region[i][0];
+      var peak = region[i][1];
+      var end = region[i][2];
+      var v = loc[i] || 0;
+      if (start > peak || peak > end) continue;
+      if (start < 0 && end > 0) continue;
+      if (peak === 0 || v === peak) continue;
+      if (v < start || v > end) return 0;
+      if (v < peak) scalar *= (v - start) / (peak - start);
+      else scalar *= (end - v) / (end - peak);
+    }
+    return scalar;
+  }
+
+  function kernScalars(model, variation) {
+    var loc = [];
+    var i;
+    for (i = 0; i < model.axes.length; i++) {
+      var axis = model.axes[i];
+      var raw = variation && variation[axis.tag] != null ? variation[axis.tag] : axis.def;
+      var n = raw === axis.def ? 0 : raw > axis.def
+        ? (raw - axis.def) / (axis.max - axis.def)
+        : (raw - axis.def) / (axis.def - axis.min);
+      if (model.avar && model.avar[i] && model.avar[i].length) {
+        var segs = model.avar[i];
+        if (n <= segs[0][0]) n = segs[0][1];
+        else if (n >= segs[segs.length - 1][0]) n = segs[segs.length - 1][1];
+        else {
+          for (var j = 0; j < segs.length - 1; j++) {
+            var a = segs[j];
+            var b = segs[j + 1];
+            if (n < a[0] || n > b[0]) continue;
+            var t = b[0] === a[0] ? 0 : (n - a[0]) / (b[0] - a[0]);
+            n = a[1] + t * (b[1] - a[1]);
+            break;
+          }
+        }
+      }
+      loc.push(n);
+    }
+    var key = loc.join(",");
+    if (key === model.scalarKey) return model.scalars;
+    var block = model.blocks[0];
+    var scalars = new Float64Array(block.stride);
+    for (i = 0; i < block.stride; i++) {
+      scalars[i] = kernSupport(loc, model.regions[block.idxs[i]]);
+    }
+    model.scalarKey = key;
+    model.scalars = scalars;
+    return scalars;
+  }
+
+  function kernDelta(model, outer, inner, scalars) {
+    if (inner < 0) return 0;
+    var block = model.blocks[outer];
+    if (!block) return 0;
+    var row = inner * block.stride;
+    var acc = 0;
+    for (var r = 0; r < block.stride; r++) acc += block.items[row + r] * scalars[r];
+    return acc;
+  }
+
+  function kernPairUnits(model, variation, left, right) {
+    var scalars = kernScalars(model, variation);
+    var sum = 0;
+    for (var i = 0; i < model.subs.length; i++) {
+      var sub = model.subs[i];
+      var rec = null;
+      if (sub.kind === 1) {
+        var inner = sub.map.get(left);
+        if (inner) rec = inner.get(right) || null;
+      } else if (sub.cov.has(left)) {
+        rec = sub.recs[(sub.c1.get(left) || 0) * sub.n2 + (sub.c2.get(right) || 0)];
+      }
+      if (!rec) continue;
+      sum += Math.floor(rec.x + kernDelta(model, rec.outer, rec.inner, scalars) + 0.5);
+    }
+    return sum;
+  }
+
+  function hbAlreadyKerns(hbState) {
+    function adv(text) {
+      var buffer = hbBuffer(hbState);
+      buffer.addText(text);
+      buffer.guessSegmentProperties();
+      hbState.shape(hbState.font, buffer, hbFeatures(hbState));
+      var glyphs = buffer.getGlyphInfosAndPositions();
+      return glyphs.length ? glyphs[0].xAdvance : 0;
+    }
+    try {
+      return adv("A") - adv("AT") > 1;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function kernModel() {
+    if (cachedKern !== null) return cachedKern || null;
+    cachedKern = buildKernModel(cachedFontBuf) || false;
+    if (cachedKern && cachedHbState && hbAlreadyKerns(cachedHbState)) cachedKern = false;
+    return cachedKern || null;
+  }
+
+  /**
+   * Shape with HarfBuzz. Advances follow the variation; pair kerning is applied
+   * from the font's GPOS kern feature when HarfBuzz leaves it out.
    * Returns { runs, width } for one line at baseline y0, origin x0.
    * Variations must already be set on hbState.font.
    */
@@ -718,6 +1099,7 @@
     var glyphs = buffer.getGlyphInfosAndPositions();
     var runs = [];
     var x = x0;
+    var kern = kernModel();
 
     for (var i = 0; i < glyphs.length; i++) {
       var g = glyphs[i];
@@ -732,7 +1114,10 @@
         });
       }
       x += g.xAdvance * scale;
-      if (trackExtra && i < glyphs.length - 1) x += trackExtra * fontSize;
+      if (i < glyphs.length - 1) {
+        if (kern) x += kernPairUnits(kern, variation, g.codepoint, glyphs[i + 1].codepoint) * scale;
+        if (trackExtra) x += trackExtra * fontSize;
+      }
     }
 
     return { runs: runs, width: x - x0 };

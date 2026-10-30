@@ -117,6 +117,7 @@
 
       .line {
         display: block;
+        flex: 0 0 auto;
         width: 100%;
         height: calc(var(--fs) * var(--lh) * 1px);
         font-size: calc(var(--fs) * 1px);
@@ -469,10 +470,19 @@ CHROME</textarea>
           </button>
         </div>
         <div class="row">
-          <label for="lh0">leading</label>
-          <input id="lh0" type="range" min="0.5" max="1.6" step="0.01" value="0.85" />
-          <span class="val" id="lh0Val">0.85</span>
+          <label for="lh">leading</label>
+          <input id="lh" type="range" min="0.5" max="1.6" step="0.01" value="0.85" />
+          <span class="val" id="lhVal">0.85</span>
         </div>
+        <input id="lh0" type="hidden" value="0.85" />
+        <input id="lh1" type="hidden" value="0.85" />
+        <div class="row">
+          <label for="sc">scale</label>
+          <input id="sc" type="range" min="0.5" max="2" step="0.01" value="1" />
+          <span class="val" id="scVal">100%</span>
+        </div>
+        <input id="sc0" type="hidden" value="1" />
+        <input id="sc1" type="hidden" value="1" />
         <div class="row">
           <label for="wght0">wght</label>
           <input id="wght0" type="range" min="200" max="1000" step="1" value="915" />
@@ -507,11 +517,6 @@ CHROME</textarea>
           <label for="fs1">size</label>
           <input id="fs1" type="range" min="80" max="360" step="1" value="259" />
           <span class="val" id="fs1Val">259px</span>
-        </div>
-        <div class="row">
-          <label for="lh1">leading</label>
-          <input id="lh1" type="range" min="0.5" max="1.6" step="0.01" value="0.85" />
-          <span class="val" id="lh1Val">0.85</span>
         </div>
         <div class="row">
           <label for="wght1">wght</label>
@@ -561,22 +566,22 @@ CHROME</textarea>
     </aside>
 
     <script src="../../node_modules/opentype.js/dist/opentype.js"></script>
-    <script src="../../animations/glyph-outlines.js?v=17"></script>
+    <script src="../../animations/glyph-outlines.js?v=18"></script>
     <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
         var DEFAULT_TEXT = "FEATHER\nOPAQUE\n2 CFM\nDIN/RAL\n60 PSI\nCHROME";
         var LS_KEY = "animator:v2:line-cascade-opt1-v2:settings:v3";
-        var POSE_KEYS = ["size", "lh", "wght", "wdth", "cntr", "slnt", "track"];
+        var POSE_KEYS = ["size", "wght", "wdth", "cntr", "slnt", "track"];
         var LINE_PRESETS = [
-          { size: 259, lh: 0.85, wght: 877, wdth: 65, cntr: 100, slnt: 0, track: -0.015 },
-          { size: 278, lh: 0.85, wght: 929, wdth: 74, cntr: 71, slnt: 0, track: -0.02 },
-          { size: 263, lh: 0.85, wght: 200, wdth: 115, cntr: 70, slnt: -12, track: -0.065 },
-          { size: 318, lh: 0.85, wght: 375, wdth: 65, cntr: 0, slnt: 0, track: -0.04 },
-          { size: 229, lh: 0.85, wght: 1000, wdth: 130, cntr: 65, slnt: 0, track: 0 },
-          { size: 196, lh: 0.85, wght: 514, wdth: 99, cntr: 58, slnt: 0, track: 0.035 },
+          { size: 259, wght: 877, wdth: 65, cntr: 100, slnt: 0, track: -0.015 },
+          { size: 278, wght: 929, wdth: 74, cntr: 71, slnt: 0, track: -0.02 },
+          { size: 263, wght: 200, wdth: 115, cntr: 70, slnt: -12, track: -0.065 },
+          { size: 318, wght: 375, wdth: 65, cntr: 0, slnt: 0, track: -0.04 },
+          { size: 229, wght: 1000, wdth: 130, cntr: 65, slnt: 0, track: 0 },
+          { size: 196, wght: 514, wdth: 99, cntr: 58, slnt: 0, track: 0.035 },
         ];
-        var FALLBACK_POSE = { size: 196, lh: 0.85, wght: 400, wdth: 80, cntr: 0, slnt: 0, track: -0.03 };
+        var FALLBACK_POSE = { size: 196, wght: 400, wdth: 80, cntr: 0, slnt: 0, track: -0.03 };
         var root = document.documentElement;
         var lockup = document.getElementById("lockup");
         var lineTabsEl = document.getElementById("lineTabs");
@@ -606,6 +611,9 @@ CHROME</textarea>
           rnd: 14,
           ost: 6.19,
           lh0: 0.85,
+          lh1: 0.85,
+          sc0: 1,
+          sc1: 1,
           oy: -14,
           wght0: 915,
           wdth0: 75,
@@ -631,8 +639,8 @@ CHROME</textarea>
           rnd: document.getElementById("rndVal"),
           ost: document.getElementById("ostVal"),
           fs1: document.getElementById("fs1Val"),
-          lh0: document.getElementById("lh0Val"),
-          lh1: document.getElementById("lh1Val"),
+          lh: document.getElementById("lhVal"),
+          sc: document.getElementById("scVal"),
           oy: document.getElementById("oyVal"),
           wght0: document.getElementById("wght0Val"),
           wdth0: document.getElementById("wdth0Val"),
@@ -653,7 +661,8 @@ CHROME</textarea>
           els[key] = document.getElementById(key);
         });
         els.fs1 = document.getElementById("fs1");
-        els.lh1 = document.getElementById("lh1");
+        els.lh = document.getElementById("lh");
+        els.sc = document.getElementById("sc");
         els.wght1 = document.getElementById("wght1");
         els.wdth1 = document.getElementById("wdth1");
         els.cntr1 = document.getElementById("cntr1");
@@ -764,7 +773,7 @@ CHROME</textarea>
         function mixPoses(a, b, t) {
           return {
             size: lerp(a.size, b.size, t),
-            lh: lerp(a.lh, b.lh, t),
+            lh: lerp(num("lh0", 0.85), num("lh1", 0.85), t),
             wght: lerp(a.wght, b.wght, t),
             wdth: lerp(a.wdth, b.wdth, t),
             cntr: lerp(a.cntr, b.cntr, t),
@@ -822,7 +831,8 @@ CHROME</textarea>
         function formatVal(key, v) {
           if (CHECK_KEYS[key]) return els[key] && els[key].checked ? "on" : "off";
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
-          if (key === "lh0" || key === "lh1" || key === "tr0" || key === "tr1") {
+          if (key === "sc" || key === "sc0" || key === "sc1") return Math.round(Number(v) * 100) + "%";
+          if (key === "lh" || key === "lh0" || key === "lh1" || key === "tr0" || key === "tr1") {
             return Number(v).toFixed(2);
           }
           if (key === "off" || key === "rnd" || key === "ost") {
@@ -872,7 +882,6 @@ CHROME</textarea>
         function writePoseToSliders(pose) {
           syncingPose = true;
           if (els.fs1) els.fs1.value = pose.size;
-          if (els.lh1) els.lh1.value = pose.lh;
           if (els.wght1) els.wght1.value = pose.wght;
           if (els.wdth1) els.wdth1.value = pose.wdth;
           if (els.cntr1) els.cntr1.value = pose.cntr;
@@ -885,7 +894,6 @@ CHROME</textarea>
         function readPoseFromSliders() {
           return {
             size: num("fs1", defaultSize()),
-            lh: num("lh1", 0.85),
             wght: num("wght1", 400),
             wdth: num("wdth1", 80),
             cntr: num("cntr1", 0),
@@ -1183,7 +1191,8 @@ CHROME</textarea>
             }
             if (!fitted) {
               var md = Math.hypot(M.x - v.x, M.y - v.y);
-              if (md > dist * 4) {
+              var outward = (n0.x + n1.x) * (M.x - v.x) + (n0.y + n1.y) * (M.y - v.y);
+              if (md > dist * 2 || outward < 0) {
                 out.push(p0);
                 out.push(p1);
               } else {
@@ -1511,6 +1520,17 @@ CHROME</textarea>
           for (i = 0; i < n; i++) {
             amt = lineAmt(ms, i, n);
             pose = amt <= 0 ? from : amt >= 1 ? linePoses[i] : mixPoses(from, linePoses[i], amt);
+            var tAmt = amt <= 0 ? 0 : amt >= 1 ? 1 : amt;
+            var endSize = linePoses[i] && isFinite(linePoses[i].size) ? linePoses[i].size : from.size;
+            pose = {
+              size: lerp(from.size * num("sc0", 1), endSize * num("sc1", 1), tAmt),
+              lh: lerp(num("lh0", 0.85), num("lh1", 0.85), tAmt),
+              wght: pose.wght,
+              wdth: pose.wdth,
+              cntr: pose.cntr,
+              slnt: pose.slnt,
+              track: pose.track,
+            };
             applyLine(lineEls[i], pose);
           }
           if (nowReadout) {
@@ -1666,11 +1686,31 @@ CHROME</textarea>
           raf = requestAnimationFrame(frame);
         }
 
+        function syncLeadSlider() {
+          var store = holdKf === 1 ? els.lh1 : els.lh0;
+          if (!els.lh || !store) return;
+          syncingPose = true;
+          els.lh.value = store.value;
+          syncingPose = false;
+          paintVals();
+        }
+
+        function syncScaleSlider() {
+          var store = holdKf === 1 ? els.sc1 : els.sc0;
+          if (!els.sc || !store) return;
+          syncingPose = true;
+          els.sc.value = store.value;
+          syncingPose = false;
+          paintVals();
+        }
+
         function restart() {
           holdKf = -1;
           lastLiveKf = -1;
           lastLiveLine = -1;
           t0 = performance.now();
+          syncLeadSlider();
+          syncScaleSlider();
           paintKfTabs();
           applyElapsed(0);
           cancelAnimationFrame(raf);
@@ -1685,6 +1725,8 @@ CHROME</textarea>
           holdKf = i;
           lastLiveKf = -1;
           lastLiveLine = -1;
+          syncLeadSlider();
+          syncScaleSlider();
           paintKfTabs();
           applyElapsed(lastElapsed);
         }
@@ -1724,12 +1766,13 @@ CHROME</textarea>
             els[key].value = data[key];
           });
           if (data.lh0 == null && data.lh != null && els.lh0) els.lh0.value = data.lh;
+          if (data.lh1 == null && els.lh1) {
+            var savedLead = data.poses && data.poses[0] && data.poses[0].lh;
+            if (savedLead == null) savedLead = data.lh;
+            if (savedLead != null) els.lh1.value = savedLead;
+          }
           if (Array.isArray(data.poses)) {
-            linePoses = data.poses.map(function (pose) {
-              var next = clonePose(pose);
-              if ((pose == null || pose.lh == null) && data.lh != null) next.lh = Number(data.lh);
-              return next;
-            });
+            linePoses = data.poses.map(clonePose);
           }
           if (data.activeLine != null) {
             activeLine = Math.max(0, Math.round(Number(data.activeLine) || 0));
@@ -1761,7 +1804,15 @@ CHROME</textarea>
 
         function onSettingInput() {
           if (syncingPose) return;
-          if (this && (this.id === "fs1" || this.id === "lh1" || this.id === "wght1" || this.id === "wdth1" || this.id === "cntr1" || this.id === "slnt1" || this.id === "tr1")) {
+          if (this && this.id === "lh") {
+            var store = holdKf === 1 ? els.lh1 : els.lh0;
+            if (store) store.value = this.value;
+          }
+          if (this && this.id === "sc") {
+            var scaleStore = holdKf === 1 ? els.sc1 : els.sc0;
+            if (scaleStore) scaleStore.value = this.value;
+          }
+          if (this && (this.id === "fs1" || this.id === "wght1" || this.id === "wdth1" || this.id === "cntr1" || this.id === "slnt1" || this.id === "tr1")) {
             if (linePoses[activeLine]) linePoses[activeLine] = readPoseFromSliders();
           }
           applyVars();
