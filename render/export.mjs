@@ -27,6 +27,9 @@ const MIME = {
   ".svg": "image/svg+xml",
   ".ttf": "font/ttf",
   ".wasm": "application/wasm",
+  ".webm": "video/webm",
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
 };
@@ -100,8 +103,32 @@ function startServer() {
       res.end("not found");
       return;
     }
+    const stat = statSync(file);
+    const type = MIME[extname(file)] || "application/octet-stream";
+    const range = req.headers.range;
+    if (range) {
+      const match = /bytes=(\d*)-(\d*)/.exec(range);
+      let start = match && match[1] ? Number(match[1]) : 0;
+      let end = match && match[2] ? Number(match[2]) : stat.size - 1;
+      if (!Number.isFinite(start) || !Number.isFinite(end) || start > end || start >= stat.size) {
+        res.writeHead(416, { "Content-Range": "bytes */" + stat.size });
+        res.end();
+        return;
+      }
+      end = Math.min(end, stat.size - 1);
+      res.writeHead(206, {
+        "Content-Type": type,
+        "Accept-Ranges": "bytes",
+        "Content-Range": "bytes " + start + "-" + end + "/" + stat.size,
+        "Content-Length": end - start + 1,
+      });
+      createReadStream(file, { start: start, end: end }).pipe(res);
+      return;
+    }
     res.writeHead(200, {
-      "Content-Type": MIME[extname(file)] || "application/octet-stream",
+      "Content-Type": type,
+      "Accept-Ranges": "bytes",
+      "Content-Length": stat.size,
     });
     createReadStream(file).pipe(res);
   });
@@ -271,6 +298,11 @@ async function main() {
           const cy = Number(document.getElementById("cy") && document.getElementById("cy").value);
           const hd = Number(document.getElementById("hd") && document.getElementById("hd").value);
           if (isFinite(cy)) return cy + 2 * (isFinite(hd) ? hd : 0);
+          const api = window.AnimatorExport;
+          if (api) {
+            const fromApi = typeof api.durationMs === "function" ? api.durationMs() : api.durationMs;
+            if (fromApi > 0) return fromApi;
+          }
           return 3000;
         });
 
@@ -289,7 +321,16 @@ async function main() {
 
     for (let i = 0; i < frameCount; i++) {
       const t = (i / args.fps) * 1000;
-      await page.evaluate((ms) => window.__animatorExport.tick(ms), t);
+      await page.evaluate(async (ms) => {
+        const api = window.AnimatorExport;
+        if (api && typeof api.seek === "function" && typeof api.settle === "function") {
+          if (api.stop) api.stop();
+          api.seek(ms);
+          await api.settle();
+          return;
+        }
+        window.__animatorExport.tick(ms);
+      }, t);
       await stage.screenshot({
         path: join(framesDir, "frame_" + String(i).padStart(5, "0") + ".png"),
         type: "png",

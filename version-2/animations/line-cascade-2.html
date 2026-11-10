@@ -20,6 +20,7 @@
         --ar-w: 1080;
         --ar-h: 1440;
         --bg: #ffffff;
+        --bg-image: none;
         --fg: #000000;
         --pad-t: 72;
         --pad-r: 56;
@@ -86,7 +87,10 @@
         position: relative;
         width: 1080px;
         height: 1440px;
-        background: var(--bg);
+        background-color: var(--bg);
+        background-image: var(--bg-image);
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
         color: var(--fg);
         overflow: hidden;
         box-shadow: none;
@@ -373,6 +377,11 @@
       <div class="group">
         <p class="group-title">color</p>
         <div class="row">
+          <label for="grad">gradient</label>
+          <input id="grad" type="checkbox" />
+          <span class="val" id="gradVal">off</span>
+        </div>
+        <div class="row">
           <label for="bg">bg</label>
           <input id="bg" type="color" value="#ffffff" />
           <span class="val" id="bgVal">#ffffff</span>
@@ -381,6 +390,30 @@
           <label for="fg">text</label>
           <input id="fg" type="color" value="#000000" />
           <span class="val" id="fgVal">#000000</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">chrome</p>
+        <div class="row">
+          <label for="chrome">chrome</label>
+          <input id="chrome" type="checkbox" />
+          <span class="val" id="chromeVal">off</span>
+        </div>
+        <div class="row">
+          <label for="off">offset</label>
+          <input id="off" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="offVal">14</span>
+        </div>
+        <div class="row">
+          <label for="rnd">rounding</label>
+          <input id="rnd" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="rndVal">14</span>
+        </div>
+        <div class="row">
+          <label for="ost">stroke</label>
+          <input id="ost" type="range" min="0" max="20" step="0.1" value="6.19" />
+          <span class="val" id="ostVal">6.19</span>
         </div>
       </div>
 
@@ -525,6 +558,9 @@ No. 7 Tip</textarea>
       </div>
     </aside>
 
+    <script src="../../node_modules/opentype.js/dist/opentype.js"></script>
+    <script src="../../animations/glyph-outlines.js?v=20"></script>
+    <script src="chrome-effect.js?v=2"></script>
     <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
@@ -549,9 +585,17 @@ No. 7 Tip</textarea>
         var activeLine = 0;
         var syncingPose = false;
 
+        var BG_GRADIENT =
+          "linear-gradient(to bottom, #2c2839 0%, #2a2f45 8%, #263957 18%, #1f4166 26%, #144a76 34%, #085488 40%, #01609a 48%, #0178b0 58%, #0091c4 68%, #16a9d5 78%, #58bdd9 90%, #58bdd9 100%)";
+
         var DEFAULTS = {
+          grad: "0",
           bg: "#ffffff",
           fg: "#000000",
+          chrome: "0",
+          off: 14,
+          rnd: 14,
+          ost: 6.19,
           tx: DEFAULT_TEXT,
           align: "center",
           fs: 196,
@@ -569,11 +613,17 @@ No. 7 Tip</textarea>
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
         var TEXT_KEYS = { tx: 1, align: 1 };
+        var CHECK_KEYS = { grad: 1, chrome: 1 };
 
         var els = {};
         var vals = {
+          grad: document.getElementById("gradVal"),
           bg: document.getElementById("bgVal"),
           fg: document.getElementById("fgVal"),
+          chrome: document.getElementById("chromeVal"),
+          off: document.getElementById("offVal"),
+          rnd: document.getElementById("rndVal"),
+          ost: document.getElementById("ostVal"),
           fs: document.getElementById("fsVal"),
           fs1: document.getElementById("fs1Val"),
           lh: document.getElementById("lhVal"),
@@ -747,6 +797,7 @@ No. 7 Tip</textarea>
 
         function applyVars() {
           root.style.setProperty("--bg", els.bg.value);
+          root.style.setProperty("--bg-image", els.grad && els.grad.checked ? BG_GRADIENT : "none");
           root.style.setProperty("--fg", els.fg.value);
           root.style.setProperty("--fs", String(num("fs", 196)));
           root.style.setProperty("--lh", String(num("lh", 0.94)));
@@ -764,6 +815,8 @@ No. 7 Tip</textarea>
         }
 
         function formatVal(key, v) {
+          if (CHECK_KEYS[key]) return v === "1" ? "on" : "off";
+          if (key === "ost") return Number(v).toFixed(2);
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "ul1") return Number(v) >= 0.5 ? "on" : "off";
           if (key === "lh" || key === "tr0" || key === "tr1") {
@@ -790,8 +843,36 @@ No. 7 Tip</textarea>
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = formatVal(key, els[key].value);
+            var v = CHECK_KEYS[key] ? (els[key].checked ? "1" : "0") : els[key].value;
+            vals[key].textContent = formatVal(key, v);
           });
+        }
+
+        function chromeOn() {
+          return !!(els.chrome && els.chrome.checked && window.ChromeEffect);
+        }
+
+        function chromeSpec(extra) {
+          var spec = {
+            offset: els.off ? Number(els.off.value) : 14,
+            round: els.rnd ? Number(els.rnd.value) : 14,
+            stroke: els.ost ? Number(els.ost.value) : 6.19,
+            align: (els.align && els.align.value) || "center",
+          };
+          if (!extra) return spec;
+          Object.keys(extra).forEach(function (key) {
+            spec[key] = extra[key];
+          });
+          return spec;
+        }
+
+        function syncChrome(el, extra) {
+          if (!el || !window.ChromeEffect) return;
+          if (!chromeOn()) {
+            if (el.classList.contains("is-chrome")) ChromeEffect.clear(el);
+            return;
+          }
+          ChromeEffect.paint(el, chromeSpec(extra));
         }
 
         function poseSummary(pose) {
@@ -912,6 +993,17 @@ No. 7 Tip</textarea>
             el.style.textDecorationLine = "none";
             el.style.textDecorationColor = "transparent";
           }
+          syncChrome(el, {
+            text: el.getAttribute("data-text") || el.textContent,
+            size: fs,
+            wght: pose.wght,
+            wdth: pose.wdth,
+            cntr: pose.cntr,
+            slnt: pose.slnt,
+            track: pose.track,
+            features: ["ordn"],
+            disabled: ["liga"],
+          });
         }
 
         function applyElapsed(ms) {
@@ -1058,6 +1150,7 @@ No. 7 Tip</textarea>
           texts.forEach(function (text) {
             var line = document.createElement("div");
             line.className = "line";
+            line.setAttribute("data-text", text);
             fillLine(line, text);
             lockup.appendChild(line);
             lineEls.push(line);
@@ -1122,7 +1215,8 @@ No. 7 Tip</textarea>
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            if (TEXT_KEYS[key] || COLOR_KEYS[key]) data[key] = els[key].value;
+            if (CHECK_KEYS[key]) data[key] = els[key].checked ? "1" : "0";
+            else if (TEXT_KEYS[key] || COLOR_KEYS[key]) data[key] = els[key].value;
             else data[key] = parseFloat(els[key].value);
           });
           data.poses = linePoses.map(clonePose);
@@ -1145,6 +1239,10 @@ No. 7 Tip</textarea>
           if (!data || typeof data !== "object") return;
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
+            if (CHECK_KEYS[key]) {
+              els[key].checked = data[key] === "1" || data[key] === 1 || data[key] === true;
+              return;
+            }
             els[key].value = data[key];
           });
           if (Array.isArray(data.poses)) {
@@ -1168,7 +1266,8 @@ No. 7 Tip</textarea>
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            if (CHECK_KEYS[key]) els[key].checked = DEFAULTS[key] === "1";
+            else els[key].value = DEFAULTS[key];
           });
           linePoses = LINE_PRESETS.map(clonePose);
           activeLine = 0;
@@ -1240,11 +1339,14 @@ No. 7 Tip</textarea>
           seek: function (ms) {
             applyElapsed(ms);
           },
+          settle: function () {
+            return window.ChromeEffect ? ChromeEffect.ready(document.getElementById("stage")) : Promise.resolve();
+          },
           stop: stopPlayback,
           start: startPlayback,
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=9"></script>
+    <script type="module" src="../../web-export.js?v=13"></script>
   </body>
 </html>

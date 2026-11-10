@@ -400,6 +400,30 @@
       </div>
 
       <div class="group">
+        <p class="group-title">chrome</p>
+        <div class="row">
+          <label for="chrome">chrome</label>
+          <input id="chrome" type="checkbox" />
+          <span class="val" id="chromeVal">off</span>
+        </div>
+        <div class="row">
+          <label for="off">offset</label>
+          <input id="off" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="offVal">14</span>
+        </div>
+        <div class="row">
+          <label for="rnd">rounding</label>
+          <input id="rnd" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="rndVal">14</span>
+        </div>
+        <div class="row">
+          <label for="ost">stroke</label>
+          <input id="ost" type="range" min="0" max="20" step="0.1" value="6.19" />
+          <span class="val" id="ostVal">6.19</span>
+        </div>
+      </div>
+
+      <div class="group">
         <p class="group-title">content</p>
         <div class="row">
           <label for="tx">text</label>
@@ -527,6 +551,9 @@ XT°5</textarea>
       </div>
     </aside>
 
+    <script src="../../node_modules/opentype.js/dist/opentype.js"></script>
+    <script src="../../animations/glyph-outlines.js?v=20"></script>
+    <script src="chrome-effect.js?v=2"></script>
     <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
@@ -563,10 +590,15 @@ XT°5</textarea>
           tr1: -0.02,
           move: 420,
           hold: 700,
+          chrome: "0",
+          off: 14,
+          rnd: 14,
+          ost: 6.19,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
         var TEXT_KEYS = { tx: 1, align: 1 };
+        var CHECK_KEYS = { chrome: 1 };
 
         var els = {};
         var vals = {
@@ -587,6 +619,10 @@ XT°5</textarea>
           tr1: document.getElementById("tr1Val"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
+          chrome: document.getElementById("chromeVal"),
+          off: document.getElementById("offVal"),
+          rnd: document.getElementById("rndVal"),
+          ost: document.getElementById("ostVal"),
         };
 
         Object.keys(DEFAULTS).forEach(function (key) {
@@ -718,6 +754,8 @@ XT°5</textarea>
         }
 
         function formatVal(key, v) {
+          if (CHECK_KEYS[key]) return v === "1" ? "on" : "off";
+          if (key === "ost") return Number(v).toFixed(2);
           if (key === "bg" || key === "fg") return String(v).toLowerCase();
           if (key === "lh" || key === "tr0" || key === "tr1") {
             return Number(v).toFixed(2);
@@ -744,8 +782,36 @@ XT°5</textarea>
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = formatVal(key, els[key].value);
+            var v = CHECK_KEYS[key] ? (els[key].checked ? "1" : "0") : els[key].value;
+            vals[key].textContent = formatVal(key, v);
           });
+        }
+
+        function chromeOn() {
+          return !!(els.chrome && els.chrome.checked && window.ChromeEffect);
+        }
+
+        function chromeSpec(extra) {
+          var spec = {
+            offset: els.off ? Number(els.off.value) : 14,
+            round: els.rnd ? Number(els.rnd.value) : 14,
+            stroke: els.ost ? Number(els.ost.value) : 6.19,
+            align: "left",
+          };
+          if (!extra) return spec;
+          Object.keys(extra).forEach(function (key) {
+            spec[key] = extra[key];
+          });
+          return spec;
+        }
+
+        function syncChrome(el, extra) {
+          if (!el || !window.ChromeEffect) return;
+          if (!chromeOn()) {
+            if (el.classList.contains("is-chrome")) ChromeEffect.clear(el);
+            return;
+          }
+          ChromeEffect.paint(el, chromeSpec(extra));
         }
 
         function keyframe(i) {
@@ -781,6 +847,21 @@ XT°5</textarea>
             mixed.slnt
           );
           g.el.style.fontWeight = String(Math.round(wght));
+          if (g.ch === " ") {
+            if (window.ChromeEffect && g.el.classList.contains("is-chrome")) ChromeEffect.clear(g.el);
+            return;
+          }
+          syncChrome(g.el, {
+            text: g.ch,
+            size: num("fs", 410),
+            wght: wght,
+            wdth: mixed.wdth,
+            cntr: mixed.cntr,
+            slnt: mixed.slnt,
+            track: 0,
+            align: "left",
+            disabled: ["liga"],
+          });
         }
 
         function slntLabel(v) {
@@ -1021,7 +1102,8 @@ XT°5</textarea>
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            if (TEXT_KEYS[key] || COLOR_KEYS[key]) data[key] = els[key].value;
+            if (CHECK_KEYS[key]) data[key] = els[key].checked ? "1" : "0";
+            else if (TEXT_KEYS[key] || COLOR_KEYS[key]) data[key] = els[key].value;
             else data[key] = parseFloat(els[key].value);
           });
           data.mix = mix.slice();
@@ -1069,6 +1151,10 @@ XT°5</textarea>
           if (!data) return;
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
+            if (CHECK_KEYS[key]) {
+              els[key].checked = data[key] === "1" || data[key] === 1 || data[key] === true;
+              return;
+            }
             els[key].value = data[key];
           });
           if (Array.isArray(data.mix)) {
@@ -1081,7 +1167,8 @@ XT°5</textarea>
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            if (CHECK_KEYS[key]) els[key].checked = DEFAULTS[key] === "1";
+            else els[key].value = DEFAULTS[key];
           });
           mix = [];
           lastText = DEFAULT_TEXT;
@@ -1153,11 +1240,14 @@ XT°5</textarea>
           seek: function (ms) {
             applyElapsed(ms);
           },
+          settle: function () {
+            return window.ChromeEffect ? ChromeEffect.ready(document.getElementById("stage")) : Promise.resolve();
+          },
           stop: stopPlayback,
           start: startPlayback,
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=9"></script>
+    <script type="module" src="../../web-export.js?v=13"></script>
   </body>
 </html>

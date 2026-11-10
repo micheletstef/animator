@@ -452,6 +452,30 @@
       </div>
 
       <div class="group">
+        <p class="group-title">chrome</p>
+        <div class="row">
+          <label for="chrome">chrome</label>
+          <input id="chrome" type="checkbox" />
+          <span class="val" id="chromeVal">off</span>
+        </div>
+        <div class="row">
+          <label for="off">offset</label>
+          <input id="off" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="offVal">14</span>
+        </div>
+        <div class="row">
+          <label for="rnd">rounding</label>
+          <input id="rnd" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="rndVal">14</span>
+        </div>
+        <div class="row">
+          <label for="ost">stroke</label>
+          <input id="ost" type="range" min="0" max="20" step="0.1" value="6.19" />
+          <span class="val" id="ostVal">6.19</span>
+        </div>
+      </div>
+
+      <div class="group">
         <p class="group-title">content</p>
         <div class="row">
           <label for="tA">1 start</label>
@@ -591,6 +615,9 @@
 
     <span class="probe" id="probe" aria-hidden="true"></span>
 
+    <script src="../../node_modules/opentype.js/dist/opentype.js"></script>
+    <script src="../../animations/glyph-outlines.js?v=20"></script>
+    <script src="chrome-effect.js?v=2"></script>
     <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
@@ -640,11 +667,15 @@
           slnt: 0,
           move: 1800,
           hold: 700,
+          chrome: "0",
+          off: 14,
+          rnd: 14,
+          ost: 6.19,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1 };
         var TEXT_KEYS = { tA: 1, tB: 1, tC: 1, tD: 1 };
-        var CHECK_KEYS = { grad: 1 };
+        var CHECK_KEYS = { grad: 1, chrome: 1 };
         var DUALS = [
           { id: "wA", text: "tA", fallback: "a", fill: "wAFill", lab: "wALab" },
           { id: "wB", text: "tB", fallback: "b", fill: "wBFill", lab: "wBLab" },
@@ -669,6 +700,10 @@
           slnt: document.getElementById("slntVal"),
           move: document.getElementById("moveVal"),
           hold: document.getElementById("holdVal"),
+          chrome: document.getElementById("chromeVal"),
+          off: document.getElementById("offVal"),
+          rnd: document.getElementById("rndVal"),
+          ost: document.getElementById("ostVal"),
         };
 
         Object.keys(DEFAULTS).forEach(function (key) {
@@ -957,6 +992,16 @@
             Number(els.slnt.value) || 0
           );
           unit.inner.style.transform = "none";
+          syncChrome(unit.inner, {
+            text: unit.inner.textContent,
+            size: parseFloat(unit.inner.style.fontSize) || 100,
+            wght: line.wght,
+            wdth: wdth,
+            cntr: line.cntr,
+            slnt: Number(els.slnt.value) || 0,
+            track: track,
+            align: "left",
+          });
           return { wdth: wdth, box: boxW };
         }
 
@@ -1040,6 +1085,33 @@
           t0 = performance.now();
         }
 
+        function chromeOn() {
+          return !!(els.chrome && els.chrome.checked && window.ChromeEffect);
+        }
+
+        function chromeSpec(extra) {
+          var spec = {
+            offset: els.off ? Number(els.off.value) : 14,
+            round: els.rnd ? Number(els.rnd.value) : 14,
+            stroke: els.ost ? Number(els.ost.value) : 6.19,
+            align: "left",
+          };
+          if (!extra) return spec;
+          Object.keys(extra).forEach(function (key) {
+            spec[key] = extra[key];
+          });
+          return spec;
+        }
+
+        function syncChrome(el, extra) {
+          if (!el || !window.ChromeEffect) return;
+          if (!chromeOn()) {
+            if (el.classList.contains("is-chrome")) ChromeEffect.clear(el);
+            return;
+          }
+          ChromeEffect.paint(el, chromeSpec(extra));
+        }
+
         function readVal(key) {
           if (!els[key]) return DEFAULTS[key];
           if (CHECK_KEYS[key]) return els[key].checked ? "1" : "0";
@@ -1063,6 +1135,8 @@
           if (key === "lh" || key === "tr") return Number(v).toFixed(2);
           if (key === "slnt") return Number(v).toFixed(2).replace(/\.00$/, "");
           if (key === "move" || key === "hold") return Math.round(Number(v)) + "ms";
+          if (key === "ost") return Number(v).toFixed(2);
+          if (key === "off" || key === "rnd") return String(Number(v));
           return String(Math.round(Number(v)));
         }
 
@@ -1300,11 +1374,14 @@
           seek: function (ms) {
             applyMix(sample(ms));
           },
+          settle: function () {
+            return window.ChromeEffect ? ChromeEffect.ready(document.getElementById("stage")) : Promise.resolve();
+          },
           stop: stopPlayback,
           start: startPlayback,
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=9"></script>
+    <script type="module" src="../../web-export.js?v=13"></script>
   </body>
 </html>

@@ -326,8 +326,8 @@
     </aside>
 
     <div class="masters" aria-hidden="true">
-      <video id="vid-large" src="bottle-assets/large-white.webm?v=60" muted playsinline loop autoplay preload="auto"></video>
-      <video id="vid-small" src="bottle-assets/small-white.webm?v=60" muted playsinline loop autoplay preload="auto"></video>
+      <video id="vid-large" src="bottle-assets/large-white.webm?v=62" muted playsinline preload="auto"></video>
+      <video id="vid-small" src="bottle-assets/small-white.webm?v=62" muted playsinline preload="auto"></video>
     </div>
 
     <script src="artboard-view.js?v=30"></script>
@@ -379,6 +379,209 @@
           large: document.getElementById("vid-large"),
           small: document.getElementById("vid-small"),
         };
+        Object.keys(videos).forEach(function (id) {
+          if (videos[id]) videos[id]._bottleId = id;
+        });
+
+        function whenSeekable(video) {
+          return new Promise(function (resolve) {
+            var tries = 0;
+            function check() {
+              var end = video.seekable && video.seekable.length ? video.seekable.end(video.seekable.length - 1) : 0;
+              if (video.readyState >= 2 && end > 0.5) {
+                resolve();
+                return;
+              }
+              if (++tries > 40) {
+                resolve();
+                return;
+              }
+              setTimeout(check, 50);
+            }
+            if (video.readyState >= 1) check();
+            else video.addEventListener("loadeddata", check, { once: true });
+          });
+        }
+
+        // A normal video response is often not seekable, so export snaps every
+        // frame back to the start. A local blob can be seeked to the exact time.
+        function loadMaster(video) {
+          var src = video.getAttribute("src");
+          if (!src) return Promise.resolve();
+          video.pause();
+          video.loop = false;
+          return fetch(src)
+            .then(function (res) {
+              if (!res.ok) throw new Error(String(res.status));
+              return res.blob();
+            })
+            .then(function (blob) {
+              var typed = blob.type && blob.type.indexOf("video/") === 0 ? blob : new Blob([blob], { type: "video/webm" });
+              var url = URL.createObjectURL(typed);
+              video.src = url;
+              return whenSeekable(video).then(function () {
+                return attachPair(video, url);
+              });
+            })
+            .catch(function () {
+              return whenSeekable(video);
+            });
+        }
+
+        // A second copy stays parked on the first frame. At the end of a turn
+        // we draw that copy instead of letting the playing clip seek back to
+        // the start, which is the hitch in the preview.
+        function attachPair(video, url) {
+          var pair = document.createElement("video");
+          pair.muted = true;
+          pair.playsInline = true;
+          pair.preload = "auto";
+          pair.loop = false;
+          pair._bottleId = video._bottleId;
+          pair.src = url;
+          if (video.parentNode) video.parentNode.appendChild(pair);
+          video._pair = pair;
+          pair._pair = video;
+          return whenSeekable(pair).then(function () {
+            pair.pause();
+            if (pair.currentTime > 0.001) pair.currentTime = 0;
+          });
+        }
+
+        var mastersReady = Promise.all(
+          Object.keys(videos).map(function (id) {
+            return loadMaster(videos[id]);
+          })
+        );
+
+        function storeFrame(canvas, frames, t) {
+          var img = new Image();
+          img.src = canvas.toDataURL("image/png");
+          frames.push({ t: t, img: img });
+          return img.decode ? img.decode().catch(function () {}) : Promise.resolve();
+        }
+
+        // Seeking every export frame restarts the decoder at the last keyframe,
+        // so later frames never arrive and the picture freezes. Play each clip
+        // through once and keep the frames.
+        function collectFrames(video) {
+          var probe = document.createElement("video");
+          probe.muted = true;
+          probe.playsInline = true;
+          probe.preload = "auto";
+          probe.src = video.currentSrc || video.src;
+          probe.setAttribute("style", "position:fixed;left:-8000px;top:0;opacity:0.02;pointer-events:none;");
+          document.body.appendChild(probe);
+          return new Promise(function (resolve) {
+            var finished = false;
+            function finish(frames) {
+              if (finished) return;
+              finished = true;
+              try { probe.pause(); } catch (e) {}
+              if (probe.parentNode) probe.parentNode.removeChild(probe);
+              video._frames = frames || [];
+              if (video._pair) video._pair._frames = video._frames;
+              resolve(video._frames);
+            }
+            probe.loop = false;
+            probe.addEventListener("error", function () { finish([]); }, { once: true });
+            probe.addEventListener("loadeddata", function () {
+              probe.style.width = (probe.videoWidth || 336) + "px";
+              probe.style.height = (probe.videoHeight || 1160) + "px";
+              var canvas = document.createElement("canvas");
+              canvas.width = probe.videoWidth || 2;
+              canvas.height = probe.videoHeight || 2;
+              var ctx = canvas.getContext("2d", { willReadFrequently: true });
+              var frames = [];
+              var decodes = [];
+              var step = 1 / 60;
+              function done() {
+                Promise.all(decodes).then(function () { finish(frames); });
+              }
+              function onFrame(now, meta) {
+                if (finished) return;
+                var t = meta && isFinite(meta.mediaTime) ? meta.mediaTime : probe.currentTime;
+                var prev = frames.length ? frames[frames.length - 1].t : -1;
+                if (!(prev >= 0 && t + 0.05 < prev) && frames.length < 480 && !probe.ended) {
+                  probe.requestVideoFrameCallback(onFrame);
+                }
+                if (prev >= 0 && t + 0.05 < prev) { done(); return; }
+                if (prev < 0 || t - prev >= step - 0.004) {
+                  ctx.drawImage(probe, 0, 0, canvas.width, canvas.height);
+                  decodes.push(storeFrame(canvas, frames, t));
+                }
+                if (frames.length >= 480 || probe.ended) done();
+              }
+              probe.addEventListener("ended", done, { once: true });
+              function begin() {
+                ctx.drawImage(probe, 0, 0, canvas.width, canvas.height);
+                decodes.push(storeFrame(canvas, frames, 0));
+                probe.requestVideoFrameCallback(onFrame);
+                var play = probe.play();
+                if (play && play.catch) play.catch(function () { done(); });
+              }
+              if (probe.currentTime > 0.001) {
+                probe.addEventListener("seeked", begin, { once: true });
+                try { probe.currentTime = 0; } catch (e) { begin(); }
+              } else begin();
+            }, { once: true });
+            setTimeout(function () { finish(video._frames || []); }, 90000);
+          });
+        }
+
+        var framesReady = null;
+        function ensureFrames() {
+          if (framesReady) return framesReady;
+          var ids = Object.keys(videos);
+          var chain = mastersReady;
+          ids.forEach(function (id) {
+            chain = chain.then(function () {
+              return collectFrames(videos[id]);
+            });
+          });
+          framesReady = chain;
+          return framesReady;
+        }
+
+        function loopLength(video) {
+          var frames = video && video._frames;
+          if (!frames || frames.length < 2) return video && video.duration > 0 ? video.duration : 0;
+          var deltas = [];
+          var i;
+          for (i = 1; i < frames.length; i++) {
+            var d = frames[i].t - frames[i - 1].t;
+            if (d > 0.004 && d < 0.2) deltas.push(d);
+          }
+          deltas.sort(function (a, b) { return a - b; });
+          var step = deltas.length ? deltas[deltas.length >> 1] : 1 / 30;
+          var natural = frames[frames.length - 1].t + step;
+          if (video.duration > 0 && Math.abs(video.duration - natural) < step * 1.5) return video.duration;
+          return natural;
+        }
+
+        function frameAt(video, ms) {
+          var frames = video && video._frames;
+          if (!frames || !frames.length) return null;
+          var loop = loopLength(video);
+          if (!(loop > 0)) return frames[0];
+          var belt = durationMs() / 1000;
+          var spins = Math.max(1, Math.round(belt / loop));
+          var into = (ms / 1000) % belt;
+          if (into < 0) into += belt;
+          var t = ((into / belt) * spins * loop) % loop;
+          var best = frames[0];
+          var bestDist = Infinity;
+          var i;
+          for (i = 0; i < frames.length; i++) {
+            var d = Math.abs(frames[i].t - t);
+            d = Math.min(d, Math.abs(frames[i].t + loop - t), Math.abs(frames[i].t - (t + loop)));
+            if (d < bestDist) {
+              bestDist = d;
+              best = frames[i];
+            }
+          }
+          return best;
+        }
         var canvases = [];
         var plates = {};
         var silhouettes = {};
@@ -387,6 +590,8 @@
         var playing = true;
         var raf = 0;
         var lastFrame = 0;
+        var seekSerial = 0;
+        var seekJob = Promise.resolve();
 
         function num(key, fallback) {
           var n = els[key] ? parseFloat(els[key].value) : fallback;
@@ -537,11 +742,14 @@
           for (i = 0; i < canvases.length; i++) {
             canvas = canvases[i];
             video = videos[canvas._id];
-            if (!video || video.readyState < 2) continue;
+            if (!video) continue;
+            var source = video._shot && video._shot.complete ? video._shot : video;
+            var stamp = video._shot ? video._shotTime : video.currentTime;
+            if (source === video && video.readyState < 2) continue;
             filter = gradeFilter(canvas._id);
             if (
               !canvas._force &&
-              canvas._drawn === video.currentTime &&
+              canvas._drawn === stamp &&
               canvas._stroke === radius &&
               canvas._ink === color &&
               canvas._grade === filter
@@ -556,7 +764,7 @@
               if (!ready[canvas._id]) {
                 ready[canvas._id] = renderPlate(
                   canvas._id,
-                  video,
+                  source,
                   canvas._dw,
                   canvas._dh,
                   radius,
@@ -567,10 +775,10 @@
               ctx.drawImage(ready[canvas._id], 0, 0);
             } else {
               ctx.filter = filter;
-              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
               ctx.filter = "none";
             }
-            canvas._drawn = video.currentTime;
+            canvas._drawn = stamp;
             canvas._stroke = radius;
             canvas._ink = color;
             canvas._grade = filter;
@@ -639,21 +847,114 @@
 
         function pauseVideos() {
           Object.keys(videos).forEach(function (id) {
-            if (videos[id]) videos[id].pause();
+            var video = videos[id];
+            if (!video) return;
+            video.pause();
+            if (video._pair) video._pair.pause();
+          });
+        }
+
+        function handoff(video) {
+          if (!playing || !video || !video._bottleId) return;
+          if (videos[video._bottleId] !== video) return;
+          if (!(video.duration > 0)) return;
+          var next = video._pair;
+          var remain = video.duration - video.currentTime;
+          if (next && next.paused && next.readyState >= 1 && next.currentTime > 0.04 && remain < 0.5 && remain > 0.08) {
+            try { next.currentTime = 0; } catch (e) {}
+          }
+          if (!video.ended && remain > 1 / 50) return;
+          if (!next || next.readyState < 2) {
+            if (video.ended) {
+              try { video.currentTime = 0; } catch (e) {}
+              var again = video.play();
+              if (again && again.catch) again.catch(function () {});
+            }
+            return;
+          }
+          videos[video._bottleId] = next;
+          bindFramePump(next);
+          forcePaint();
+          var pending = next.play();
+          if (pending && pending.catch) pending.catch(function () {});
+          video.pause();
+          setTimeout(function () {
+            if (videos[video._bottleId] === video) return;
+            try { video.currentTime = 0; } catch (e) {}
+          }, 80);
+        }
+
+        function seekOne(video, ms, serial) {
+          return new Promise(function (resolve) {
+            if (!video) {
+              resolve();
+              return;
+            }
+            var settled = false;
+            var timer = 0;
+            function finish() {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timer);
+              video.removeEventListener("seeked", finish);
+              video.removeEventListener("error", finish);
+              video.removeEventListener("loadedmetadata", arm);
+              resolve();
+            }
+            function arm() {
+              if (serial !== seekSerial || !(video.duration > 0)) {
+                finish();
+                return;
+              }
+              var target = (ms / 1000) % video.duration;
+              if (!isFinite(target) || target < 0) target = 0;
+              if (video.readyState >= 2 && Math.abs(video.currentTime - target) <= 0.0005) {
+                finish();
+                return;
+              }
+              video.addEventListener("seeked", finish);
+              video.addEventListener("error", finish);
+              timer = setTimeout(finish, 1500);
+              try {
+                video.pause();
+                video.currentTime = target;
+              } catch (e) {
+                finish();
+              }
+            }
+            if (video.readyState >= 1) arm();
+            else video.addEventListener("loadedmetadata", arm);
+          });
+        }
+
+        function applyShots(ms) {
+          Object.keys(videos).forEach(function (id) {
+            var video = videos[id];
+            if (!video) return;
+            var frame = frameAt(video, ms);
+            video._shot = frame ? frame.img : null;
+            video._shotTime = frame ? frame.t : null;
           });
         }
 
         function seekVideos(ms) {
-          Object.keys(videos).forEach(function (id) {
-            var video = videos[id];
-            if (!video || !(video.duration > 0)) return;
-            var target = (ms / 1000) % video.duration;
-            if (Math.abs(video.currentTime - target) > 0.0005) {
-              try {
-                video.currentTime = target;
-              } catch (e) {}
+          var serial = ++seekSerial;
+          seekJob = ensureFrames().then(function () {
+            if (serial !== seekSerial) return;
+            if (videos.large && videos.large._frames && videos.large._frames.length) {
+              applyShots(ms);
+              return;
             }
+            return Promise.all(
+              Object.keys(videos).map(function (id) {
+                return seekOne(videos[id], ms, serial);
+              })
+            );
+          }).then(function () {
+            if (serial !== seekSerial) return;
+            forcePaint();
           });
+          return seekJob;
         }
 
         function presentedFrames(video) {
@@ -682,6 +983,7 @@
           var dt = now - lastFrame;
           lastFrame = now;
           if (dt > 0 && dt < 200) travel += (dt / durationMs()) * cycleW;
+          Object.keys(videos).forEach(function (id) { handoff(videos[id]); });
           travel = wrap(travel, cycleW);
           applyTransform();
           var id;
@@ -710,9 +1012,18 @@
           pauseVideos();
         }
 
+        function clearShots() {
+          Object.keys(videos).forEach(function (id) {
+            if (!videos[id]) return;
+            videos[id]._shot = null;
+            videos[id]._shotTime = null;
+          });
+        }
+
         function startPlayback() {
           playing = true;
           lastFrame = 0;
+          clearShots();
           playVideos();
           cancelAnimationFrame(raf);
           raf = requestAnimationFrame(frame);
@@ -821,14 +1132,17 @@
           var video = videos[id];
           if (!video) return;
           video.muted = true;
-          video.loop = true;
+          video.loop = false;
           video.playsInline = true;
           try {
             video.disablePictureInPicture = true;
           } catch (e) {}
           bindFramePump(video);
           video.addEventListener("loadeddata", forcePaint);
-          video.addEventListener("seeked", forcePaint);
+          video.addEventListener("seeked", function () {
+            if (video._bottleId && videos[video._bottleId] !== video) return;
+            forcePaint();
+          });
           video.addEventListener("error", function () {
             if (nowReadout) nowReadout.textContent = id + " failed to load";
           });
@@ -840,7 +1154,10 @@
         applyVars();
         paintVals();
         buildTrack();
-        startPlayback();
+        mastersReady.then(function () {
+          forcePaint();
+          startPlayback();
+        });
 
         window.AnimatorExport = {
           stage: stage,
@@ -851,13 +1168,15 @@
             travel = wrap((ms / dur) * cycleW, cycleW);
             applyTransform();
             seekVideos(ms);
-            forcePaint();
+          },
+          settle: function () {
+            return seekJob;
           },
           stop: stopPlayback,
           start: startPlayback,
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=9"></script>
+    <script type="module" src="../../web-export.js?v=12"></script>
   </body>
 </html>

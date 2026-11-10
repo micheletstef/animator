@@ -200,6 +200,147 @@ async function pickEncoder(width, height, fps, bitrate) {
   return null;
 }
 
+function svgPaintBounds(svg) {
+  var bb = null;
+  try {
+    bb = svg.getBBox();
+  } catch (err) {}
+  var w = parseFloat(svg.getAttribute("width")) || svg.clientWidth || 1;
+  var h = parseFloat(svg.getAttribute("height")) || svg.clientHeight || 1;
+  if (!bb || !(bb.width > 0) || !(bb.height > 0)) {
+    return { x: 0, y: 0, w: w, h: h };
+  }
+  var blur = 0;
+  svg.querySelectorAll(".drop-blur, .inner-blur").forEach(function (node) {
+    var n = parseFloat(node.getAttribute("stdDeviation"));
+    if (n > blur) blur = n;
+  });
+  var pad = Math.max(8, Math.ceil(blur * 3));
+  return {
+    x: bb.x - pad,
+    y: bb.y - pad,
+    w: bb.width + pad * 2,
+    h: bb.height + pad * 2,
+  };
+}
+
+function loadImage(src) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
+    img.onload = function () {
+      resolve(img);
+    };
+    img.onerror = function () {
+      reject(new Error("svg raster failed"));
+    };
+    img.src = src;
+  });
+}
+
+function layoutOrigin(svg, stage) {
+  var stageRect = stage.getBoundingClientRect();
+  var rect = svg.getBoundingClientRect();
+  var sx = stageRect.width ? stage.offsetWidth / stageRect.width : 1;
+  var sy = stageRect.height ? stage.offsetHeight / stageRect.height : 1;
+  return {
+    x: (rect.left - stageRect.left) * sx,
+    y: (rect.top - stageRect.top) * sy,
+  };
+}
+
+async function rasterizeChromeSvg(svg, pixelRatio) {
+  var bounds = svgPaintBounds(svg);
+  var clone = svg.cloneNode(true);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("viewBox", bounds.x + " " + bounds.y + " " + bounds.w + " " + bounds.h);
+  clone.setAttribute("width", String(bounds.w));
+  clone.setAttribute("height", String(bounds.h));
+  clone.removeAttribute("style");
+  clone.removeAttribute("class");
+  var xml = new XMLSerializer().serializeToString(clone);
+  var img = await loadImage("data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml));
+  var canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bounds.w * pixelRatio));
+  canvas.height = Math.max(1, Math.round(bounds.h * pixelRatio));
+  canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+  return { canvas: canvas, bounds: bounds };
+}
+
+// html-to-image copies the stage into a foreignObject. Masks and filters in
+// that copy do not paint, so chrome turns into flat gray bands. Take the
+// chrome nodes out of the stage, capture the rest, then paint each chrome
+// SVG as its own image — the same shapes the preview is showing.
+export async function captureStage(stage, settings, fontEmbedCSS) {
+  var svgs = Array.prototype.slice.call(stage.querySelectorAll("svg.chrome"));
+  var options = {
+    width: settings.art.w,
+    height: settings.art.h,
+    pixelRatio: settings.scale,
+    fontEmbedCSS: fontEmbedCSS,
+    style: {
+      boxShadow: "none",
+      transform: "none",
+      width: settings.art.w + "px",
+      height: settings.art.h + "px",
+    },
+  };
+  if (!svgs.length) return toCanvas(stage, options);
+
+  var pixelRatio = settings.scale || 1;
+  var baked = [];
+  for (var i = 0; i < svgs.length; i++) {
+    baked.push({
+      image: await rasterizeChromeSvg(svgs[i], pixelRatio),
+      origin: layoutOrigin(svgs[i], stage),
+    });
+  }
+
+  var parked = [];
+  var guides = Array.prototype.slice.call(stage.querySelectorAll(".stage-guides"));
+  var guideDisplay = guides.map(function (node) {
+    return node.style.display;
+  });
+  guides.forEach(function (node) {
+    node.style.display = "none";
+  });
+  svgs.forEach(function (svg) {
+    var mark = document.createComment("chrome");
+    svg.parentNode.insertBefore(mark, svg);
+    svg.remove();
+    parked.push({ svg: svg, mark: mark });
+  });
+
+  try {
+    var base = await toCanvas(stage, options);
+    var ctx = base.getContext("2d");
+    var px = base.width / settings.art.w;
+    var py = base.height / settings.art.h;
+    var fitX = settings.art.w / (stage.offsetWidth || settings.art.w);
+    var fitY = settings.art.h / (stage.offsetHeight || settings.art.h);
+    for (var n = 0; n < baked.length; n++) {
+      var item = baked[n];
+      ctx.drawImage(
+        item.image.canvas,
+        (item.origin.x + item.image.bounds.x) * fitX * px,
+        (item.origin.y + item.image.bounds.y) * fitY * py,
+        item.image.bounds.w * fitX * px,
+        item.image.bounds.h * fitY * py
+      );
+    }
+    return base;
+  } finally {
+    parked.forEach(function (item) {
+      if (item.mark.parentNode) {
+        item.mark.parentNode.insertBefore(item.svg, item.mark);
+        item.mark.remove();
+      }
+    });
+    guides.forEach(function (node, index) {
+      node.style.display = guideDisplay[index];
+    });
+  }
+}
+
 function fitCanvas(source, w, h) {
   if (source.width === w && source.height === h) return source;
   var canvas = document.createElement("canvas");
@@ -286,21 +427,11 @@ async function exportAnimation(api, btn) {
       if (encoderError) throw encoderError;
       var t = (i / settings.fps) * 1000;
       api.seek(t);
+      if (typeof api.settle === "function") await api.settle();
       await waitPaint();
       setStatus(btn, i + 1 + " / " + frameCount);
 
-      var captured = await toCanvas(stage, {
-        width: settings.art.w,
-        height: settings.art.h,
-        pixelRatio: settings.scale,
-        fontEmbedCSS: fontEmbedCSS,
-        style: {
-          boxShadow: "none",
-          transform: "none",
-          width: settings.art.w + "px",
-          height: settings.art.h + "px",
-        },
-      });
+      var captured = await captureStage(stage, settings, fontEmbedCSS);
       var canvas = fitCanvas(captured, settings.w, settings.h);
 
       if (encoder.encodeQueueSize > 8) {

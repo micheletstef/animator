@@ -166,7 +166,7 @@
         padding: 0;
         font-size: 24px;
         line-height: 1;
-        color: var(--caption, var(--fg));
+        color: var(--line);
         background: transparent;
         pointer-events: none;
         white-space: nowrap;
@@ -497,10 +497,6 @@
               <span class="var-readout-label">Contrast</span>
               <span class="var-readout-values" id="readoutCntr"></span>
             </div>
-            <div class="var-readout-item">
-              <span class="var-readout-label">Slant</span>
-              <span class="var-readout-values" id="readoutSlnt"></span>
-            </div>
           </div>
         </div>
       </div>
@@ -648,16 +644,6 @@
             <input id="cMax" class="is-end" type="range" min="0" max="100" step="0.1" value="100" aria-label="CNTR end" />
           </div>
         </div>
-        <div class="axis-row">
-          <label for="sMin">slnt</label>
-          <div class="dual-range" id="sDual">
-            <span class="dual-val" id="sMinVal">0</span>
-            <span class="dual-val" id="sMaxVal">-12</span>
-            <div class="dual-track"><div class="dual-fill" id="sFill"></div></div>
-            <input id="sMin" class="is-start" type="range" min="-12" max="0" step="0.25" value="0" aria-label="slnt start" />
-            <input id="sMax" class="is-end" type="range" min="-12" max="0" step="0.25" value="-12" aria-label="slnt end" />
-          </div>
-        </div>
       </div>
 
       <div class="group">
@@ -744,14 +730,12 @@
           CNTR: { min: 0, max: 100, step: 0.1, default: 0 },
           wght: { min: 200, max: 1000, step: 1, default: 500 },
           wdth: { min: 65, max: 130, step: 1, default: 100 },
-          slnt: { min: -12, max: 0, step: 0.25, default: 0 },
         };
 
         var DUAL_AXES = [
           { tag: "wght", minKey: "wMin", maxKey: "wMax", fill: "wFill", minVal: "wMinVal", maxVal: "wMaxVal" },
           { tag: "wdth", minKey: "dMin", maxKey: "dMax", fill: "dFill", minVal: "dMinVal", maxVal: "dMaxVal" },
           { tag: "CNTR", minKey: "cMin", maxKey: "cMax", fill: "cFill", minVal: "cMinVal", maxVal: "cMaxVal" },
-          { tag: "slnt", minKey: "sMin", maxKey: "sMax", fill: "sFill", minVal: "sMinVal", maxVal: "sMaxVal" },
         ];
 
         function clampAxis(tag, v) {
@@ -766,7 +750,6 @@
         }
 
         function fmtReadout(tag, v) {
-          if (tag === "slnt") return String(Math.round(Math.abs(Number(v))));
           return String(Math.round(Number(v)));
         }
 
@@ -800,7 +783,6 @@
             wght: w,
             CNTR: lerpFromRange(els.cMin, els.cMax, t),
             wdth: lerpFromRange(els.dMin, els.dMax, t),
-            slnt: lerpFromRange(els.sMin, els.sMax, t),
           };
         }
 
@@ -823,8 +805,7 @@
             fmtAxis("wght", v.wght) +
             ', "wdth" ' +
             fmtAxis("wdth", v.wdth) +
-            ', "slnt" ' +
-            fmtAxis("slnt", v.slnt) +
+            ', "slnt" 0' +
             ', "CNTR" ' +
             fmtAxis("CNTR", v.CNTR)
           );
@@ -981,7 +962,7 @@
           return Math.max(0, Math.min(1, Number(v)));
         }
 
-        var AXIS_STEPS = 8;
+        var AXIS_STEPS = 6;
 
         function stepTiming() {
           var stepDur = Math.max(200, parseFloat(els.cy.value));
@@ -1016,15 +997,13 @@
           var o = timing.overlap;
           var kf = [];
           var poses = [
-            { w: 0, d: 0, c: 0, s: 0 },
-            { w: 1, d: 0, c: 0, s: 0 },
-            { w: 1, d: 1, c: 0, s: 0 },
-            { w: 1, d: 1, c: 1, s: 0 },
-            { w: 1, d: 1, c: 1, s: 1 },
-            { w: 1, d: 1, c: 1, s: 0 },
-            { w: 1, d: 1, c: 0, s: 0 },
-            { w: 1, d: 0, c: 0, s: 0 },
-            { w: 0, d: 0, c: 0, s: 0 },
+            { w: 0, d: 0, c: 0 },
+            { w: 1, d: 0, c: 0 },
+            { w: 1, d: 1, c: 0 },
+            { w: 1, d: 1, c: 1 },
+            { w: 1, d: 1, c: 0 },
+            { w: 1, d: 0, c: 0 },
+            { w: 0, d: 0, c: 0 },
           ];
 
           function add(time, pose) {
@@ -1033,7 +1012,6 @@
               w: pose.w,
               d: pose.d,
               c: pose.c,
-              s: pose.s,
             });
           }
 
@@ -1073,16 +1051,16 @@
         }
 
         function sampledAxes(k) {
-          return { wght: k.w, wdth: k.d, cntr: k.c, slnt: k.s };
+          return { wght: k.w, wdth: k.d, cntr: k.c };
         }
 
         function segmentAnimates(a, b) {
-          return a.w !== b.w || a.d !== b.d || a.c !== b.c || a.s !== b.s;
+          return a.w !== b.w || a.d !== b.d || a.c !== b.c;
         }
 
         function sampleKeyframes(time) {
           var kf = getKeyframes();
-          if (!kf.length) return { wght: 0, wdth: 0, cntr: 0, slnt: 0 };
+          if (!kf.length) return { wght: 0, wdth: 0, cntr: 0 };
 
           if (time <= kf[0].t) return sampledAxes(kf[0]);
 
@@ -1107,7 +1085,6 @@
               wght: clamp01(catmullRom1D(k0.w, k1.w, k2.w, k3.w, u)),
               wdth: clamp01(catmullRom1D(k0.d, k1.d, k2.d, k3.d, u)),
               cntr: clamp01(catmullRom1D(k0.c, k1.c, k2.c, k3.c, u)),
-              slnt: clamp01(catmullRom1D(k0.s, k1.s, k2.s, k3.s, u)),
             };
           }
 
@@ -1120,7 +1097,7 @@
 
         function motionPhaseFromElapsed(elapsed) {
           var seq = sequentialAxisCached(elapsed);
-          return Math.max(seq.wght, seq.wdth, seq.cntr, seq.slnt);
+          return Math.max(seq.wght, seq.wdth, seq.cntr);
         }
 
         var seqCacheElapsed = -1;
@@ -1141,7 +1118,6 @@
             wght: clampAxis("wght", lerpFromRange(els.wMin, els.wMax, seq.wght)),
             CNTR: clampAxis("CNTR", lerpFromRange(els.cMin, els.cMax, seq.cntr)),
             wdth: clampAxis("wdth", lerpFromRange(els.dMin, els.dMax, seq.wdth)),
-            slnt: clampAxis("slnt", lerpFromRange(els.sMin, els.sMax, seq.slnt)),
           };
         }
 
@@ -1157,14 +1133,13 @@
           wght: document.getElementById("readoutWght"),
           CNTR: document.getElementById("readoutCntr"),
           wdth: document.getElementById("readoutWdth"),
-          slnt: document.getElementById("readoutSlnt"),
         };
 
         var readoutScale = {
           key: "",
-          values: { wght: [], CNTR: [], wdth: [], slnt: [] },
-          cells: { wght: [], CNTR: [], wdth: [], slnt: [] },
-          current: { wght: -1, CNTR: -1, wdth: -1, slnt: -1 },
+          values: { wght: [], CNTR: [], wdth: [] },
+          cells: { wght: [], CNTR: [], wdth: [] },
+          current: { wght: -1, CNTR: -1, wdth: -1 },
         };
 
         function readoutScaleKey() {
@@ -1175,8 +1150,6 @@
             els.cMax.value,
             els.dMin.value,
             els.dMax.value,
-            els.sMin.value,
-            els.sMax.value,
           ].join("|");
         }
 
@@ -1203,26 +1176,21 @@
           var wghtVals = [];
           var cntrVals = [];
           var wdthVals = [];
-          var slntVals = [];
           for (var i = 0; i < weights.length; i++) {
             var related = relatedVariationAtWeight(weights[i], wStart, wEnd);
             wghtVals.push(related.wght);
             cntrVals.push(related.CNTR);
             wdthVals.push(related.wdth);
-            slntVals.push(related.slnt);
           }
           readoutScale.values.wght = wghtVals;
           readoutScale.values.CNTR = cntrVals;
           readoutScale.values.wdth = wdthVals;
-          readoutScale.values.slnt = slntVals;
           readoutScale.cells.wght = fillReadoutRow(readoutEls.wght, "wght", wghtVals);
           readoutScale.cells.CNTR = fillReadoutRow(readoutEls.CNTR, "CNTR", cntrVals);
           readoutScale.cells.wdth = fillReadoutRow(readoutEls.wdth, "wdth", wdthVals);
-          readoutScale.cells.slnt = fillReadoutRow(readoutEls.slnt, "slnt", slntVals);
           readoutScale.current.wght = -1;
           readoutScale.current.CNTR = -1;
           readoutScale.current.wdth = -1;
-          readoutScale.current.slnt = -1;
         }
 
         function syncReadoutCurrent(tag, currentValue) {
@@ -1241,7 +1209,6 @@
           syncReadoutCurrent("wght", v.wght);
           syncReadoutCurrent("CNTR", v.CNTR);
           syncReadoutCurrent("wdth", v.wdth);
-          syncReadoutCurrent("slnt", v.slnt);
         }
 
         function getText() {
@@ -1582,8 +1549,6 @@
           cMax: 100,
           dMin: 65,
           dMax: 130,
-          sMin: 0,
-          sMax: -12,
           cy: 1200,
           sp: 450,
           ep: "ease-in-out",
@@ -1621,8 +1586,6 @@
           cMax: document.getElementById("cMax"),
           dMin: document.getElementById("dMin"),
           dMax: document.getElementById("dMax"),
-          sMin: document.getElementById("sMin"),
-          sMax: document.getElementById("sMax"),
           cy: document.getElementById("cy"),
           sp: document.getElementById("sp"),
           ep: document.getElementById("ep"),

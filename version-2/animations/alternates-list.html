@@ -298,6 +298,30 @@
       </div>
 
       <div class="group">
+        <p class="group-title">chrome</p>
+        <div class="row">
+          <label for="chrome">chrome</label>
+          <input id="chrome" type="checkbox" />
+          <span class="val" id="chromeVal">off</span>
+        </div>
+        <div class="row">
+          <label for="off">offset</label>
+          <input id="off" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="offVal">14</span>
+        </div>
+        <div class="row">
+          <label for="rnd">rounding</label>
+          <input id="rnd" type="range" min="0" max="48" step="0.5" value="14" />
+          <span class="val" id="rndVal">14</span>
+        </div>
+        <div class="row">
+          <label for="ost">stroke</label>
+          <input id="ost" type="range" min="0" max="20" step="0.1" value="6.19" />
+          <span class="val" id="ostVal">6.19</span>
+        </div>
+      </div>
+
+      <div class="group">
         <p class="group-title">content</p>
         <div class="row">
           <label for="tx">text</label>
@@ -385,6 +409,9 @@ Spurless, Pointed</textarea>
 
     </aside>
 
+    <script src="../../node_modules/opentype.js/dist/opentype.js"></script>
+    <script src="../../animations/glyph-outlines.js?v=20"></script>
+    <script src="chrome-effect.js?v=2"></script>
     <script src="artboard-view.js?v=30"></script>
     <script>
       (function () {
@@ -439,9 +466,14 @@ Spurless, Pointed</textarea>
           step: 1200,
           hold0: 1000,
           hold1: 1000,
+          chrome: "0",
+          off: 14,
+          rnd: 14,
+          ost: 6.19,
         };
 
         var COLOR_KEYS = { bg: 1, fg: 1, hl: 1 };
+        var CHECK_KEYS = { chrome: 1 };
 
         var els = {
           bg: document.getElementById("bg"),
@@ -459,6 +491,10 @@ Spurless, Pointed</textarea>
           step: document.getElementById("step"),
           hold0: document.getElementById("hold0"),
           hold1: document.getElementById("hold1"),
+          chrome: document.getElementById("chrome"),
+          off: document.getElementById("off"),
+          rnd: document.getElementById("rnd"),
+          ost: document.getElementById("ost"),
         };
 
         var vals = {
@@ -476,6 +512,10 @@ Spurless, Pointed</textarea>
           step: document.getElementById("stepVal"),
           hold0: document.getElementById("hold0Val"),
           hold1: document.getElementById("hold1Val"),
+          chrome: document.getElementById("chromeVal"),
+          off: document.getElementById("offVal"),
+          rnd: document.getElementById("rndVal"),
+          ost: document.getElementById("ostVal"),
         };
 
         var nameNodes = [];
@@ -560,6 +600,7 @@ Spurless, Pointed</textarea>
           nameNodes.forEach(function (node) {
             node.el.classList.toggle("is-on", !!(alt && node.alt.feat === alt.feat));
           });
+          syncAltChrome();
           if (nowReadout) {
             nowReadout.textContent = alt ? alt.label : "hold";
           }
@@ -620,7 +661,57 @@ Spurless, Pointed</textarea>
           setActive(-1);
         }
 
+        function chromeOn() {
+          return !!(els.chrome && els.chrome.checked && window.ChromeEffect);
+        }
+
+        function chromeSpec(extra) {
+          var spec = {
+            offset: els.off ? Number(els.off.value) : 14,
+            round: els.rnd ? Number(els.rnd.value) : 14,
+            stroke: els.ost ? Number(els.ost.value) : 6.19,
+            align: "left",
+          };
+          if (!extra) return spec;
+          Object.keys(extra).forEach(function (key) {
+            spec[key] = extra[key];
+          });
+          return spec;
+        }
+
+        function syncAltChrome() {
+          if (!nameNodes) return;
+          nameNodes.forEach(function (node) {
+            var active = node.el.classList.contains("is-on");
+            if (!chromeOn() || !active) {
+              if (window.ChromeEffect && node.el.classList.contains("is-chrome")) ChromeEffect.clear(node.el);
+              return;
+            }
+            var size = Number(els.fs.value) || 118;
+            var spacingPx = parseFloat(getComputedStyle(node.el).letterSpacing);
+            if (!isFinite(spacingPx)) spacingPx = 0;
+            ChromeEffect.paint(
+              node.el,
+              chromeSpec({
+                text: node.el.textContent,
+                size: size,
+                wght: Number(els.wght.value) || 745,
+                wdth: Number(els.wdth.value) || 67,
+                cntr: Number(els.cntr.value) || 0,
+                slnt: Number(els.slnt.value) || 0,
+                track: spacingPx / size,
+                align: "left",
+                features: [node.alt.feat],
+                disabled: ["liga", "calt"],
+              })
+            );
+          });
+        }
+
         function fmt(key, v) {
+          if (CHECK_KEYS[key]) return v === "1" || v === true || v === "on" ? "on" : "off";
+          if (key === "ost") return Number(v).toFixed(2);
+          if (key === "off" || key === "rnd") return String(Number(v));
           if (COLOR_KEYS[key]) return String(v).toLowerCase();
           if (key === "tx") return String(v);
           if (key === "fs" || key === "oy") return Math.round(Number(v)) + "px";
@@ -649,7 +740,8 @@ Spurless, Pointed</textarea>
         function paintVals() {
           Object.keys(vals).forEach(function (key) {
             if (!vals[key] || !els[key]) return;
-            vals[key].textContent = fmt(key, els[key].value);
+            var shown = CHECK_KEYS[key] ? (els[key].checked ? "1" : "0") : els[key].value;
+            vals[key].textContent = fmt(key, shown);
           });
         }
 
@@ -657,7 +749,8 @@ Spurless, Pointed</textarea>
           var data = {};
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            data[key] = els[key].value;
+            if (CHECK_KEYS[key]) data[key] = els[key].checked ? "1" : "0";
+            else data[key] = els[key].value;
           });
           try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -678,6 +771,10 @@ Spurless, Pointed</textarea>
           }
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key] || data[key] == null) return;
+            if (CHECK_KEYS[key]) {
+              els[key].checked = data[key] === "1" || data[key] === 1 || data[key] === true;
+              return;
+            }
             els[key].value = data[key];
           });
         }
@@ -685,7 +782,8 @@ Spurless, Pointed</textarea>
         function reset() {
           Object.keys(DEFAULTS).forEach(function (key) {
             if (!els[key]) return;
-            els[key].value = DEFAULTS[key];
+            if (CHECK_KEYS[key]) els[key].checked = DEFAULTS[key] === "1";
+            else els[key].value = DEFAULTS[key];
           });
           try {
             localStorage.removeItem(LS_KEY);
@@ -705,6 +803,7 @@ Spurless, Pointed</textarea>
             if (key === "tx") buildLockup(els.tx.value);
             applyVars();
             paintVals();
+            syncAltChrome();
             save();
             if (key === "tx") restart();
           });
@@ -722,11 +821,14 @@ Spurless, Pointed</textarea>
           filename: "alternates-list.mp4",
           durationMs: durationMs,
           seek: applyElapsed,
+          settle: function () {
+            return window.ChromeEffect ? ChromeEffect.ready(document.getElementById("stage")) : Promise.resolve();
+          },
           stop: stopPlayback,
           start: startPlayback,
         };
       })();
     </script>
-    <script type="module" src="../../web-export.js?v=9"></script>
+    <script type="module" src="../../web-export.js?v=13"></script>
   </body>
 </html>

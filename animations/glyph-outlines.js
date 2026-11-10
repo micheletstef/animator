@@ -690,15 +690,32 @@
     return hbState._buffer;
   }
 
-  function hbFeatures(hbState) {
-    if (!hbState._features) {
-      hbState._features = [
-        new hbState.Feature("kern", 1),
-        new hbState.Feature("liga", 1),
-        new hbState.Feature("rlig", 1),
-      ];
+  function hbFeatures(hbState, featureOpts) {
+    featureOpts = featureOpts || {};
+    var extra = featureOpts.features || [];
+    var disabled = featureOpts.disabled || [];
+    if (!extra.length && !disabled.length) {
+      if (!hbState._features) {
+        hbState._features = [
+          new hbState.Feature("kern", 1),
+          new hbState.Feature("liga", 1),
+          new hbState.Feature("rlig", 1),
+        ];
+      }
+      return hbState._features;
     }
-    return hbState._features;
+    var tags = { kern: 1, liga: 1, rlig: 1 };
+    disabled.forEach(function (tag) {
+      if (tag) tags[tag] = 0;
+    });
+    extra.forEach(function (tag) {
+      if (tag) tags[tag] = 1;
+    });
+    var list = [];
+    Object.keys(tags).forEach(function (tag) {
+      list.push(new hbState.Feature(tag, tags[tag]));
+    });
+    return list;
   }
 
   /**
@@ -1166,7 +1183,7 @@
    * Returns { runs, width } for one line at baseline y0, origin x0.
    * Variations must already be set on hbState.font.
    */
-  function shapeLine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal) {
+  function shapeLine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal, featureOpts) {
     if (!line) return { runs: [], width: 0 };
     var pathOpts = pathOptsForGlyph(variation);
     var scale = fontSize / hbState.upem;
@@ -1177,7 +1194,7 @@
     var buffer = hbBuffer(hbState);
     buffer.addText(line);
     buffer.guessSegmentProperties();
-    hbState.shape(hbState.font, buffer, hbFeatures(hbState));
+    hbState.shape(hbState.font, buffer, hbFeatures(hbState, featureOpts));
 
     var glyphs = buffer.getGlyphInfosAndPositions();
     var items = [];
@@ -1232,11 +1249,18 @@
   }
 
   /** Fallback when HarfBuzz is unavailable (no GPOS kern). */
-  function shapeLineOpentype(otFont, line, x0, y0, fontSize, variation, trackingPxVal) {
+  function shapeLineOpentype(otFont, line, x0, y0, fontSize, variation, trackingPxVal, featureOpts) {
     if (!line) return { runs: [], width: 0 };
     var pathOpts = Object.assign({}, otFont.defaultRenderOptions || { kerning: true });
     pathOpts.kerning = true;
     pathOpts.features = { liga: true, rlig: true };
+    featureOpts = featureOpts || {};
+    (featureOpts.disabled || []).forEach(function (tag) {
+      if (tag) pathOpts.features[tag] = false;
+    });
+    (featureOpts.features || []).forEach(function (tag) {
+      if (tag) pathOpts.features[tag] = true;
+    });
     pathOpts.variation = mergedVariation(otFont, variation);
     if (otFont.variation) otFont.variation.set(pathOpts.variation);
     var trackEm = trackingPxVal ? trackingPxVal / fontSize : 0;
@@ -1267,9 +1291,9 @@
     return { runs: placed.runs, width: endX + placed.shift - x0 };
   }
 
-  function shapeLineWithEngine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal) {
-    if (hbState) return shapeLine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal);
-    return shapeLineOpentype(otFont, line, x0, y0, fontSize, variation, trackingPxVal);
+  function shapeLineWithEngine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal, featureOpts) {
+    if (hbState) return shapeLine(hbState, otFont, line, x0, y0, fontSize, variation, trackingPxVal, featureOpts);
+    return shapeLineOpentype(otFont, line, x0, y0, fontSize, variation, trackingPxVal, featureOpts);
   }
 
   function translateCommands(commands, dx, dy) {
@@ -1583,6 +1607,10 @@
       var x0 = opts.x || 0;
       var y0 = opts.y || 0;
       if (cachedHbState) setHbVariations(cachedHbState, font, variation);
+      var featureOpts = null;
+      if ((opts.features && opts.features.length) || (opts.disabled && opts.disabled.length)) {
+        featureOpts = { features: opts.features || [], disabled: opts.disabled || [] };
+      }
       var shaped = shapeLineWithEngine(
         cachedHbState,
         font,
@@ -1591,7 +1619,8 @@
         0,
         fontSize,
         variation,
-        tracking
+        tracking,
+        featureOpts
       );
       var commands = [];
       shaped.runs.forEach(function (run) {
